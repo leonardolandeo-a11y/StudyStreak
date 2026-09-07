@@ -29,14 +29,19 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Goal> goals;
 
+
+    @OneToMany(mappedBy="validator")
+    private List<Validation> validations;
+
+    @OneToMany(mappedBy = "requester")
+    private List<TrackingLink> sentTrackingLinks;
+
+    @OneToMany(mappedBy = "receiver")
+    private List<TrackingLink> receivedTrackingLinks;
+
+    @OneToMany(mappedBy = "user")
+    private List<Notification> notifications;
     protected User(){};
 
-    public User(String username, String email, String password, Boolean active, LocalDate registrationDate, String timeZone) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.active = active;
-        this.registrationDate = registrationDate;
-        this.timeZone = timeZone;
-    }
+
 }

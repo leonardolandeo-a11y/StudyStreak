@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -21,5 +23,15 @@ public class Goal {
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
 
+    @OneToMany(mappedBy = "goal")
+    private List<DailyRecord> dailyRecords;
+
+    @OneToOne(mappedBy = "goal")
+    private Streak streak;
+
+    @ManyToMany(mappedBy = "goals")
+    private List<Tag> tags;
+
     protected Goal(){}
+
 }
