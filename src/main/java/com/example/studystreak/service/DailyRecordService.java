@@ -1,12 +1,13 @@
 package com.example.studystreak.service;
 
+import com.example.studystreak.repository.DailyRecordRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DailyRecordService {
-    private final DailyRecordService dailyRecordService;
+    private final DailyRecordRepository dailyRecordRepository;
 
-    public DailyRecordService(DailyRecordService dailyRecordService){
-        this.dailyRecordService = dailyRecordService;
+    public DailyRecordService(DailyRecordRepository dailyRecordRepository){
+        this.dailyRecordRepository = dailyRecordRepository;
     }
 }
