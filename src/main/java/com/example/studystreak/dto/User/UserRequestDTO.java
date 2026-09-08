@@ -1,4 +1,4 @@
-package com.example.studystreak.dto.user;
+package com.example.studystreak.dto.User;
 
 import lombok.Getter;
 import lombok.Setter;
