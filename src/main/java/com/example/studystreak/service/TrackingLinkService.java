@@ -88,8 +88,14 @@ public class TrackingLinkService {
         TrackingLink updatedtrackingLink = trackingLinkRepository.save(trackingLink);
         return modelMapper.map(updatedtrackingLink,TrackingLinkDTO.class);
     }
-    public void deleteTrackingLink(Long trackingId) {
+    public void deleteTrackingLink(Long trackingId, Long userId) {
         TrackingLink trackingLink = trackingLinkRepository.findById(trackingId).orElseThrow();
+
+        if (!trackingLink.getRequester().getId().equals(userId)
+                || !trackingLink.getReceiver().getId().equals(userId)) {
+            throw new RuntimeException();
+        }
+
         trackingLinkRepository.delete(trackingLink);
     }
 }
