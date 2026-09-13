@@ -39,14 +39,6 @@ public class TagService {
         Tag tag = tagRepository.findById(tagId).orElseThrow(); //el error handling lo implementare algun dia
         return modelMapper.map(tag,TagDTO.class); //se mapea a dto
     }
-    public TagDTO updateTag(Long tagId, TagDTO tagDTO) {
-        Tag tag = tagRepository.findById(tagId).orElseThrow();
-        tag.setName(tagDTO.getName());
-        Tag updatedTag = tagRepository.save(tag);
-        return modelMapper.map(updatedTag,TagDTO.class);
-    }
-    public void deleteTag(Long tagId) {
-        Tag tag = tagRepository.findById(tagId).orElseThrow();
-        tagRepository.delete(tag);
-    }
+    //metodos como deletetag o update se manejan desde GoalService
+
 }
