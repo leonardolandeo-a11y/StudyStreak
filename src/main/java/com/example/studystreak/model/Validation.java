@@ -17,7 +17,7 @@ public class Validation {
     private String comment;
 
     @OneToOne
-    @JoinColumn(name = "daily_record_id",nullable = false)
+    @JoinColumn(name = "daily_record_id", nullable = false, unique = true)
     private DailyRecord dailyRecord;
 
     @ManyToOne
