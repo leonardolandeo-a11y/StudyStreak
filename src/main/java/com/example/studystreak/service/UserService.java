@@ -2,6 +2,7 @@ package com.example.studystreak.service;
 
 import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
+import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -45,5 +46,20 @@ public class UserService {
     public void deleteUser(Long userId){
         User user = userRepository.findById(userId).orElseThrow(); // Exception (No implemented yet)
         userRepository.delete(user);
+    }
+    public UserResponseDTO updateUserDetails(Long userID, UserUpdateRequestDTO userUpdateRequestDTO){
+        User user = userRepository.findById(userID).orElseThrow(); // Exception (No implemented yet)
+
+        if (userUpdateRequestDTO.getUsername() != null){
+            user.setUsername(userUpdateRequestDTO.getUsername());
+        }
+        if (userUpdateRequestDTO.getEmail() != null){
+            user.setEmail(userUpdateRequestDTO.getEmail());
+        }
+        if (userUpdateRequestDTO.getTimeZone() != null){
+            user.setTimeZone(userUpdateRequestDTO.getTimeZone());
+        }
+        User updateUser = userRepository.save(user);
+        return modelMapper.map(updateUser, UserResponseDTO.class);
     }
 }
