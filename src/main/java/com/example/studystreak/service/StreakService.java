@@ -1,6 +1,7 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Streak.StreakDTO;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.Streak;
@@ -42,7 +43,8 @@ public class StreakService {
 
     @Transactional
     public StreakDTO recalculateStreak(Long goalId) {
-        Goal goal = goalRepository.findById(goalId).orElseThrow();
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
 
         List<LocalDate> approvedDates = getApprovedDates(goalId);
 
