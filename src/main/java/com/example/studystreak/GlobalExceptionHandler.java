@@ -5,6 +5,7 @@ import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.example.studystreak.exceptions.ForbiddenException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,6 +22,14 @@ public class GlobalExceptionHandler {
     public ProblemDetail conflictHandler(ConflictException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(409);
         problemDetail.setTitle("Conflict Error");
+        problemDetail.setDetail(ex.getMessage());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ProblemDetail forbiddenHandler(ForbiddenException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(403);
+        problemDetail.setTitle("Forbidden Error");
         problemDetail.setDetail(ex.getMessage());
         return problemDetail;
     }
