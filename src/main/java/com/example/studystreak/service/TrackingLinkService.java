@@ -1,6 +1,9 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.TrackingLink.TrackingLinkDTO;
+import com.example.studystreak.exceptions.ConflictException;
+import com.example.studystreak.exceptions.ForbiddenException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.TrackingLink;
 import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.model.User;
@@ -22,21 +25,26 @@ public class TrackingLinkService {
 
     @Autowired
     public TrackingLinkService(TrackingLinkRepository trackingLinkRepository, UserRepository userRepository, ModelMapper modelMapper) {
+
         this.trackingLinkRepository = trackingLinkRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
 
     public TrackingLinkDTO createTrackingLink(Long requesterId, Long receiverId) {
+
         if (requesterId.equals(receiverId)) {
-            throw new RuntimeException();
+            throw new ConflictException("A user cannot create a tracking link with themselves");
         }
 
-        User requester = userRepository.findById(requesterId).orElseThrow();
-        User receiver = userRepository.findById(receiverId).orElseThrow();
+        User requester = userRepository.findById(requesterId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + requesterId));
+
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + receiverId));
 
         if (trackingLinkRepository.findLinkBetweenUsers(requesterId, receiverId).isPresent()) {
-            throw new RuntimeException();
+            throw new ConflictException("A tracking link between users " + requesterId + " and " + receiverId + " already exists");
         }
 
         TrackingLink trackingLink = new TrackingLink(requester, receiver, TrackingStatus.PENDING);
@@ -44,8 +52,9 @@ public class TrackingLinkService {
         //por motivos de seguridad seteeamos obligatoriamente el status a PENDING
         trackingLink.setStatus(TrackingStatus.PENDING);
 
-        TrackingLink savedtrackingLink = trackingLinkRepository.save(trackingLink);
-        return modelMapper.map(savedtrackingLink, TrackingLinkDTO.class);
+        TrackingLink savedTrackingLink = trackingLinkRepository.save(trackingLink);
+
+        return modelMapper.map(savedTrackingLink, TrackingLinkDTO.class);
     }
 
     public List<TrackingLinkDTO> getAllTrackingLinks() {
@@ -60,7 +69,8 @@ public class TrackingLinkService {
     }
 
     public TrackingLinkDTO getTrackingLinkById(Long trackingId) {
-        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId).orElseThrow();
+        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tracking link not found with id: " + trackingId));
 
         return modelMapper.map(trackingLink, TrackingLinkDTO.class);
     }
@@ -77,8 +87,8 @@ public class TrackingLinkService {
     }
 
     public TrackingLinkDTO getLinkBetweenUsers(Long currentUserId, Long otherUserId) {
-        // Se ha actualizado el repository para agregar el query method findlinkbetweenusers
-        TrackingLink link = trackingLinkRepository.findLinkBetweenUsers(currentUserId, otherUserId).orElseThrow();
+        TrackingLink link = trackingLinkRepository.findLinkBetweenUsers(currentUserId, otherUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tracking link not found between users " + currentUserId + " and " + otherUserId));
 
         return modelMapper.map(link, TrackingLinkDTO.class);
     }
@@ -96,7 +106,8 @@ public class TrackingLinkService {
     }
 
     public List<TrackingLinkDTO> getActiveTrackingList(Long userId) {
-        List<TrackingLink> trackingLinks = trackingLinkRepository.findLinksByUserIdAndStatus(userId, TrackingStatus.ACCEPTED);
+        List<TrackingLink> trackingLinks =
+                trackingLinkRepository.findLinksByUserIdAndStatus(userId, TrackingStatus.ACCEPTED);
 
         List<TrackingLinkDTO> trackingDTOs = new ArrayList<>();
 
@@ -108,24 +119,41 @@ public class TrackingLinkService {
     }
 
     public TrackingLinkDTO updateTrackingStatus(Long trackingId, TrackingLinkDTO trackingLinkDTO, Long receiverId) {
-        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId).orElseThrow();
 
-        if (!trackingLink.getReceiver().getId().equals(receiverId) || trackingLink.getStatus() != TrackingStatus.PENDING || trackingLinkDTO.getStatus() == TrackingStatus.PENDING) {
-            throw new RuntimeException();
+        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tracking link not found with id: " + trackingId));
+
+        if (!trackingLink.getReceiver().getId().equals(receiverId)) {
+            throw new ForbiddenException("User with id: " + receiverId + " cannot update tracking link with id: " + trackingId);
+        }
+
+        if (trackingLink.getStatus() != TrackingStatus.PENDING) {
+            throw new ConflictException("Tracking link with id: " + trackingId + " has already been processed");
+        }
+
+        if (trackingLinkDTO.getStatus() == null) {
+            throw new IllegalArgumentException("Tracking status is required");
+        }
+
+        if (trackingLinkDTO.getStatus() == TrackingStatus.PENDING) {
+            throw new IllegalArgumentException("Tracking status must be ACCEPTED or REJECTED");
         }
 
         trackingLink.setStatus(trackingLinkDTO.getStatus());
 
-        TrackingLink updatedtrackingLink = trackingLinkRepository.save(trackingLink);
+        TrackingLink updatedTrackingLink = trackingLinkRepository.save(trackingLink);
 
-        return modelMapper.map(updatedtrackingLink, TrackingLinkDTO.class);
+        return modelMapper.map(updatedTrackingLink, TrackingLinkDTO.class);
     }
 
     public void deleteTrackingLink(Long trackingId, Long userId) {
-        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId).orElseThrow();
+        TrackingLink trackingLink = trackingLinkRepository.findById(trackingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tracking link not found with id: " + trackingId));
 
-        if (!trackingLink.getRequester().getId().equals(userId) && !trackingLink.getReceiver().getId().equals(userId)) {
-            throw new RuntimeException();
+        if (!trackingLink.getRequester().getId().equals(userId)
+                && !trackingLink.getReceiver().getId().equals(userId)) {
+
+            throw new ForbiddenException("User with id: " + userId + " cannot delete tracking link with id: " + trackingId);
         }
 
         trackingLinkRepository.delete(trackingLink);
