@@ -66,8 +66,9 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
 
         if (!notification.getUser().getId().equals(UserId)) {
-            throw new RuntimeException("User with id: " + UserId + " cannot access notification with id: " + notificationId);
+            throw new ForbiddenException("User with id: " + UserId + " cannot access notification with id: " + notificationId);
         }
+
         notification.setRead(true);
         Notification Readnotification = notificationRepository.save(notification);
         return modelMapper.map(Readnotification, NotificationDTO.class);
@@ -78,7 +79,7 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
 
         if (!notification.getUser().getId().equals(userId)) {
-            throw new RuntimeException("User with id: " + userId + " cannot access notification with id: " + notificationId);
+            throw new ForbiddenException("User with id: " + userId + " cannot access notification with id: " + notificationId);
         }
 
         notificationRepository.delete(notification);
