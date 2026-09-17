@@ -29,4 +29,7 @@ public class Tag {
         this.name = name;
         this.goals = goals;
     }
+    public void pushGoals(Goal goal) {
+        goals.add(goal);
+    }
 }
