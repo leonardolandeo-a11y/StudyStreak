@@ -1,7 +1,6 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Validation.ValidationDTO;
-import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.User;
 import com.example.studystreak.model.Validation;
@@ -11,6 +10,8 @@ import com.example.studystreak.repository.ValidationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.studystreak.exceptions.ConflictException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 
 @Service
 public class ValidationService {
@@ -51,11 +52,11 @@ public class ValidationService {
         Long ownerId = dailyRecord.getGoal().getUser().getId();
 
         if (ownerId.equals(validatorId)) {
-            throw new IllegalStateException("A user cannot validate their own daily record");
+            throw new ConflictException("A user cannot validate their own daily record");
         }
 
         if (validationRepository.existsByDailyRecordId(dailyRecordId)) {
-            throw new IllegalStateException("Daily record already validated");
+            throw new ConflictException("Daily record already validated");
         }
 
         Validation validation = modelMapper.map(validationDTO, Validation.class);
