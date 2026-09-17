@@ -1,14 +1,15 @@
 package com.example.studystreak.service;
 
-
 import com.example.studystreak.dto.Tag.TagDTO;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.Tag;
 import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.TagRepository;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class TagService {
     private final TagRepository tagRepository;
     private final GoalRepository goalRepository;
     private final ModelMapper modelMapper;
+
     //autowired se encarga de gestionar la inyeccion de dependencias
     @Autowired
     public TagService(TagRepository tagRepository, ModelMapper modelMapper, GoalRepository goalRepository) {
@@ -37,18 +39,21 @@ public class TagService {
         Tag savedTag = tagRepository.save(tag);
         return modelMapper.map(savedTag, TagDTO.class);
     }
+
     public List<TagDTO> getAllTags() {
         List<Tag> tags = tagRepository.findAll();
         List<TagDTO> tagDTOs = new ArrayList<>();
         for (Tag tag : tags) {
             tagDTOs.add(modelMapper.map(tag, TagDTO.class));
         }
-        return  tagDTOs;
+        return tagDTOs;
     }
 
     public TagDTO getTagById(Long tagId) {
-        Tag tag = tagRepository.findById(tagId).orElseThrow(); //el error handling lo implementare algun dia
-        return modelMapper.map(tag,TagDTO.class); //se mapea a dto
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId));
+        //el error handling lo implementare algun dia
+        return modelMapper.map(tag, TagDTO.class); //se mapea a dto
     }
 
     public TagDTO updateTag(Long tagId, TagDTO tagDTO) {
