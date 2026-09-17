@@ -1,7 +1,9 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Tag.TagDTO;
+import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.Tag;
+import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.TagRepository;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
@@ -15,17 +17,24 @@ import java.util.List;
 public class TagService {
     //private final: variable privada e inmutable
     private final TagRepository tagRepository;
+    private final GoalRepository goalRepository;
     private final ModelMapper modelMapper;
 
     //autowired se encarga de gestionar la inyeccion de dependencias
     @Autowired
-    public TagService(TagRepository tagRepository, ModelMapper modelMapper) {
+    public TagService(TagRepository tagRepository, ModelMapper modelMapper, GoalRepository goalRepository) {
         this.tagRepository = tagRepository;
+        this.goalRepository = goalRepository;
         this.modelMapper = modelMapper;
     }
-
-    public TagDTO createTag(TagDTO tagDTO) {
+    public TagDTO createTag(TagDTO tagDTO, Long userId,Long goalId) {
+        Goal goal = goalRepository.findById(goalId).orElseThrow();
+        if (!goal.getUser().getId().equals(userId)) {
+            throw new RuntimeException();
+        }
         Tag tag = modelMapper.map(tagDTO, Tag.class);
+        tag.pushGoals(goal);
+        goal.pushTags(tag);
         // Es más seguro trabajar con la tag guardada en la base de datos
         Tag savedTag = tagRepository.save(tag);
         return modelMapper.map(savedTag, TagDTO.class);
@@ -46,6 +55,16 @@ public class TagService {
         //el error handling lo implementare algun dia
         return modelMapper.map(tag, TagDTO.class); //se mapea a dto
     }
-    //metodos como deletetag o update se manejan desde GoalService
 
+    public TagDTO updateTag(Long tagId, TagDTO tagDTO) {
+        Tag tag = tagRepository.findById(tagId).orElseThrow();
+
+        tag.setName(tagDTO.getName());
+        Tag updatedTag = tagRepository.save(tag);
+        return modelMapper.map(updatedTag, TagDTO.class);
+    }
+    public void deleteTag(Long tagId) {
+        Tag tag = tagRepository.findById(tagId).orElseThrow();
+        tagRepository.delete(tag);
+    }
 }
