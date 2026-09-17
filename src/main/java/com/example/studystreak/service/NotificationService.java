@@ -1,7 +1,8 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Notification.NotificationDTO;
-import com.example.studystreak.dto.TrackingLink.TrackingLinkDTO;
+import com.example.studystreak.exceptions.ForbiddenException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.*;
 import com.example.studystreak.repository.NotificationRepository;
 import com.example.studystreak.repository.UserRepository;
@@ -25,43 +26,53 @@ public class NotificationService {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
+
     public NotificationDTO createdNotification(Long userId, NotificationDTO notificationDTO) {
-        Notification notification = modelMapper.map(notificationDTO,Notification.class);
+        Notification notification = modelMapper.map(notificationDTO, Notification.class);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(); //despues lo hago
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         notification.setUser(user);
         notification.setRead(false);
         notification.setCreatedAt(LocalDateTime.now());
-        //por         validateUserAccess(userId,currentUserId);motivos de seguridad seteeamos read y createdat
+
+        //por motivos de seguridad seteeamos read y createdat
         Notification savednotification = notificationRepository.save(notification);
+
         return modelMapper.map(savednotification, NotificationDTO.class);
     }
 
     public List<NotificationDTO> getNotificationByUserId(Long UserId) {
         List<Notification> notifications = notificationRepository.findNotificationsInOrder(UserId);
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
+
         for (Notification notification : notifications) {
             notificationDTOS.add(modelMapper.map(notification, NotificationDTO.class));
         }
+
         return notificationDTOS;
     }
 
     public List<NotificationDTO> getUnreadNotificationsByUserId(Long UserId) {
         List<Notification> notifications = notificationRepository.findUnreadUserNotifications(UserId);
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
+
         for (Notification notification : notifications) {
             notificationDTOS.add(modelMapper.map(notification, NotificationDTO.class));
         }
+
         return notificationDTOS;
     }
 
     public List<NotificationDTO> getNotificationsByTypeAndUserId(Long UserId, NotificationType type) {
         List<Notification> notifications = notificationRepository.findNotificationByType(UserId, type);
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
+
         for (Notification notification : notifications) {
             notificationDTOS.add(modelMapper.map(notification, NotificationDTO.class));
         }
+
         return notificationDTOS;
     }
 
@@ -74,7 +85,9 @@ public class NotificationService {
         }
 
         notification.setRead(true);
+
         Notification Readnotification = notificationRepository.save(notification);
+
         return modelMapper.map(Readnotification, NotificationDTO.class);
     }
 
