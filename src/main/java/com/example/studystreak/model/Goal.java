@@ -33,7 +33,5 @@ public class Goal {
     private List<Tag> tags;
 
     protected Goal(){}
-    public void pushTags(Tag tag) {
-        tags.add(tag);
-    }
+
 }

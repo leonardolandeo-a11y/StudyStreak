@@ -2,9 +2,11 @@ package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Notification.NotificationDTO;
 import com.example.studystreak.dto.TrackingLink.TrackingLinkDTO;
-import com.example.studystreak.model.*;
+import com.example.studystreak.model.Notification;
+import com.example.studystreak.model.NotificationType;
+import com.example.studystreak.model.TrackingLink;
+import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.repository.NotificationRepository;
-import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,24 +19,18 @@ import java.util.Optional;
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository, ModelMapper modelMapper, UserRepository userRepository) {
+    public NotificationService(NotificationRepository notificationRepository, ModelMapper modelMapper) {
         this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
-    public NotificationDTO createdNotification(Long userId, NotificationDTO notificationDTO) {
+    public NotificationDTO createdNotification(NotificationDTO notificationDTO) {
         Notification notification = modelMapper.map(notificationDTO,Notification.class);
-        User user = userRepository.findById(userId)
-                .orElseThrow(); //despues lo hago
-
-        notification.setUser(user);
         notification.setRead(false);
         notification.setCreatedAt(LocalDateTime.now());
-        //por         validateUserAccess(userId,currentUserId);motivos de seguridad seteeamos read y createdat
+        //por motivos de seguridad seteeamos read y createdat
         Notification savednotification = notificationRepository.save(notification);
         return modelMapper.map(savednotification, NotificationDTO.class);
     }
