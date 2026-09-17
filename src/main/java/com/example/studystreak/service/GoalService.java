@@ -1,6 +1,7 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Goal.GoalDTO;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.GoalRepository;
@@ -23,8 +24,10 @@ public class GoalService {
         this.userRepository = userRepository;
     }
 
-    public GoalDTO createGoal(Long userId, GoalDTO goalDTO){
-        User user = userRepository.findById(userId).orElseThrow(); // Exception (No implemented yet)
+    public GoalDTO createGoal(Long userId, GoalDTO goalDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
         Goal goal = modelMapper.map(goalDTO, Goal.class);
 
         goal.setUser(user);
@@ -34,26 +37,32 @@ public class GoalService {
         return modelMapper.map(goal, GoalDTO.class);
     }
 
-    public List<GoalDTO> getUserGoals(Long userId){
+    public List<GoalDTO> getUserGoals(Long userId) {
         List<Goal> goals = goalRepository.findByUserId(userId);
 
         List<GoalDTO> goalsDTO = new ArrayList<>();
-        for (int i =0; i < goals.size();i++){
+        for (int i = 0; i < goals.size(); i++) {
             goalsDTO.add(modelMapper.map(goals.get(i), GoalDTO.class));
         }
         return goalsDTO;
     }
-    public GoalDTO updateGoal(Long goalId, GoalDTO goalDTO){
-        Goal goal = goalRepository.findById(goalId).orElseThrow(); // Exception (No implemented yet)
+
+    public GoalDTO updateGoal(Long goalId, GoalDTO goalDTO) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
         goal.setFrequency(goalDTO.getFrequency());
         goal.setTopic(goalDTO.getTopic());
         goal.setDuration(goalDTO.getDuration());
         goalRepository.save(goal);
-        return modelMapper.map(goal , GoalDTO.class);
+        return modelMapper.map(goal, GoalDTO.class);
 
     }
-    public void deleteGoal(Long goalId){
-        Goal goal = goalRepository.findById(goalId).orElseThrow(); // Exception (No implemented yet)
+
+    public void deleteGoal(Long goalId) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
         goalRepository.delete(goal);
     }
 

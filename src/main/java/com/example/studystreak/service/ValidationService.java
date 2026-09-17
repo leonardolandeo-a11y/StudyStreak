@@ -10,6 +10,8 @@ import com.example.studystreak.repository.ValidationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.studystreak.exceptions.ConflictException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 
 @Service
 public class ValidationService {
@@ -38,29 +40,23 @@ public class ValidationService {
     public ValidationDTO createValidation(Long dailyRecordId, Long validatorId, ValidationDTO validationDTO) {
 
         if (validationDTO.getApproved() == null) {
-            throw new IllegalArgumentException(
-                    "Approved value is required"
-            );
+            throw new IllegalArgumentException("Approved value is required");
         }
 
         DailyRecord dailyRecord = dailyRecordRepository.findById(dailyRecordId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Daily record not found with id: " + dailyRecordId));
 
         User validator = userRepository.findById(validatorId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + validatorId));
 
         Long ownerId = dailyRecord.getGoal().getUser().getId();
 
         if (ownerId.equals(validatorId)) {
-            throw new IllegalStateException(
-                    "A user cannot validate their own daily record"
-            );
+            throw new ConflictException("A user cannot validate their own daily record");
         }
 
         if (validationRepository.existsByDailyRecordId(dailyRecordId)) {
-            throw new IllegalStateException(
-                    "Daily record already validated"
-            );
+            throw new ConflictException("Daily record already validated");
         }
 
         Validation validation = modelMapper.map(validationDTO, Validation.class);
@@ -80,7 +76,7 @@ public class ValidationService {
     public ValidationDTO getDailyRecordValidation(Long dailyRecordId) {
         Validation validation = validationRepository
                 .findByDailyRecordId(dailyRecordId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Validation not found for daily record id: " + dailyRecordId));
 
         return modelMapper.map(validation, ValidationDTO.class);
     }
@@ -89,13 +85,11 @@ public class ValidationService {
     public ValidationDTO updateValidation(Long validationId, ValidationDTO validationDTO) {
 
         if (validationDTO.getApproved() == null) {
-            throw new IllegalArgumentException(
-                    "Approved value is required"
-            );
+            throw new IllegalArgumentException("Approved value is required");
         }
 
         Validation validation = validationRepository.findById(validationId)
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Validation not found with id: " + validationId));
 
         validation.setApproved(validationDTO.getApproved());
         validation.setComment(validationDTO.getComment());
