@@ -1,6 +1,9 @@
 package com.example.studystreak.service;
 
-import com.example.studystreak.dto.Validation.ValidationDTO;
+import com.example.studystreak.dto.Validation.ValidationRequestDTO;
+import com.example.studystreak.dto.Validation.ValidationResponseDTO;
+import com.example.studystreak.exceptions.ConflictException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.User;
 import com.example.studystreak.model.Validation;
@@ -10,8 +13,6 @@ import com.example.studystreak.repository.ValidationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.studystreak.exceptions.ConflictException;
-import com.example.studystreak.exceptions.ResourceNotFoundException;
 
 @Service
 public class ValidationService {
@@ -27,8 +28,8 @@ public class ValidationService {
             DailyRecordRepository dailyRecordRepository,
             UserRepository userRepository,
             ModelMapper modelMapper,
-            StreakService streakService) {
-
+            StreakService streakService
+    ) {
         this.validationRepository = validationRepository;
         this.dailyRecordRepository = dailyRecordRepository;
         this.userRepository = userRepository;
@@ -37,67 +38,93 @@ public class ValidationService {
     }
 
     @Transactional
-    public ValidationDTO createValidation(Long dailyRecordId, Long validatorId, ValidationDTO validationDTO) {
+    public ValidationResponseDTO createValidation(Long dailyRecordId, Long validatorId,
+            ValidationRequestDTO validationRequest) {
 
-        if (validationDTO.getApproved() == null) {
-            throw new IllegalArgumentException("Approved value is required");
+        if (validationRequest.getApproved() == null) {
+            throw new IllegalArgumentException(
+                    "Approved value is required");
         }
 
         DailyRecord dailyRecord = dailyRecordRepository.findById(dailyRecordId)
-                .orElseThrow(() -> new ResourceNotFoundException("Daily record not found with id: " + dailyRecordId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Daily record not found with id: "
+                                                + dailyRecordId)
+                        );
 
         User validator = userRepository.findById(validatorId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + validatorId));
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: "
+                                                + validatorId)
+                        );
 
-        Long ownerId = dailyRecord.getGoal().getUser().getId();
+        Long ownerId =
+                dailyRecord.getGoal().getUser().getId();
+
 
         if (ownerId.equals(validatorId)) {
-            throw new ConflictException("A user cannot validate their own daily record");
+            throw new ConflictException(
+                    "A user cannot validate their own daily record"
+            );
         }
 
         if (validationRepository.existsByDailyRecordId(dailyRecordId)) {
-            throw new ConflictException("Daily record already validated");
+            throw new ConflictException(
+                    "Daily record already validated"
+            );
         }
 
-        Validation validation = modelMapper.map(validationDTO, Validation.class);
+        Validation validation = modelMapper.map(validationRequest, Validation.class);
 
         validation.setDailyRecord(dailyRecord);
         validation.setValidator(validator);
 
-        validation = validationRepository.save(validation);
+        Validation savedValidation = validationRepository.save(validation);
+        dailyRecord.setValidation(savedValidation);
 
-        dailyRecord.setValidation(validation);
 
         streakService.recalculateStreak(dailyRecord.getGoal().getId());
 
-        return modelMapper.map(validation, ValidationDTO.class);
+        return modelMapper.map(savedValidation, ValidationResponseDTO.class);
     }
 
-    public ValidationDTO getDailyRecordValidation(Long dailyRecordId) {
-        Validation validation = validationRepository
-                .findByDailyRecordId(dailyRecordId)
-                .orElseThrow(() -> new ResourceNotFoundException("Validation not found for daily record id: " + dailyRecordId));
+    public ValidationResponseDTO getDailyRecordValidation(
+            Long dailyRecordId
+    ) {
+        Validation validation = validationRepository.findByDailyRecordId(dailyRecordId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                        "Validation not found for daily record id: "
+                                                + dailyRecordId
+                                )
+                        );
 
-        return modelMapper.map(validation, ValidationDTO.class);
+        return modelMapper.map(validation, ValidationResponseDTO.class
+        );
     }
 
     @Transactional
-    public ValidationDTO updateValidation(Long validationId, ValidationDTO validationDTO) {
+    public ValidationResponseDTO updateValidation(Long dailyRecordId, ValidationRequestDTO validationRequest) {
 
-        if (validationDTO.getApproved() == null) {
+        if (validationRequest.getApproved() == null) {
             throw new IllegalArgumentException("Approved value is required");
         }
 
-        Validation validation = validationRepository.findById(validationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Validation not found with id: " + validationId));
+        Validation validation = validationRepository.findByDailyRecordId(dailyRecordId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Validation not found for daily record id: "
+                                                + dailyRecordId)
+                        );
 
-        validation.setApproved(validationDTO.getApproved());
-        validation.setComment(validationDTO.getComment());
+        validation.setApproved(validationRequest.getApproved());
 
-        validation = validationRepository.save(validation);
+        validation.setComment(validationRequest.getComment());
 
-        streakService.recalculateStreak(validation.getDailyRecord().getGoal().getId());
+        Validation updatedValidation = validationRepository.save(validation);
 
-        return modelMapper.map(validation, ValidationDTO.class);
+
+        streakService.recalculateStreak(
+                validation.getDailyRecord()
+                        .getGoal()
+                        .getId()
+        );
+
+        return modelMapper.map(updatedValidation, ValidationResponseDTO.class);
     }
 }
