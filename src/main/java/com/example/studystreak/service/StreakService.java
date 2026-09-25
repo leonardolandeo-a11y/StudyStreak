@@ -36,8 +36,7 @@ public class StreakService {
     }
 
     public StreakDTO getGoalStreak(Long goalId) {
-        return streakRepository.findByGoalId(goalId)
-                .map(streak -> modelMapper.map(streak, StreakDTO.class))
+        return streakRepository.findByGoalId(goalId).map(streak -> modelMapper.map(streak, StreakDTO.class))
                 .orElseGet(() -> recalculateStreak(goalId));
     }
 
@@ -47,19 +46,15 @@ public class StreakService {
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
 
         List<LocalDate> approvedDates = getApprovedDates(goalId);
-
         int currentStreak = calculateCurrentStreak(approvedDates);
         int bestStreak = calculateBestStreak(approvedDates);
 
         Streak streak = streakRepository.findByGoalId(goalId)
                 .orElse(new Streak(0, 0, null, goal));
-
         streak.setCurrentStreak(currentStreak);
         streak.setBestStreak(bestStreak);
         streak.setLastUpdateDate(LocalDate.now());
-
         streak = streakRepository.save(streak);
-
         return modelMapper.map(streak, StreakDTO.class);
     }
 
@@ -69,8 +64,7 @@ public class StreakService {
         LocalDate today = LocalDate.now();
 
         return dailyRecords.stream()
-                .filter(record ->
-                        record.getDate() != null
+                .filter(record -> record.getDate() != null
                                 && !record.getDate().isAfter(today)
                                 && record.getValidation() != null
                                 && Boolean.TRUE.equals(record.getValidation().getApproved())
