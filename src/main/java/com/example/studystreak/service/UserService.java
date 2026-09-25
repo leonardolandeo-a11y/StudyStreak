@@ -1,5 +1,6 @@
 package com.example.studystreak.service;
 
+import com.example.studystreak.event.UserRegisteredEvent;
 import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
@@ -7,6 +8,7 @@ import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.studystreak.model.Role;
@@ -19,13 +21,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
+    /*
+    ApplicationEventPublisher es una interfaz de Spring que permite publicar eventos mediante publisEvent()
 
-    public UserService(UserRepository userRepository, ModelMapper modelMapper,
-            PasswordEncoder passwordEncoder) {
+     */
+    private final ApplicationEventPublisher eventPublisher;
 
+    public UserService(UserRepository userRepository,ModelMapper modelMapper, PasswordEncoder passwordEncoder,
+                                                                            ApplicationEventPublisher eventPublisher){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
@@ -37,14 +44,11 @@ public class UserService {
 
         user.setRegistrationDate(LocalDate.now());
         user.setActive(true);
-        user.setRole(Role.USER);
-        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword())
-        );
-
-        User savedUser = userRepository.save(user);
-
-        return modelMapper.map(savedUser, UserResponseDTO.class
-        );
+        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword())); // Encode the password using passwordEncoder
+        user = userRepository.save(user);
+        //Se dispara el evento de Registro del user
+        eventPublisher.publishEvent(new UserRegisteredEvent(user.getEmail(),user.getUsername()));
+        return modelMapper.map(user, UserResponseDTO.class);
     }
 
     public UserResponseDTO getUserById(Long userId) {
