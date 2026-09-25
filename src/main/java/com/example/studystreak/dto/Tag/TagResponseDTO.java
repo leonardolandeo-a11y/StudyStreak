@@ -5,8 +5,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TagDTO {
-    private String name;
+public class TagResponseDTO {
 
-    protected TagDTO(){}
+    private Long id;
+    private String name;
 }

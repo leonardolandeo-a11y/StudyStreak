@@ -1,54 +1,96 @@
 package com.example.studystreak.controller;
 
-import com.example.studystreak.dto.Validation.ValidationDTO;
+import com.example.studystreak.dto.Validation.ValidationRequestDTO;
+import com.example.studystreak.dto.Validation.ValidationResponseDTO;
 import com.example.studystreak.service.ValidationService;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(
+        "/api/goals/{goalId}/daily-records/{dailyRecordId}/validation"
+)
 public class ValidationController {
 
     private final ValidationService validationService;
-
+    /*
+     * Ya no necesitamos CurrentUserService aquí.
+     */
     public ValidationController(ValidationService validationService) {
+
         this.validationService = validationService;
     }
 
-    @PostMapping("/daily-records/{dailyRecordId}/validation")
-    public ResponseEntity<ValidationDTO> createValidation(
+
+    /*
+     * POST
+     *
+     * Crea la Validation singular asociada
+     * al DailyRecord indicado.
+     *
+     * El usuario que valida se obtiene automáticamente
+     * desde SecurityContext dentro del service.
+     */
+    @PostMapping
+    public ResponseEntity<ValidationResponseDTO>
+    createValidation(
+            @PathVariable Long goalId,
             @PathVariable Long dailyRecordId,
-            @RequestHeader("X-User-Id") Long validatorId,
-            @RequestBody ValidationDTO validationDTO) {
+            @RequestBody ValidationRequestDTO validationRequest
+    ) {
 
-        ValidationDTO createdValidation = validationService.createValidation(
+        ValidationResponseDTO validation = validationService.createValidation(goalId, dailyRecordId, validationRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(validation);
+    }
+
+
+    /*
+     * GET
+     *
+     * Obtiene la Validation asociada al DailyRecord.
+     *
+     * El service decide si el usuario autenticado
+     * tiene permiso para verla.
+     */
+    @GetMapping
+    public ResponseEntity<ValidationResponseDTO>
+    getDailyRecordValidation(@PathVariable Long goalId, @PathVariable Long dailyRecordId) {
+
+        return ResponseEntity.ok(
+                validationService
+                        .getDailyRecordValidation(
+                                goalId,
+                                dailyRecordId
+                        )
+        );
+    }
+
+
+    /*
+     * PUT
+     *
+     * Actualiza la Validation existente.
+     *
+     * Solamente el validator original podrá hacerlo;
+     * esta comprobación se realiza en ValidationService.
+     */
+    @PutMapping
+    public ResponseEntity<ValidationResponseDTO>
+    updateValidation(@PathVariable Long goalId, @PathVariable Long dailyRecordId,
+            @RequestBody ValidationRequestDTO validationRequest
+    ) {
+
+        return ResponseEntity.ok(
+                validationService.updateValidation(
+                        goalId,
                         dailyRecordId,
-                        validatorId,
-                        validationDTO
-                );
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdValidation);
-    }
-
-    @GetMapping("/daily-records/{dailyRecordId}/validation")
-    public ResponseEntity<ValidationDTO> getDailyRecordValidation(@PathVariable Long dailyRecordId) {
-
-        ValidationDTO validation = validationService.getDailyRecordValidation(dailyRecordId);
-
-        return ResponseEntity.ok(validation);
-    }
-
-    @PutMapping("/validations/{validationId}")
-    public ResponseEntity<ValidationDTO> updateValidation(
-            @PathVariable Long validationId,
-            @RequestBody ValidationDTO validationDTO) {
-
-        ValidationDTO updatedValidation = validationService.updateValidation(
-                        validationId,
-                        validationDTO
-                );
-
-        return ResponseEntity.ok(updatedValidation);
+                        validationRequest
+                )
+        );
     }
 }

@@ -1,7 +1,11 @@
 package com.example.studystreak.controller;
 
-import com.example.studystreak.dto.Tag.TagDTO;
+import com.example.studystreak.dto.Tag.TagRequestDTO;
+import com.example.studystreak.dto.Tag.TagResponseDTO;
+import com.example.studystreak.service.GoalService;
 import com.example.studystreak.service.TagService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,58 +18,46 @@ public class TagController {
 
     private final TagService tagService;
 
-    public TagController(TagService tagService) {
+    public TagController(TagService tagService, GoalService goalService) {
+
         this.tagService = tagService;
     }
 
     //get
     @GetMapping
-    public ResponseEntity<List<TagDTO>> getGoalTags(
-            @PathVariable Long userId,
-            @PathVariable Long goalId) {
-
-        List<TagDTO> allTags = tagService.getAllTags();
-
-        return ResponseEntity.ok(allTags);
+    public ResponseEntity<Page<TagResponseDTO>> getGoalTags(@PathVariable Long goalId, Pageable pageable) {
+        return ResponseEntity.ok(tagService.getTagsByGoalId(goalId, pageable));
     }
-
     @GetMapping("/{tagId}")
-    public ResponseEntity<TagDTO> getTag(@PathVariable Long tagId) {
-
-        TagDTO tagDTO = tagService.getTagById(tagId);
-
+    public ResponseEntity<TagResponseDTO> getTag(@PathVariable Long goalId, @PathVariable Long tagId) {
+        TagResponseDTO tagDTO = tagService.getTagById(goalId, tagId);
         return ResponseEntity.ok(tagDTO);
     }
 
     //post
     @PostMapping
-    public ResponseEntity<TagDTO> createTag(
-            @PathVariable Long userId,
-            @PathVariable Long goalId,
-            @RequestBody TagDTO tagDTO) {
+    public ResponseEntity<TagResponseDTO> createTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long userId,
+                                                    @PathVariable Long goalId) {
 
-        TagDTO savedTag = tagService.createTag(tagDTO, userId, goalId);
-
+        TagResponseDTO savedTag = tagService.createTag(tagDTO, goalId);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTag);
     }
 
     //put/patch
     @PatchMapping("/{tagId}")
-    public ResponseEntity<TagDTO> updateTag(
-            @PathVariable Long tagId,
-            @RequestBody TagDTO tagDTO) {
+    public ResponseEntity<TagResponseDTO> updateTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long tagId,
+                                            @PathVariable Long goalId) {
 
-        TagDTO updatedTag = tagService.updateTag(tagId, tagDTO);
-
-        return ResponseEntity.ok(updatedTag);
+    TagResponseDTO updateTag = tagService.updateTag(goalId,tagId,tagDTO);
+    return ResponseEntity.ok(updateTag);
     }
 
     //delete
     @DeleteMapping("/{tagId}")
-    public ResponseEntity<Void> deleteTag(@PathVariable Long tagId) {
+    public ResponseEntity<Void> removeTagFromGoal(@PathVariable Long goalId, @PathVariable Long tagId) {
 
-        tagService.deleteTag(tagId);
-
+        tagService.removeTagFromGoal(goalId, tagId);
         return ResponseEntity.noContent().build();
     }
 }
+

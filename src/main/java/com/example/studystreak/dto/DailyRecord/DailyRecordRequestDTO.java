@@ -7,9 +7,11 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class DailyRecordDTO {
+public class DailyRecordRequestDTO {
+
     private LocalDate date;
     private String note;
     private String evidence;
-    protected DailyRecordDTO(){}
+
+    public DailyRecordRequestDTO() {}
 }

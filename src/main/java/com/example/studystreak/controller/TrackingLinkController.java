@@ -1,7 +1,11 @@
 package com.example.studystreak.controller;
 
-import com.example.studystreak.dto.TrackingLink.TrackingLinkDTO;
+import com.example.studystreak.dto.TrackingLink.TrackingLinkResponseDTO;
+import com.example.studystreak.dto.TrackingLink.TrackingLinkStatusRequestDTO;
+import com.example.studystreak.service.CurrentUserService;
 import com.example.studystreak.service.TrackingLinkService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,83 +17,80 @@ import java.util.List;
 public class TrackingLinkController {
 
     private final TrackingLinkService trackingLinkService;
+    private final CurrentUserService currentUserService;
 
-    public TrackingLinkController(TrackingLinkService trackingLinkService) {
+    public TrackingLinkController(TrackingLinkService trackingLinkService, CurrentUserService currentUserService) {
+
         this.trackingLinkService = trackingLinkService;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping("/{receiverId}")
-    public ResponseEntity<TrackingLinkDTO> createTrackingLink(
-            @RequestHeader("X-User-Id") Long requesterId,
-            @PathVariable Long receiverId) {
+    public ResponseEntity<TrackingLinkResponseDTO>
+    createTrackingLink(@PathVariable Long receiverId) {
 
-        TrackingLinkDTO trackingLink = trackingLinkService.createTrackingLink(requesterId, receiverId);
+        Long requesterId = currentUserService.getCurrentUserId();
+        TrackingLinkResponseDTO savedTrackingLink = trackingLinkService.createTrackingLink(requesterId,receiverId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(trackingLink);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(savedTrackingLink);
     }
 
     @GetMapping
-    public ResponseEntity<List<TrackingLinkDTO>> getTrackingLinks(
-            @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>>
+    getTrackingLinks(Pageable pageable) {
 
-        List<TrackingLinkDTO> trackingLinks = trackingLinkService.getTrackingLinksByUserId(userId);
-
-        return ResponseEntity.ok(trackingLinks);
+        Long userId = currentUserService.getCurrentUserId();
+        return ResponseEntity.ok(
+                trackingLinkService.getTrackingLinksByUserId(userId, pageable)
+        );
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<List<TrackingLinkDTO>> getPendingInvitations(
-            @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>>
+    getPendingInvitations(Pageable pageable) {
 
-        List<TrackingLinkDTO> pendingInvitations = trackingLinkService.getPendingReceivedInvitations(userId);
-
-        return ResponseEntity.ok(pendingInvitations);
+        Long userId = currentUserService.getCurrentUserId();
+        return ResponseEntity.ok(
+                trackingLinkService.getPendingReceivedInvitations(userId, pageable)
+        );
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<TrackingLinkDTO>> getActiveTrackingLinks(
-            @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>> getActiveTrackingLinks(Pageable pageable) {
 
-        List<TrackingLinkDTO> activeTrackingLinks = TrackingLinkService.getActiveTrackingList(userId);
-
-        return ResponseEntity.ok(activeTrackingLinks);
+        Long userId = currentUserService.getCurrentUserId();
+        return ResponseEntity.ok(
+                trackingLinkService.getActiveTrackingList(userId, pageable)
+        );
     }
 
     @GetMapping("/with/{otherUserId}")
-    public ResponseEntity<TrackingLinkDTO> getLinkBetweenUsers(
-            @RequestHeader("X-User-Id") Long currentUserId,
-            @PathVariable Long otherUserId) {
+    public ResponseEntity<TrackingLinkResponseDTO>
+    getLinkBetweenUsers(@PathVariable Long otherUserId) {
 
-        TrackingLinkDTO trackingLink = trackingLinkService.getLinkBetweenUsers(
-                        currentUserId,
-                        otherUserId
-                );
-
-        return ResponseEntity.ok(trackingLink);
+        Long currentUserId = currentUserService.getCurrentUserId();
+        return ResponseEntity.ok(
+                trackingLinkService.getLinkBetweenUsers(currentUserId, otherUserId)
+        );
     }
 
-    @PutMapping("/{trackingId}")
-    public ResponseEntity<TrackingLinkDTO> updateTrackingStatus(
-            @PathVariable Long trackingId,
-            @RequestHeader("X-User-Id") Long receiverId,
-            @RequestBody TrackingLinkDTO trackingLinkDTO) {
+    @PatchMapping("/{trackingId}/status")
+    public ResponseEntity<TrackingLinkResponseDTO>
+    updateTrackingStatus(@PathVariable Long trackingId, @RequestBody TrackingLinkStatusRequestDTO trackingRequest) {
 
-        TrackingLinkDTO updatedTrackingLink = trackingLinkService.updateTrackingStatus(
-                        trackingId,
-                        trackingLinkDTO,
-                        receiverId
-                );
+        Long receiverId = currentUserService.getCurrentUserId();
+        TrackingLinkResponseDTO updatedTrackingLink =
+                trackingLinkService.updateTrackingStatus(trackingId, trackingRequest, receiverId);
 
         return ResponseEntity.ok(updatedTrackingLink);
     }
 
     @DeleteMapping("/{trackingId}")
-    public ResponseEntity<Void> deleteTrackingLink(
-            @PathVariable Long trackingId,
-            @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<Void> deleteTrackingLink(@PathVariable Long trackingId) {
 
+        Long userId = currentUserService.getCurrentUserId();
         trackingLinkService.deleteTrackingLink(trackingId, userId);
-
         return ResponseEntity.noContent().build();
     }
 }

@@ -44,13 +44,20 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         try{
 
             String username = jwtService.extractUsername(token);
+            String tokenRole = jwtService.extractRole(token); // NUEVO: Se extrae el rol tambien
             // SecurityContextHolder.getContext() -> Give me the current security information for this request (Person who make the request)
             // SecurityContextHolder.getContext().getAuthentication() -> Give me the authentication information of the current user for this request
             // SecurityContextHolder.getContext().getAuthentication() == null -> No user has been authenticated yet for this request
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
                 // False for exceptions
-                if (jwtService.isTokenValid(token, userDetails.getUsername())){
+
+                boolean validToken = jwtService.isTokenValid(token, userDetails.getUsername());
+                String expectedAuthority = "ROLE_" + tokenRole;
+                boolean validRole = userDetails.getAuthorities().stream().anyMatch(authority
+                                -> authority.getAuthority().equals(expectedAuthority));
+
+                if (validToken && validRole) {
                     // UsernamePasswordAuthenticationToken
                     // principal    → who the user is
                     // credentials  → proof/secret used to authenticate
@@ -64,9 +71,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     // Stores the authenticated user in Spring Security's current SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
+
+
             }
         }catch (Exception e){
             // Exception (Not Implemented yet)
+            //lo que dice el de arriba
+            SecurityContextHolder.clearContext();
 
         }
 

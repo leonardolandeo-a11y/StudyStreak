@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class StreakDTO {
+    private Long id; //id se queda en el dto
     private Integer currentStreak;
     private Integer bestStreak;
     private LocalDate lastUpdateDate;

@@ -1,54 +1,64 @@
 package com.example.studystreak.controller;
 
-import com.example.studystreak.dto.DailyRecord.DailyRecordDTO;
+import com.example.studystreak.dto.DailyRecord.DailyRecordRequestDTO;
+import com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO;
 import com.example.studystreak.service.DailyRecordService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/goals/{goalId}/daily-records")
 public class DailyRecordController {
 
     private final DailyRecordService dailyRecordService;
 
-    public DailyRecordController(DailyRecordService dailyRecordService){
+    public DailyRecordController(DailyRecordService dailyRecordService) {
+
         this.dailyRecordService = dailyRecordService;
     }
 
-    @PostMapping("/goals/{goalId}/daily-records")
-    public ResponseEntity<DailyRecordDTO> createDailyRecord(
-            @PathVariable Long goalId,
-            @RequestBody DailyRecordDTO dailyRecordDTO){
+    @PostMapping
+    public ResponseEntity<DailyRecordResponseDTO> createDailyRecord(@PathVariable Long goalId,
+            @RequestBody DailyRecordRequestDTO dailyRecordRequest) {
 
-        DailyRecordDTO response = dailyRecordService.createDailyRecord(goalId, dailyRecordDTO);
+        DailyRecordResponseDTO savedRecord = dailyRecordService.createDailyRecord(goalId, dailyRecordRequest);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedRecord);
     }
 
-    @GetMapping("/goals/{goalId}/daily-records")
-    public ResponseEntity<List<DailyRecordDTO>> getGoalDailyRecords(@PathVariable Long goalId){
+    @GetMapping
+    public ResponseEntity<Page<DailyRecordResponseDTO>>
+    getGoalDailyRecords(@PathVariable Long goalId, Pageable pageable) {
 
-        List<DailyRecordDTO> response = dailyRecordService.getGoalDailyRecords(goalId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                dailyRecordService.getGoalDailyRecords(goalId, pageable));
     }
 
-    @PutMapping("/daily-records/{dailyRecordId}")
-    public ResponseEntity<DailyRecordDTO> updateDailyRecord(@PathVariable Long dailyRecordId, @RequestBody DailyRecordDTO dailyRecordDTO){
+    @GetMapping("/{dailyRecordId}")
+    public ResponseEntity<DailyRecordResponseDTO> getDailyRecords(@PathVariable Long goalId,
+                                                                  @PathVariable Long dailyRecordId) {
 
-        DailyRecordDTO response = dailyRecordService.updateDailyRecord(dailyRecordId, dailyRecordDTO);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(dailyRecordService.getDailyRecordById(goalId, dailyRecordId));
     }
 
-    @DeleteMapping("/daily-records/{dailyRecordId}")
-    public ResponseEntity<Void> deleteDailyRecord(@PathVariable Long dailyRecordId){
+    @PutMapping("/{dailyRecordId}")
+    public ResponseEntity<DailyRecordResponseDTO> updateDailyRecord(@PathVariable Long goalId,
+                                                                    @PathVariable Long dailyRecordId,
+                                                                    @RequestBody DailyRecordRequestDTO dailyRecordRequest
+    ) {
+        return ResponseEntity.ok(dailyRecordService.updateDailyRecord(goalId, dailyRecordId, dailyRecordRequest));
+    }
 
-        dailyRecordService.deleteDailyRecord(dailyRecordId);
+    @DeleteMapping("/{dailyRecordId}")
+    public ResponseEntity<Void> deleteDailyRecord(@PathVariable Long goalId, @PathVariable Long dailyRecordId) {
 
+        dailyRecordService.deleteDailyRecord(goalId, dailyRecordId);
         return ResponseEntity.noContent().build();
     }
 }

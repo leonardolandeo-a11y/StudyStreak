@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class NotificationDTO {
+    private Long id;
     private String message;
     private Boolean read;
     private LocalDateTime createdAt;
