@@ -15,12 +15,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/users/{userId}/goals/{goalId}/tags")
 public class TagController {
+
     private final TagService tagService;
 
     public TagController(TagService tagService, GoalService goalService) {
 
         this.tagService = tagService;
     }
+
     //get
     @GetMapping
     public ResponseEntity<Page<TagResponseDTO>> getGoalTags(@PathVariable Long goalId, Pageable pageable) {
@@ -31,6 +33,7 @@ public class TagController {
         TagResponseDTO tagDTO = tagService.getTagById(goalId, tagId);
         return ResponseEntity.ok(tagDTO);
     }
+
     //post
     @PostMapping
     public ResponseEntity<TagResponseDTO> createTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long userId,
@@ -48,6 +51,7 @@ public class TagController {
     TagResponseDTO updateTag = tagService.updateTag(goalId,tagId,tagDTO);
     return ResponseEntity.ok(updateTag);
     }
+
     //delete
     @DeleteMapping("/{tagId}")
     public ResponseEntity<Void> removeTagFromGoal(@PathVariable Long goalId, @PathVariable Long tagId) {
