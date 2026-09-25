@@ -9,6 +9,8 @@ import com.example.studystreak.model.Goal;
 import com.example.studystreak.repository.DailyRecordRepository;
 import com.example.studystreak.repository.GoalRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,11 +50,10 @@ public class DailyRecordService {
         return modelMapper.map(savedRecord, DailyRecordResponseDTO.class);
     }
 
-    public List<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId) {
+    public Page<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId, Pageable pageable) {
 
-        return dailyRecordRepository.findByGoalId(goalId).stream()
-                .map(record -> modelMapper
-                        .map(record, DailyRecordResponseDTO.class)).toList();
+        return dailyRecordRepository.findByGoalId(goalId, pageable)
+                .map(record -> modelMapper.map(record, DailyRecordResponseDTO.class));
     }
 
     public DailyRecordResponseDTO getDailyRecordById(Long dailyRecordId) {

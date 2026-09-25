@@ -8,10 +8,10 @@ import com.example.studystreak.model.User;
 import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class GoalService {
@@ -36,10 +36,10 @@ public class GoalService {
         return modelMapper.map(goal, GoalResponseDTO.class);
     }
 
-    public List<GoalResponseDTO> getUserGoals(Long userId) {
+    public Page<GoalResponseDTO> getUserGoals(Long userId, Pageable pageable) {
 
-        return goalRepository.findByUserId(userId).stream()
-                .map(goal -> modelMapper.map(goal, GoalResponseDTO.class)).toList();
+        return goalRepository.findByUserId(userId, pageable)
+                .map(goal -> modelMapper.map(goal, GoalResponseDTO.class));
     }
 
     public GoalResponseDTO getGoalById(Long goalId) {

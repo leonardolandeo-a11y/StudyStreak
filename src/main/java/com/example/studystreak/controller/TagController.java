@@ -4,6 +4,8 @@ import com.example.studystreak.dto.Tag.TagRequestDTO;
 import com.example.studystreak.dto.Tag.TagResponseDTO;
 import com.example.studystreak.service.GoalService;
 import com.example.studystreak.service.TagService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,8 @@ public class TagController {
     }
     //get
     @GetMapping
-    public ResponseEntity<List<TagResponseDTO>> getGoalTags(@PathVariable Long goalId) {
-        //aun falta corregir
-        List<TagResponseDTO> tagDTOs = tagService.getTagsByGoalId(goalId);
-        return ResponseEntity.ok(tagDTOs);
+    public ResponseEntity<Page<TagResponseDTO>> getGoalTags(@PathVariable Long goalId, Pageable pageable) {
+        return ResponseEntity.ok(tagService.getTagsByGoalId(goalId, pageable));
     }
     @GetMapping("/{tagId}")
     public ResponseEntity<TagResponseDTO> getTag(@PathVariable Long goalId, @PathVariable Long tagId) {

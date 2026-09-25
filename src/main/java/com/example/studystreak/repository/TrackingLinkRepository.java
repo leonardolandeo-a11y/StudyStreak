@@ -2,6 +2,8 @@ package com.example.studystreak.repository;
 
 import com.example.studystreak.model.TrackingLink;
 import com.example.studystreak.model.TrackingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,18 +28,28 @@ public interface TrackingLinkRepository extends JpaRepository<TrackingLink, Long
     - Cuando el usuario 1 invito al 2
     - CUando el usuario 2 invito al 1
      */
-    @Query("SELECT t FROM TrackingLink t WHERE " +
-            "t.requester.id = :userId OR t.receiver.id = :userId")
-    List<TrackingLink> findLinksByUserId(@Param("userId") Long userId);
+    @Query(
+            value = " SELECT t FROM TrackingLink t WHERE t.requester.id = :userId OR t.receiver.id = :userId",
+            countQuery = " SELECT COUNT(t) FROM TrackingLink t WHERE t.requester.id = :userId OR t.receiver.id = :userId"
+    )
+    Page<TrackingLink> findLinksByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
     //se explica solo, creo
 
     //Spring Boot genera el query method por el nombre
-    List<TrackingLink> findByReceiverIdAndStatus(Long receiverId, TrackingStatus status);
+    Page<TrackingLink> findByReceiverIdAndStatus(Long receiverId, TrackingStatus status,
+            Pageable pageable
+    );
 
-    @Query("SELECT t FROM TrackingLink t WHERE " +
-            "(t.requester.id = :userId OR t.receiver.id = :userId)" +
-            " AND t.status=:status")
-    List<TrackingLink> findLinksByUserIdAndStatus(
-            @Param("userId") Long userId,
-            @Param("status") TrackingStatus status);
+    @Query(
+            value = " SELECT t FROM TrackingLink t WHERE (t.requester.id = :userId OR t.receiver.id = :userId) " +
+                    " AND t.status = :status",
+            countQuery = "SELECT COUNT(t) FROM TrackingLink t WHERE (t.requester.id = :userId OR t.receiver.id = :userId) " +
+                    " AND t.status = :status"
+    )
+    Page<TrackingLink> findLinksByUserIdAndStatus(@Param("userId") Long userId, @Param("status") TrackingStatus status,
+            Pageable pageable
+    );
 }

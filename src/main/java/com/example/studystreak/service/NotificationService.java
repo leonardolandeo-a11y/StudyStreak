@@ -8,6 +8,8 @@ import com.example.studystreak.repository.NotificationRepository;
 import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -41,29 +43,27 @@ public class NotificationService {
         return toResponse(savednotification);
     }
 
-    public List<NotificationDTO> getNotificationByUserId(Long userId) {
+    public Page<NotificationDTO> getNotificationByUserId(Long userId, Pageable pageable) {
+
         return notificationRepository
-                .findByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::toResponse);
     }
 
-    public List<NotificationDTO> getUnreadNotificationsByUserId(Long userId) {
+
+    public Page<NotificationDTO> getUnreadNotificationsByUserId(Long userId, Pageable pageable) {
+
         return notificationRepository
-                .findByUserIdAndReadFalseOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+                .findByUserIdAndReadFalseOrderByCreatedAtDesc(userId, pageable)
+                .map(this::toResponse);
     }
 
-    public List<NotificationDTO> getNotificationsByTypeAndUserId(Long userId, NotificationType type) {
+    public Page<NotificationDTO> getNotificationsByTypeAndUserId(
+            Long userId, NotificationType type, Pageable pageable) {
 
         return notificationRepository
-                .findByUserIdAndTypeOrderByCreatedAtDesc(userId, type)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+                .findByUserIdAndTypeOrderByCreatedAtDesc(userId, type, pageable)
+                .map(this::toResponse);
     }
 
 

@@ -3,6 +3,8 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.Notification.NotificationDTO;
 import com.example.studystreak.model.NotificationType;
 import com.example.studystreak.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,35 +31,35 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationDTO>>
-    getUserNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId) {
-        validateUserAccess(userId, currentUserId);
+    public ResponseEntity<Page<NotificationDTO>>
+    getUserNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId,
+            Pageable pageable) {
 
+        validateUserAccess(userId, currentUserId);
         return ResponseEntity.ok(
-                notificationService.getNotificationByUserId(userId)
+                notificationService.getNotificationByUserId(userId, pageable)
         );
     }
-
     @GetMapping("/unread")
-    public ResponseEntity<List<NotificationDTO>>
-    getUnreadNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId) {
-
+    public ResponseEntity<Page<NotificationDTO>>
+    getUnreadNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId,
+            Pageable pageable
+    ) {
         validateUserAccess(userId, currentUserId);
 
         return ResponseEntity.ok(
-                notificationService.getUnreadNotificationsByUserId(userId)
-        );
+                notificationService.getUnreadNotificationsByUserId(userId, pageable));
     }
 
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<NotificationDTO>>
+    public ResponseEntity<Page<NotificationDTO>>
     getNotificationsByType(@PathVariable Long userId, @PathVariable NotificationType type,
-            @RequestHeader("X-User-Id") Long currentUserId) {
+            @RequestHeader("X-User-Id") Long currentUserId,
+            Pageable pageable) {
 
         validateUserAccess(userId, currentUserId);
-
-        return ResponseEntity.ok(notificationService.getNotificationsByTypeAndUserId(userId, type)
-        );
+        return ResponseEntity.ok(
+                notificationService.getNotificationsByTypeAndUserId(userId, type, pageable));
     }
 
     @PatchMapping("/{notificationId}/read")

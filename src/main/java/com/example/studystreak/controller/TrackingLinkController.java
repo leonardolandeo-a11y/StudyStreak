@@ -3,6 +3,8 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.TrackingLink.TrackingLinkResponseDTO;
 import com.example.studystreak.dto.TrackingLink.TrackingLinkStatusRequestDTO;
 import com.example.studystreak.service.TrackingLinkService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,30 +42,31 @@ public class TrackingLinkController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TrackingLinkResponseDTO>>
-    getTrackingLinks(
-            @RequestHeader("X-User-Id") Long userId
-    ) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>>
+    getTrackingLinks(@RequestHeader("X-User-Id") Long userId,
+            Pageable pageable) {
 
-        return ResponseEntity.ok(trackingLinkService.getTrackingLinksByUserId(userId)
+        return ResponseEntity.ok(
+                trackingLinkService.getTrackingLinksByUserId(userId, pageable)
         );
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<List<TrackingLinkResponseDTO>>
-    getPendingInvitations(
-            @RequestHeader("X-User-Id") Long userId
-    ) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>>
+    getPendingInvitations(@RequestHeader("X-User-Id") Long userId,
+                          Pageable pageable) {
 
-        return ResponseEntity.ok(trackingLinkService.getPendingReceivedInvitations(userId)
+        return ResponseEntity.ok(
+                trackingLinkService.getPendingReceivedInvitations(userId, pageable)
         );
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<List<TrackingLinkResponseDTO>>
-    getActiveTrackingLinks(@RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<Page<TrackingLinkResponseDTO>> getActiveTrackingLinks(@RequestHeader("X-User-Id") Long userId,
+            Pageable pageable) {
 
-        return ResponseEntity.ok(trackingLinkService.getActiveTrackingList(userId));
+        return ResponseEntity.ok(
+                trackingLinkService.getActiveTrackingList(userId, pageable)
+        );
     }
 
     @GetMapping("/with/{otherUserId}")

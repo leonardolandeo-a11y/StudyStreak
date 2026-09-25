@@ -3,6 +3,8 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.DailyRecord.DailyRecordRequestDTO;
 import com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO;
 import com.example.studystreak.service.DailyRecordService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,16 +32,15 @@ public class DailyRecordController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DailyRecordResponseDTO>>
-    getGoalDailyRecords(@PathVariable Long goalId) {
+    public ResponseEntity<Page<DailyRecordResponseDTO>>
+    getGoalDailyRecords(@PathVariable Long goalId, Pageable pageable) {
 
-        List<DailyRecordResponseDTO> records = dailyRecordService.getGoalDailyRecords(goalId);
-
-        return ResponseEntity.ok(records);
+        return ResponseEntity.ok(
+                dailyRecordService.getGoalDailyRecords(goalId, pageable));
     }
 
     @GetMapping("/{dailyRecordId}")
-    public ResponseEntity<DailyRecordResponseDTO> getDailyRecord(@PathVariable Long dailyRecordId) {
+    public ResponseEntity<DailyRecordResponseDTO> getDailyRecords(@PathVariable Long dailyRecordId) {
 
         DailyRecordResponseDTO record = dailyRecordService.getDailyRecordById(dailyRecordId);
 

@@ -8,6 +8,8 @@ import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.TagRepository;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,10 +62,10 @@ public class TagService {
         return modelMapper.map(savedTag, TagResponseDTO.class);
     }
 
-    public List<TagResponseDTO> getTagsByGoalId(Long goalId) {
-
-        return tagRepository.findAllByGoalId(goalId).stream()
-                .map(tag -> modelMapper.map(tag, TagResponseDTO.class)).toList();
+    public Page<TagResponseDTO> getTagsByGoalId(Long goalId, Pageable pageable) {
+        return tagRepository.findAllByGoalId(goalId, pageable)
+                .map(tag -> modelMapper.map(tag, TagResponseDTO.class)
+                );
     }
 
     public TagResponseDTO getTagById(Long goalId, Long tagId) {

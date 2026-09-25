@@ -10,6 +10,8 @@ import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.TrackingLinkRepository;
 import com.example.studystreak.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -55,11 +57,11 @@ public class TrackingLinkService {
         return toResponse(savedTrackingLink);
     }
 
-    public List<TrackingLinkResponseDTO> getTrackingLinksByUserId(
-            Long userId
-    ) {
-        return trackingLinkRepository.findLinksByUserId(userId).stream()
-                .map(this::toResponse).toList();
+    public Page<TrackingLinkResponseDTO> getTrackingLinksByUserId(
+            Long userId, Pageable pageable) {
+
+        return trackingLinkRepository.findLinksByUserId(userId, pageable)
+                .map(this::toResponse);
     }
 
     public TrackingLinkResponseDTO getLinkBetweenUsers(Long currentUserId, Long otherUserId) {
@@ -74,19 +76,17 @@ public class TrackingLinkService {
         return toResponse(trackingLink);
     }
 
-    public List<TrackingLinkResponseDTO>
-    getPendingReceivedInvitations(Long userId) {
+    public Page<TrackingLinkResponseDTO> getPendingReceivedInvitations(Long userId, Pageable pageable) {
 
         return trackingLinkRepository
-                .findByReceiverIdAndStatus(userId, TrackingStatus.PENDING).stream()
-                .map(this::toResponse).toList();
+                .findByReceiverIdAndStatus(userId, TrackingStatus.PENDING, pageable)
+                .map(this::toResponse);
     }
 
-    public List<TrackingLinkResponseDTO> getActiveTrackingList(Long userId) {
+    public Page<TrackingLinkResponseDTO> getActiveTrackingList(Long userId, Pageable pageable) {
 
-        return trackingLinkRepository
-                .findLinksByUserIdAndStatus(userId, TrackingStatus.ACCEPTED).stream()
-                .map(this::toResponse).toList();
+        return trackingLinkRepository.findLinksByUserIdAndStatus(userId, TrackingStatus.ACCEPTED, pageable)
+                .map(this::toResponse);
     }
 
     public TrackingLinkResponseDTO updateTrackingStatus(

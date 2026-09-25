@@ -8,14 +8,17 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Long> {
 
-    @Query("SELECT DISTINCT t FROM Tag t JOIN t.goals g WHERE g.id = :goalId")
-    List<Tag> findAllByGoalId(
-            @Param("goalId") Long goalId
-    );
+    @Query(
+            value = "SELECT DISTINCT t FROM Tag t JOIN t.goals g WHERE g.id = :goalId",
+            countQuery = " SELECT COUNT(DISTINCT t.id) FROM Tag t JOIN t.goals g WHERE g.id = :goalId"
+    )
+    Page<Tag> findAllByGoalId(@Param("goalId") Long goalId, Pageable pageable);
 
     @Query("SELECT DISTINCT t FROM Tag t JOIN t.goals g WHERE t.id = :tagId AND g.id = :goalId")
     Optional<Tag> findByIdAndGoalId(

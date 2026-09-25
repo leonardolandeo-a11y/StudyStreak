@@ -3,6 +3,8 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.Goal.GoalRequestDTO;
 import com.example.studystreak.dto.Goal.GoalResponseDTO;
 import com.example.studystreak.service.GoalService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +23,7 @@ public class GoalController {
     }
 
     /*
-     * TODO Issue Security:
-     * reemplazar X-User-Id por SecurityContext.
+     * reemplazar X-User-Id por SecurityContext en el siguiente issue
      */
     private void validateUserAccess(Long pathUserId, Long headerUserId) {
 
@@ -32,13 +33,11 @@ public class GoalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<GoalResponseDTO>> getUserGoals(@PathVariable Long userId,
-                                                              @RequestHeader("X-User-Id") Long currentUserId) {
+    public ResponseEntity<Page<GoalResponseDTO>> getUserGoals(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId,
+            Pageable pageable) {
 
         validateUserAccess(userId, currentUserId);
-        List<GoalResponseDTO> goals = goalService.getUserGoals(userId);
-
-        return ResponseEntity.ok(goals);
+        return ResponseEntity.ok(goalService.getUserGoals(userId, pageable));
     }
 
     @GetMapping("/{goalId}")
