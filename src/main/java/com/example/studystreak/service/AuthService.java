@@ -27,7 +27,7 @@ public class AuthService {
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(),user.getPassword())){  // Compare the passwords
             throw new BadCredentialsException("Invalid username or password");
         }
-        String token  = jwtService.generateToken(user.getUsername()); // Create the token with respect the username
+        String token  = jwtService.generateToken(user); // Create the token with respect the username
         return new LoginResponseDTO(token);   // Return the LoginResponseDTO token
     }
 }
