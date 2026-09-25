@@ -21,5 +21,7 @@ public class GoalRequestDTO {
     @Positive(message = "La duración debe ser mayor que cero")
     private Integer duration;
 
+    private Boolean completed;
+
     public GoalRequestDTO() {}
 }
