@@ -2,7 +2,6 @@ package com.example.studystreak.controller;
 
 import com.example.studystreak.dto.Goal.GoalRequestDTO;
 import com.example.studystreak.dto.Goal.GoalResponseDTO;
-import com.example.studystreak.dto.Goal.GoalDTO;
 import com.example.studystreak.service.GoalService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

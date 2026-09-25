@@ -1,0 +1,38 @@
+name: studystreak-aws
+
+services:
+  app:
+    image: studystreak:${APP_VERSION:?PP_VERSION en .env.aws}
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+    environment:
+      SPRING_PROFILES_ACTIVE: aws
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:?Define SPRING_DATASOURCE_URL en .env.aws}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Define SPRING_DATASOURCE_USERNAME en .env.aws}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Define SPRING_DATASOURCE_PASSWORD en .env.aws}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env.aws}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+      DB_DDL_AUTO: ${DB_DDL_AUTO:-validate}
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    volumes:
+      - type: bind
+        source: ./certs/global-bundle.pem
+        target: /app/certs/global-bundle.pem
+        read_only: true
+        bind:
+          create_host_path: false
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

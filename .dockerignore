@@ -3,3 +3,10 @@
 target
 *.iml
 .env
+.env.*
+certs
+backups
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
