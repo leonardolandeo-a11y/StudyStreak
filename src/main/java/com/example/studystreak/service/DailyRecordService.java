@@ -1,67 +1,98 @@
 package com.example.studystreak.service;
 
-import com.example.studystreak.dto.DailyRecord.DailyRecordDTO;
+import com.example.studystreak.dto.DailyRecord.DailyRecordRequestDTO;
+import com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO;
+import com.example.studystreak.exceptions.ConflictException;
+import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.repository.DailyRecordRepository;
 import com.example.studystreak.repository.GoalRepository;
-import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class DailyRecordService {
+
     private final DailyRecordRepository dailyRecordRepository;
     private final ModelMapper modelMapper;
     private final GoalRepository goalRepository;
 
-    public DailyRecordService(DailyRecordRepository dailyRecordRepository, ModelMapper modelMapper, GoalRepository goalRepository) {
+    public DailyRecordService(DailyRecordRepository dailyRecordRepository, ModelMapper modelMapper,
+            GoalRepository goalRepository) {
+
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
         this.goalRepository = goalRepository;
     }
 
-    public DailyRecordDTO createDailyRecord(Long goalId, DailyRecordDTO dailyRecordDTO) {
+    public DailyRecordResponseDTO createDailyRecord(Long goalId, DailyRecordRequestDTO dailyRecordRequest) {
+
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
 
-        DailyRecord dailyRecord = modelMapper.map(dailyRecordDTO, DailyRecord.class);
-        dailyRecord.setGoal(goal);
+        boolean alreadyExists = dailyRecordRepository.existsByGoalIdAndDate(goalId, dailyRecordRequest.getDate());
 
-        dailyRecord = dailyRecordRepository.save(dailyRecord);
-        return modelMapper.map(dailyRecord, DailyRecordDTO.class);
-    }
-
-    public List<DailyRecordDTO> getGoalDailyRecords(Long goalId) {
-        List<DailyRecord> dailyRecords = dailyRecordRepository.findByGoalId(goalId);
-        List<DailyRecordDTO> dailyRecordDTOS = new ArrayList<>();
-
-        for (int i = 0; i < dailyRecords.size(); i++) {
-            dailyRecordDTOS.add(modelMapper.map(dailyRecords.get(i), DailyRecordDTO.class));
+        if (alreadyExists) {
+            throw new ConflictException("A daily record already exists for this goal on "
+                        + dailyRecordRequest.getDate());
         }
-        return dailyRecordDTOS;
 
+
+        DailyRecord dailyRecord = modelMapper.map(dailyRecordRequest, DailyRecord.class);
+        dailyRecord.setGoal(goal);
+        DailyRecord savedRecord = dailyRecordRepository.save(dailyRecord);
+
+        return modelMapper.map(savedRecord, DailyRecordResponseDTO.class);
     }
 
-    public DailyRecordDTO updateDailyRecord(Long dailyRecordId, DailyRecordDTO dailyRecordDTO) {
+    public List<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId) {
+
+        return dailyRecordRepository.findByGoalId(goalId).stream()
+                .map(record -> modelMapper
+                        .map(record, DailyRecordResponseDTO.class)).toList();
+    }
+
+    public DailyRecordResponseDTO getDailyRecordById(Long dailyRecordId) {
+
         DailyRecord dailyRecord = dailyRecordRepository.findById(dailyRecordId)
                 .orElseThrow(() -> new ResourceNotFoundException("DailyRecord not found with id: " + dailyRecordId));
 
-        dailyRecord.setDate(dailyRecordDTO.getDate());
-        dailyRecord.setNote(dailyRecordDTO.getNote());
-        dailyRecord.setEvidence(dailyRecordDTO.getEvidence());
+        return modelMapper.map(dailyRecord, DailyRecordResponseDTO.class);
+    }
 
-        dailyRecordRepository.save(dailyRecord);
+    public DailyRecordResponseDTO updateDailyRecord(Long dailyRecordId, DailyRecordRequestDTO dailyRecordRequest) {
 
-        return modelMapper.map(dailyRecord, DailyRecordDTO.class);
+        DailyRecord dailyRecord = dailyRecordRepository.findById(dailyRecordId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "DailyRecord not found with id: " + dailyRecordId));
+
+        Long goalId = dailyRecord.getGoal().getId();
+        boolean duplicatedDate = dailyRecordRepository
+                        .existsByGoalIdAndDateAndIdNot(goalId, dailyRecordRequest.getDate(), dailyRecordId);
+
+        if (duplicatedDate) {
+            throw new ConflictException(
+                    "A daily record already exists for this goal on " + dailyRecordRequest.getDate());
+        }
+
+        dailyRecord.setDate(dailyRecordRequest.getDate());
+        dailyRecord.setNote(dailyRecordRequest.getNote());
+        dailyRecord.setEvidence(dailyRecordRequest.getEvidence());
+
+        DailyRecord updatedRecord = dailyRecordRepository.save(dailyRecord);
+
+        return modelMapper.map(updatedRecord, DailyRecordResponseDTO.class);
     }
 
     public void deleteDailyRecord(Long dailyRecordId) {
+
         DailyRecord dailyRecord = dailyRecordRepository.findById(dailyRecordId)
-                .orElseThrow(() -> new ResourceNotFoundException("DailyRecord not found with id: " + dailyRecordId));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                        "DailyRecord not found with id: " + dailyRecordId));
+
         dailyRecordRepository.delete(dailyRecord);
     }
 }
