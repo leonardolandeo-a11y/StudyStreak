@@ -21,8 +21,8 @@ services:
 
       DB_DDL_AUTO: ${DB_DDL_AUTO:-validate}
 
-      MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
-      MAIL_PORT: ${MAIL_PORT:-2525}
+      MAIL_HOST: ${MAIL_HOST:?Define MAIL_HOST en .env.aws}
+      MAIL_PORT: ${MAIL_PORT:?Define MAIL_PORT en .env.aws}
       MAIL_USERNAME: ${MAIL_USERNAME:?Define MAIL_USERNAME en .env.aws}
       MAIL_PASSWORD: ${MAIL_PASSWORD:?Define MAIL_PASSWORD en .env.aws}
 
