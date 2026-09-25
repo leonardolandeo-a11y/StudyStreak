@@ -20,7 +20,9 @@ public class AuthService {
     }
 
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO){
-        User user = userRepository.findByUsername(loginRequestDTO.getUsername()).orElseThrow(); // Exception (Not implemented yet)
+        User user = userRepository.findByUsername(loginRequestDTO.getUsername())
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+        // Exception (Not implemented yet)
         // matches (raw_password, encoded_password)
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(),user.getPassword())){  // Compare the passwords
             throw new BadCredentialsException("Invalid username or password");

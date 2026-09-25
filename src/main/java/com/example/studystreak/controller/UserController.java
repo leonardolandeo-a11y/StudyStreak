@@ -1,38 +1,61 @@
 package com.example.studystreak.controller;
 
-
 import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
     private final UserService userService;
 
-    public UserController(UserService userService){
+    public UserController(UserService userService) {
         this.userService = userService;
     }
+
     @PostMapping
-    public UserResponseDTO createUser(@RequestBody UserRequestDTO user ){
-        return userService.createUser(user);
+    public ResponseEntity<UserResponseDTO> createUser(@RequestBody UserRequestDTO request) {
+
+        UserResponseDTO user = userService.createUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
-    @GetMapping("/{userID}")
-    public UserResponseDTO getUser(@PathVariable Long userID){
-        return userService.getUserById(userID);
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long userId) {
+
+        return ResponseEntity.ok(userService.getUserById(userId));
     }
-    @PutMapping("/{userID}")
-    public UserResponseDTO updateUser(@PathVariable Long userID, @RequestBody UserRequestDTO userResponseDTO){
-        return userService.updateUser(userID, userResponseDTO);
+
+    /*
+     * se comprobara que el usuario autenticado seael propietario de la cuenta o un administrador en el siguiente issue
+     */
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserResponseDTO> updateUserDetails(
+            @PathVariable Long userId,
+            @RequestBody UserUpdateRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                userService.updateUserDetails(
+                        userId,
+                        request
+                )
+        );
     }
-    @DeleteMapping("/{userID}")
-    public void deleteUser(@PathVariable Long userID){
-        userService.deleteUser(userID);
-    }
-    @PatchMapping("/{userID}")
-    public UserResponseDTO updateUserDetails(@PathVariable Long userID, @RequestBody UserUpdateRequestDTO userUpdateRequestDTO){
-        return userService.updateUserDetails(userID, userUpdateRequestDTO);
+
+    /*
+    se restringira al admin en el issue de security
+     */
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long userId
+    ) {
+        userService.deleteUser(userId);
+
+        return ResponseEntity.noContent().build();
     }
 }
