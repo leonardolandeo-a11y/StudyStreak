@@ -12,48 +12,57 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import com.example.studystreak.exceptions.ForbiddenException;
 
 @Service
 public class TagService {
     //private final: variable privada e inmutable
-    private final TagRepository tagRepository;
-    private final GoalRepository goalRepository;
-    private final ModelMapper modelMapper;
+        private final TagRepository tagRepository;
+        private final GoalRepository goalRepository;
+        private final ModelMapper modelMapper;
+        private final CurrentUserService currentUserService;
 
 
-    public TagService(TagRepository tagRepository, ModelMapper modelMapper, GoalRepository goalRepository) {
-        this.tagRepository = tagRepository;
-        this.goalRepository = goalRepository;
-        this.modelMapper = modelMapper;
-    }
+        public TagService(TagRepository tagRepository, ModelMapper modelMapper, GoalRepository goalRepository,
+                          CurrentUserService currentUserService) {
+            this.tagRepository = tagRepository;
+            this.goalRepository = goalRepository;
+            this.modelMapper = modelMapper;
+            this.currentUserService = currentUserService;
+        }
 
-    @Transactional
-    public TagResponseDTO createTag(TagRequestDTO tagDTO, Long userId, Long goalId) {
+    private Goal getOwnedGoal(Long goalId) {
+
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
 
-        /*
-         * posteriormente el usuario deberá obtenerse desde
-         * SecurityContext y no confiar en userId enviado por cliente.
-         */
-        if (!goal.getUser().getId().equals(userId)) {
-            throw new RuntimeException();
+        Long currentUserId = currentUserService.getCurrentUserId();
+
+        if (!goal.getUser().getId().equals(currentUserId)) {
+            throw new ForbiddenException("You cannot access goal with id: " + goalId);
         }
+        return goal;
+    }
+
+    @Transactional
+    public TagResponseDTO createTag(TagRequestDTO tagDTO, Long goalId) {
+
+        Goal goal = getOwnedGoal(goalId);
+        Long currentUserId = currentUserService.getCurrentUserId();
 
         String tagName = tagDTO.getName().trim();
 
-        /*
-         * Buscar una tag con el mismo nombre que ya sea utilizada
-         * por alguna meta del mismo usuario.
-         */
-        Tag tag = tagRepository.findByNameAndUserId(tagName, userId)
+        Tag tag = tagRepository.findByNameAndUserId(tagName, currentUserId)
                 .orElseGet(() -> new Tag(tagName));
 
-        boolean alreadyAssigned = tag.getGoals().stream()
-                .anyMatch(existingGoal -> existingGoal.getId().equals(goalId));
-
+        boolean alreadyAssigned =
+                tag.getGoals()
+                        .stream()
+                        .anyMatch(existingGoal ->
+                                existingGoal
+                                        .getId()
+                                        .equals(goalId)
+                        );
         if (!alreadyAssigned) {
             tag.addGoal(goal);
             goal.addTag(tag);
@@ -63,24 +72,35 @@ public class TagService {
     }
 
     public Page<TagResponseDTO> getTagsByGoalId(Long goalId, Pageable pageable) {
-        return tagRepository.findAllByGoalId(goalId, pageable)
-                .map(tag -> modelMapper.map(tag, TagResponseDTO.class)
-                );
+
+        getOwnedGoal(goalId);
+        return tagRepository
+                .findAllByGoalId(goalId, pageable)
+                .map(tag -> modelMapper.map(tag, TagResponseDTO.class));
     }
 
     public TagResponseDTO getTagById(Long goalId, Long tagId) {
-        Tag tag = tagRepository.findById(tagId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId));
-        //el error handling lo implementare algun dia
-        return modelMapper.map(tag, TagResponseDTO.class); //se mapea a dto
-    }
 
+        getOwnedGoal(goalId);
+        Tag tag = tagRepository
+                .findByIdAndGoalId(tagId, goalId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Tag not found with id: " + tagId + " for goal: " + goalId)
+                );
+
+        return modelMapper.map(tag, TagResponseDTO.class);
+    }
     @Transactional
     public TagResponseDTO updateTag(Long goalId, Long tagId, TagRequestDTO tagDTO) {
-        Tag tag = tagRepository.findByIdAndGoalId(tagId, goalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId));
+
+        getOwnedGoal(goalId);
+        Tag tag = tagRepository
+                .findByIdAndGoalId(tagId, goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId +
+                        " for goal: " + goalId));
 
         tag.setName(tagDTO.getName().trim());
+
         Tag updatedTag = tagRepository.save(tag);
 
         return modelMapper.map(updatedTag, TagResponseDTO.class);
@@ -88,12 +108,12 @@ public class TagService {
 
     @Transactional
     public void removeTagFromGoal(Long goalId, Long tagId) {
-        Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        Goal goal = getOwnedGoal(goalId);
 
         Tag tag = tagRepository.findByIdAndGoalId(tagId, goalId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Tag not found with id: " + tagId + " for goal: " + goalId));
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId
+                                        + " for goal: " + goalId));
 
         tag.removeGoal(goal);
         goal.removeTag(tag);

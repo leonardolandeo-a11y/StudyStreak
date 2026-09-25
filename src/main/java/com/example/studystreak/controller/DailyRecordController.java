@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,26 +41,24 @@ public class DailyRecordController {
     }
 
     @GetMapping("/{dailyRecordId}")
-    public ResponseEntity<DailyRecordResponseDTO> getDailyRecords(@PathVariable Long dailyRecordId) {
+    public ResponseEntity<DailyRecordResponseDTO> getDailyRecords(@PathVariable Long goalId,
+                                                                  @PathVariable Long dailyRecordId) {
 
-        DailyRecordResponseDTO record = dailyRecordService.getDailyRecordById(dailyRecordId);
-
-        return ResponseEntity.ok(record);
+        return ResponseEntity.ok(dailyRecordService.getDailyRecordById(goalId, dailyRecordId));
     }
 
     @PutMapping("/{dailyRecordId}")
-    public ResponseEntity<DailyRecordResponseDTO> updateDailyRecord(@PathVariable Long dailyRecordId,
+    public ResponseEntity<DailyRecordResponseDTO> updateDailyRecord(@PathVariable Long goalId,
+                                                                    @PathVariable Long dailyRecordId,
                                                                     @RequestBody DailyRecordRequestDTO dailyRecordRequest
     ) {
-        DailyRecordResponseDTO updatedRecord = dailyRecordService.updateDailyRecord(dailyRecordId, dailyRecordRequest);
-
-        return ResponseEntity.ok(updatedRecord);
+        return ResponseEntity.ok(dailyRecordService.updateDailyRecord(goalId, dailyRecordId, dailyRecordRequest));
     }
 
     @DeleteMapping("/{dailyRecordId}")
-    public ResponseEntity<Void> deleteDailyRecord(@PathVariable Long dailyRecordId) {
+    public ResponseEntity<Void> deleteDailyRecord(@PathVariable Long goalId, @PathVariable Long dailyRecordId) {
 
-        dailyRecordService.deleteDailyRecord(dailyRecordId);
+        dailyRecordService.deleteDailyRecord(goalId, dailyRecordId);
         return ResponseEntity.noContent().build();
     }
 }

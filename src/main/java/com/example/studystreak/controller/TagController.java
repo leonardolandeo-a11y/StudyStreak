@@ -36,7 +36,7 @@ public class TagController {
     public ResponseEntity<TagResponseDTO> createTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long userId,
                                                     @PathVariable Long goalId) {
 
-        TagResponseDTO savedTag = tagService.createTag(tagDTO,userId,goalId);
+        TagResponseDTO savedTag = tagService.createTag(tagDTO, goalId);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTag);
     }
 

@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.example.studystreak.exceptions.ForbiddenException;
 
 
 @Service
@@ -18,14 +19,42 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
-    public GoalService(GoalRepository goalRepository, ModelMapper modelMapper, UserRepository userRepository) {
+    public GoalService(GoalRepository goalRepository, ModelMapper modelMapper, UserRepository userRepository,
+            CurrentUserService currentUserService) {
         this.goalRepository = goalRepository;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
+    private void validateCurrentUser(Long userId) {
+
+        Long currentUserId = currentUserService.getCurrentUserId();
+        if (!currentUserId.equals(userId)) {
+            throw new ForbiddenException("You cannot access resources of another user");
+        }
+    }
+
+    private Goal getOwnedGoal(Long goalId) {
+
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        Long currentUserId = currentUserService.getCurrentUserId();
+        if (!goal.getUser().getId().equals(currentUserId)) {
+            throw new ForbiddenException(
+                    "You cannot access goal with id: " + goalId
+            );
+        }
+        return goal;
+    }
+
+
     public GoalResponseDTO createGoal(Long userId, GoalRequestDTO goalDTO) {
+
+        validateCurrentUser(userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -38,21 +67,20 @@ public class GoalService {
 
     public Page<GoalResponseDTO> getUserGoals(Long userId, Pageable pageable) {
 
+        validateCurrentUser(userId);
         return goalRepository.findByUserId(userId, pageable)
                 .map(goal -> modelMapper.map(goal, GoalResponseDTO.class));
     }
 
     public GoalResponseDTO getGoalById(Long goalId) {
 
-        Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
-
+        Goal goal = getOwnedGoal(goalId);
         return modelMapper.map(goal, GoalResponseDTO.class);
     }
 
     public GoalResponseDTO updateGoal(Long goalId, GoalRequestDTO goalDTO) {
-        Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        Goal goal = getOwnedGoal(goalId);
 
         goal.setTopic(goalDTO.getTopic());
         goal.setFrequency(goalDTO.getFrequency());
@@ -63,9 +91,7 @@ public class GoalService {
     }
 
     public void deleteGoal(Long goalId) {
-        Goal goal = goalRepository.findById(goalId)
-                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
-
+        Goal goal = getOwnedGoal(goalId);
         goalRepository.delete(goal);
     }
 
