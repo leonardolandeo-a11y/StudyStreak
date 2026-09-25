@@ -9,6 +9,7 @@ import com.example.studystreak.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.studystreak.model.Role;
 
 import java.time.LocalDate;
 
@@ -36,6 +37,7 @@ public class UserService {
 
         user.setRegistrationDate(LocalDate.now());
         user.setActive(true);
+        user.setRole(Role.USER);
         user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword())
         );
 

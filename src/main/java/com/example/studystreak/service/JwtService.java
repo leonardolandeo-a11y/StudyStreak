@@ -1,6 +1,7 @@
 package com.example.studystreak.service;
 
 
+import com.example.studystreak.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -32,9 +33,18 @@ public class JwtService {
                 .parseSignedClaims(token) // Parse and verify the signed JWT containing Claims
                 .getPayload();  // From the 3 parts we just need the Payload()
     }
-    public String generateToken(String username){
+    /*
+     Ahora la firma es  generateToken(User user):
+     Recibimos el User completo porque necesitamos más información
+     que únicamente el username.
+     Se añaden mas claims: id, email, name
+     */
+    public String generateToken(User user){
         // builder creates the token
-        return Jwts.builder().subject(username) // Token belongs to the user
+        return Jwts.builder().subject(user.getUsername()) // Token belongs to the user
+                .claim("userId", user.getId())
+                .claim("email", user.getEmail())
+                .claim("role", user.getRole().name())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())  // Token use the secret key
@@ -44,11 +54,70 @@ public class JwtService {
     public String extractUsername(String token){
         return extractAllClaims(token).getSubject();
     }
-    public Boolean isTokenValid(String token, String username){
+
+    /*
+     Extrae el userId que guardamos al crear el JWT.
+     NOTA: Usamos Number en lugar de Long directamente porque
+     JSON puede interpretar el numero como Integer/Long
+     */
+    public Long extractUserId(String token) {
+
+        Number userId = extractAllClaims(token).get("userId", Number.class);
+        return userId.longValue();
+    }
+
+
+    /*
+    Obtiene el emial del token
+     */
+    public String extractEmail(String token) {
+
+        return extractAllClaims(token).get("email", String.class);
+    }
+
+
+    /*
+     Obtiene el rol deu usuario
+     */
+    public String extractRole(String token) {
+
+        return extractAllClaims(token).get("role", String.class);
+    }
+
+
+    /*
+     fecha de expiracion
+     */
+    public Date extractExpiration(String token) {
+
+        return extractAllClaims(token).getExpiration();
+    }
+
+
+    /*
+     Comprueba si el token expiro uya
+     */
+    private boolean isTokenExpired(String token) {
+
+        return extractExpiration(token).before(new Date());
+    }
+
+
+    /*
+     Verificamos que:
+     - El token perteneza al usuario correcto
+     - Que no haya expirado
+     */
+    public boolean isTokenValid(
+            String token,
+            String username
+    ) {
+
         try {
             String tokenUsername = extractUsername(token);
-            return tokenUsername.equals(username);
-        }catch (Exception e){ // Exception (No implemented yet)
+            return tokenUsername.equals(username)
+                    && !isTokenExpired(token);
+        } catch (Exception e) {
             return false;
         }
     }

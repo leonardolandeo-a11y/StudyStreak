@@ -27,6 +27,10 @@ public class User {
     private LocalDate registrationDate;
     private String timeZone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @OneToMany(mappedBy = "user")
     private List<Goal> goals;
 
