@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.studystreak.model.Role;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -35,20 +36,22 @@ public class UserService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
 
-        User user = modelMapper.map(
-                userRequestDTO,
-                User.class
-        );
+        User user = modelMapper.map(userRequestDTO, User.class);
 
         user.setRegistrationDate(LocalDate.now());
         user.setActive(true);
-        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword())); // Encode the password using passwordEncoder
-        user = userRepository.save(user);
-        //Se dispara el evento de Registro del user
-        eventPublisher.publishEvent(new UserRegisteredEvent(user.getEmail(),user.getUsername()));
-        return modelMapper.map(user, UserResponseDTO.class);
+        user.setRole(Role.USER);
+
+        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+
+        User savedUser = userRepository.save(user);
+
+        eventPublisher.publishEvent(new UserRegisteredEvent(savedUser.getEmail(), savedUser.getUsername()));
+
+        return modelMapper.map(savedUser, UserResponseDTO.class);
     }
 
     public UserResponseDTO getUserById(Long userId) {
