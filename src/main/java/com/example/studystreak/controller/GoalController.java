@@ -1,5 +1,6 @@
 package com.example.studystreak.controller;
 
+
 import com.example.studystreak.dto.Goal.GoalRequestDTO;
 import com.example.studystreak.dto.Goal.GoalResponseDTO;
 import com.example.studystreak.service.GoalService;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.studystreak.exceptions.ForbiddenException;
 import com.example.studystreak.service.CurrentUserService;
-
 @RestController
 @RequestMapping("/users/{userId}/goals")
 public class GoalController {

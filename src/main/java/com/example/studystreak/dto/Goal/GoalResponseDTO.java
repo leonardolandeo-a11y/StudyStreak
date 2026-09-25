@@ -11,7 +11,7 @@ public class GoalResponseDTO {
     private String topic;
     private Integer frequency;
     private Integer duration;
+    private Boolean completed;
 
-    public GoalResponseDTO() {
-    }
+    public GoalResponseDTO() {}
 }

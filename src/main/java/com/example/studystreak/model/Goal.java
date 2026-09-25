@@ -3,6 +3,7 @@ package com.example.studystreak.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "goal")
 public class Goal {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -19,8 +21,10 @@ public class Goal {
     private Integer frequency;
     private Integer duration;
 
+    private Boolean completed = false;
+
     @ManyToOne
-    @JoinColumn(name = "user_id",nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "goal")
@@ -32,10 +36,11 @@ public class Goal {
     @ManyToMany(mappedBy = "goals")
     private List<Tag> tags = new ArrayList<>();
 
-    protected Goal(){}
+    protected Goal() {}
+
     public void addTag(Tag tag) {
         if (!tags.contains(tag)) {
-        tags.add(tag);
+            tags.add(tag);
         }
     }
 
