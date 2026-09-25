@@ -1,8 +1,6 @@
-name: studystreak-aws
-
 services:
   app:
-    image: studystreak:${APP_VERSION:?PP_VERSION en .env.aws}
+    image: studystreak:${APP_VERSION:?Define APP_VERSION en .env.aws}
 
     build:
       context: .
@@ -13,12 +11,20 @@ services:
 
     environment:
       SPRING_PROFILES_ACTIVE: aws
+
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:?Define SPRING_DATASOURCE_URL en .env.aws}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?Define SPRING_DATASOURCE_USERNAME en .env.aws}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?Define SPRING_DATASOURCE_PASSWORD en .env.aws}
+
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env.aws}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+
       DB_DDL_AUTO: ${DB_DDL_AUTO:-validate}
+
+      MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
+      MAIL_PORT: ${MAIL_PORT:-2525}
+      MAIL_USERNAME: ${MAIL_USERNAME:?Define MAIL_USERNAME en .env.aws}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?Define MAIL_PASSWORD en .env.aws}
 
     ports:
       - "127.0.0.1:8080:8080"
