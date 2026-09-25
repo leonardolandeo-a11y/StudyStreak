@@ -1,6 +1,7 @@
 package com.example.studystreak.service;
 
-import com.example.studystreak.dto.Goal.GoalDTO;
+import com.example.studystreak.dto.Goal.GoalRequestDTO;
+import com.example.studystreak.dto.Goal.GoalResponseDTO;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.User;
@@ -24,38 +25,40 @@ public class GoalService {
         this.userRepository = userRepository;
     }
 
-    public GoalDTO createGoal(Long userId, GoalDTO goalDTO) {
+    public GoalResponseDTO createGoal(Long userId, GoalRequestDTO goalDTO) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Goal goal = modelMapper.map(goalDTO, Goal.class);
-
         goal.setUser(user);
-
         goal = goalRepository.save(goal);
 
-        return modelMapper.map(goal, GoalDTO.class);
+        return modelMapper.map(goal, GoalResponseDTO.class);
     }
 
-    public List<GoalDTO> getUserGoals(Long userId) {
-        List<Goal> goals = goalRepository.findByUserId(userId);
+    public List<GoalResponseDTO> getUserGoals(Long userId) {
 
-        List<GoalDTO> goalsDTO = new ArrayList<>();
-        for (int i = 0; i < goals.size(); i++) {
-            goalsDTO.add(modelMapper.map(goals.get(i), GoalDTO.class));
-        }
-        return goalsDTO;
+        return goalRepository.findByUserId(userId).stream()
+                .map(goal -> modelMapper.map(goal, GoalResponseDTO.class)).toList();
     }
 
-    public GoalDTO updateGoal(Long goalId, GoalDTO goalDTO) {
+    public GoalResponseDTO getGoalById(Long goalId) {
+
         Goal goal = goalRepository.findById(goalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
 
-        goal.setFrequency(goalDTO.getFrequency());
+        return modelMapper.map(goal, GoalResponseDTO.class);
+    }
+
+    public GoalResponseDTO updateGoal(Long goalId, GoalRequestDTO goalDTO) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
         goal.setTopic(goalDTO.getTopic());
+        goal.setFrequency(goalDTO.getFrequency());
         goal.setDuration(goalDTO.getDuration());
-        goalRepository.save(goal);
-        return modelMapper.map(goal, GoalDTO.class);
+        Goal updatedGoal = goalRepository.save(goal);
+        return modelMapper.map(updatedGoal, GoalResponseDTO.class);
 
     }
 

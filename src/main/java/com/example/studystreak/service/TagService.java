@@ -1,16 +1,16 @@
 package com.example.studystreak.service;
 
-import com.example.studystreak.dto.Tag.TagDTO;
+import com.example.studystreak.dto.Tag.TagRequestDTO;
+import com.example.studystreak.dto.Tag.TagResponseDTO;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.model.Tag;
 import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.TagRepository;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,51 +20,82 @@ public class TagService {
     private final GoalRepository goalRepository;
     private final ModelMapper modelMapper;
 
-    //autowired se encarga de gestionar la inyeccion de dependencias
-    @Autowired
+
     public TagService(TagRepository tagRepository, ModelMapper modelMapper, GoalRepository goalRepository) {
         this.tagRepository = tagRepository;
         this.goalRepository = goalRepository;
         this.modelMapper = modelMapper;
     }
-    public TagDTO createTag(TagDTO tagDTO, Long userId,Long goalId) {
-        Goal goal = goalRepository.findById(goalId).orElseThrow();
+
+    @Transactional
+    public TagResponseDTO createTag(TagRequestDTO tagDTO, Long userId, Long goalId) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        /*
+         * posteriormente el usuario deberá obtenerse desde
+         * SecurityContext y no confiar en userId enviado por cliente.
+         */
         if (!goal.getUser().getId().equals(userId)) {
             throw new RuntimeException();
         }
-        Tag tag = modelMapper.map(tagDTO, Tag.class);
-        tag.pushGoals(goal);
-        goal.pushTags(tag);
-        // Es más seguro trabajar con la tag guardada en la base de datos
-        Tag savedTag = tagRepository.save(tag);
-        return modelMapper.map(savedTag, TagDTO.class);
-    }
 
-    public List<TagDTO> getAllTags() {
-        List<Tag> tags = tagRepository.findAll();
-        List<TagDTO> tagDTOs = new ArrayList<>();
-        for (Tag tag : tags) {
-            tagDTOs.add(modelMapper.map(tag, TagDTO.class));
+        String tagName = tagDTO.getName().trim();
+
+        /*
+         * Buscar una tag con el mismo nombre que ya sea utilizada
+         * por alguna meta del mismo usuario.
+         */
+        Tag tag = tagRepository.findByNameAndUserId(tagName, userId)
+                .orElseGet(() -> new Tag(tagName));
+
+        boolean alreadyAssigned = tag.getGoals().stream()
+                .anyMatch(existingGoal -> existingGoal.getId().equals(goalId));
+
+        if (!alreadyAssigned) {
+            tag.addGoal(goal);
+            goal.addTag(tag);
         }
-        return tagDTOs;
+        Tag savedTag = tagRepository.save(tag);
+        return modelMapper.map(savedTag, TagResponseDTO.class);
     }
 
-    public TagDTO getTagById(Long tagId) {
+    public List<TagResponseDTO> getTagsByGoalId(Long goalId) {
+
+        return tagRepository.findAllByGoalId(goalId).stream()
+                .map(tag -> modelMapper.map(tag, TagResponseDTO.class)).toList();
+    }
+
+    public TagResponseDTO getTagById(Long goalId, Long tagId) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId));
         //el error handling lo implementare algun dia
-        return modelMapper.map(tag, TagDTO.class); //se mapea a dto
+        return modelMapper.map(tag, TagResponseDTO.class); //se mapea a dto
     }
 
-    public TagDTO updateTag(Long tagId, TagDTO tagDTO) {
-        Tag tag = tagRepository.findById(tagId).orElseThrow();
+    @Transactional
+    public TagResponseDTO updateTag(Long goalId, Long tagId, TagRequestDTO tagDTO) {
+        Tag tag = tagRepository.findByIdAndGoalId(tagId, goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag not found with id: " + tagId));
 
-        tag.setName(tagDTO.getName());
+        tag.setName(tagDTO.getName().trim());
         Tag updatedTag = tagRepository.save(tag);
-        return modelMapper.map(updatedTag, TagDTO.class);
+
+        return modelMapper.map(updatedTag, TagResponseDTO.class);
     }
-    public void deleteTag(Long tagId) {
-        Tag tag = tagRepository.findById(tagId).orElseThrow();
-        tagRepository.delete(tag);
+
+    @Transactional
+    public void removeTagFromGoal(Long goalId, Long tagId) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        Tag tag = tagRepository.findByIdAndGoalId(tagId, goalId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tag not found with id: " + tagId + " for goal: " + goalId));
+
+        tag.removeGoal(goal);
+        goal.removeTag(tag);
+
+        tagRepository.save(tag);
     }
 }
