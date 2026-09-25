@@ -36,7 +36,7 @@ public interface TrackingLinkRepository extends JpaRepository<TrackingLink, Long
 
     @Query("SELECT t FROM TrackingLink t WHERE " +
             "(t.requester.id = :userId OR t.receiver.id = :userId)" +
-            "AND t.status=:status")
+            " AND t.status=:status")
     List<TrackingLink> findLinksByUserIdAndStatus(
             @Param("userId") Long userId,
             @Param("status") TrackingStatus status);

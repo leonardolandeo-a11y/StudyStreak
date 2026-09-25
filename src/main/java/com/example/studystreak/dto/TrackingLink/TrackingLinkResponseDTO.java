@@ -6,8 +6,12 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TrackingLinkDTO {
+public class TrackingLinkResponseDTO {
+
+    private Long id;
+    private Long requesterId;
+    private Long receiverId;
     private TrackingStatus status;
 
-    protected TrackingLinkDTO(){}
+    public TrackingLinkResponseDTO() {}
 }
