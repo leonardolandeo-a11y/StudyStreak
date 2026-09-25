@@ -166,24 +166,18 @@ public class TrackingLinkService {
     private TrackingLinkResponseDTO toResponse(
             TrackingLink trackingLink
     ) {
-
         TrackingLinkResponseDTO response =
                 new TrackingLinkResponseDTO();
-
         response.setId(trackingLink.getId());
-
         response.setRequesterId(
                 trackingLink.getRequester().getId()
         );
-
         response.setReceiverId(
                 trackingLink.getReceiver().getId()
         );
-
         response.setStatus(
                 trackingLink.getStatus()
         );
-
         return response;
     }
 }

@@ -13,64 +13,71 @@ import java.util.List;
 @RestController
 @RequestMapping("/users/{userId}/notifications")
 public class NotificationController {
+
     private final NotificationService notificationService;
-    //inyeccion
+
     public NotificationController(NotificationService notificationService) {
+
         this.notificationService = notificationService;
     }
-    /*
-    funcion auxiliar para validar usuarios (seria bueno modificar laa estructura de los endpoints para
-    no depender de estas cosas)
-     */
+
     private void validateUserAccess(Long pathUserId, Long headerUserId) {
-        if (!pathUserId.equals(headerUserId)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
-        //implementar despues
+
+        if (!pathUserId.equals(headerUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
+        }
     }
 
-    //get
     @GetMapping
-    public ResponseEntity<List<NotificationDTO>> getUserNotifications(@PathVariable Long userId ,
-                                                                      @RequestHeader("X-User-Id") Long currentUserId) {
+    public ResponseEntity<List<NotificationDTO>>
+    getUserNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId) {
         validateUserAccess(userId, currentUserId);
-        List<NotificationDTO> userNotifications = notificationService.getNotificationByUserId(userId);
-        return ResponseEntity.ok(userNotifications);
+
+        return ResponseEntity.ok(
+                notificationService.getNotificationByUserId(userId)
+        );
     }
+
     @GetMapping("/unread")
-    public ResponseEntity<List<NotificationDTO>> getUnReadNotifications(@PathVariable Long userId ,
-                                                                        @RequestHeader("X-User-Id") Long currentUserId) {
+    public ResponseEntity<List<NotificationDTO>>
+    getUnreadNotifications(@PathVariable Long userId, @RequestHeader("X-User-Id") Long currentUserId) {
+
         validateUserAccess(userId, currentUserId);
-        List<NotificationDTO> userNotifications = notificationService.getUnreadNotificationsByUserId(userId);
-        return ResponseEntity.ok(userNotifications);
+
+        return ResponseEntity.ok(
+                notificationService.getUnreadNotificationsByUserId(userId)
+        );
     }
+
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<NotificationDTO>> getTypeNotifications(@PathVariable NotificationType type, @PathVariable Long userId ,
-                                                                      @RequestHeader("X-User-Id") Long currentUserId) {
-        validateUserAccess(userId,currentUserId);
-        List<NotificationDTO> userNotifications = notificationService.getNotificationsByTypeAndUserId(userId,type);
-        return ResponseEntity.ok(userNotifications);
-    }
-    //post
-    @PostMapping
-    public ResponseEntity<NotificationDTO> createNotification(@RequestBody NotificationDTO notificationDTO,
-                                                              @PathVariable Long userId,
-                                                              @RequestHeader("X-User-Id") Long currentUserId) {
+    public ResponseEntity<List<NotificationDTO>>
+    getNotificationsByType(@PathVariable Long userId, @PathVariable NotificationType type,
+            @RequestHeader("X-User-Id") Long currentUserId) {
+
         validateUserAccess(userId, currentUserId);
-        NotificationDTO SavedNotification = notificationService.createdNotification(userId,notificationDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(SavedNotification);
+
+        return ResponseEntity.ok(notificationService.getNotificationsByTypeAndUserId(userId, type)
+        );
     }
-    //patch
+
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<NotificationDTO>  markNotificationAsRead(@PathVariable Long notificationId,@PathVariable Long userId ,
-                                                                   @RequestHeader("X-User-Id") Long currentUserId) {
-        validateUserAccess(userId,currentUserId);
-        NotificationDTO ReadNotification = notificationService.markAsRead(notificationId, userId);
-        return ResponseEntity.ok(ReadNotification);
+    public ResponseEntity<NotificationDTO>
+    markNotificationAsRead(@PathVariable Long userId, @PathVariable Long notificationId,
+            @RequestHeader("X-User-Id") Long currentUserId) {
+
+        validateUserAccess(userId, currentUserId);
+
+        return ResponseEntity.ok(notificationService.markAsRead(notificationId, userId)
+        );
     }
+
     @DeleteMapping("/{notificationId}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId, @PathVariable Long userId,
-                                                              @RequestHeader("X-User-Id") Long currentUserId) {
-        validateUserAccess(userId,currentUserId);
-        notificationService.deleteNotification(notificationId, userId); //despues lo corrijo
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long userId, @PathVariable Long notificationId,
+            @RequestHeader("X-User-Id") Long currentUserId
+    ) {
+        validateUserAccess(userId, currentUserId);
+
+        notificationService.deleteNotification(notificationId, userId);
+        return ResponseEntity.noContent().build();
     }
 }
