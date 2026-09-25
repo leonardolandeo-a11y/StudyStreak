@@ -3,7 +3,7 @@ package com.example.studystreak.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -30,10 +30,16 @@ public class Goal {
     private Streak streak;
 
     @ManyToMany(mappedBy = "goals")
-    private List<Tag> tags;
+    private List<Tag> tags = new ArrayList<>();
 
     protected Goal(){}
-    public void pushTags(Tag tag) {
+    public void addTag(Tag tag) {
+        if (!tags.contains(tag)) {
         tags.add(tag);
+        }
+    }
+
+    public void removeTag(Tag tag) {
+        tags.remove(tag);
     }
 }

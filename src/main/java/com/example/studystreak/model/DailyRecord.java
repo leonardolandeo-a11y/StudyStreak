@@ -8,13 +8,21 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Entity
-@Table(name = "daily_record")
+@Table(name = "daily_record",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_daily_record_goal_date",
+                        columnNames = {"goal_id", "date"}
+                )
+        }
+)
 public class DailyRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-
+    @Column(nullable = false)
     private LocalDate date;
+
     private String note;
     private String evidence;
 

@@ -7,9 +7,12 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class DailyRecordDTO {
+public class DailyRecordResponseDTO {
+
+    private Long id;
     private LocalDate date;
     private String note;
     private String evidence;
-    protected DailyRecordDTO(){}
+
+    public DailyRecordResponseDTO() {}
 }

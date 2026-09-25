@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -22,14 +24,19 @@ public class Tag {
             joinColumns = @JoinColumn(name = "tag_id"),
             inverseJoinColumns = @JoinColumn(name = "goal_id")
     )
-    private List<Goal> goals;
+    private List<Goal> goals = new ArrayList<>();
     protected Tag(){}
 
-    public Tag(String name, List<Goal> goals) {
+    public Tag(String name) {
         this.name = name;
-        this.goals = goals;
     }
-    public void pushGoals(Goal goal) {
+    public void addGoal(Goal goal) {
+        if (!goals.contains((goal))) {
         goals.add(goal);
+        }
+    }
+
+    public void removeGoal(Goal goal) {
+        goals.remove(goal);
     }
 }

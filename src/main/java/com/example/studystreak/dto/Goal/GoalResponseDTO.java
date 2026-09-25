@@ -5,9 +5,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GoalDTO {
+public class GoalResponseDTO {
+
+    private Long id;
     private String topic;
     private Integer frequency;
     private Integer duration;
-    protected GoalDTO(){}
+
+    public GoalResponseDTO() {
+    }
 }
