@@ -9,13 +9,11 @@ Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma
 
 **Integrantes:**
 
-- [Jared Eloy Daniel Chala Lastra](mailto:jared.chala@utec.edu.pe) — **202520040**
-- [Leonard Alexander Landeo Huatay](mailto:leonardo.landeo@utec.edu.pe) — **202520151**
 - [Fabricio Nick Tumialan Maihua](mailto:fabricio.tumialan@utec.edu.pe) — **202520045**
+- [Leonard Alexander Landeo Huatay](mailto:leonardo.landeo@utec.edu.pe) — **202520151**
+- [Jared Eloy Daniel Chala Lastra](mailto:jared.chala@utec.edu.pe) — **202520040**
 
-**Backend desplegado:** `[AWS_BACKEND_URL]`
-
-> Antes del merge final, verificar rutas, formato definitivo de errores y cambios finales de seguridad contra `main`.
+**Backend desplegado:** `Pendiente`
 
 ---
 
@@ -43,24 +41,13 @@ Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma
 
 ### Contexto
 
-StudyStreak es una aplicación backend orientada a ayudar a estudiantes a mantener hábitos de estudio constantes. El sistema combina metas personales, registro de progreso diario, seguimiento entre usuarios, validación de actividades, cálculo de rachas, notificaciones y autenticación segura dentro de una API REST.
+StudyStreak es una aplicación backend orientada a ayudar a estudiantes a mantener hábitos de estudio constantes. Integra metas personales, registro de progreso diario, seguimiento entre usuarios, validación de actividades, cálculo de rachas, notificaciones y autenticación segura dentro de una API REST.
 
-El proyecto fue desarrollado como parte del curso **CS 2031 – Desarrollo Basado en Plataforma**. El backend utiliza Spring Boot y PostgreSQL, sigue una arquitectura por capas y emplea Spring Security con JWT. También utiliza eventos de aplicación y procesamiento asíncrono para desacoplar tareas secundarias del flujo principal.
+El proyecto fue desarrollado con Spring Boot y PostgreSQL siguiendo una arquitectura por capas. Spring Security y JWT protegen los recursos privados, mientras que eventos de aplicación y listeners asíncronos desacoplan tareas secundarias como notificaciones y correo electrónico.
 
 ### Objetivos del proyecto
 
-El objetivo general es desarrollar un backend seguro y estructurado para gestionar metas de estudio, registrar progreso, validar actividades y mantener seguimiento entre usuarios.
-
-Objetivos específicos:
-
-- permitir registro, login y autenticación con JWT;
-- proteger contraseñas con BCrypt;
-- crear metas, registros diarios y tags;
-- gestionar relaciones de seguimiento y validaciones;
-- calcular rachas y generar notificaciones;
-- integrar correo y procesamiento asíncrono;
-- persistir datos en PostgreSQL;
-- facilitar ejecución con Docker y despliegue en AWS.
+El objetivo general es desarrollar un backend seguro y estructurado para gestionar metas de estudio y convertir el progreso diario en información verificable. Los objetivos específicos son permitir registro y login, proteger contraseñas con BCrypt, administrar metas y registros diarios, organizar metas mediante tags, gestionar relaciones de seguimiento, validar progreso, calcular rachas, generar notificaciones, integrar correo, persistir información en PostgreSQL y facilitar ejecución con Docker y despliegue en AWS.
 
 ---
 
@@ -68,79 +55,59 @@ Objetivos específicos:
 
 ### Descripción del problema
 
-Muchos estudiantes establecen metas académicas, pero tienen dificultades para mantener constancia. El progreso suele registrarse de forma informal y no siempre existe una forma clara de visualizar continuidad, comprobar avances o compartir responsabilidad con otra persona.
+Muchos estudiantes definen metas académicas, pero tienen dificultades para mantener constancia. El progreso suele registrarse de forma informal y no siempre existe una forma clara de visualizar continuidad, comprobar avances o compartir responsabilidad con otra persona.
 
-StudyStreak busca resolver este problema permitiendo crear metas, registrar actividad diaria y establecer relaciones de seguimiento. Los registros pueden ser validados y, a partir de ellos, se calcula una racha que representa la continuidad del hábito.
+StudyStreak aborda este problema mediante metas, registros diarios y relaciones de seguimiento. Los registros pueden ser validados por usuarios autorizados y utilizarse para calcular una racha que representa la continuidad del hábito.
 
 ### Justificación
 
-Resolver este problema es relevante porque la constancia es un componente importante de los hábitos de estudio. StudyStreak convierte el progreso diario en información estructurada y verificable y agrega un componente de responsabilidad compartida.
-
-Además, el proyecto permite aplicar conceptos del curso como persistencia, DTOs, APIs REST, seguridad, eventos, Docker y despliegue en la nube.
+La constancia es un componente importante de los hábitos de estudio. StudyStreak convierte el progreso diario en información estructurada y verificable y agrega un componente de responsabilidad compartida. Técnicamente, el proyecto permite aplicar persistencia relacional, DTOs, APIs REST, seguridad, eventos, asincronía, contenedores y despliegue en la nube.
 
 ---
 
 ## Descripción de la solución
 
-StudyStreak expone una API REST desarrollada con Spring Boot. Los clientes se autentican con JWT y acceden a recursos protegidos mediante Bearer Token.
+El flujo principal es:
 
 ```text
-Registro
-   ↓
-Login y JWT
-   ↓
-Goal
-   ↓
-DailyRecord
-   ↓
-TrackingLink
-   ↓
-Validation
-   ↓
-Streak
-   ↓
-Notifications
+Registro → Login → JWT → Goal → DailyRecord → TrackingLink
+→ Validation → Streak → Notifications
 ```
 
-Los controllers delegan en services, donde se aplican reglas de negocio, ownership y transacciones. Los repositories gestionan PostgreSQL mediante Spring Data JPA y los DTOs separan la API de las entidades persistentes.
+Los controllers reciben las peticiones y delegan en services. Los services aplican reglas de negocio, ownership y transacciones. Los repositories administran PostgreSQL mediante Spring Data JPA y los DTOs separan el contrato externo de las entidades persistentes.
 
 ### Funcionalidades implementadas
 
-- **Usuarios y autenticación:** registro, login y acceso con JWT.
-- **Goals:** administración de metas.
-- **DailyRecords:** progreso diario sin duplicados por meta y fecha.
-- **Tags:** clasificación de metas.
+- **Usuarios y autenticación:** registro, login, access token y refresh token.
+- **Goals:** creación, consulta, actualización y eliminación de metas.
+- **DailyRecords:** progreso diario con restricción de duplicados por meta y fecha.
+- **Tags:** clasificación de metas mediante relación muchos a muchos.
 - **TrackingLinks:** seguimiento entre usuarios con estados `PENDING`, `ACCEPTED` y `REJECTED`.
-- **Validations:** aprobación de registros por usuarios autorizados.
+- **Validations:** aprobación o rechazo de registros por usuarios autorizados.
 - **Streaks:** cálculo de racha actual y mejor racha.
-- **Notifications:** avisos asociados a eventos relevantes.
+- **Notifications:** avisos generados a partir de eventos del dominio.
 
 ---
 
 ## Tecnologías utilizadas
 
-- Java 21
-- Spring Boot y Spring Web
+- Java 21 y Maven
+- Spring Boot 4.1.1 y Spring Web
 - Spring Data JPA / Hibernate
-- Spring Security
-- JJWT
+- Spring Security y JJWT
 - Jakarta Bean Validation
 - PostgreSQL 17
-- ModelMapper
-- Lombok
-- Spring Mail / JavaMailSender
-- servicio SMTP externo
-- Maven
+- ModelMapper y Lombok
+- Spring Mail / JavaMailSender y servicio SMTP
 - Docker y Docker Compose
-- AWS EC2
-- Amazon RDS for PostgreSQL
+- AWS EC2 y Amazon RDS for PostgreSQL
 - Git y GitHub
 
 ---
 
 ## Modelo de entidades
 
-Las entidades principales son **User, Goal, DailyRecord, Tag, TrackingLink, Validation, Streak** y **Notification**.
+Las entidades persistentes principales son **User, Goal, DailyRecord, Tag, TrackingLink, Validation, Streak** y **Notification**.
 
 ### Diagrama Entidad-Relación
 
@@ -151,11 +118,9 @@ erDiagram
     USER ||--o{ NOTIFICATION : receives
     USER ||--o{ TRACKING_LINK : requester
     USER ||--o{ TRACKING_LINK : receiver
-
     GOAL ||--o{ DAILY_RECORD : contains
     GOAL ||--o| STREAK : has
     GOAL }o--o{ TAG : classified_with
-
     DAILY_RECORD ||--o| VALIDATION : has
 ```
 
@@ -163,16 +128,16 @@ erDiagram
 
 | Entidad | Atributos principales | Relaciones |
 |---|---|---|
-| `User` | `id`, `username`, `email`, `password`, `active`, `timeZone`, `role` | Posee Goals, recibe Notifications y participa en TrackingLinks y Validations |
-| `Goal` | `id`, `topic`, `frequency`, `duration`, `completed` | Pertenece a User, contiene DailyRecords, se relaciona con Tags y puede tener Streak |
+| `User` | `id`, `username`, `email`, `password`, `active`, `registrationDate`, `timeZone`, `role` | Posee Goals, recibe Notifications y participa en TrackingLinks y Validations |
+| `Goal` | `id`, `topic`, `frequency`, `duration`, `completed` | Pertenece a User, contiene DailyRecords, Tags y puede tener Streak |
 | `DailyRecord` | `id`, `date`, `note`, `evidence` | Pertenece a Goal y puede tener Validation |
 | `Tag` | `id`, `name` | Relación muchos a muchos con Goal |
-| `TrackingLink` | `id`, `status` | Relaciona requester y receiver |
+| `TrackingLink` | `id`, `requester`, `receiver`, `status` | Relaciona dos Users |
 | `Validation` | `id`, `approved`, `comment` | Pertenece a DailyRecord y es realizada por User |
 | `Streak` | `id`, `currentStreak`, `bestStreak`, `lastUpdateDate` | Pertenece a Goal |
 | `Notification` | `id`, `message`, `read`, `createdAt`, `type` | Pertenece a User |
 
-`Goal` puede existir sin `Streak`, pero como máximo tiene uno. `DailyRecord` puede tener cero o una `Validation`.
+Existen restricciones para username y email únicos, un DailyRecord por meta y fecha, un Streak por Goal y una Validation por DailyRecord.
 
 ### Arquitectura general
 
@@ -193,74 +158,71 @@ flowchart TD
 
 ## Manejo de errores
 
-El backend centraliza excepciones mediante `@RestControllerAdvice`, manteniendo códigos HTTP consistentes entre controllers.
+El backend centraliza excepciones mediante `@RestControllerAdvice`. El formato común es:
 
-- `400 Bad Request`: request inválido o mal formado.
-- `401 Unauthorized`: fallo de autenticación.
-- `403 Forbidden`: usuario sin permisos sobre el recurso.
-- `404 Not Found`: recurso inexistente.
-- `409 Conflict`: conflicto con el estado actual.
-- `500 Internal Server Error`: fallo inesperado.
+```json
+{
+  "timestamp": "2026-09-25T00:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Descripción del error",
+  "path": "/ruta"
+}
+```
 
-Entre las excepciones del dominio se encuentran `ResourceNotFoundException`, `ConflictException` y `ForbiddenException`. El manejo global evita exponer detalles internos y unifica las respuestas.
+Se manejan `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict` y `500 Internal Server Error`. Además de `ResourceNotFoundException`, `ConflictException` y `ForbiddenException`, el handler procesa `BadCredentialsException`, `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `IllegalArgumentException` y errores inesperados. Spring Security utiliza el mismo `ErrorResponseDTO` para respuestas 401 y 403.
 
-<!-- SINCRONIZACIÓN FINAL: verificar el formato definitivo del ErrorResponseDTO. -->
+El registro comprueba username y email duplicados antes de persistirlos, por lo que dichos conflictos se transforman en `409 Conflict` en lugar de errores internos.
 
 ---
 
 ## Medidas de seguridad implementadas
 
-### Seguridad de datos
+### Autenticación y autorización
 
-Las contraseñas se codifican con `BCryptPasswordEncoder`. Después del login se genera un JWT firmado que incluye username como subject y claims como `userId`, `email` y `role`.
+Las contraseñas se almacenan con `BCryptPasswordEncoder`. El registro valida username, email, zona horaria y una contraseña de 8 a 72 caracteres que debe contener mayúscula, minúscula y número.
 
-El filtro JWT obtiene `Authorization: Bearer <token>`, valida el token y establece al usuario en `SecurityContext`.
+`POST /login` devuelve un **access token** y un **refresh token**. Ambos JWT incluyen `userId`, `email`, `role` y un claim `type`; el access token usa `type=access` y el refresh token `type=refresh`. `POST /refresh` valida el refresh token y emite un nuevo par de tokens. La firma y los tiempos de expiración se configuran mediante variables de entorno.
 
-Secretos y credenciales se configuran mediante variables de entorno. Los roles `USER` y `ADMIN` y las reglas de ownership limitan el acceso.
+`JwtRequestFilter` valida el Bearer Token, comprueba que sea de tipo access, verifica su expiración y rol y establece la identidad en `SecurityContext`. Los services aplican ownership para impedir acceso a recursos ajenos.
+
+La aplicación define roles `USER` y `ADMIN`. `@EnableMethodSecurity` habilita seguridad por método; `DELETE /users/{userId}` y `POST /api/goals/{goalId}/streak/recalculate` están restringidos con `@PreAuthorize("hasRole('ADMIN')")`.
 
 ### Prevención de vulnerabilidades
 
-- **Inyección SQL:** Spring Data JPA evita construir consultas SQL concatenando directamente la entrada del usuario.
-- **CSRF:** está deshabilitado porque la API utiliza autenticación stateless con Bearer Token y no sesiones basadas en cookies.
-- **XSS:** el backend responde principalmente JSON y no renderiza HTML con entrada del usuario; un frontend futuro debe escapar contenido dinámico.
-- **Control de acceso:** la identidad proviene de `SecurityContext`, no de un `X-User-Id` confiado al cliente.
-- **CORS:** Spring Security controla los orígenes y métodos permitidos.
-
-<!-- SINCRONIZACIÓN FINAL: confirmar refresh token y @PreAuthorize después del issue final de seguridad. -->
+- **Inyección SQL:** acceso mediante Spring Data JPA y consultas parametrizadas.
+- **CSRF:** deshabilitado porque la API es stateless y usa Bearer Token.
+- **XSS:** el backend responde principalmente JSON y no renderiza HTML con entrada del usuario.
+- **CORS:** permite orígenes locales `http://localhost:*` y métodos HTTP configurados.
+- **Secretos:** JWT, base de datos y SMTP se suministran mediante variables de entorno y `.env` no debe versionarse.
 
 ---
 
 ## Eventos y asincronía
 
-La aplicación utiliza eventos para desacoplar procesos secundarios de la lógica principal. Entre los casos implementados se encuentran registro de usuario, finalización de meta, creación de `TrackingLink`, respuesta a invitaciones y finalización de relaciones de seguimiento.
+La aplicación publica eventos para desacoplar procesos secundarios. Existen casos para registro de usuario, finalización de meta, solicitud de TrackingLink, respuesta a la invitación y finalización de la relación de seguimiento.
 
-Los eventos reducen el acoplamiento entre servicios. Los listeners usan `@TransactionalEventListener` con fase `AFTER_COMMIT`, por lo que se ejecutan tras una transacción exitosa.
+Los listeners usan `@TransactionalEventListener(phase = AFTER_COMMIT)` para reaccionar únicamente después de una transacción exitosa. La asincronía se habilita mediante `@EnableAsync` y `ThreadPoolTaskExecutor`, evitando que tareas como correo y notificaciones bloqueen la respuesta HTTP principal.
 
-La asincronía se habilita con `@EnableAsync` y `ThreadPoolTaskExecutor`; correo y notificaciones se procesan sin bloquear la respuesta HTTP principal.
-
-### Servicio de correo
-
-El servicio utiliza `JavaMailSender`. Después del registro se publica un evento y un listener asíncrono envía un correo de bienvenida. Las credenciales SMTP se configuran mediante variables de entorno.
+El servicio de correo usa `JavaMailSender`; después del registro, un listener asíncrono envía un correo de bienvenida usando configuración SMTP externa.
 
 ---
 
 ## Endpoints principales
 
-| Dominio | Ruta principal |
+| Dominio | Endpoints principales |
 |---|---|
-| Autenticación | `POST /register`, `POST /login` |
-| Usuarios | `/users/{userId}` |
-| Goals | `/users/{userId}/goals` |
-| Tags | `/users/{userId}/goals/{goalId}/tags` |
-| DailyRecords | `/api/goals/{goalId}/daily-records` |
-| TrackingLinks | `/api/tracking-links` |
-| Validations | `/api/goals/{goalId}/daily-records/{dailyRecordId}/validation` |
-| Streak | `/api/goals/{goalId}/streak` |
-| Notifications | `/users/{userId}/notifications` |
+| Autenticación | `POST /register`, `POST /login`, `POST /refresh` |
+| Usuarios | `GET/PATCH /users/{userId}`, `DELETE /users/{userId}` *(ADMIN)* |
+| Goals | `GET/POST /users/{userId}/goals`, `GET/PUT/DELETE /users/{userId}/goals/{goalId}` |
+| Tags | `GET/POST /users/{userId}/goals/{goalId}/tags`, `GET/PATCH/DELETE .../{tagId}` |
+| DailyRecords | `GET/POST /api/goals/{goalId}/daily-records`, `GET/PUT/DELETE .../{dailyRecordId}` |
+| TrackingLinks | `POST /api/tracking-links/{receiverId}`, `GET /api/tracking-links`, `/pending`, `/active`, `/with/{otherUserId}`, `PATCH .../{trackingId}/status`, `DELETE .../{trackingId}` |
+| Validations | `POST/GET/PUT /api/goals/{goalId}/daily-records/{dailyRecordId}/validation` |
+| Streak | `GET /api/goals/{goalId}/streak`, `POST .../recalculate` *(ADMIN)* |
+| Notifications | `GET /users/{userId}/notifications`, `/unread`, `/type/{type}`, `PATCH .../{notificationId}/read`, `DELETE .../{notificationId}` |
 
-Los endpoints protegidos requieren un Bearer Token válido. Los listados que utilizan `Pageable` soportan paginación.
-
-<!-- SINCRONIZACIÓN FINAL: comparar rutas con los controllers definitivos antes del merge. -->
+Los endpoints protegidos requieren `Authorization: Bearer <access-token>`. Los listados que reciben `Pageable` soportan paginación.
 
 ---
 
@@ -274,37 +236,28 @@ cd StudyStreak
 cp .env.example .env
 ```
 
-Variables principales:
-
-| Variable | Propósito |
-|---|---|
-| `POSTGRES_DB` | Nombre de la base de datos |
-| `POSTGRES_USER` | Usuario PostgreSQL |
-| `POSTGRES_PASSWORD` | Contraseña PostgreSQL |
-| `POSTGRES_PORT` | Puerto PostgreSQL |
-| `APP_PORT` | Puerto de la aplicación |
-| `SPRING_DATASOURCE_URL` | URL JDBC |
-| `SPRING_DATASOURCE_USERNAME` | Usuario datasource |
-| `SPRING_DATASOURCE_PASSWORD` | Contraseña datasource |
-| `JWT_SECRET` | Clave de firma JWT |
-| `JWT_EXPIRATION` | Expiración JWT |
-| `MAIL_HOST` | Servidor SMTP |
-| `MAIL_PORT` | Puerto SMTP |
-| `MAIL_USERNAME` | Usuario SMTP |
-| `MAIL_PASSWORD` | Contraseña SMTP |
-
-Nunca deben subirse `.env`, contraseñas, API keys o secretos JWT.
+Variables principales: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `APP_PORT`, `JWT_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME` y `MAIL_PASSWORD`. Al ejecutar Spring fuera de Docker también pueden definirse `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
 
 ```bash
+set -a
+source .env
+set +a
 ./mvnw spring-boot:run
+```
+
+Las pruebas automatizadas se ejecutan con:
+
+```bash
 ./mvnw clean test
 ```
+
+La versión revisada contiene **8 tests** que cubren carga del contexto, JWT access/refresh, separación entre refresh y access token, ownership de DailyRecords y respuestas 403/404/409 del manejador global.
 
 ---
 
 ## Docker y PostgreSQL
 
-El proyecto utiliza un `Dockerfile` multi-stage con Java 21. Docker Compose permite levantar PostgreSQL 17 y el backend de StudyStreak, manteniendo un volumen persistente para la base de datos.
+Docker Compose levanta PostgreSQL 17 y el backend. La aplicación recibe por variables de entorno la URL JDBC, credenciales, configuración JWT —incluida la expiración del refresh token— y configuración SMTP. PostgreSQL utiliza un volumen persistente.
 
 ```bash
 docker compose up --build
@@ -314,7 +267,7 @@ docker compose up --build
 
 ## Despliegue en AWS
 
-La arquitectura de producción utiliza **Amazon EC2** para ejecutar el backend y **Amazon RDS for PostgreSQL** para persistencia.
+La arquitectura prevista utiliza **Amazon EC2** para el backend y **Amazon RDS for PostgreSQL** para persistencia.
 
 ```mermaid
 flowchart LR
@@ -324,7 +277,7 @@ flowchart LR
     EC2 --> SMTP[Servicio SMTP]
 ```
 
-Las configuraciones sensibles se proporcionan mediante variables de entorno y los Security Groups controlan el acceso entre tráfico público, EC2 y RDS.
+Los valores sensibles se proporcionan mediante variables de entorno y los Security Groups controlan el acceso entre cliente, EC2 y RDS.
 
 **URL pública:** `[AWS_BACKEND_URL]`
 
@@ -332,20 +285,18 @@ Las configuraciones sensibles se proporcionan mediante variables de entorno y lo
 
 ## GitHub & Management
 
-El equipo organizó el desarrollo mediante **GitHub Issues**, ramas por tarea y Pull Requests. Los issues fueron asignados a integrantes para distribuir responsabilidades.
-
-El flujo utilizado fue:
+El trabajo se organizó mediante **GitHub Issues**, ramas por tarea y Pull Requests. Los issues fueron asignados a integrantes y cada cambio se implementó en una rama independiente antes de revisión y merge a `main`.
 
 ```text
-Crear Issue → asignar responsable → crear rama → implementar y probar
-→ commit y push → Pull Request → revisión → merge a main
+Issue → responsable → rama → implementación y pruebas → commit/push
+→ Pull Request → revisión → merge a main
 ```
 
-Antes del merge se realizaron verificaciones locales con Maven y pruebas manuales de la API.
+La verificación final del backend incluyó pruebas Maven, construcción de imagen Docker, revisión de Docker Compose y pruebas funcionales del flujo registro → login → Goal → DailyRecord → TrackingLink → Validation → Streak.
 
 ### GitHub Actions
 
-Al momento de redactar este informe no se documenta un workflow de GitHub Actions implementado en el proyecto. Por ello, no se afirma la existencia de CI automático. Si se incorpora antes de la entrega, esta sección deberá actualizarse con el workflow final.
+La versión revisada del repositorio no contiene workflows en `.github/workflows`, por lo que no se afirma que exista CI automatizado con GitHub Actions. El flujo utilizado se basa en validación local y Pull Requests.
 
 ---
 
@@ -353,15 +304,15 @@ Al momento de redactar este informe no se documenta un workflow de GitHub Action
 
 ### Logros del proyecto
 
-StudyStreak integra autenticación, persistencia, metas, progreso diario, seguimiento, validaciones, rachas, notificaciones y asincronía. La solución permite registrar continuidad y compartir seguimiento de forma estructurada.
+StudyStreak integra autenticación y autorización, persistencia, metas, progreso diario, seguimiento entre usuarios, validaciones, rachas, notificaciones, correo y asincronía. La solución permite registrar continuidad y compartir seguimiento dentro de una API segura.
 
 ### Aprendizajes clave
 
-El proyecto permitió aplicar diseño de entidades, JPA, DTOs, arquitectura por capas, autenticación JWT, ownership, manejo global de errores, eventos, asincronía, correo, Docker, PostgreSQL, AWS y colaboración mediante Issues y Pull Requests.
+El proyecto permitió aplicar modelado relacional, JPA, DTOs, arquitectura por capas, JWT con access/refresh tokens, ownership, manejo global de errores, eventos transaccionales, asincronía, PostgreSQL, Docker, AWS y trabajo colaborativo con GitHub.
 
 ### Trabajo futuro
 
-Como mejoras se propone desarrollar un frontend completo, ampliar estadísticas, agregar recordatorios configurables, aumentar las pruebas automatizadas, añadir Swagger/OpenAPI, implementar logging estructurado, automatizar CI/CD y mejorar las plantillas de correo.
+Como mejoras se propone desarrollar un frontend, ampliar estadísticas, agregar recordatorios, aumentar cobertura de pruebas, añadir Swagger/OpenAPI, incorporar logging estructurado, automatizar CI/CD y mejorar las plantillas de correo.
 
 ---
 
@@ -369,16 +320,11 @@ Como mejoras se propone desarrollar un frontend completo, ampliar estadísticas,
 
 ### Licencia
 
-`[LICENCIA A DEFINIR POR EL EQUIPO]`
+Este proyecto se distribuye bajo la licencia MIT.
 
 ### Referencias
 
-- Documentación oficial de Spring Boot
-- Documentación oficial de Spring Security
-- Documentación oficial de Spring Data JPA
-- Documentación oficial de PostgreSQL
-- Documentación de Jakarta Bean Validation
-- Documentación de JJWT
-- Documentación oficial de Docker
-- Documentación de Amazon EC2
-- Documentación de Amazon RDS
+- Documentación oficial de Spring Boot, Spring Security y Spring Data JPA
+- Documentación oficial de PostgreSQL y Docker
+- Documentación de Jakarta Bean Validation y JJWT
+- Documentación de Amazon EC2 y Amazon RDS
