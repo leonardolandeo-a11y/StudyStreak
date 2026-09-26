@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class NotificationService {
@@ -93,7 +91,7 @@ public class NotificationService {
     @Transactional
     public NotificationDTO createGoalCompletedNotification(Long userId, Long goalId) {
 
-        String message = "¡Felicidades! Has completado la meta con id: " + goalId;
+        String message = "Â¡Felicidades! Has completado la meta con id: " + goalId;
 
         return createNotification(userId, message, NotificationType.GOAL_COMPLETED);
     }
