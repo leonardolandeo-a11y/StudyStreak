@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> unauthorizedHandler(BadCredentialsException ex, HttpServletRequest request) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password", request);
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

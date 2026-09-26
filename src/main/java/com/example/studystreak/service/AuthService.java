@@ -13,6 +13,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+
     public AuthService(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder){
         this.userRepository = userRepository;
         this.jwtService = jwtService;
@@ -22,12 +23,39 @@ public class AuthService {
     public LoginResponseDTO login(LoginRequestDTO loginRequestDTO){
         User user = userRepository.findByUsername(loginRequestDTO.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
-        // Exception (Not implemented yet)
+
         // matches (raw_password, encoded_password)
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(),user.getPassword())){  // Compare the passwords
             throw new BadCredentialsException("Invalid username or password");
         }
-        String token  = jwtService.generateToken(user); // Create the token with respect the username
-        return new LoginResponseDTO(token);   // Return the LoginResponseDTO token
+
+        String token = jwtService.generateToken(user); // Create the access token
+        String refreshToken = jwtService.generateRefreshToken(user); // Create the refresh token
+
+        return new LoginResponseDTO(token, refreshToken);
+    }
+
+    public LoginResponseDTO refresh(String refreshToken){
+
+        try {
+            String username = jwtService.extractUsername(refreshToken);
+
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+
+            if (!jwtService.isRefreshTokenValid(refreshToken, user.getUsername())) {
+                throw new BadCredentialsException("Invalid refresh token");
+            }
+
+            String token = jwtService.generateToken(user);
+            String newRefreshToken = jwtService.generateRefreshToken(user);
+
+            return new LoginResponseDTO(token, newRefreshToken);
+
+        } catch (BadCredentialsException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new BadCredentialsException("Invalid refresh token");
+        }
     }
 }
