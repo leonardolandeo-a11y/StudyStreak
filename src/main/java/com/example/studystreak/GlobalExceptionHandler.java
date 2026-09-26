@@ -12,6 +12,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.stream.Collectors;
 
@@ -31,6 +32,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponseDTO> forbiddenHandler(ForbiddenException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> accessDeniedHandler(AccessDeniedException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", request);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
