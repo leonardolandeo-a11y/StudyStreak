@@ -2,6 +2,7 @@ package com.example.studystreak.controller;
 
 import com.example.studystreak.dto.Auth.LoginRequestDTO;
 import com.example.studystreak.dto.Auth.LoginResponseDTO;
+import com.example.studystreak.dto.Auth.RefreshTokenRequestDTO;
 import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.service.AuthService;
@@ -18,10 +19,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+
     public AuthController(AuthService authService,UserService userService){
         this.authService = authService;
         this.userService = userService;
     }
+
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserRequestDTO request) {
 
@@ -31,9 +34,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login( @Valid @RequestBody LoginRequestDTO loginRequestDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
 
         LoginResponseDTO response = authService.login(loginRequestDTO);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponseDTO> refresh(@Valid @RequestBody RefreshTokenRequestDTO request) {
+
+        LoginResponseDTO response = authService.refresh(request.getRefreshToken());
 
         return ResponseEntity.ok(response);
     }

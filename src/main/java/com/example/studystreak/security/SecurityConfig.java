@@ -61,10 +61,10 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/login", "/register")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
+                        .requestMatchers("/login", "/register", "/refresh")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
                 )
                 .addFilterBefore(
                         jwtRequestFilter,
@@ -120,4 +120,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
