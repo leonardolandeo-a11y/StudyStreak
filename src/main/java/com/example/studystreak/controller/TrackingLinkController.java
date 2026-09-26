@@ -4,6 +4,7 @@ import com.example.studystreak.dto.TrackingLink.TrackingLinkResponseDTO;
 import com.example.studystreak.dto.TrackingLink.TrackingLinkStatusRequestDTO;
 import com.example.studystreak.service.CurrentUserService;
 import com.example.studystreak.service.TrackingLinkService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class TrackingLinkController {
     createTrackingLink(@PathVariable Long receiverId) {
 
         Long requesterId = currentUserService.getCurrentUserId();
-        TrackingLinkResponseDTO savedTrackingLink = trackingLinkService.createTrackingLink(requesterId,receiverId);
+        TrackingLinkResponseDTO savedTrackingLink = trackingLinkService.createTrackingLink(requesterId, receiverId);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -57,6 +58,7 @@ public class TrackingLinkController {
         );
     }
 
+    @GetMapping("/active")
     public ResponseEntity<Page<TrackingLinkResponseDTO>> getActiveTrackingLinks(Pageable pageable) {
 
         Long userId = currentUserService.getCurrentUserId();
@@ -77,7 +79,7 @@ public class TrackingLinkController {
 
     @PatchMapping("/{trackingId}/status")
     public ResponseEntity<TrackingLinkResponseDTO>
-    updateTrackingStatus(@PathVariable Long trackingId, @RequestBody TrackingLinkStatusRequestDTO trackingRequest) {
+    updateTrackingStatus(@PathVariable Long trackingId, @Valid @RequestBody TrackingLinkStatusRequestDTO trackingRequest) {
 
         Long receiverId = currentUserService.getCurrentUserId();
         TrackingLinkResponseDTO updatedTrackingLink =
