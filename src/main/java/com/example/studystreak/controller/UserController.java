@@ -4,6 +4,7 @@ import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +33,7 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponseDTO> updateUserDetails(
             @PathVariable Long userId,
-            @RequestBody UserUpdateRequestDTO request
+            @Valid @RequestBody UserUpdateRequestDTO request
     ) {
         return ResponseEntity.ok(
                 userService.updateUserDetails(

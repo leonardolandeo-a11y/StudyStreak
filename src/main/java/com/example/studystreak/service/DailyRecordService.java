@@ -86,6 +86,8 @@ public class DailyRecordService {
 
     public Page<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId, Pageable pageable) {
 
+        getOwnedGoal(goalId);
+
         return dailyRecordRepository.findByGoalId(goalId, pageable)
                 .map(record -> modelMapper.map(record, DailyRecordResponseDTO.class));
     }

@@ -3,6 +3,7 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.DailyRecord.DailyRecordRequestDTO;
 import com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO;
 import com.example.studystreak.service.DailyRecordService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,7 @@ public class DailyRecordController {
 
     @PostMapping
     public ResponseEntity<DailyRecordResponseDTO> createDailyRecord(@PathVariable Long goalId,
-            @RequestBody DailyRecordRequestDTO dailyRecordRequest) {
+                                                                    @Valid @RequestBody DailyRecordRequestDTO dailyRecordRequest) {
 
         DailyRecordResponseDTO savedRecord = dailyRecordService.createDailyRecord(goalId, dailyRecordRequest);
 
@@ -50,7 +51,7 @@ public class DailyRecordController {
     @PutMapping("/{dailyRecordId}")
     public ResponseEntity<DailyRecordResponseDTO> updateDailyRecord(@PathVariable Long goalId,
                                                                     @PathVariable Long dailyRecordId,
-                                                                    @RequestBody DailyRecordRequestDTO dailyRecordRequest
+                                                                    @Valid @RequestBody DailyRecordRequestDTO dailyRecordRequest
     ) {
         return ResponseEntity.ok(dailyRecordService.updateDailyRecord(goalId, dailyRecordId, dailyRecordRequest));
     }
