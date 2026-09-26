@@ -1,11 +1,9 @@
 package com.example.studystreak.controller;
 
-import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,33 +18,25 @@ public class UserController {
         this.userService = userService;
     }
 
-
-
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long userId) {
-
-        return ResponseEntity.ok(userService.getUserById(userId));
+    public ResponseEntity<UserResponseDTO> getUser(
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(
+                userService.getUserById(userId)
+        );
     }
 
-    /*
-     * se comprobara que el usuario autenticado seael propietario de la cuenta o un administrador en el siguiente issue
-     */
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponseDTO> updateUserDetails(
             @PathVariable Long userId,
             @Valid @RequestBody UserUpdateRequestDTO request
     ) {
         return ResponseEntity.ok(
-                userService.updateUserDetails(
-                        userId,
-                        request
-                )
+                userService.updateUserDetails(userId, request)
         );
     }
 
-    /*
-    se restringira al admin en el issue de security
-     */
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(
