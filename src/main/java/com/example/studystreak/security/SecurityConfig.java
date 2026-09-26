@@ -1,18 +1,19 @@
 package com.example.studystreak.security;
 
+import com.example.studystreak.dto.ErrorResponseDTO;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,9 +24,11 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtRequestFilter jwtRequestFilter;
+    private final ObjectMapper objectMapper;
 
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter){
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter, ObjectMapper objectMapper){
         this.jwtRequestFilter = jwtRequestFilter;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -33,14 +36,10 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // HttpSecurity http -> object to configure the security
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
 
-                /*
-                 Activa la configuración CORS definida abajo.
-                 */
                 .cors(cors -> cors.configurationSource(
                         corsConfigurationSource()
                 ))
@@ -48,24 +47,44 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // NUEVO: Agregado para manejar errores 401 y403 de autenticacion/autorizacion
-                // Util para el error handling
+
                 .exceptionHandling(exceptions ->
                         exceptions
                                 .authenticationEntryPoint((request, response, authException) -> {
                                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                    objectMapper.writeValue(
+                                            response.getOutputStream(),
+                                            new ErrorResponseDTO(
+                                                    HttpStatus.UNAUTHORIZED.value(),
+                                                    HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                                                    "Authentication is required",
+                                                    request.getRequestURI()
+                                            )
+                                    );
                                 })
                                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                                    objectMapper.writeValue(
+                                            response.getOutputStream(),
+                                            new ErrorResponseDTO(
+                                                    HttpStatus.FORBIDDEN.value(),
+                                                    HttpStatus.FORBIDDEN.getReasonPhrase(),
+                                                    "Access denied",
+                                                    request.getRequestURI()
+                                            )
+                                    );
                                 })
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/login", "/register")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
+                        .requestMatchers("/login", "/register", "/refresh")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
                 )
+
                 .addFilterBefore(
                         jwtRequestFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -74,11 +93,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /*
-     Configuración de CORS:
-     - Permitimos frontends ejecutándose en localhost durante desarrollo.
-     - ej: http://localhost:8080
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
@@ -120,4 +134,3 @@ public class SecurityConfig {
         return source;
     }
 }
-

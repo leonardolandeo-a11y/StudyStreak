@@ -4,8 +4,10 @@ import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,7 +34,7 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponseDTO> updateUserDetails(
             @PathVariable Long userId,
-            @RequestBody UserUpdateRequestDTO request
+            @Valid @RequestBody UserUpdateRequestDTO request
     ) {
         return ResponseEntity.ok(
                 userService.updateUserDetails(
@@ -46,6 +48,7 @@ public class UserController {
     se restringira al admin en el issue de security
      */
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Long userId
     ) {

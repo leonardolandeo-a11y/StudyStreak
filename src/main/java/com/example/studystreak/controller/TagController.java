@@ -4,6 +4,7 @@ import com.example.studystreak.dto.Tag.TagRequestDTO;
 import com.example.studystreak.dto.Tag.TagResponseDTO;
 import com.example.studystreak.service.GoalService;
 import com.example.studystreak.service.TagService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class TagController {
     public ResponseEntity<Page<TagResponseDTO>> getGoalTags(@PathVariable Long goalId, Pageable pageable) {
         return ResponseEntity.ok(tagService.getTagsByGoalId(goalId, pageable));
     }
+
     @GetMapping("/{tagId}")
     public ResponseEntity<TagResponseDTO> getTag(@PathVariable Long goalId, @PathVariable Long tagId) {
         TagResponseDTO tagDTO = tagService.getTagById(goalId, tagId);
@@ -36,7 +38,7 @@ public class TagController {
 
     //post
     @PostMapping
-    public ResponseEntity<TagResponseDTO> createTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long userId,
+    public ResponseEntity<TagResponseDTO> createTag(@Valid @RequestBody TagRequestDTO tagDTO, @PathVariable Long userId,
                                                     @PathVariable Long goalId) {
 
         TagResponseDTO savedTag = tagService.createTag(tagDTO, goalId);
@@ -45,11 +47,11 @@ public class TagController {
 
     //put/patch
     @PatchMapping("/{tagId}")
-    public ResponseEntity<TagResponseDTO> updateTag(@RequestBody TagRequestDTO tagDTO, @PathVariable Long tagId,
-                                            @PathVariable Long goalId) {
+    public ResponseEntity<TagResponseDTO> updateTag(@Valid @RequestBody TagRequestDTO tagDTO, @PathVariable Long tagId,
+                                                    @PathVariable Long goalId) {
 
-    TagResponseDTO updateTag = tagService.updateTag(goalId,tagId,tagDTO);
-    return ResponseEntity.ok(updateTag);
+        TagResponseDTO updateTag = tagService.updateTag(goalId, tagId, tagDTO);
+        return ResponseEntity.ok(updateTag);
     }
 
     //delete
@@ -60,4 +62,3 @@ public class TagController {
         return ResponseEntity.noContent().build();
     }
 }
-

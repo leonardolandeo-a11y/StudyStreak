@@ -4,6 +4,7 @@ import com.example.studystreak.dto.Streak.StreakDTO;
 import com.example.studystreak.service.StreakService;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,18 +39,20 @@ public class StreakController {
     /*
      * Fuerza manualmente el recálculo.
      *
-     * Usamos recalculateOwnedStreak()
-     * porque este endpoint sí necesita comprobar
-     * quién está haciendo la petición.
+     * Este endpoint queda restringido a ADMIN.
+     * El recálculo interno no necesita comprobar
+     * ownership porque el administrador puede
+     * recalcular cualquier Goal.
      */
     @PostMapping("/recalculate")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StreakDTO> recalculateStreak(
             @PathVariable Long goalId
     ) {
 
         StreakDTO streak =
                 streakService
-                        .recalculateOwnedStreak(goalId);
+                        .recalculateStreak(goalId);
 
         return ResponseEntity.ok(streak);
     }

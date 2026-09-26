@@ -4,6 +4,7 @@ package com.example.studystreak.controller;
 import com.example.studystreak.dto.Goal.GoalRequestDTO;
 import com.example.studystreak.dto.Goal.GoalResponseDTO;
 import com.example.studystreak.service.GoalService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.studystreak.exceptions.ForbiddenException;
 import com.example.studystreak.service.CurrentUserService;
+
 @RestController
 @RequestMapping("/users/{userId}/goals")
 public class GoalController {
@@ -54,7 +56,7 @@ public class GoalController {
     }
 
     @PostMapping
-    public ResponseEntity<GoalResponseDTO> createGoal(@PathVariable Long userId, @RequestBody GoalRequestDTO goalDTO) {
+    public ResponseEntity<GoalResponseDTO> createGoal(@PathVariable Long userId, @Valid @RequestBody GoalRequestDTO goalDTO) {
 
         validateUserAccess(userId);
         GoalResponseDTO savedGoal = goalService.createGoal(userId, goalDTO);
@@ -63,7 +65,7 @@ public class GoalController {
 
     @PutMapping("/{goalId}")
     public ResponseEntity<GoalResponseDTO> updateGoal(@PathVariable Long userId, @PathVariable Long goalId,
-            @RequestBody GoalRequestDTO goalDTO) {
+                                                      @Valid @RequestBody GoalRequestDTO goalDTO) {
 
         validateUserAccess(userId);
         GoalResponseDTO updatedGoal = goalService.updateGoal(goalId, goalDTO);
