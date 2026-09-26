@@ -4,6 +4,7 @@ import com.example.studystreak.dto.User.UserRequestDTO;
 import com.example.studystreak.dto.User.UserResponseDTO;
 import com.example.studystreak.dto.User.UserUpdateRequestDTO;
 import com.example.studystreak.event.UserRegisteredEvent;
+import com.example.studystreak.exceptions.ConflictException;
 import com.example.studystreak.exceptions.ForbiddenException;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.Role;
@@ -59,6 +60,14 @@ public class UserService {
     @Transactional
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
 
+        if (userRepository.existsByUsername(userRequestDTO.getUsername())) {
+            throw new ConflictException("Username already exists");
+        }
+
+        if (userRepository.existsByEmail(userRequestDTO.getEmail())) {
+            throw new ConflictException("Email already exists");
+        }
+
         User user = modelMapper.map(userRequestDTO, User.class);
 
         user.setRegistrationDate(LocalDate.now());
@@ -91,6 +100,14 @@ public class UserService {
         validateUserAccess(userId);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername()) && userRepository.existsByUsername(request.getUsername())) {
+            throw new ConflictException("Username already exists");
+        }
+
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("Email already exists");
+        }
 
         if (request.getUsername() != null) {
             user.setUsername(request.getUsername());
