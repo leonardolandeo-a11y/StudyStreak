@@ -13,7 +13,7 @@ Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma
 - [Leonard Alexander Landeo Huatay](mailto:leonardo.landeo@utec.edu.pe) — **202520151**
 - [Jared Eloy Daniel Chala Lastra](mailto:jared.chala@utec.edu.pe) — **202520040**
 
-**Backend desplegado:** `Pendiente`
+**Backend desplegado:** `http://3.238.32.75:8080`
 
 ---
 
@@ -96,7 +96,7 @@ Los controllers reciben las peticiones y delegan en services. Los services aplic
 - Spring Data JPA / Hibernate
 - Spring Security y JJWT
 - Jakarta Bean Validation
-- PostgreSQL 17
+- PostgreSQL 17 para desarrollo local y Amazon RDS PostgreSQL 18.3 en producción
 - ModelMapper y Lombok
 - Spring Mail / JavaMailSender y servicio SMTP
 - Docker y Docker Compose
@@ -267,19 +267,21 @@ docker compose up --build
 
 ## Despliegue en AWS
 
-La arquitectura prevista utiliza **Amazon EC2** para el backend y **Amazon RDS for PostgreSQL** para persistencia.
+El backend de StudyStreak se encuentra desplegado en **Amazon EC2**, mientras que la persistencia de datos en producción utiliza **Amazon RDS for PostgreSQL**.
+
+La aplicación Spring Boot se ejecuta dentro de un contenedor Docker en la instancia EC2 y se comunica con la base de datos RDS mediante la red privada de AWS.
 
 ```mermaid
 flowchart LR
-    Client[Cliente / Postman] --> Public[HTTPS / Endpoint público]
-    Public --> EC2[Amazon EC2\nStudyStreak Backend]
+    Client[Cliente / Postman] --> Public[HTTP / Endpoint público :8080]
+    Public --> EC2[Amazon EC2\nDocker + Spring Boot]
     EC2 --> RDS[(Amazon RDS\nPostgreSQL)]
     EC2 --> SMTP[Servicio SMTP]
 ```
 
 Los valores sensibles se proporcionan mediante variables de entorno y los Security Groups controlan el acceso entre cliente, EC2 y RDS.
 
-**URL pública:** `[AWS_BACKEND_URL]`
+**URL pública:** `http://3.238.32.75:8080`
 
 ---
 
