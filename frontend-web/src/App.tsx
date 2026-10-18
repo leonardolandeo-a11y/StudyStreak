@@ -10,7 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import Goals from "./pages/Goals";
+import GoalDetails from "./pages/GoalDetails";
 
 function App(){
   return (
@@ -28,8 +29,19 @@ function App(){
             <ProtectedRoute>
               <Dashboard></Dashboard>
             </ProtectedRoute>
-          }
-        ></Route>
+        }></Route>
+
+        <Route path= "/goals" element= {
+          <ProtectedRoute>
+              <Goals></Goals>
+          </ProtectedRoute>
+        }></Route>
+
+        <Route path = "/goals/:goalId"element={
+          <ProtectedRoute>
+            <GoalDetails></GoalDetails>
+          </ProtectedRoute>
+        }></Route>
 
         <Route path = "*" element={<NotFound></NotFound>}></Route>
       </Routes>

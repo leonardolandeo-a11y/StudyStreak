@@ -6,34 +6,47 @@ import {
 import { AuthContext } from "./AuthContext";
 
 import {login as loginRequest } from "../services/authService";
-
+import { getUserFromToken } from "../utils/jwt";
+import type { AuthenticatedUser } from "../types/auth";
 interface AuthProviderProps{
     children:ReactNode;
 }
 
 export function AuthProvider({children}:AuthProviderProps){
-    const [isAuthenticated, setIsAuthenticated] = useState(() =>sessionStorage.getItem("accessToken") !== null);
+    const [currentUser,setCurrentUser] = useState<AuthenticatedUser|null>(() =>{
+        const token = sessionStorage.getItem("accessToken");
+        if (!token){
+            return null;
+        }
+        return getUserFromToken(token);
+    });
+
+    const isAuthenticated = currentUser !== null;
+
 
     async function login(username: string, password: string): Promise<void>{
         const response = await loginRequest({
             username,
             password
         });
+        const user = getUserFromToken(response.token);
+        if (!user){
+            throw new Error("Invalid access token");
+        }
         sessionStorage.setItem("accessToken",response.token);
         sessionStorage.setItem("refreshToken", response.refreshToken);
         
-        setIsAuthenticated(true);
+        setCurrentUser(user);
     }
     function logout():void{
         sessionStorage.removeItem("accessToken");
         sessionStorage.removeItem("refreshToken");
-
-        setIsAuthenticated(false);
+        setCurrentUser(null);
     }
 
     return (
         <AuthContext.Provider
-            value={{isAuthenticated, login, logout}}
+            value={{isAuthenticated, currentUser, login, logout}}
         >
             {children}
         </AuthContext.Provider>
