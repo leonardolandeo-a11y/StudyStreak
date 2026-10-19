@@ -26,3 +26,19 @@ export interface RegisterResponse{
     registrationDate:string;
     timeZone:string;
 }
+
+export interface JwtPayload{
+    sub :string;
+    userId : number;
+    email : string;
+    role : "USER"|"ADMIN";
+    type : "access" | "refresh";
+    iat : number;
+    exp: number;
+}
+export interface AuthenticatedUser{
+    id:number;
+    username:string;
+    email:string;
+    role:"USER"|"ADMIN";
+}
