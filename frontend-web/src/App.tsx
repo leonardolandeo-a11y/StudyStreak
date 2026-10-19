@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Goals from "./pages/Goals";
 import GoalDetails from "./pages/GoalDetails";
+import DailyRecords from "./pages/DailyRecords";
 
 function App(){
   return (
@@ -42,7 +43,12 @@ function App(){
             <GoalDetails></GoalDetails>
           </ProtectedRoute>
         }></Route>
-
+        <Route path="/goals/:goalId/daily-records" element={
+          <ProtectedRoute>
+            <DailyRecords></DailyRecords>
+          </ProtectedRoute>
+        }></Route>
+        
         <Route path = "*" element={<NotFound></NotFound>}></Route>
       </Routes>
     </BrowserRouter>

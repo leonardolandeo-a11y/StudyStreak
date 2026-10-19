@@ -1,5 +1,5 @@
 import { useState,useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link,useParams, useNavigate } from "react-router-dom";
 
 
 import { useAuth } from "../hooks/useAuth";
@@ -8,6 +8,7 @@ import { getGoal ,updateGoal,deleteGoal} from "../services/goalService";
 import GoalForm from "../components/goals/GoalForm";
 
 import type { Goal,GoalRequest } from "../types/goal";
+
 
 function GoalDetails(){
     const {currentUser} = useAuth();
@@ -121,35 +122,42 @@ function GoalDetails(){
     return (
     <div className="p-6">
         <h1 className="text-3xl font-bold">
-        {goal.topic}
+            {goal.topic}
         </h1>
 
         <div className="mt-4 space-y-2">
             <p>Frequency: {goal.frequency}</p>
             <p>Duration: {goal.duration}</p>
             <p>
-                Completed: {goal.completed ? "Yes" : "No"}
+            Completed: {goal.completed ? "Yes" : "No"}
             </p>
         </div>
 
+        <Link
+            to={`/goals/${goal.id}/daily-records`}
+            className="inline-block mt-4 underline"
+        >
+            View Daily Records
+        </Link>
+
         {success && (
-        <p className="mt-4 text-green-500">
+            <p className="mt-4 text-green-500">
             {success}
-        </p>
+            </p>
         )}
 
         <div className="mt-6">
             <GoalForm
-                onSubmit={handleUpdateGoal}
-                loading={updating}
-                initialValues={{
+            onSubmit={handleUpdateGoal}
+            loading={updating}
+            initialValues={{
                 topic: goal.topic,
                 frequency: goal.frequency,
                 duration: goal.duration,
                 completed: goal.completed,
-                }}
-                submitLabel="Update Goal"
-                resetAfterSubmit={false}
+            }}
+            submitLabel="Update Goal"
+            resetAfterSubmit={false}
             />
         </div>
 
@@ -158,7 +166,7 @@ function GoalDetails(){
             onClick={handleDeleteGoal}
             disabled={deleting}
             className="mt-6 border p-2 text-red-500"
-            >
+        >
             {deleting ? "Deleting..." : "Delete Goal"}
         </button>
     </div>
