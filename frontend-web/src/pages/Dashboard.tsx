@@ -33,13 +33,22 @@ function Dashboard(){
                 View Goals
             </Link>
         </div>
-
+        <div className="mt-4">
+            <Link
+                to="/tracking-links"
+                className="border p-2"
+            >
+                Tracking Links
+            </Link>
+        </div>
+        
         <button
         onClick={handleLogout}
         className="border p-2 mt-4"
         >
             Logout
         </button>
+
     </div>
     );
 }

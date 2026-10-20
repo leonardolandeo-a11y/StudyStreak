@@ -14,6 +14,7 @@ import Goals from "./pages/Goals";
 import GoalDetails from "./pages/GoalDetails";
 import DailyRecords from "./pages/DailyRecords";
 import DailyRecordDetails from "./pages/DailyRecordDetails";
+import TrackingLinks from "./pages/TrackingLinks";
 
 function App(){
   return (
@@ -54,6 +55,12 @@ function App(){
         <Route path= "/goals/:goalId/daily-records/:dailyRecordId" element={
           <ProtectedRoute>
             <DailyRecordDetails></DailyRecordDetails>
+          </ProtectedRoute>
+        }></Route>
+        
+        <Route path="/tracking-links" element={
+          <ProtectedRoute>
+            <TrackingLinks></TrackingLinks>
           </ProtectedRoute>
         }></Route>
         
