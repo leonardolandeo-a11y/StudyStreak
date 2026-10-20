@@ -17,6 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.studystreak.model.TrackingLink;
+import com.example.studystreak.model.TrackingStatus;
+import com.example.studystreak.repository.TrackingLinkRepository;
+
 @Service
 public class GoalService {
 
@@ -25,19 +29,23 @@ public class GoalService {
     private final UserRepository userRepository;
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TrackingLinkRepository trackingLinkRepository;
+
 
     public GoalService(
             GoalRepository goalRepository,
             ModelMapper modelMapper,
             UserRepository userRepository,
             CurrentUserService currentUserService,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            TrackingLinkRepository trackingLinkRepository
     ) {
         this.goalRepository = goalRepository;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.currentUserService = currentUserService;
         this.eventPublisher = eventPublisher;
+        this.trackingLinkRepository = trackingLinkRepository;
     }
 
     private void validateCurrentUser(Long userId) {
@@ -92,14 +100,27 @@ public class GoalService {
 
     public Page<GoalResponseDTO> getUserGoals(Long userId, Pageable pageable) {
 
-        validateCurrentUser(userId);
+        validateReadAccess(userId);
 
-        return goalRepository.findByUserId(userId, pageable).map(goal -> modelMapper.map(goal, GoalResponseDTO.class));
+        return goalRepository
+                .findByUserId(userId, pageable)
+                .map(goal -> modelMapper.map(
+                                goal,
+                                GoalResponseDTO.class
+                        ));
     }
+    public GoalResponseDTO getGoalById(Long userId, Long goalId) {
 
-    public GoalResponseDTO getGoalById(Long goalId) {
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Goal not found with id: " + goalId)
+                );
 
-        Goal goal = getOwnedGoal(goalId);
+        if (!goal.getUser().getId().equals(userId)) {
+            throw new ResourceNotFoundException("Goal with id: " + goalId + " does not belong to user: " + userId);
+        }
+
+        validateReadAccess(userId);
 
         return modelMapper.map(goal, GoalResponseDTO.class);
     }
@@ -136,5 +157,23 @@ public class GoalService {
         Goal goal = getOwnedGoal(goalId);
 
         goalRepository.delete(goal);
+    }
+
+    private void validateReadAccess(Long ownerUserId) {
+
+        Long currentUserId = currentUserService.getCurrentUserId();
+
+        // Owner can always read their own resources
+        if (currentUserId.equals(ownerUserId)) {
+            return;
+        }
+
+        TrackingLink trackingLink =  trackingLinkRepository
+                        .findLinkBetweenUsers(currentUserId, ownerUserId)
+                        .orElseThrow(() -> new ForbiddenException("You cannot access this user's goals"));
+
+        if (trackingLink.getStatus() != TrackingStatus.ACCEPTED) {
+            throw new ForbiddenException("Tracking link must be accepted before accessing this user's goals");
+        }
     }
 }

@@ -43,15 +43,13 @@ public class GoalController {
     @GetMapping
     public ResponseEntity<Page<GoalResponseDTO>> getUserGoals(@PathVariable Long userId, Pageable pageable) {
 
-        validateUserAccess(userId);
         return ResponseEntity.ok(goalService.getUserGoals(userId, pageable));
     }
 
     @GetMapping("/{goalId}")
     public ResponseEntity<GoalResponseDTO> getGoal(@PathVariable Long userId, @PathVariable Long goalId) {
 
-        validateUserAccess(userId);
-        GoalResponseDTO goal = goalService.getGoalById(goalId);
+        GoalResponseDTO goal = goalService.getGoalById(userId,goalId);
         return ResponseEntity.ok(goal);
     }
 
