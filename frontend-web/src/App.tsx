@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Goals from "./pages/Goals";
 import GoalDetails from "./pages/GoalDetails";
 import DailyRecords from "./pages/DailyRecords";
+import DailyRecordDetails from "./pages/DailyRecordDetails";
 
 function App(){
   return (
@@ -43,9 +44,16 @@ function App(){
             <GoalDetails></GoalDetails>
           </ProtectedRoute>
         }></Route>
+
         <Route path="/goals/:goalId/daily-records" element={
           <ProtectedRoute>
             <DailyRecords></DailyRecords>
+          </ProtectedRoute>
+        }></Route>
+        
+        <Route path= "/goals/:goalId/daily-records/:dailyRecordId" element={
+          <ProtectedRoute>
+            <DailyRecordDetails></DailyRecordDetails>
           </ProtectedRoute>
         }></Route>
         
