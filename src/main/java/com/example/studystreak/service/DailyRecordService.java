@@ -12,6 +12,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.example.studystreak.model.TrackingLink;
+import com.example.studystreak.model.TrackingStatus;
+import com.example.studystreak.repository.TrackingLinkRepository;
 
 import com.example.studystreak.exceptions.ForbiddenException;
 
@@ -22,14 +25,19 @@ public class DailyRecordService {
     private final ModelMapper modelMapper;
     private final GoalRepository goalRepository;
     private final CurrentUserService currentUserService;
+    private final TrackingLinkRepository trackingLinkRepository;
 
-    public DailyRecordService(DailyRecordRepository dailyRecordRepository, ModelMapper modelMapper,
-            GoalRepository goalRepository, CurrentUserService currentUserService) {
+    public DailyRecordService(DailyRecordRepository dailyRecordRepository,
+                              ModelMapper modelMapper,
+                              GoalRepository goalRepository,
+                              CurrentUserService currentUserService,
+                              TrackingLinkRepository trackingLinkRepository) {
 
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
         this.goalRepository = goalRepository;
         this.currentUserService = currentUserService;
+        this.trackingLinkRepository = trackingLinkRepository;
     }
 
     private Goal getOwnedGoal(Long goalId) {
@@ -42,6 +50,30 @@ public class DailyRecordService {
         if (!goal.getUser().getId().equals(currentUserId)) {
             throw new ForbiddenException("You cannot access goal with id: " + goalId);
         }
+        return goal;
+    }
+    private Goal getReadableGoal(Long goalId) {
+
+        Goal goal = goalRepository.findById(goalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Goal not found with id: " + goalId));
+
+        Long currentUserId = currentUserService.getCurrentUserId();
+
+        Long ownerUserId = goal.getUser().getId();
+
+        // Owner can always read the goal
+        if (currentUserId.equals(ownerUserId)) {
+            return goal;
+        }
+
+        TrackingLink trackingLink = trackingLinkRepository
+                        .findLinkBetweenUsers(currentUserId, ownerUserId)
+                        .orElseThrow(() -> new ForbiddenException("You cannot access this user's daily records"));
+
+        if (trackingLink.getStatus() != TrackingStatus.ACCEPTED) {
+            throw new ForbiddenException("Tracking link must be accepted before accessing this user's daily records");
+        }
+
         return goal;
     }
 
@@ -63,7 +95,21 @@ public class DailyRecordService {
 
         return dailyRecord;
     }
+    private DailyRecord getReadableDailyRecord(Long goalId, Long dailyRecordId) {
 
+        getReadableGoal(goalId);
+
+        DailyRecord dailyRecord = dailyRecordRepository
+                        .findById(dailyRecordId)
+                        .orElseThrow(() -> new ResourceNotFoundException("DailyRecord not found with id: " + dailyRecordId));
+
+        if (!dailyRecord.getGoal().getId().equals(goalId)) {
+
+            throw new ResourceNotFoundException("DailyRecord with id: " + dailyRecordId + " does not belong to goal: " + goalId);
+        }
+
+        return dailyRecord;
+    }
 
     public DailyRecordResponseDTO createDailyRecord(Long goalId, DailyRecordRequestDTO dailyRecordRequest) {
 
@@ -86,7 +132,7 @@ public class DailyRecordService {
 
     public Page<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId, Pageable pageable) {
 
-        getOwnedGoal(goalId);
+        getReadableGoal(goalId);
 
         return dailyRecordRepository.findByGoalId(goalId, pageable)
                 .map(record -> modelMapper.map(record, DailyRecordResponseDTO.class));
@@ -94,7 +140,7 @@ public class DailyRecordService {
 
     public DailyRecordResponseDTO getDailyRecordById(Long goalId, Long dailyRecordId) {
 
-        DailyRecord dailyRecord = getOwnedDailyRecord(goalId, dailyRecordId);
+        DailyRecord dailyRecord = getReadableDailyRecord(goalId, dailyRecordId);
         return modelMapper.map(dailyRecord, DailyRecordResponseDTO.class);
     }
 
