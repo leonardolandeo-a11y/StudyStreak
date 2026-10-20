@@ -35,7 +35,7 @@ export async function getDailyRecord(goalId:number, dailyRecordId:number):Promis
     return response.data;
 }
 
-export async function updateDailyRecord(goalId:number, dailyRecordId:number, dailyRecord:DailyRecord): Promise<DailyRecord>{
+export async function updateDailyRecord(goalId:number, dailyRecordId:number, dailyRecord:DailyRecordRequest): Promise<DailyRecord>{
 
     const response = await apiClient.put<DailyRecord>(`/api/goals/${goalId}/daily-records/${dailyRecordId}`,dailyRecord);
 

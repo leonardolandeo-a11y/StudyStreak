@@ -5,7 +5,7 @@ import type {
 } from "../../types/dailyRecord";
 
 interface DailyRecordFormProps {
-    onSubmit: (dailyRecord: DailyRecordRequest) => Promise<void>;
+    onSubmit: (dailyRecord: DailyRecordRequest) => Promise<boolean>;
 
     loading: boolean;
     initialValues?: DailyRecordRequest;
@@ -33,9 +33,9 @@ function DailyRecordForm({
     async function handleSubmit(event : SubmitEvent<HTMLFormElement>){
         event.preventDefault();
 
-        await onSubmit({date, note,evidence});
+        const submitted = await onSubmit({date, note,evidence});
 
-        if (resetAfterSubmit){
+        if (submitted && resetAfterSubmit){
             setDate("");
             setNote("");
             setEvidence("");

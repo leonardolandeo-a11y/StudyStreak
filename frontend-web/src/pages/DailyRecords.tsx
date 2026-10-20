@@ -5,13 +5,29 @@ import {
 
 import { Link,useParams,useSearchParams } from "react-router-dom";
 
-import { getDailyRecords } from "../services/dailyRecordService";
+import { getDailyRecords,
+    createDailyRecord
+} from "../services/dailyRecordService";
+
+import axios from "axios";
 
 import DailyRecordCard from "../components/dailyRecords/DailyRecordCard";
 
-import type { DailyRecord } from "../types/dailyRecord";
+import type { DailyRecord,
+    DailyRecordRequest
+} from "../types/dailyRecord";
 
 import type { PageResponse } from "../types/page";
+
+import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
+interface ApiErrorResponse {
+    timestamp: string;
+    status: number;
+    error: string;
+    message: string;
+    path: string;
+}
+
 
 function DailyRecords(){
     const {goalId} = useParams();
@@ -26,9 +42,13 @@ function DailyRecords(){
 
     const parsedGoalId = goalId ? Number(goalId) : null;
     
-    const invalidGoalId = parsedGoalId ===null || !Number.isSafeInteger(parsedGoalId)|| parsedGoalId< 0;
+    const invalidGoalId = parsedGoalId ===null || !Number.isSafeInteger(parsedGoalId)|| parsedGoalId<= 0;
     
     const pageParam = Number(searchParams.get("page") ?? "0");
+
+    const [creating, setCreating] = useState(false);
+
+    const [success, setSuccess] = useState<string|null>(null);
 
     const page = Number.isInteger(pageParam) && pageParam>= 0 ?pageParam:0;
 
@@ -49,6 +69,50 @@ function DailyRecords(){
         });
     }
 
+    async function handleCreateDailyRecord(dailyRecord:DailyRecordRequest): Promise<boolean>{
+        if (parsedGoalId === null){
+            return false;
+        }
+        try{
+            setCreating(true);
+            setError(null);
+            setSuccess(null);
+
+            await createDailyRecord(parsedGoalId,dailyRecord);
+
+            if (page === 0){
+                const updatedRecords = await getDailyRecords(parsedGoalId,0,10);
+                setRecordPage(updatedRecords);
+            }else{
+                setSearchParams({
+                    page:"0"
+                });
+            }
+            setSuccess("Daily record created successfully.");
+            return true;
+
+        }
+
+        catch (caughtError) {
+            if (
+                axios.isAxiosError<ApiErrorResponse>(caughtError) &&
+                caughtError.response?.status === 409
+            ) {
+                setError(
+                    caughtError.response.data?.message ??
+                    "A daily record already exists for this date."
+                );
+            } else {
+                setError(
+                    "Could not create daily record."
+                );
+            }
+
+            return false;
+        } finally {
+            setCreating(false);
+        }
+    }
     useEffect(()=>{
         if (invalidGoalId|| parsedGoalId===null){
             return;
@@ -91,7 +155,7 @@ function DailyRecords(){
     if (loading){
         return <p>Loading daily records...</p>;
     }
-    if (error){
+    if (error && !recordPage){
         return (
             <p className="text-red-500">{error}</p>
         );
@@ -112,9 +176,26 @@ function DailyRecords(){
             Daily Records
         </h1>
 
+        <div className="mt-6">
+            <DailyRecordForm
+                onSubmit={handleCreateDailyRecord}
+                loading={creating}
+            />
+        </div>
+
+        {success && (
+            <p className="mt-4 text-green-500">
+                {success}
+            </p>
+        )}
+        {error && (
+            <p className="mt-4 text-red-500">
+                {error}
+            </p>
+        )}
         {recordPage.empty && (
             <p className="mt-4">
-            No daily records yet.
+                No daily records yet.
             </p>
         )}
 
@@ -141,9 +222,9 @@ function DailyRecords(){
             </button>
 
             <span>
-                Page {page + 1}
-                {recordPage.totalPages > 0 &&
-                    ` of ${recordPage.totalPages}`}
+            Page {page + 1}
+            {recordPage.totalPages > 0 &&
+                ` of ${recordPage.totalPages}`}
             </span>
 
             <button
@@ -156,6 +237,6 @@ function DailyRecords(){
             </button>
         </div>
     </div>
-    )
+)
 }
 export default DailyRecords;
