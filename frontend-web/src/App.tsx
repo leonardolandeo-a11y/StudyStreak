@@ -15,6 +15,7 @@ import GoalDetails from "./pages/GoalDetails";
 import DailyRecords from "./pages/DailyRecords";
 import DailyRecordDetails from "./pages/DailyRecordDetails";
 import TrackingLinks from "./pages/TrackingLinks";
+import Validations from "./pages/Validations";
 
 function App(){
   return (
@@ -61,6 +62,12 @@ function App(){
         <Route path="/tracking-links" element={
           <ProtectedRoute>
             <TrackingLinks></TrackingLinks>
+          </ProtectedRoute>
+        }></Route>
+        
+        <Route path= "/validations" element ={
+          <ProtectedRoute>
+            <Validations></Validations>
           </ProtectedRoute>
         }></Route>
         
