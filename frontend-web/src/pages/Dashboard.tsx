@@ -41,6 +41,14 @@ function Dashboard(){
                 Tracking Links
             </Link>
         </div>
+        <div className="mt-4">
+            <Link
+                to="/validations"
+                className="border p-2"
+            >
+                Validations
+            </Link>
+        </div>
         
         <button
         onClick={handleLogout}
