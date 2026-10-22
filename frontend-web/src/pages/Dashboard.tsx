@@ -49,7 +49,14 @@ function Dashboard(){
                 Validations
             </Link>
         </div>
-        
+        <div className="mt-4">
+            <Link
+                to="/notifications"
+                className="border p-2"
+            >
+                Notifications
+            </Link>
+        </div>
         <button
         onClick={handleLogout}
         className="border p-2 mt-4"

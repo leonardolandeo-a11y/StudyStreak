@@ -16,6 +16,7 @@ import DailyRecords from "./pages/DailyRecords";
 import DailyRecordDetails from "./pages/DailyRecordDetails";
 import TrackingLinks from "./pages/TrackingLinks";
 import Validations from "./pages/Validations";
+import Notifications from "./pages/Notifications";
 
 function App(){
   return (
@@ -68,6 +69,12 @@ function App(){
         <Route path= "/validations" element ={
           <ProtectedRoute>
             <Validations></Validations>
+          </ProtectedRoute>
+        }></Route>
+        
+        <Route path="/notifications" element={
+          <ProtectedRoute>
+            <Notifications></Notifications>
           </ProtectedRoute>
         }></Route>
         
