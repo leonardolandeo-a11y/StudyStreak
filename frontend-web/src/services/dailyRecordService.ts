@@ -28,9 +28,13 @@ export async function createDailyRecord(goalId:number, dailyRecord:DailyRecordRe
     return response.data;
 }
 
-export async function getDailyRecord(goalId:number, dailyRecordId:number):Promise<DailyRecord>{
+export async function getDailyRecord(goalId: number,dailyRecordId: number,signal?: AbortSignal): Promise<DailyRecord> {
 
-    const response = await apiClient.get<DailyRecord>(`/api/goals/${goalId}/daily-records/${dailyRecordId}`);
+    const response =await apiClient.get<DailyRecord>(`/api/goals/${goalId}/daily-records/${dailyRecordId}`,
+            {
+                signal
+            }
+        );
 
     return response.data;
 }

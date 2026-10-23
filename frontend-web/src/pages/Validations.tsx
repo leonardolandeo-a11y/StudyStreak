@@ -51,6 +51,14 @@ import type{
     ValidationRequest
 } from "../types/validation";
 
+import LoadingState
+    from "../components/ui/LoadingState";
+
+import ErrorMessage
+    from "../components/ui/ErrorMessage";
+
+import EmptyState
+    from "../components/ui/EmptyState";
 
 function Validations(){
 
@@ -209,42 +217,61 @@ function Validations(){
             setValidationSaving(false); 
         }
     }
-    useEffect(() =>{
-            let cancelled = false;
-            async function loadTrackingPartners(){
-                try{
-                    setLoading(true);
-                    setError(null);
+    useEffect(() => {
 
-                    const activeLinks = await getActiveTrackingLinks(0,20);
+        const controller = new AbortController();
 
-                    if (!cancelled){
-                        setActivePage(activeLinks);
-                    }
-                }catch{
-                    if (!cancelled){
-                        setError("Could not load tracking partners.");
-                    }
-                }finally{
-                    if (!cancelled){
-                        setLoading(false);
-                    }
+
+        async function loadTrackingPartners() {
+
+            try {
+
+                setLoading(true);
+                setError(null);
+
+                const activeLinks = await getActiveTrackingLinks(0,20,controller.signal);
+                setActivePage(activeLinks);
+
+            } catch {
+
+                if (!controller.signal.aborted) {
+                    setError("Could not load tracking partners.");
+                }
+
+            } finally {
+
+                if (!controller.signal.aborted) {
+                    setLoading(false);
                 }
             }
-            void loadTrackingPartners();
+        }
 
-            return ()=> {
-                cancelled = true;
-            };
-    },[]);
+
+        void loadTrackingPartners();
+
+
+        return () => {
+            controller.abort();
+        };
+
+    }, []);
     if (!currentUser){
         return null;
     }
-    if (loading){
-        return (<p>Loading tracking partners...</p>);
+    if (loading) {
+        return (
+            <LoadingState
+                message="Loading tracking partners..."
+            />
+        );
     }
-    if (error){
-        return (<p className="text-red-500">{error}</p>);
+
+    if (error) {
+        return (
+            <ErrorMessage
+                message={error}
+            />
+        );
     }
     if (!activePage){
         return null;
@@ -264,10 +291,9 @@ function Validations(){
 
 
             {activePage.empty && (
-                <p className="mt-6">
-                    You do not have any accepted
-                    tracking partners yet.
-                </p>
+                <EmptyState
+                    message="You do not have any accepted tracking partners yet."
+                />
             )}
 
 
@@ -313,21 +339,21 @@ function Validations(){
                 </h2>
 
                 {goalsLoading && (
-                    <p className="mt-4">
-                        Loading goals...
-                    </p>
+                    <LoadingState
+                        message="Loading goals..."
+                    />
                 )}
 
                 {goalsError && (
-                    <p className="mt-4 text-red-500">
-                        {goalsError}
-                    </p>
+                    <ErrorMessage
+                        message={goalsError}
+                    />
                 )}
 
                 {goalsPage && goalsPage.empty && (
-                    <p className="mt-4">
-                        This user does not have any goals.
-                    </p>
+                    <EmptyState
+                        message="This user does not have any goals."
+                    />
                 )}
 
                 {goalsPage && (
@@ -375,23 +401,23 @@ function Validations(){
                     </h2>
 
                     {dailyRecordsLoading && (
-                        <p className="mt-4">
-                            Loading daily records...
-                        </p>
+                        <LoadingState
+                            message="Loading daily records..."
+                        />
                     )}
 
                     {dailyRecordsError && (
-                        <p className="mt-4 text-red-500">
-                            {dailyRecordsError}
-                        </p>
+                        <ErrorMessage
+                            message={dailyRecordsError}
+                        />
                     )}
 
-                    {dailyRecordsPage && dailyRecordsPage.empty && (
-                        <p className="mt-4">
-                            This goal does not have any daily records.
-                        </p>
+                    {dailyRecordsPage &&
+                        dailyRecordsPage.empty && (
+                            <EmptyState
+                                message="This goal does not have any daily records."
+                            />
                     )}
-
                     {dailyRecordsPage && (
                         <div className="mt-4 space-y-4">
 
@@ -441,15 +467,15 @@ function Validations(){
                     </h2>
 
                     {validationLoading && (
-                        <p className="mt-4">
-                            Loading validation...
-                        </p>
+                        <LoadingState
+                            message="Loading validation..."
+                        />
                     )}
 
                     {validationError && (
-                        <p className="mt-4 text-red-500">
-                            {validationError}
-                        </p>
+                        <ErrorMessage
+                            message={validationError}
+                        />
                     )}
 
                     {validationSuccess && (

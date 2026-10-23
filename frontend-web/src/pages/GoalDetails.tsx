@@ -26,6 +26,14 @@ import type {
 import StreakCard
     from "../components/streaks/StreakCard";
 
+import LoadingState
+    from "../components/ui/LoadingState";
+
+import ErrorMessage
+    from "../components/ui/ErrorMessage";
+
+import EmptyState
+    from "../components/ui/EmptyState";
 function GoalDetails(){
     const {currentUser} = useAuth();
     const {goalId} = useParams();
@@ -183,16 +191,35 @@ useEffect(() => {
     }
 
     if (invalidGoalId) {
-        return <p>Invalid goal id.</p>;
+        return (
+            <ErrorMessage
+                message="Invalid goal id."
+            />
+        );
     }
-    if (loading){
-        return <p>Loading goal...</p>;
+
+    if (loading) {
+        return (
+            <LoadingState
+                message="Loading goal..."
+            />
+        );
     }
-    if (error){
-        return <p className="text-red-500">{error}</p>;
+
+    if (error && !goal) {
+        return (
+            <ErrorMessage
+                message={error}
+            />
+        );
     }
-    if (!goal){
-        return <p>Goal not found.</p>
+
+    if (!goal) {
+        return (
+            <EmptyState
+                message="Goal not found."
+            />
+        );
     }
     return (
     <div className="p-6">
@@ -210,15 +237,15 @@ useEffect(() => {
         <div className="mt-6">
 
             {streakLoading && (
-                <p>
-                    Loading streak...
-                </p>
+                <LoadingState
+                    message="Loading streak..."
+                />
             )}
 
             {streakError && (
-                <p className="text-red-500">
-                    {streakError}
-                </p>
+                <ErrorMessage
+                    message={streakError}
+                />
             )}
 
             {!streakLoading &&
