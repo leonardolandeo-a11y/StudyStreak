@@ -1,11 +1,12 @@
 import {
+    useCallback,
     useEffect,
-    useState
+    useReducer
 } from "react";
-
 import {
-    useSearchParams
-} from "react-router-dom";
+    notificationReducer,
+    initialNotificationState
+} from "../reducers/notificationReducer";
 
 import {
     getNotifications,
@@ -28,125 +29,134 @@ import type{
     NotificationType
 }from "../types/notification";
 
-const NOTIFICATION_TYPES:NotificationType[] =[
-    "PENDING_CHECK_IN",
-    "VALIDATION_RECEIVED",
-    "WEEKLY_SUMMARY",
-    "GOAL_COMPLETED",
-    "TRACKING_REQUESTED",
-    "TRACKING_ACCEPTED",
-    "TRACKING_REJECTED",
-    "TRACKING_BROKEN"
-]
-
+import {
+    useNotificationFilters,
+    NOTIFICATION_TYPES
+} from "../hooks/useNotificationFilters";
 
 function Notifications(){
-    const { currentUser} = useAuth();
+    const {currentUser} = useAuth();
+    const {
+        page,
+        filter,
+        selectedType,
+        handleFilterChange,
+        handleTypeChange,
+        handlePageChange
+    } = useNotificationFilters();
 
-    const [searchParams ,setSearchParams ]= useSearchParams();
+    const [state, dispatch] =useReducer(notificationReducer,initialNotificationState );
 
-    const pageParam= Number(searchParams.get("page") ?? "0");
+    const {
+        notificationPage,
+        loading,
+        error,
+        success,
+        actionLoadingId,
+        refreshKey
+    } = state;
 
-    const page = Number.isSafeInteger(pageParam)&& pageParam>= 0 ? pageParam : 0;
-
-    const filter = searchParams.get("filter") === "unread" ? "unread" : "all";
-
-    const [error, setError] =useState<string | null>(null);
     
-    const [notificationPage, setNotificationPage] = useState<PageResponse<Notification>|null>(null);
-
-    const [loading, setLoading ] = useState(true);
-
     const userId = currentUser?.id;
-    const [actionLoadingId, setActionLoadingId] = useState<number|null>(null);
-    const [ success, setSuccess] = useState<string |null>(null);
-    const [refreshKey,setRefreshKey] = useState(0);
-
-    const typeParam = searchParams.get("type");
-
-    const selectedType:NotificationType|null = NOTIFICATION_TYPES.includes(typeParam as NotificationType) ? 
-        typeParam as NotificationType
-        : null;
+    
     
 
-    function handleTypeChange(type: NotificationType|""){
-        if (type === ""){
-            setSearchParams({
-                filter:"all",
-                page:"0"
+
+
+    const handleMarkAsRead = useCallback( async (notificationId:number):Promise<void>=>{
+        if (!userId) {
+            return;
+        }
+
+        try {
+
+            dispatch({
+                type: "ACTION_START",
+                payload: notificationId
             });
-            return;
-        }
-        setSearchParams({
-            type,
-            page:"0"
-        });
-    }
-    function handleFilterChange(newFilter: "all" | "unread") {
-        setSearchParams({
-            filter: newFilter,
-            page: "0"
-        });
-    }
-    function handlePageChange(newPage:number){
-        if (selectedType){
-            setSearchParams({
-            type:selectedType,
-            page:String(newPage)
+
+            await markNotificationAsRead(
+                userId,
+                notificationId
+            );
+
+            dispatch({
+                type: "ACTION_SUCCESS",
+                payload:
+                    "Notification marked as read."
             });
+
+            dispatch({
+                type: "REFRESH"
+            });
+
+        } catch {
+
+            dispatch({
+                type: "ACTION_ERROR",
+                payload:
+                    "Could not mark notification as read."
+            });
+
+        } finally {
+
+            dispatch({
+                type: "ACTION_END"
+            });
+        }
+
+    },[userId]);
+
+    const handleDelete = useCallback(async (notificationId:number):Promise<void> =>{
+        if (!userId) {
             return;
         }
-        setSearchParams({
-            filter,
-            page : String(newPage)
-        });
-    }
 
-    async function handleMarkAsRead(notificationId:number):Promise<void>{
-        if (!userId){
+        const confirmed =window.confirm("Are you sure you want to delete this notification?");
+
+        if (!confirmed) {
             return;
         }
-        try{
-            setActionLoadingId(notificationId);
-            setError(null);
-            setSuccess(null);
 
-            await markNotificationAsRead(userId, notificationId);
+        try {
+            dispatch({
+                type: "ACTION_START",
+                payload: notificationId
+            });
 
-            setSuccess("Notification marked as read.");
+            await deleteNotification(
+                userId,
+                notificationId
+            );
 
-            setRefreshKey(previous =>previous+1);
+            dispatch({
+                type: "ACTION_SUCCESS",
+                payload:
+                    "Notification deleted successfully."
+            });
 
-        }catch{
-            setError("Could not mark notification as read.");
-        }finally{
-            setActionLoadingId(null);
+            dispatch({
+                type: "REFRESH"
+            });
+
+        } catch {
+
+            dispatch({
+                type: "ACTION_ERROR",
+                payload:
+                    "Could not delete notification."
+            });
+
+        } finally {
+
+            dispatch({
+                type: "ACTION_END"
+            });
         }
-    }
 
-    async function handleDelete(notificationId:number):Promise<void>{
-        if (!userId){
-            return;
-        }
-        const confirmed = window.confirm("Are you sure you want to delete this notification?");
-        if (!confirmed){
-            return;
-        }
-        try{
-            setActionLoadingId(notificationId);
-            setError(null);
-            setSuccess(null);
+    },[userId]);
+    
 
-            await deleteNotification(userId, notificationId);
-
-            setSuccess("Notification deleted successfully");
-            setRefreshKey(previous=>previous+1);
-        }catch{
-            setError("Could not delete notification");
-        }finally{
-            setActionLoadingId(null);
-        }
-    }
     useEffect(() => {
 
         let cancelled = false;
@@ -158,8 +168,9 @@ function Notifications(){
             }
 
             try {
-                setLoading(true);
-                setError(null);
+                dispatch({
+                    type: "LOAD_START"
+                });
 
                 let result : PageResponse<Notification>;
 
@@ -172,23 +183,23 @@ function Notifications(){
                 }
 
                 if (!cancelled) {
-                    setNotificationPage(result);
+                    dispatch({
+                        type: "LOAD_SUCCESS",
+                        payload: result
+                    });
                 }
 
             } catch {
 
                 if (!cancelled) {
-                    setError(
-                        "Could not load notifications."
-                    );
+                        dispatch({
+                            type: "LOAD_ERROR",
+                            payload:
+                                "Could not load notifications."
+                        });
                 }
 
-            } finally {
-
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
+            } 
         }
 
         void loadNotifications();

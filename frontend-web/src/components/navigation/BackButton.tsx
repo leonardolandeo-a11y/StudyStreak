@@ -2,7 +2,9 @@ import {
     useLocation,
     useNavigate
 } from "react-router-dom";
-
+import {
+    ROUTES
+} from "../../routes/paths";
 function BackButton(){
 
     const navigate = useNavigate();
@@ -10,7 +12,7 @@ function BackButton(){
 
     function handleBack(){
         if (location.key === "default"){
-            navigate("/dashboard");
+            navigate(ROUTES.dashboard);
             return;
         }
         navigate(-1);
