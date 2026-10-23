@@ -46,6 +46,7 @@ import EmptyState
 import PaginationControls
     from "../components/ui/PaginationControls";
 
+const PAGE_SIZE = 10;
 
 function Tags() {
 
@@ -111,7 +112,7 @@ function Tags() {
 
             if (page === 0) {
 
-                const updatedTags =await getTags(userId, parsedGoalId, 0,  10 );
+                const updatedTags =await getTags(userId, parsedGoalId, 0,  PAGE_SIZE );
 
                 setTagPage(updatedTags);
 
@@ -215,7 +216,7 @@ function Tags() {
                 handlePageChange(page - 1);
             } else {
 
-                const updatedTags =await getTags(userId,parsedGoalId,page,10);
+                const updatedTags =await getTags(userId,parsedGoalId,page,PAGE_SIZE);
                 setTagPage(updatedTags);
             }
 
@@ -251,7 +252,7 @@ function Tags() {
                 setError(null);
 
 
-                const response =await getTags(id,goalNumber,page,10,controller.signal);
+                const response =await getTags(id,goalNumber,page,PAGE_SIZE,controller.signal);
                 setTagPage(response);
 
             } catch {
