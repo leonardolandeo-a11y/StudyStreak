@@ -15,6 +15,17 @@ import {
     tagsPath
 } from "../routes/paths";
 
+import {
+    getGoalStreak
+} from "../services/streakService";
+
+import type {
+    Streak
+} from "../types/streak";
+
+import StreakCard
+    from "../components/streaks/StreakCard";
+
 function GoalDetails(){
     const {currentUser} = useAuth();
     const {goalId} = useParams();
@@ -28,7 +39,11 @@ function GoalDetails(){
 
     const navigate = useNavigate();
     const [deleting, setDeleting] = useState(false);
+    const [streak, setStreak] = useState<Streak | null>(null);
 
+    const [streakLoading, setStreakLoading] =useState(true);
+
+    const [streakError, setStreakError] = useState<string | null>(null);
     const userId = currentUser?.id;
     const parsedGoalId = goalId ? Number(goalId): null;
     const invalidGoalId= parsedGoalId=== null || !Number.isSafeInteger(parsedGoalId) || parsedGoalId<= 0;
@@ -72,42 +87,97 @@ function GoalDetails(){
             setDeleting(false);
         }
     }
+useEffect(() => {
 
-    useEffect(() => {
-        if (userId == null|| !Number.isSafeInteger(parsedGoalId)||parsedGoalId=== null || parsedGoalId<=0 ) {
+        if (userId == null ||parsedGoalId === null || invalidGoalId) {
             return;
         }
 
-        let cancelled = false;
+        const controller =new AbortController();
 
-        async function loadGoal(id :number, goalNumber:number) {
+
+        async function loadGoal(id: number,goalNumber: number) {
+
             try {
+
                 setLoading(true);
                 setError(null);
 
-                const response = await getGoal(id,goalNumber);
+                const response =await getGoal(id, goalNumber,controller.signal );
+                setGoal(response);
 
-                if (!cancelled) {
-                    setGoal(response);
-                }
             } catch {
-                if (!cancelled) {
+
+                if (!controller.signal.aborted) {
                     setError("Could not load goal.");
                 }
+
             } finally {
-                if (!cancelled) {
+
+                if (!controller.signal.aborted) {
                     setLoading(false);
                 }
             }
         }
 
+
         void loadGoal(userId,parsedGoalId);
 
-        return () => {
-            cancelled = true;
-        };
-    }, [userId, parsedGoalId]);
 
+        return () => {
+            controller.abort();
+        };
+
+    }, [
+        userId,
+        parsedGoalId,
+        invalidGoalId
+    ]);
+    useEffect(() => {
+        if (userId == null ||parsedGoalId === null ||invalidGoalId) {
+            return;
+        }
+
+        const controller =new AbortController();
+
+
+        async function loadStreak(goalNumber: number) {
+
+            try {
+
+                setStreakLoading(true);
+                setStreakError(null);
+
+                const response = await getGoalStreak(goalNumber,controller.signal);
+                setStreak(response);
+
+            } catch {
+
+                if (!controller.signal.aborted) {
+                    setStreakError("Could not load streak.");
+                }
+
+            } finally {
+
+                if (!controller.signal.aborted) {
+                    setStreakLoading(false);
+                }
+            }
+        }
+
+
+        void loadStreak(parsedGoalId);
+
+
+        return () => {
+            controller.abort();
+        };
+
+    }, [
+        userId,
+        parsedGoalId,
+        invalidGoalId
+    ]);
     if (!currentUser) {
         return <p>Please log in to view this goal.</p>;
     }
@@ -136,6 +206,29 @@ function GoalDetails(){
             <p>
             Completed: {goal.completed ? "Yes" : "No"}
             </p>
+        </div>
+        <div className="mt-6">
+
+            {streakLoading && (
+                <p>
+                    Loading streak...
+                </p>
+            )}
+
+            {streakError && (
+                <p className="text-red-500">
+                    {streakError}
+                </p>
+            )}
+
+            {!streakLoading &&
+                !streakError &&
+                streak && (
+                    <StreakCard
+                        streak={streak}
+                    />
+                )}
+
         </div>
 
         <Link
@@ -179,7 +272,10 @@ function GoalDetails(){
             className="mt-6 border p-2 text-red-500"
         >
             {deleting ? "Deleting..." : "Delete Goal"}
+        
         </button>
+
+
     </div>
 );
 }

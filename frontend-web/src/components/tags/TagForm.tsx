@@ -1,4 +1,5 @@
 import {
+    useId,
     useState,
     type SubmitEvent
 } from "react";
@@ -25,6 +26,7 @@ function TagForm({onSubmit,loading,initialValue = "",submitLabel = "Create Tag",
 
     const [error, setError] =useState<string | null>(null);
 
+    const inputId = useId();
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 
@@ -68,12 +70,12 @@ function TagForm({onSubmit,loading,initialValue = "",submitLabel = "Create Tag",
 
             <div>
 
-                <label htmlFor="tag-name">
+                <label htmlFor={inputId}>
                     Tag Name
                 </label>
 
                 <input
-                    id="tag-name"
+                    id={inputId}
                     type="text"
                     value={name}
                     maxLength={50}
