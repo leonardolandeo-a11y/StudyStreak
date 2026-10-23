@@ -32,6 +32,8 @@ function Breadcrumbs(){
                 return "Validations";
             case "notifications":
                 return "Notifications";
+            case "tags":
+                return "Tags";
             default:
                 return segment;
         }
