@@ -58,95 +58,180 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
     return (
     <form
         onSubmit={handleSubmit}
-        className="space-y-4 border p-4"
+        className="
+            rounded-2xl
+            border border-slate-800
+            bg-slate-900/70
+            p-6
+            shadow-lg shadow-black/10
+        "
     >
-        <h2 className="text-xl font-bold">
-            {submitLabel}
-        </h2>
+        <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-100">
+                {submitLabel}
+            </h2>
 
-        <div>
-            <label htmlFor="topic">
-                Topic
-            </label>
-
-            <input
-                id="topic"
-                type="text"
-                value={topic}
-                onChange={(event) =>setTopic(event.target.value)}
-                className="w-full border p-2"
-                required
-            />
+            <p className="mt-1 text-sm text-slate-400">
+                Define the schedule and progress state for this goal.
+            </p>
         </div>
 
-        <div>
-            <label htmlFor="frequency">
-                Frequency
-            </label>
+        <div className="space-y-5">
+            <div>
+                <label
+                    htmlFor="topic"
+                    className="mb-2 block text-sm font-medium text-slate-300"
+                >
+                    Topic
+                </label>
 
-            <input
-                id="frequency"
-                type="number"
-                min="1"
-                step="1"
-                value={frequency}
-                onChange={(event) =>
-                    setFrequency(
-                        Number(event.target.value)
-                    )
-                }
-                className="w-full border p-2"
-                required
+                <input
+                    id="topic"
+                    type="text"
+                    value={topic}
+                    onChange={(event) =>
+                        setTopic(event.target.value)
+                    }
+                    placeholder="Example: Study databases"
+                    className="
+                        w-full
+                        rounded-lg
+                        border border-slate-700
+                        bg-slate-950
+                        px-3 py-2.5
+                        text-slate-100
+                        placeholder:text-slate-600
+                        hover:border-slate-600
+                    "
+                    required
+                />
+            </div>
 
-            />
-        </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                    <label
+                        htmlFor="frequency"
+                        className="mb-2 block text-sm font-medium text-slate-300"
+                    >
+                        Frequency
+                    </label>
 
-        <div>
-            <label htmlFor="duration">
-                Duration
-            </label>
+                    <input
+                        id="frequency"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={frequency}
+                        onChange={(event) =>
+                            setFrequency(
+                                Number(event.target.value)
+                            )
+                        }
+                        className="
+                            w-full
+                            rounded-lg
+                            border border-slate-700
+                            bg-slate-950
+                            px-3 py-2.5
+                            text-slate-100
+                            hover:border-slate-600
+                        "
+                        required
+                    />
+                </div>
 
-            <input
-                id="duration"
-                type="number"
-                min="1"
-                step="1"
-                value={duration}
-                onChange={(event) =>
-                    setDuration(
-                        Number(event.target.value)
-                    )
-                }
-                className="w-full border p-2"
-                required
-            />
-        </div>
+                <div>
+                    <label
+                        htmlFor="duration"
+                        className="mb-2 block text-sm font-medium text-slate-300"
+                    >
+                        Duration
+                    </label>
 
-        <div>
-            <label>
+                    <input
+                        id="duration"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={duration}
+                        onChange={(event) =>
+                            setDuration(
+                                Number(event.target.value)
+                            )
+                        }
+                        className="
+                            w-full
+                            rounded-lg
+                            border border-slate-700
+                            bg-slate-950
+                            px-3 py-2.5
+                            text-slate-100
+                            hover:border-slate-600
+                        "
+                        required
+                    />
+                </div>
+            </div>
+
+            <label
+                className="
+                    flex cursor-pointer items-center gap-3
+                    rounded-lg
+                    border border-slate-800
+                    bg-slate-950/50
+                    px-4 py-3
+                "
+            >
                 <input
                     type="checkbox"
                     checked={completed}
-                    onChange={(event) =>setCompleted(event.target.checked)}
+                    onChange={(event) =>
+                        setCompleted(event.target.checked)
+                    }
+                    className="h-4 w-4 accent-sky-500"
                 />
 
-                <span className="ml-2">
-                    Completed
-                </span>
+                <div>
+                    <p className="text-sm font-medium text-slate-200">
+                        Completed
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                        Mark this goal as already completed.
+                    </p>
+                </div>
             </label>
+
+            {error && (
+                <p
+                    className="
+                        rounded-lg
+                        border border-red-900/60
+                        bg-red-950/40
+                        px-4 py-3
+                        text-sm text-red-300
+                    "
+                >
+                    {error}
+                </p>
+            )}
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="
+                    rounded-lg
+                    bg-sky-500
+                    px-4 py-2.5
+                    text-sm font-semibold
+                    text-slate-950
+                    hover:bg-sky-400
+                    disabled:opacity-50
+                "
+            >
+                {loading ? "Saving..." : submitLabel}
+            </button>
         </div>
-        {error && (
-            <p className="text-red-500">
-                {error}
-            </p>
-        )}
-        <button
-            type="submit"
-            disabled={loading}
-            className="border p-2"
-        >
-            {loading ? "Saving..." : submitLabel}
-        </button>
     </form>
     );
 }

@@ -12,10 +12,6 @@ import GoalCard from "../components/goals/GoalCard";
 
 import { useSearchParams } from "react-router-dom";
 
-import { Link } from "react-router-dom";
-import {
-    ROUTES
-} from "../routes/paths";
 
 import LoadingState from "../components/ui/LoadingState";
 
@@ -143,58 +139,127 @@ function Goals(){
         return null;
     }
 return(
-    <div className="p-6">
-        <Link
-            to={ROUTES.dashboard}
-            className="inline-block mb-4 underline"
-        >
-            Back to Dashboard
-        </Link>
+    <div className="space-y-8">
 
-        <h1 className="text-3xl font-bold">
-            My Goals
-        </h1>
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Goals
+            </p>
 
-        <div className="mt-6">
+            <h1
+                className="
+                    mt-2
+                    text-3xl font-bold
+                    tracking-tight
+                    text-slate-100
+                "
+            >
+                My Goals
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Create study goals, track their progress,
+                and manage their daily records.
+            </p>
+        </section>
+
+
+        <section>
             <GoalForm
-            onSubmit={handleCreateGoal}
-            loading={creating}
+                onSubmit={handleCreateGoal}
+                loading={creating}
             />
-        </div>
+        </section>
+
 
         {success && (
-            <p className="mt-4 text-green-500">
-            {success}
-            </p>
-        )}
-
-        {goalPage.empty && (
-            <EmptyState
-                message="No goals yet."
-            />
-        )}
-
-        {!goalPage.empty && (
-            <div className="mt-6 space-y-4">
-                {goalPage.content.map((goal) => (
-                    <GoalCard
-                        key={goal.id}
-                        goal={goal}
-                    />
-                ))}
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
+                {success}
             </div>
         )}
 
-        {!goalPage.empty && (
-            <PaginationControls
-                page={page}
-                totalPages={goalPage.totalPages}
-                first={goalPage.first}
-                last={goalPage.last}
-                onPrevious={goToPreviousPage}
-                onNext={goToNextPage}
-            />
-        )}
+
+        <section>
+            <div
+                className="
+                    mb-5
+                    flex flex-wrap
+                    items-end
+                    justify-between
+                    gap-3
+                "
+            >
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        Your goals
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Review and manage your current study goals.
+                    </p>
+                </div>
+
+                {!goalPage.empty && (
+                    <span
+                        className="
+                            rounded-full
+                            border border-slate-800
+                            bg-slate-900
+                            px-3 py-1
+                            text-xs font-medium
+                            text-slate-400
+                        "
+                    >
+                        {goalPage.totalElements} total
+                    </span>
+                )}
+            </div>
+
+
+            {goalPage.empty && (
+                <EmptyState
+                    message="No goals yet. Create your first goal above."
+                />
+            )}
+
+
+            {!goalPage.empty && (
+                <div
+                    className="
+                        grid gap-4
+                        lg:grid-cols-2
+                    "
+                >
+                    {goalPage.content.map((goal) => (
+                        <GoalCard
+                            key={goal.id}
+                            goal={goal}
+                        />
+                    ))}
+                </div>
+            )}
+
+
+            {!goalPage.empty && (
+                <PaginationControls
+                    page={page}
+                    totalPages={goalPage.totalPages}
+                    first={goalPage.first}
+                    last={goalPage.last}
+                    onPrevious={goToPreviousPage}
+                    onNext={goToNextPage}
+                />
+            )}
+        </section>
+
     </div>
     );
 

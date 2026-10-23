@@ -265,24 +265,53 @@ function TrackingLinks() {
     }
 
     return (
-    <div className="p-6">
+    <div className="space-y-8">
 
-        <h1 className="text-3xl font-bold">
-            Tracking Links
-        </h1>
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Connections
+            </p>
 
-        <div className="mt-6">
+            <h1
+                className="
+                    mt-2
+                    text-3xl font-bold
+                    tracking-tight
+                    text-slate-100
+                "
+            >
+                Tracking Links
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Send tracking requests, manage invitations,
+                and review your active study connections.
+            </p>
+        </section>
+
+
+        <section>
             <TrackingLinkForm
                 onSubmit={handleCreateTrackingLink}
                 loading={creating}
             />
-        </div>
+        </section>
+
 
         {success && (
-            <p className="mt-4 text-green-500">
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
                 {success}
-            </p>
+            </div>
         )}
+
 
         {error && trackingPage && (
             <ErrorMessage
@@ -290,25 +319,42 @@ function TrackingLinks() {
             />
         )}
 
-        {pendingPage && !pendingPage.empty && (
-            <div className="mt-6">
-                <h2 className="text-2xl font-bold">
-                    Pending Invitations
-                </h2>
 
-                <div className="mt-4 space-y-4">
+        {pendingPage && !pendingPage.empty && (
+            <section>
+                <div className="mb-5">
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        Pending Invitations
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Requests waiting for your response.
+                    </p>
+                </div>
+
+
+                <div className="grid gap-4 lg:grid-cols-2">
                     {pendingPage.content.map(
                         (trackingLink) => (
-                            <div
+                            <article
                                 key={trackingLink.id}
-                                className="border p-4"
+                                className="
+                                    rounded-2xl
+                                    border border-amber-900/40
+                                    bg-amber-950/10
+                                    p-5
+                                "
                             >
-                                <p>
-                                    User {trackingLink.requesterId}
-                                    {" "}sent you a tracking request.
+                                <p className="text-sm text-slate-300">
+                                    User{" "}
+                                    <span className="font-semibold text-slate-100">
+                                        {trackingLink.requesterId}
+                                    </span>{" "}
+                                    sent you a tracking request.
                                 </p>
 
-                                <div className="mt-3 flex gap-3">
+                                <div className="mt-4 flex flex-wrap gap-3">
+
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -317,7 +363,14 @@ function TrackingLinks() {
                                                 "ACCEPTED"
                                             )
                                         }
-                                        className="border p-2"
+                                        className="
+                                            rounded-lg
+                                            bg-emerald-500
+                                            px-4 py-2
+                                            text-sm font-semibold
+                                            text-slate-950
+                                            hover:bg-emerald-400
+                                        "
                                     >
                                         Accept
                                     </button>
@@ -330,25 +383,42 @@ function TrackingLinks() {
                                                 "REJECTED"
                                             )
                                         }
-                                        className="border p-2"
+                                        className="
+                                            rounded-lg
+                                            border border-red-900
+                                            bg-red-950/30
+                                            px-4 py-2
+                                            text-sm font-medium
+                                            text-red-300
+                                            hover:bg-red-950/60
+                                        "
                                     >
                                         Reject
                                     </button>
+
                                 </div>
-                            </div>
+                            </article>
                         )
                     )}
                 </div>
-            </div>
+            </section>
         )}
 
-        {activePage && !activePage.empty && (
-            <div className="mt-6">
-                <h2 className="text-2xl font-bold">
-                    Active Tracking Links
-                </h2>
 
-                <div className="mt-4 space-y-4">
+        {activePage && !activePage.empty && (
+            <section>
+                <div className="mb-5">
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        Active Tracking Links
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Users currently connected to your progress.
+                    </p>
+                </div>
+
+
+                <div className="grid gap-4 lg:grid-cols-2">
                     {activePage.content.map(
                         (trackingLink) => {
 
@@ -358,17 +428,46 @@ function TrackingLinks() {
                                     : trackingLink.requesterId;
 
                             return (
-                                <div
+                                <article
                                     key={trackingLink.id}
-                                    className="border p-4"
+                                    className="
+                                        rounded-2xl
+                                        border border-slate-800
+                                        bg-slate-900/70
+                                        p-5
+                                    "
                                 >
-                                    <p>
-                                        Tracking with User {otherUserId}
-                                    </p>
+                                    <div
+                                        className="
+                                            flex
+                                            flex-wrap
+                                            items-start
+                                            justify-between
+                                            gap-4
+                                        "
+                                    >
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                Tracking with
+                                            </p>
 
-                                    <p>
-                                        Status: {trackingLink.status}
-                                    </p>
+                                            <p className="mt-1 text-lg font-semibold text-slate-100">
+                                                User {otherUserId}
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            className="
+                                                rounded-full
+                                                bg-emerald-950/60
+                                                px-3 py-1
+                                                text-xs font-semibold
+                                                text-emerald-300
+                                            "
+                                        >
+                                            {trackingLink.status}
+                                        </span>
+                                    </div>
 
                                     <button
                                         type="button"
@@ -377,49 +476,98 @@ function TrackingLinks() {
                                                 trackingLink.id
                                             )
                                         }
-                                        className="mt-3 border p-2 text-red-500"
+                                        className="
+                                            mt-5
+                                            rounded-lg
+                                            border border-red-900
+                                            bg-red-950/30
+                                            px-4 py-2
+                                            text-sm font-medium
+                                            text-red-300
+                                            hover:bg-red-950/60
+                                        "
                                     >
                                         Remove Tracking Link
                                     </button>
-                                </div>
+                                </article>
                             );
                         }
                     )}
                 </div>
-            </div>
+            </section>
         )}
 
-        {trackingPage.empty && (
-            <EmptyState
-                message="No tracking links yet."
-            />
-        )}
 
-        {!trackingPage.empty && (
-            <div className="mt-6 space-y-4">
+        <section>
+            <div
+                className="
+                    mb-5
+                    flex flex-wrap
+                    items-end
+                    justify-between
+                    gap-3
+                "
+            >
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        All Tracking Links
+                    </h2>
 
-                {trackingPage.content.map(
-                    (trackingLink) => (
-                        <TrackingLinkCard
-                            key={trackingLink.id}
-                            trackingLink={trackingLink}
-                            currentUserId={currentUser.id}
-                        />
-                    )
+                    <p className="mt-1 text-sm text-slate-400">
+                        Complete history of your tracking connections.
+                    </p>
+                </div>
+
+                {!trackingPage.empty && (
+                    <span
+                        className="
+                            rounded-full
+                            border border-slate-800
+                            bg-slate-900
+                            px-3 py-1
+                            text-xs font-medium
+                            text-slate-400
+                        "
+                    >
+                        {trackingPage.totalElements} total
+                    </span>
                 )}
-
             </div>
-        )}
-        {!trackingPage.empty && (
-            <PaginationControls
-                page={page}
-                totalPages={trackingPage.totalPages}
-                first={trackingPage.first}
-                last={trackingPage.last}
-                onPrevious={goToPreviousPage}
-                onNext={goToNextPage}
-            />
-        )}
+
+
+            {trackingPage.empty && (
+                <EmptyState
+                    message="No tracking links yet."
+                />
+            )}
+
+
+            {!trackingPage.empty && (
+                <div className="grid gap-4 lg:grid-cols-2">
+                    {trackingPage.content.map(
+                        (trackingLink) => (
+                            <TrackingLinkCard
+                                key={trackingLink.id}
+                                trackingLink={trackingLink}
+                                currentUserId={currentUser.id}
+                            />
+                        )
+                    )}
+                </div>
+            )}
+
+
+            {!trackingPage.empty && (
+                <PaginationControls
+                    page={page}
+                    totalPages={trackingPage.totalPages}
+                    first={trackingPage.first}
+                    last={trackingPage.last}
+                    onPrevious={goToPreviousPage}
+                    onNext={goToNextPage}
+                />
+            )}
+        </section>
 
     </div>
     );

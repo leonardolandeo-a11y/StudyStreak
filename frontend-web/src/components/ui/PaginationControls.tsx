@@ -18,28 +18,55 @@ function PaginationControls({
 }: PaginationControlsProps) {
 
     return (
-        <div className="mt-6 flex items-center gap-4">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
 
             <button
                 type="button"
                 onClick={onPrevious}
                 disabled={first}
-                className="border p-2 disabled:opacity-50"
+                className="
+                    rounded-lg
+                    border border-slate-700
+                    bg-slate-900
+                    px-4 py-2
+                    text-sm font-medium
+                    text-slate-200
+                    hover:border-slate-600
+                    hover:bg-slate-800
+                    disabled:cursor-not-allowed
+                    disabled:opacity-40
+                "
             >
                 Previous
             </button>
 
-            <span>
-                Page {page + 1}
-
-                {totalPages > 0 && ` of ${totalPages}`}
+            <span className="text-sm text-slate-400">
+                Page{" "}
+                <span className="font-semibold text-slate-200">
+                    {page + 1}
+                </span>
+                {" "}of{" "}
+                <span className="font-semibold text-slate-200">
+                    {Math.max(totalPages, 1)}
+                </span>
             </span>
 
             <button
                 type="button"
                 onClick={onNext}
                 disabled={last}
-                className="border p-2 disabled:opacity-50"
+                className="
+                    rounded-lg
+                    border border-slate-700
+                    bg-slate-900
+                    px-4 py-2
+                    text-sm font-medium
+                    text-slate-200
+                    hover:border-slate-600
+                    hover:bg-slate-800
+                    disabled:cursor-not-allowed
+                    disabled:opacity-40
+                "
             >
                 Next
             </button>

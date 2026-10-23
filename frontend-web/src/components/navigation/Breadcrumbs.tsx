@@ -39,11 +39,22 @@ function Breadcrumbs(){
         }
     }
     return (
-        <nav className="mb-6 flex gap-2">
+        <nav className="
+            flex
+            flex-wrap
+            items-center
+            gap-2
+            text-sm
+            text-slate-400
+        ">
 
             <Link
                 to={ROUTES.dashboard}
-                className="underline"
+                className="
+                    font-medium
+                    text-slate-300
+                    hover:text-sky-400
+                "
             >
                 Dashboard
             </Link>
@@ -71,10 +82,10 @@ function Breadcrumbs(){
                                 key={path}
                                 className="flex gap-2"
                             >
-                                <span>/</span>
+                                <span className="text-slate-600">/</span>
 
                                 {isLast ? (
-                                    <span>
+                                    <span className="font-medium text-slate-100">
                                         {getLabel(
                                             segment,
                                             originalIndex
@@ -83,7 +94,11 @@ function Breadcrumbs(){
                                 ) : (
                                     <Link
                                         to={path}
-                                        className="underline"
+                                        className="
+                                            font-medium
+                                            text-slate-300
+                                            hover:text-sky-400
+                                        "
                                     >
                                         {getLabel(
                                             segment,

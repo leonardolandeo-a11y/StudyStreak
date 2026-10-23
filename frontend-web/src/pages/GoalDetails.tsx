@@ -222,20 +222,143 @@ useEffect(() => {
         );
     }
     return (
-    <div className="p-6">
-        <h1 className="text-3xl font-bold">
-            {goal.topic}
-        </h1>
+    <div className="space-y-8">
 
-        <div className="mt-4 space-y-2">
-            <p>Frequency: {goal.frequency}</p>
-            <p>Duration: {goal.duration}</p>
-            <p>
-            Completed: {goal.completed ? "Yes" : "No"}
-            </p>
-        </div>
-        <div className="mt-6">
+        <section
+            className="
+                rounded-2xl
+                border border-slate-800
+                bg-slate-900/70
+                p-6
+                shadow-lg shadow-black/10
+            "
+        >
+            <div
+                className="
+                    flex flex-wrap
+                    items-start
+                    justify-between
+                    gap-4
+                "
+            >
+                <div>
+                    <p className="text-sm font-medium text-sky-400">
+                        Goal details
+                    </p>
 
+                    <h1
+                        className="
+                            mt-2
+                            text-3xl font-bold
+                            tracking-tight
+                            text-slate-100
+                        "
+                    >
+                        {goal.topic}
+                    </h1>
+
+                    <p className="mt-2 text-sm text-slate-500">
+                        Goal #{goal.id}
+                    </p>
+                </div>
+
+                <span
+                    className={`
+                        rounded-full
+                        px-3 py-1
+                        text-xs font-semibold
+                        ${
+                            goal.completed
+                                ? "bg-emerald-950/60 text-emerald-300"
+                                : "bg-sky-950/60 text-sky-300"
+                        }
+                    `}
+                >
+                    {goal.completed ? "Completed" : "Active"}
+                </span>
+            </div>
+
+
+            <div
+                className="
+                    mt-6
+                    grid gap-4
+                    sm:grid-cols-2
+                "
+            >
+                <div
+                    className="
+                        rounded-xl
+                        border border-slate-800
+                        bg-slate-950/50
+                        p-4
+                    "
+                >
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                        Frequency
+                    </p>
+
+                    <p className="mt-2 text-xl font-semibold text-slate-100">
+                        {goal.frequency}
+                    </p>
+                </div>
+
+                <div
+                    className="
+                        rounded-xl
+                        border border-slate-800
+                        bg-slate-950/50
+                        p-4
+                    "
+                >
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                        Duration
+                    </p>
+
+                    <p className="mt-2 text-xl font-semibold text-slate-100">
+                        {goal.duration}
+                    </p>
+                </div>
+            </div>
+
+
+            <div className="mt-6 flex flex-wrap gap-3">
+
+                <Link
+                    to={dailyRecordsPath(goal.id)}
+                    className="
+                        rounded-lg
+                        bg-sky-500
+                        px-4 py-2.5
+                        text-sm font-semibold
+                        text-slate-950
+                        hover:bg-sky-400
+                    "
+                >
+                    View Daily Records
+                </Link>
+
+                <Link
+                    to={tagsPath(goal.id)}
+                    className="
+                        rounded-lg
+                        border border-slate-700
+                        bg-slate-950
+                        px-4 py-2.5
+                        text-sm font-medium
+                        text-slate-200
+                        hover:border-slate-600
+                        hover:bg-slate-800
+                    "
+                >
+                    Manage Tags
+                </Link>
+
+            </div>
+        </section>
+
+
+        <section>
             {streakLoading && (
                 <LoadingState
                     message="Loading streak..."
@@ -255,57 +378,83 @@ useEffect(() => {
                         streak={streak}
                     />
                 )}
+        </section>
 
-        </div>
-
-        <Link
-            to={dailyRecordsPath(goal.id)}
-            className="inline-block mt-4 underline"
-        >
-            View Daily Records
-        </Link>
-        <Link
-            to={tagsPath(goal.id)}
-            className="inline-block mt-4 ml-4 underline"
-        >
-            Manage Tags
-        </Link>
 
         {success && (
-            <p className="mt-4 text-green-500">
-            {success}
-            </p>
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
+                {success}
+            </div>
         )}
+
         {error && goal && (
             <ErrorMessage
                 message={error}
             />
         )}
-        <div className="mt-6">
+
+
+        <section>
             <GoalForm
-            onSubmit={handleUpdateGoal}
-            loading={updating}
-            initialValues={{
-                topic: goal.topic,
-                frequency: goal.frequency,
-                duration: goal.duration,
-                completed: goal.completed,
-            }}
-            submitLabel="Update Goal"
-            resetAfterSubmit={false}
+                onSubmit={handleUpdateGoal}
+                loading={updating}
+                initialValues={{
+                    topic: goal.topic,
+                    frequency: goal.frequency,
+                    duration: goal.duration,
+                    completed: goal.completed,
+                }}
+                submitLabel="Update Goal"
+                resetAfterSubmit={false}
             />
-        </div>
+        </section>
 
-        <button
-            type="button"
-            onClick={handleDeleteGoal}
-            disabled={deleting}
-            className="mt-6 border p-2 text-red-500"
+
+        <section
+            className="
+                rounded-2xl
+                border border-red-950
+                bg-red-950/20
+                p-6
+            "
         >
-            {deleting ? "Deleting..." : "Delete Goal"}
-        
-        </button>
+            <h2 className="text-lg font-semibold text-red-300">
+                Danger zone
+            </h2>
 
+            <p className="mt-1 text-sm text-slate-400">
+                Deleting this goal cannot be undone.
+            </p>
+
+            <button
+                type="button"
+                onClick={handleDeleteGoal}
+                disabled={deleting}
+                className="
+                    mt-4
+                    rounded-lg
+                    border border-red-900
+                    bg-red-950/50
+                    px-4 py-2.5
+                    text-sm font-semibold
+                    text-red-300
+                    hover:bg-red-900/40
+                    disabled:opacity-50
+                "
+            >
+                {deleting
+                    ? "Deleting..."
+                    : "Delete Goal"}
+            </button>
+        </section>
 
     </div>
 );

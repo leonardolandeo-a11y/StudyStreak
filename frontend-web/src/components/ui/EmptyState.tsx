@@ -1,12 +1,24 @@
-interface EmptyStateProps{
-    message:string;
+interface EmptyStateProps {
+    message: string;
 }
 
-function EmptyState( {message}:EmptyStateProps){
+function EmptyState({
+    message
+}: EmptyStateProps) {
     return (
-        <p className="p-6">
+        <div
+            className="
+                rounded-xl
+                border border-dashed border-slate-700
+                bg-slate-900/40
+                px-6 py-10
+                text-center
+                text-sm text-slate-400
+            "
+        >
             {message}
-        </p>
+        </div>
     );
 }
+
 export default EmptyState;

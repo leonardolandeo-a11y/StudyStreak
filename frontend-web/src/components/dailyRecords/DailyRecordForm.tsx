@@ -45,63 +45,144 @@ function DailyRecordForm({
     return (
     <form
         onSubmit={handleSubmit}
-        className="space-y-4 border p-4"
+        className="
+            rounded-2xl
+            border border-slate-800
+            bg-slate-900/70
+            p-6
+            shadow-lg shadow-black/10
+        "
     >
-        <h2 className="text-xl font-bold">
-            {submitLabel}
-        </h2>
+        <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-100">
+                {submitLabel}
+            </h2>
 
-        <div>
-            <label htmlFor="date">
-                Date
-            </label>
-
-            <input
-                id="date"
-                type="date"
-                value={date}
-                max={today}
-                onChange={(event) =>setDate(event.target.value)}
-                className="w-full border p-2"
-                required
-            />
+            <p className="mt-1 text-sm text-slate-400">
+                Record your progress and attach any useful evidence.
+            </p>
         </div>
 
-        <div>
-            <label htmlFor="note">
-                Note
-            </label>
 
-            <textarea
-                id="note"
-                value={note}
-                maxLength={1000}
-                onChange={(event) =>setNote(event.target.value)}
-                className="w-full border p-2"
-            />
+        <div className="space-y-5">
+
+            <div>
+                <label
+                    htmlFor="date"
+                    className="mb-2 block text-sm font-medium text-slate-300"
+                >
+                    Date
+                </label>
+
+                <input
+                    id="date"
+                    type="date"
+                    value={date}
+                    max={today}
+                    onChange={(event) =>
+                        setDate(event.target.value)
+                    }
+                    className="
+                        w-full
+                        rounded-lg
+                        border border-slate-700
+                        bg-slate-950
+                        px-3 py-2.5
+                        text-slate-100
+                        hover:border-slate-600
+                    "
+                    required
+                />
+            </div>
+
+
+            <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                    <label
+                        htmlFor="note"
+                        className="text-sm font-medium text-slate-300"
+                    >
+                        Note
+                    </label>
+
+                    <span className="text-xs text-slate-500">
+                        {note.length}/1000
+                    </span>
+                </div>
+
+                <textarea
+                    id="note"
+                    value={note}
+                    maxLength={1000}
+                    rows={5}
+                    onChange={(event) =>
+                        setNote(event.target.value)
+                    }
+                    placeholder="What did you accomplish today?"
+                    className="
+                        w-full
+                        resize-y
+                        rounded-lg
+                        border border-slate-700
+                        bg-slate-950
+                        px-3 py-2.5
+                        text-slate-100
+                        placeholder:text-slate-600
+                        hover:border-slate-600
+                    "
+                />
+            </div>
+
+
+            <div>
+                <label
+                    htmlFor="evidence"
+                    className="mb-2 block text-sm font-medium text-slate-300"
+                >
+                    Evidence
+                </label>
+
+                <input
+                    id="evidence"
+                    type="text"
+                    value={evidence}
+                    onChange={(event) =>
+                        setEvidence(event.target.value)
+                    }
+                    placeholder="Link, reference, or evidence description"
+                    className="
+                        w-full
+                        rounded-lg
+                        border border-slate-700
+                        bg-slate-950
+                        px-3 py-2.5
+                        text-slate-100
+                        placeholder:text-slate-600
+                        hover:border-slate-600
+                    "
+                />
+            </div>
+
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="
+                    rounded-lg
+                    bg-sky-500
+                    px-4 py-2.5
+                    text-sm font-semibold
+                    text-slate-950
+                    hover:bg-sky-400
+                    disabled:opacity-50
+                "
+            >
+                {loading
+                    ? "Saving..."
+                    : submitLabel}
+            </button>
+
         </div>
-
-        <div>
-            <label htmlFor="evidence">
-                Evidence
-            </label>
-
-            <input
-                id="evidence"
-                type="text"
-                value={evidence}
-                onChange={(event) =>setEvidence(event.target.value)}
-                className="w-full border p-2"
-            />
-        </div>
-
-        <button
-            type="submit"
-            disabled={loading}
-            className="border p-2 disabled:opacity-50"
-        >
-            {loading ? "Saving..." : submitLabel}
-        </button>
     </form>
     )
 }
