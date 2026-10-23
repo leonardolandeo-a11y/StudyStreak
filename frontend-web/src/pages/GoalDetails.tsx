@@ -11,7 +11,8 @@ import type { Goal,GoalRequest } from "../types/goal";
 
 import {
     ROUTES,
-    dailyRecordsPath
+    dailyRecordsPath,
+    tagsPath
 } from "../routes/paths";
 
 function GoalDetails(){
@@ -142,6 +143,12 @@ function GoalDetails(){
             className="inline-block mt-4 underline"
         >
             View Daily Records
+        </Link>
+        <Link
+            to={tagsPath(goal.id)}
+            className="inline-block mt-4 ml-4 underline"
+        >
+            Manage Tags
         </Link>
 
         {success && (

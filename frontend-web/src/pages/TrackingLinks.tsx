@@ -254,9 +254,9 @@ function TrackingLinks() {
 
     if (error && !trackingPage) {
         return (
-            <p className="text-red-500">
-                {error}
-            </p>
+            <ErrorMessage
+                message={error}
+            />
         );
     }
 
