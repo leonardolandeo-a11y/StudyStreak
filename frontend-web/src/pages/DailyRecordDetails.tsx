@@ -24,6 +24,15 @@ import {
     dailyRecordsPath
 } from "../routes/paths";
 
+import LoadingState
+    from "../components/ui/LoadingState";
+
+import ErrorMessage
+    from "../components/ui/ErrorMessage";
+
+import EmptyState
+    from "../components/ui/EmptyState";
+
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
 
@@ -91,50 +100,70 @@ function DailyRecordDetails(){
         }
     }
     useEffect(() => {
-        if (invalidGoalId ||invalidDailyRecordId ||parsedGoalId === null ||parsedDailyRecordId === null) {
+
+        if (invalidGoalId ||invalidDailyRecordId ||parsedGoalId === null || parsedDailyRecordId === null ) {
             return;
         }
 
-        let cancelled = false;
-        
-        async function loadDailyRecord(goalNumber:number,recordNumber:number){
-            try{
+        const controller = new AbortController();
+
+
+        async function loadDailyRecord(goalNumber: number, recordNumber: number ) {
+
+            try {
+
                 setLoading(true);
                 setError(null);
-                const response = await getDailyRecord(goalNumber,recordNumber);
 
-                if (!cancelled){
-                    setDailyRecord(response);
-                }
+                const response =await getDailyRecord( goalNumber, recordNumber,controller.signal );
 
-            }catch{
-                if (!cancelled){
+                setDailyRecord(response);
+
+            } catch {
+
+                if (!controller.signal.aborted) {
                     setError("Could not load daily record.");
                 }
-            }finally{
-                if ( !cancelled){
+
+            } finally {
+
+                if (!controller.signal.aborted) {
                     setLoading(false);
                 }
             }
         }
+
+
         void loadDailyRecord(parsedGoalId,parsedDailyRecordId);
 
-        return () =>{
-            cancelled=true;
+
+        return () => {
+            controller.abort();
         };
-    },[parsedGoalId,parsedDailyRecordId,invalidGoalId,invalidDailyRecordId]);
-    if (invalidGoalId||invalidDailyRecordId){
-        return (<p>Invalid daily record id.</p>);
-    }
-    if (loading){
-        return (<p>Loading daily record...</p>);
-    }
-    if (error && !dailyRecord){
-        return ( <p className="text-red-500">{error}</p>);
+
+    }, [
+        parsedGoalId,
+        parsedDailyRecordId,
+        invalidGoalId,
+        invalidDailyRecordId
+    ]);
+    if (invalidGoalId ||invalidDailyRecordId) {
+        return ( <ErrorMessage message="Invalid daily record id."/>);
     }
 
-    if (!dailyRecord|| parsedGoalId=== null){
-        return (<p> Daily record not found.</p>);
+
+    if (loading) {
+        return ( <LoadingState message="Loading daily record..." />);
+    }
+
+
+    if (error && !dailyRecord) {
+        return ( <ErrorMessage message={error} />);
+    }
+
+
+    if (!dailyRecord || parsedGoalId === null ) {
+        return ( <EmptyState message="Daily record not found."/>);
     }
     return (
         <div className="p-6">
@@ -170,9 +199,9 @@ function DailyRecordDetails(){
             )}
 
             {error && (
-                <p className="mt-4 text-red-500">
-                    {error}
-                </p>
+                <ErrorMessage
+                    message={error}
+                />
             )}
 
             <div className="mt-6">
