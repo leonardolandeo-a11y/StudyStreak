@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Link } from "react-router-dom";
+import { ROUTES } from "../routes/paths";
 
 function Dashboard(){
     const {logout, currentUser} = useAuth();
@@ -8,7 +9,7 @@ function Dashboard(){
 
     function handleLogout(){
         logout();
-        navigate("/login");
+        navigate(ROUTES.login);
     }
     return (
     <div className="p-6">
@@ -27,7 +28,7 @@ function Dashboard(){
 
         <div className="mt-4">
             <Link
-                to="/goals"
+                to= {ROUTES.goals}
                 className="border p-2"
             >
                 View Goals
@@ -35,7 +36,7 @@ function Dashboard(){
         </div>
         <div className="mt-4">
             <Link
-                to="/tracking-links"
+                to={ROUTES.trackingLinks}
                 className="border p-2"
             >
                 Tracking Links
@@ -43,7 +44,7 @@ function Dashboard(){
         </div>
         <div className="mt-4">
             <Link
-                to="/validations"
+                to={ROUTES.validations}
                 className="border p-2"
             >
                 Validations
@@ -51,7 +52,7 @@ function Dashboard(){
         </div>
         <div className="mt-4">
             <Link
-                to="/notifications"
+                to={ROUTES.notifications}
                 className="border p-2"
             >
                 Notifications

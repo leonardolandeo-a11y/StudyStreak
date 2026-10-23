@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 
 import type { DailyRecord } from "../../types/dailyRecord";
+import {
+    dailyRecordDetailsPath
+} from "../../routes/paths";
 
 interface DailyRecordCardProps{
     dailyRecord:DailyRecord;
@@ -23,7 +26,12 @@ function DailyRecordCard({dailyRecord, goalId}:DailyRecordCardProps){
             </p>
 
             <Link
-                to={`/goals/${goalId}/daily-records/${dailyRecord.id}`}
+                to={
+                    dailyRecordDetailsPath(
+                        goalId,
+                        dailyRecord.id
+                    )
+                }
                 className="inline-block mt-3 underline"
             >
                 View details

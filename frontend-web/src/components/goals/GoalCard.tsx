@@ -1,6 +1,8 @@
 import type { Goal } from "../../types/goal";
 import { Link } from "react-router-dom";
-
+import {
+    goalDetailsPath
+} from "../../routes/paths";
 interface GoalCardProps{
     goal:Goal;
 }
@@ -25,7 +27,7 @@ function GoalCard({goal}: GoalCardProps){
         </p>
 
         <Link
-            to={`/goals/${goal.id}`}
+            to={goalDetailsPath(goal.id)}
             className="inline-block mt-3 underline"
         >
             View details
