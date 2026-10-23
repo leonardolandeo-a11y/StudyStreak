@@ -13,7 +13,9 @@ import GoalCard from "../components/goals/GoalCard";
 import { useSearchParams } from "react-router-dom";
 
 import { Link } from "react-router-dom";
-
+import {
+    ROUTES
+} from "../routes/paths";
 
 function Goals(){
     const {currentUser} = useAuth();
@@ -123,7 +125,7 @@ function Goals(){
 return(
     <div className="p-6">
         <Link
-            to="/dashboard"
+            to={ROUTES.dashboard}
             className="inline-block mb-4 underline"
         >
             Back to Dashboard

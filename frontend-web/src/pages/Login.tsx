@@ -1,7 +1,9 @@
 import { useState,type SubmitEvent } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-
+import {
+    ROUTES
+} from "../routes/paths";
 function Login(){
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -22,7 +24,7 @@ function Login(){
         try {
             await login(username,password );
             setSuccess(true);
-            navigate("/dashboard");
+            navigate(ROUTES.dashboard);
         }catch{
             setError("Invalid username or password.");
         }finally{

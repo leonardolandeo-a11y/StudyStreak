@@ -2,7 +2,9 @@ import {
     Link,
     useLocation
 } from "react-router-dom";
-
+import {
+    ROUTES
+} from "../../routes/paths";
 function Breadcrumbs(){
     const location  = useLocation();
 
@@ -38,7 +40,7 @@ function Breadcrumbs(){
         <nav className="mb-6 flex gap-2">
 
             <Link
-                to="/dashboard"
+                to={ROUTES.dashboard}
                 className="underline"
             >
                 Dashboard
