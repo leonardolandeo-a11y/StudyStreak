@@ -20,6 +20,10 @@ import type{
 
 import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
 
+import {
+    dailyRecordsPath
+} from "../routes/paths";
+
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
 
@@ -79,7 +83,7 @@ function DailyRecordDetails(){
             setError(null);
 
             await deleteDailyRecord(parsedGoalId,parsedDailyRecordId);
-            navigate(`/goals/${parsedGoalId}/daily-records`);
+            navigate(dailyRecordsPath(parsedGoalId));
         }catch{
             setError("Could not delete daily record.");
         }finally{
@@ -135,7 +139,7 @@ function DailyRecordDetails(){
     return (
         <div className="p-6">
             <Link
-                to={`/goals/${parsedGoalId}/daily-records`}
+                to={dailyRecordsPath(parsedGoalId)}
                 className="inline-block mb-4 underline"
             >
                 Back to Daily Records

@@ -20,6 +20,9 @@ import type { DailyRecord,
 import type { PageResponse } from "../types/page";
 
 import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
+import {
+    goalDetailsPath
+} from "../routes/paths";
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -166,7 +169,7 @@ function DailyRecords(){
     return(
     <div className="p-6">
         <Link
-            to={`/goals/${parsedGoalId}`}
+            to={goalDetailsPath(parsedGoalId)}
             className="inline-block mb-4 underline"
         >
             Back to Goal

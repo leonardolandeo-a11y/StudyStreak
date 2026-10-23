@@ -9,6 +9,10 @@ import GoalForm from "../components/goals/GoalForm";
 
 import type { Goal,GoalRequest } from "../types/goal";
 
+import {
+    ROUTES,
+    dailyRecordsPath
+} from "../routes/paths";
 
 function GoalDetails(){
     const {currentUser} = useAuth();
@@ -60,7 +64,7 @@ function GoalDetails(){
 
             await deleteGoal(currentUser.id, goal.id);
 
-            navigate("/goals");
+            navigate(ROUTES.goals);
         }catch{
             setError("Could not delete goal.")
         }finally{
@@ -134,7 +138,7 @@ function GoalDetails(){
         </div>
 
         <Link
-            to={`/goals/${goal.id}/daily-records`}
+            to={dailyRecordsPath(goal.id)}
             className="inline-block mt-4 underline"
         >
             View Daily Records
