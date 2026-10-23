@@ -30,6 +30,7 @@ const Validations  = lazy(()=>import("./pages/Validations"));
 
 const Notifications = lazy(()=>import("./pages/Notifications"));
 
+const Tags = lazy(() => import("./pages/Tags"));
 
 function App(){
   return (
@@ -61,9 +62,11 @@ function App(){
             <Route path="/goals/:goalId" element={<GoalDetails></GoalDetails>}></Route>
             <Route path="/goals/:goalId/daily-records" element={<DailyRecords></DailyRecords>}></Route>
             <Route path="/goals/:goalId/daily-records/:dailyRecordId" element={<DailyRecordDetails></DailyRecordDetails>}></Route>
+            <Route path="/goals/:goalId/tags" element={<Tags />}></Route>
             <Route path= {ROUTES.trackingLinks} element={<TrackingLinks></TrackingLinks>}></Route>
             <Route path= {ROUTES.validations} element= {<Validations></Validations>}></Route>
             <Route path= {ROUTES.notifications} element={<Notifications></Notifications>}></Route>
+            
           </Route>
 
           <Route path = "*" element={<NotFound></NotFound>}></Route>
