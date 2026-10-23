@@ -326,68 +326,125 @@ function Tags() {
 
 
     return (
-        <div className="p-6">
+    <div className="space-y-8">
 
-            <h1 className="text-3xl font-bold">
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Organization
+            </p>
+
+            <h1
+                className="
+                    mt-2
+                    text-3xl font-bold
+                    tracking-tight
+                    text-slate-100
+                "
+            >
                 Tags
             </h1>
 
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Organize this goal with short labels that make
+                your study progress easier to classify.
+            </p>
+        </section>
 
-            <div className="mt-6">
 
-                <TagForm
-                    onSubmit={handleCreateTag}
-                    loading={creating}
-                />
+        <section>
+            <TagForm
+                onSubmit={handleCreateTag}
+                loading={creating}
+            />
+        </section>
 
+
+        {success && (
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
+                {success}
             </div>
+        )}
 
 
-            {success && (
-                <p className="mt-4 text-green-500">
-                    {success}
-                </p>
-            )}
+        {error && (
+            <ErrorMessage
+                message={error}
+            />
+        )}
 
 
-            {error && (
-                <ErrorMessage
-                    message={error}
-                />
-            )}
+        <section>
+            <div
+                className="
+                    mb-5
+                    flex flex-wrap
+                    items-end
+                    justify-between
+                    gap-3
+                "
+            >
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        Goal tags
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Labels currently assigned to this goal.
+                    </p>
+                </div>
+
+                {!tagPage.empty && (
+                    <span
+                        className="
+                            rounded-full
+                            border border-slate-800
+                            bg-slate-900
+                            px-3 py-1
+                            text-xs font-medium
+                            text-slate-400
+                        "
+                    >
+                        {tagPage.totalElements} total
+                    </span>
+                )}
+            </div>
 
 
             {tagPage.empty && (
                 <EmptyState
-                    message="No tags yet."
+                    message="No tags yet. Create your first tag above."
                 />
             )}
 
 
             {!tagPage.empty && (
-                <div className="mt-6 space-y-4">
-
+                <div
+                    className="
+                        grid gap-4
+                        sm:grid-cols-2
+                        lg:grid-cols-3
+                    "
+                >
                     {tagPage.content.map(
                         (tag) => (
                             <TagCard
                                 key={tag.id}
                                 tag={tag}
-                                onUpdate={
-                                    handleUpdateTag
-                                }
-                                onDelete={
-                                    handleDeleteTag
-                                }
-                                updatingId={
-                                    updatingId
-                                }
-                                deletingId={
-                                    deletingId
-                                }
+                                onUpdate={handleUpdateTag}
+                                onDelete={handleDeleteTag}
+                                updatingId={updatingId}
+                                deletingId={deletingId}
                             />
                         )
                     )}
-
                 </div>
             )}
 
@@ -406,8 +463,9 @@ function Tags() {
                     }
                 />
             )}
+        </section>
 
-        </div>
+    </div>
     );
 }
 

@@ -278,16 +278,34 @@ function Validations(){
     }
 
     return(
-        <div className="p-6">
+    <div className="space-y-10">
 
-            <h1 className="text-3xl font-bold">
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Review progress
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">
                 Validations
             </h1>
 
-            <p className="mt-2">
-                Select a tracking partner whose progress
-                you want to validate.
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Select a tracking partner, choose one of their goals,
+                and validate their daily progress.
             </p>
+        </section>
+
+
+        <section>
+            <div className="mb-5">
+                <h2 className="text-xl font-semibold text-slate-100">
+                    Tracking Partners
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-400">
+                    Choose a connected user whose progress you want to review.
+                </p>
+            </div>
 
 
             {activePage.empty && (
@@ -297,46 +315,116 @@ function Validations(){
             )}
 
 
-            <div className="mt-6 space-y-4">
+            {!activePage.empty && (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {activePage.content.map(
+                        (trackingLink) => {
 
-                {activePage.content.map(
-                    (trackingLink) => {
+                            const partnerId =
+                                trackingLink.requesterId === currentUser.id
+                                    ? trackingLink.receiverId
+                                    : trackingLink.requesterId;
 
-                        const partnerId = trackingLink.requesterId === currentUser.id ? trackingLink.receiverId :trackingLink.requesterId;
+                            const selected =
+                                selectedPartnerId === partnerId;
 
-                        return (
-                            <div
-                                key={trackingLink.id}
-                                className="border p-4"
-                            >
-                                <p className="font-semibold">
-                                    User {partnerId}
-                                </p>
-
-                                <p>
-                                    Status: {trackingLink.status}
-                                </p>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleViewGoals(partnerId)}
-                                    className="mt-3 border p-2"
+                            return (
+                                <article
+                                    key={trackingLink.id}
+                                    className={`
+                                        rounded-2xl
+                                        border
+                                        p-5
+                                        transition
+                                        ${
+                                            selected
+                                                ? "border-sky-500/60 bg-sky-950/20"
+                                                : "border-slate-800 bg-slate-900/70 hover:border-slate-700"
+                                        }
+                                    `}
                                 >
-                                    View Goals
-                                </button>
-                            </div>
-                        );
-                    }
-                )}
+                                    <div
+                                        className="
+                                            flex flex-wrap
+                                            items-start
+                                            justify-between
+                                            gap-3
+                                        "
+                                    >
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                Tracking partner
+                                            </p>
 
-            </div>
+                                            <p className="mt-1 text-lg font-semibold text-slate-100">
+                                                User {partnerId}
+                                            </p>
+                                        </div>
 
-            {selectedPartnerId && (
-            <div className="mt-8">
+                                        <span
+                                            className="
+                                                rounded-full
+                                                bg-emerald-950/60
+                                                px-3 py-1
+                                                text-xs font-semibold
+                                                text-emerald-300
+                                            "
+                                        >
+                                            {trackingLink.status}
+                                        </span>
+                                    </div>
 
-                <h2 className="text-2xl font-bold">
-                    User {selectedPartnerId}'s Goals
-                </h2>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleViewGoals(partnerId)
+                                        }
+                                        className="
+                                            mt-5
+                                            rounded-lg
+                                            bg-slate-800
+                                            px-4 py-2
+                                            text-sm font-medium
+                                            text-slate-200
+                                            hover:bg-slate-700
+                                        "
+                                    >
+                                        {selected
+                                            ? "Refresh Goals"
+                                            : "View Goals"}
+                                    </button>
+                                </article>
+                            );
+                        }
+                    )}
+                </div>
+            )}
+        </section>
+
+
+        {selectedPartnerId && (
+            <section
+                className="
+                    rounded-2xl
+                    border border-slate-800
+                    bg-slate-900/40
+                    p-6
+                "
+            >
+                <div className="mb-5">
+                    <p className="text-sm font-medium text-sky-400">
+                        Step 2
+                    </p>
+
+                    <h2 className="mt-1 text-2xl font-semibold text-slate-100">
+                        User {selectedPartnerId}&apos;s Goals
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Select a goal to review its daily records.
+                    </p>
+                </div>
+
 
                 {goalsLoading && (
                     <LoadingState
@@ -344,11 +432,13 @@ function Validations(){
                     />
                 )}
 
+
                 {goalsError && (
                     <ErrorMessage
                         message={goalsError}
                     />
                 )}
+
 
                 {goalsPage && goalsPage.empty && (
                     <EmptyState
@@ -356,160 +446,344 @@ function Validations(){
                     />
                 )}
 
-                {goalsPage && (
-                    <div className="mt-4 space-y-4">
 
+                {goalsPage && !goalsPage.empty && (
+                    <div className="grid gap-4 md:grid-cols-2">
                         {goalsPage.content.map(
-                            (goal) => (
-                                <div
-                                    key={goal.id}
-                                    className="border p-4"
-                                >
-                                    <p className="font-semibold">
-                                        {goal.topic}
-                                    </p>
+                            (goal) => {
 
-                                    <p>
-                                        Frequency: {goal.frequency}
-                                    </p>
+                                const selected =
+                                    selectedGoalId === goal.id;
 
-                                    <p>
-                                        Duration: {goal.duration}
-                                    </p>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>handleViewDailyRecords(goal.id)}
-                                        className="mt-3 border p-2"
+                                return (
+                                    <article
+                                        key={goal.id}
+                                        className={`
+                                            rounded-xl
+                                            border
+                                            p-5
+                                            ${
+                                                selected
+                                                    ? "border-sky-500/60 bg-sky-950/20"
+                                                    : "border-slate-800 bg-slate-950/50"
+                                            }
+                                        `}
                                     >
-                                        View Daily Records
-                                    </button>
-                                </div>
-                            )
-                        )}
+                                        <div
+                                            className="
+                                                flex flex-wrap
+                                                items-start
+                                                justify-between
+                                                gap-3
+                                            "
+                                        >
+                                            <div>
+                                                <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                    Goal
+                                                </p>
 
-                    </div>
-                )}
+                                                <p className="mt-1 text-lg font-semibold text-slate-100">
+                                                    {goal.topic}
+                                                </p>
+                                            </div>
 
-            </div>
-            )}
-            {selectedGoalId && (
-                <div className="mt-8">
+                                            <span
+                                                className={`
+                                                    rounded-full
+                                                    px-3 py-1
+                                                    text-xs font-semibold
+                                                    ${
+                                                        goal.completed
+                                                            ? "bg-emerald-950/60 text-emerald-300"
+                                                            : "bg-sky-950/60 text-sky-300"
+                                                    }
+                                                `}
+                                            >
+                                                {goal.completed
+                                                    ? "Completed"
+                                                    : "Active"}
+                                            </span>
+                                        </div>
 
-                    <h2 className="text-2xl font-bold">
-                        Daily Records for Goal {selectedGoalId}
-                    </h2>
 
-                    {dailyRecordsLoading && (
-                        <LoadingState
-                            message="Loading daily records..."
-                        />
-                    )}
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                            <div
+                                                className="
+                                                    rounded-lg
+                                                    border border-slate-800
+                                                    bg-slate-900/60
+                                                    p-3
+                                                "
+                                            >
+                                                <p className="text-xs text-slate-500">
+                                                    Frequency
+                                                </p>
 
-                    {dailyRecordsError && (
-                        <ErrorMessage
-                            message={dailyRecordsError}
-                        />
-                    )}
+                                                <p className="mt-1 font-medium text-slate-200">
+                                                    {goal.frequency}
+                                                </p>
+                                            </div>
 
-                    {dailyRecordsPage &&
-                        dailyRecordsPage.empty && (
-                            <EmptyState
-                                message="This goal does not have any daily records."
-                            />
-                    )}
-                    {dailyRecordsPage && (
-                        <div className="mt-4 space-y-4">
+                                            <div
+                                                className="
+                                                    rounded-lg
+                                                    border border-slate-800
+                                                    bg-slate-900/60
+                                                    p-3
+                                                "
+                                            >
+                                                <p className="text-xs text-slate-500">
+                                                    Duration
+                                                </p>
 
-                            {dailyRecordsPage.content.map(
-                                (dailyRecord) => (
-                                    <div
-                                        key={dailyRecord.id}
-                                        className="border p-4"
-                                    >
-                                        <p className="font-semibold">
-                                            Date: {dailyRecord.date}
-                                        </p>
+                                                <p className="mt-1 font-medium text-slate-200">
+                                                    {goal.duration}
+                                                </p>
+                                            </div>
+                                        </div>
 
-                                        <p>
-                                            Note: {dailyRecord.note || "No note"}
-                                        </p>
-
-                                        <p>
-                                            Evidence: {dailyRecord.evidence || "No evidence"}
-                                        </p>
 
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                handleValidateRecord(dailyRecord.id)
+                                                handleViewDailyRecords(
+                                                    goal.id
+                                                )
                                             }
-                                            className="mt-3 border p-2"
+                                            className="
+                                                mt-4
+                                                rounded-lg
+                                                bg-slate-800
+                                                px-4 py-2
+                                                text-sm font-medium
+                                                text-slate-200
+                                                hover:bg-slate-700
+                                            "
                                         >
-                                            Validate Record
+                                            View Daily Records
                                         </button>
-                                    </div>
-                                )
-                            )}
+                                    </article>
+                                );
+                            }
+                        )}
+                    </div>
+                )}
+            </section>
+        )}
 
-                        </div>
-                    )}
 
-                </div>
-            )}
+        {selectedGoalId && (
+            <section
+                className="
+                    rounded-2xl
+                    border border-slate-800
+                    bg-slate-900/40
+                    p-6
+                "
+            >
+                <div className="mb-5">
+                    <p className="text-sm font-medium text-sky-400">
+                        Step 3
+                    </p>
 
-
-            {selectedDailyRecordId && (
-                <div className="mt-8">
-
-                    <h2 className="text-2xl font-bold">
-                        Validation for Daily Record {selectedDailyRecordId}
+                    <h2 className="mt-1 text-2xl font-semibold text-slate-100">
+                        Daily Records
                     </h2>
 
-                    {validationLoading && (
-                        <LoadingState
-                            message="Loading validation..."
+                    <p className="mt-1 text-sm text-slate-400">
+                        Review a progress entry before validating it.
+                    </p>
+                </div>
+
+
+                {dailyRecordsLoading && (
+                    <LoadingState
+                        message="Loading daily records..."
+                    />
+                )}
+
+
+                {dailyRecordsError && (
+                    <ErrorMessage
+                        message={dailyRecordsError}
+                    />
+                )}
+
+
+                {dailyRecordsPage &&
+                    dailyRecordsPage.empty && (
+                        <EmptyState
+                            message="This goal does not have any daily records."
                         />
                     )}
 
-                    {validationError && (
-                        <ErrorMessage
-                            message={validationError}
-                        />
-                    )}
 
-                    {validationSuccess && (
-                        <p className="mt-4 text-green-500">
-                            {validationSuccess}
-                        </p>
-                    )}
+                {dailyRecordsPage &&
+                    !dailyRecordsPage.empty && (
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {dailyRecordsPage.content.map(
+                                (dailyRecord) => {
 
-                    {!validationLoading && !validationError && (
+                                    const selected =
+                                        selectedDailyRecordId ===
+                                        dailyRecord.id;
+
+                                    return (
+                                        <article
+                                            key={dailyRecord.id}
+                                            className={`
+                                                rounded-xl
+                                                border
+                                                p-5
+                                                ${
+                                                    selected
+                                                        ? "border-sky-500/60 bg-sky-950/20"
+                                                        : "border-slate-800 bg-slate-950/50"
+                                                }
+                                            `}
+                                        >
+                                            <p className="text-xs uppercase tracking-wide text-slate-500">
+                                                {dailyRecord.date}
+                                            </p>
+
+                                            <div className="mt-4 space-y-4">
+
+                                                <div>
+                                                    <p className="text-xs text-slate-500">
+                                                        Note
+                                                    </p>
+
+                                                    <p className="mt-1 text-sm leading-6 text-slate-300">
+                                                        {dailyRecord.note ||
+                                                            "No note"}
+                                                    </p>
+                                                </div>
+
+
+                                                <div>
+                                                    <p className="text-xs text-slate-500">
+                                                        Evidence
+                                                    </p>
+
+                                                    <p className="mt-1 break-words text-sm text-slate-300">
+                                                        {dailyRecord.evidence ||
+                                                            "No evidence"}
+                                                    </p>
+                                                </div>
+
+                                            </div>
+
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleValidateRecord(
+                                                        dailyRecord.id
+                                                    )
+                                                }
+                                                className="
+                                                    mt-5
+                                                    rounded-lg
+                                                    bg-sky-500
+                                                    px-4 py-2
+                                                    text-sm font-semibold
+                                                    text-slate-950
+                                                    hover:bg-sky-400
+                                                "
+                                            >
+                                                Validate Record
+                                            </button>
+                                        </article>
+                                    );
+                                }
+                            )}
+                        </div>
+                    )}
+            </section>
+        )}
+
+
+        {selectedDailyRecordId && (
+            <section>
+                <div className="mb-5">
+                    <p className="text-sm font-medium text-sky-400">
+                        Step 4
+                    </p>
+
+                    <h2 className="mt-1 text-2xl font-semibold text-slate-100">
+                        Validation
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Daily Record #{selectedDailyRecordId}
+                    </p>
+                </div>
+
+
+                {validationLoading && (
+                    <LoadingState
+                        message="Loading validation..."
+                    />
+                )}
+
+
+                {validationError && (
+                    <ErrorMessage
+                        message={validationError}
+                    />
+                )}
+
+
+                {validationSuccess && (
+                    <div
+                        className="
+                            rounded-xl
+                            border border-emerald-900/60
+                            bg-emerald-950/40
+                            px-4 py-3
+                            text-sm text-emerald-300
+                        "
+                    >
+                        {validationSuccess}
+                    </div>
+                )}
+
+
+                {!validationLoading &&
+                    !validationError && (
                         <div className="mt-4">
-
                             <ValidationForm
                                 key={selectedDailyRecordId}
-                                onSubmit={handleSubmitValidation}
-                                loading={validationSaving}
-                                initialValues={
-                                    validation? {
-                                            approved: validation.approved,
-                                            comment: validation.comment ?? ""
-                                        }: undefined
+                                onSubmit={
+                                    handleSubmitValidation
                                 }
-                                submitLabel={validation? "Update Validation": "Create Validation"
+                                loading={
+                                    validationSaving
+                                }
+                                initialValues={
+                                    validation
+                                        ? {
+                                              approved:
+                                                  validation.approved,
+                                              comment:
+                                                  validation.comment ??
+                                                  ""
+                                          }
+                                        : undefined
+                                }
+                                submitLabel={
+                                    validation
+                                        ? "Update Validation"
+                                        : "Create Validation"
                                 }
                                 resetAfterSubmit={false}
                             />
-
                         </div>
                     )}
+            </section>
+        )}
 
-                </div>
-            )}
-
-
-        </div>
+    </div>
     );
 }
 

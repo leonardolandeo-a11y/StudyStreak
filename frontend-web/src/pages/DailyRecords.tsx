@@ -3,7 +3,10 @@ import {
     useState
 } from "react";
 
-import { Link,useParams,useSearchParams } from "react-router-dom";
+import {
+    useParams,
+    useSearchParams
+} from "react-router-dom";
 
 import { getDailyRecords,
     createDailyRecord
@@ -20,9 +23,7 @@ import type { DailyRecord,
 import type { PageResponse } from "../types/page";
 
 import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
-import {
-    goalDetailsPath
-} from "../routes/paths";
+
 import LoadingState from "../components/ui/LoadingState";
 
 import ErrorMessage from "../components/ui/ErrorMessage";
@@ -175,7 +176,11 @@ function DailyRecords(){
     ]);
 
     if (invalidGoalId){
-        return <p>Invalid goal id.</p>;
+        return (
+            <ErrorMessage
+                message="Invalid goal id."
+            />
+        );
     }
     if (loading){
         return (
@@ -195,63 +200,137 @@ function DailyRecords(){
         return null;
     }
     return(
-    <div className="p-6">
-        <Link
-            to={goalDetailsPath(parsedGoalId)}
-            className="inline-block mb-4 underline"
-        >
-            Back to Goal
-        </Link>
+    <div className="space-y-8">
 
-        <h1 className="text-3xl font-bold">
-            Daily Records
-        </h1>
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Progress tracking
+            </p>
 
-        <div className="mt-6">
+            <h1
+                className="
+                    mt-2
+                    text-3xl font-bold
+                    tracking-tight
+                    text-slate-100
+                "
+            >
+                Daily Records
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Log your progress for this goal and review
+                previous study records.
+            </p>
+        </section>
+
+
+        <section>
             <DailyRecordForm
                 onSubmit={handleCreateDailyRecord}
                 loading={creating}
             />
-        </div>
+        </section>
+
 
         {success && (
-            <p className="mt-4 text-green-500">
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
                 {success}
-            </p>
+            </div>
         )}
+
+
         {error && (
             <ErrorMessage
                 message={error}
             />
         )}
-        {recordPage.empty && (
-            <EmptyState
-                message="No daily records yet."
-            />
-        )}
 
-        <div className="mt-6 space-y-4">
-            {recordPage.content.map(
-            (dailyRecord) => (
-                <DailyRecordCard
-                key={dailyRecord.id}
-                dailyRecord={dailyRecord}
-                goalId={parsedGoalId}
+
+        <section>
+            <div
+                className="
+                    mb-5
+                    flex flex-wrap
+                    items-end
+                    justify-between
+                    gap-3
+                "
+            >
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-100">
+                        Record history
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                        Your logged progress for this goal.
+                    </p>
+                </div>
+
+                {!recordPage.empty && (
+                    <span
+                        className="
+                            rounded-full
+                            border border-slate-800
+                            bg-slate-900
+                            px-3 py-1
+                            text-xs font-medium
+                            text-slate-400
+                        "
+                    >
+                        {recordPage.totalElements} total
+                    </span>
+                )}
+            </div>
+
+
+            {recordPage.empty && (
+                <EmptyState
+                    message="No daily records yet. Add your first record above."
                 />
-            )
             )}
-        </div>
 
-        {!recordPage.empty && (
-            <PaginationControls
-                page={page}
-                totalPages={recordPage.totalPages}
-                first={recordPage.first}
-                last={recordPage.last}
-                onPrevious={goToPreviousPage}
-                onNext={goToNextPage}
-            />
-        )}
+
+            {!recordPage.empty && (
+                <div
+                    className="
+                        grid gap-4
+                        lg:grid-cols-2
+                    "
+                >
+                    {recordPage.content.map(
+                        (dailyRecord) => (
+                            <DailyRecordCard
+                                key={dailyRecord.id}
+                                dailyRecord={dailyRecord}
+                                goalId={parsedGoalId}
+                            />
+                        )
+                    )}
+                </div>
+            )}
+
+
+            {!recordPage.empty && (
+                <PaginationControls
+                    page={page}
+                    totalPages={recordPage.totalPages}
+                    first={recordPage.first}
+                    last={recordPage.last}
+                    onPrevious={goToPreviousPage}
+                    onNext={goToNextPage}
+                />
+            )}
+        </section>
+
     </div>
 )
 }

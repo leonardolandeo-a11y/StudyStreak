@@ -252,89 +252,175 @@ function Notifications(){
         return null;
     }
     return (
-        <div className="p-6">
+    <div className="space-y-8">
 
-            <h1 className="text-3xl font-bold">
+        <section>
+            <p className="text-sm font-medium text-sky-400">
+                Activity
+            </p>
+
+            <h1
+                className="
+                    mt-2
+                    text-3xl font-bold
+                    tracking-tight
+                    text-slate-100
+                "
+            >
                 Notifications
             </h1>
 
+            <p className="mt-2 max-w-2xl text-slate-400">
+                Review updates about your goals, validations,
+                tracking activity, and progress.
+            </p>
+        </section>
 
-            <div className="mt-6 flex gap-3">
 
-                <button
-                    type="button"
-                    onClick={() =>
-                        handleFilterChange("all")
-                    }
-                    className="border p-2"
-                >
-                    All
-                </button>
+        <section
+            className="
+                rounded-2xl
+                border border-slate-800
+                bg-slate-900/70
+                p-5
+            "
+        >
+            <div className="flex flex-wrap items-end gap-4">
 
-                <button
-                    type="button"
-                    onClick={() =>
-                        handleFilterChange("unread")
-                    }
-                    className="border p-2"
-                >
-                    Unread
-                </button>
-                <select
-                    value={selectedType ?? ""}
-                    onChange={(event) =>
-                        handleTypeChange(
-                            event.target.value as
-                                NotificationType | ""
-                        )
-                    }
-                    className="border p-2"
-                >
-                    <option value="">
-                        Filter by type
-                    </option>
+                <div>
+                    <p className="mb-2 text-sm font-medium text-slate-300">
+                        Status
+                    </p>
 
-                    {NOTIFICATION_TYPES.map(
-                        (type) => (
-                            <option
-                                key={type}
-                                value={type}
-                            >
-                                {type}
-                            </option>
-                        )
-                    )}
+                    <div className="flex gap-2">
 
-                </select>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                handleFilterChange("all")
+                            }
+                            className={`
+                                rounded-lg
+                                px-4 py-2
+                                text-sm font-medium
+                                ${
+                                    filter === "all" &&
+                                    !selectedType
+                                        ? "bg-sky-500 text-slate-950"
+                                        : "border border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                }
+                            `}
+                        >
+                            All
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                handleFilterChange("unread")
+                            }
+                            className={`
+                                rounded-lg
+                                px-4 py-2
+                                text-sm font-medium
+                                ${
+                                    filter === "unread" &&
+                                    !selectedType
+                                        ? "bg-sky-500 text-slate-950"
+                                        : "border border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                }
+                            `}
+                        >
+                            Unread
+                        </button>
+
+                    </div>
+                </div>
+
+
+                <div className="min-w-60 flex-1 sm:max-w-sm">
+                    <label
+                        htmlFor="notificationType"
+                        className="mb-2 block text-sm font-medium text-slate-300"
+                    >
+                        Notification Type
+                    </label>
+
+                    <select
+                        id="notificationType"
+                        value={selectedType ?? ""}
+                        onChange={(event) =>
+                            handleTypeChange(
+                                event.target.value as
+                                    NotificationType | ""
+                            )
+                        }
+                        className="
+                            w-full
+                            rounded-lg
+                            border border-slate-700
+                            bg-slate-950
+                            px-3 py-2.5
+                            text-slate-100
+                            hover:border-slate-600
+                        "
+                    >
+                        <option value="">
+                            All types
+                        </option>
+
+                        {NOTIFICATION_TYPES.map(
+                            (type) => (
+                                <option
+                                    key={type}
+                                    value={type}
+                                >
+                                    {type}
+                                </option>
+                            )
+                        )}
+                    </select>
+                </div>
 
             </div>
+        </section>
 
 
-            {loading && (
-                <LoadingState
-                    message="Loading notifications..."
+        {loading && (
+            <LoadingState
+                message="Loading notifications..."
+            />
+        )}
+
+
+        {error && (
+            <ErrorMessage
+                message={error}
+            />
+        )}
+
+
+        {success && (
+            <div
+                className="
+                    rounded-xl
+                    border border-emerald-900/60
+                    bg-emerald-950/40
+                    px-4 py-3
+                    text-sm text-emerald-300
+                "
+            >
+                {success}
+            </div>
+        )}
+
+
+        {!loading &&
+            !error &&
+            notificationPage?.empty && (
+                <EmptyState
+                    message="No notifications found."
                 />
-            )}
-
-
-            {error && (
-                <ErrorMessage
-                    message={error}
-                />
-            )}
-
-            {success && (
-                <p className="mt-6 text-green-500">
-                    {success}
-                </p>
-            )}
-
-            {!loading &&
-                !error &&
-                notificationPage?.empty && (
-                    <EmptyState
-                        message="No notifications found."
-                    />
             )}
 
 
@@ -342,52 +428,88 @@ function Notifications(){
             !error &&
             notificationPage &&
             !notificationPage.empty && (
-                <div className="mt-6 space-y-4">
+                <section>
 
-                    {notificationPage.content.map(
-                        (notification) => (
-                            <NotificationCard
-                                key={notification.id}
-                                notification={notification}
-                                onMarkAsRead={handleMarkAsRead}
-                                onDelete={handleDelete}
-                                loading={
-                                    actionLoadingId ===
-                                    notification.id
-                                }
-                            />
-                        )
-                    )}
+                    <div
+                        className="
+                            mb-5
+                            flex flex-wrap
+                            items-end
+                            justify-between
+                            gap-3
+                        "
+                    >
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-100">
+                                Your notifications
+                            </h2>
 
-                </div>
+                            <p className="mt-1 text-sm text-slate-400">
+                                Recent activity for your StudyStreak account.
+                            </p>
+                        </div>
+
+                        <span
+                            className="
+                                rounded-full
+                                border border-slate-800
+                                bg-slate-900
+                                px-3 py-1
+                                text-xs font-medium
+                                text-slate-400
+                            "
+                        >
+                            {notificationPage.totalElements} total
+                        </span>
+                    </div>
+
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+
+                        {notificationPage.content.map(
+                            (notification) => (
+                                <NotificationCard
+                                    key={notification.id}
+                                    notification={notification}
+                                    onMarkAsRead={handleMarkAsRead}
+                                    onDelete={handleDelete}
+                                    loading={
+                                        actionLoadingId ===
+                                        notification.id
+                                    }
+                                />
+                            )
+                        )}
+
+                    </div>
+
+                </section>
             )}
 
 
+        {notificationPage &&
+            !notificationPage.empty && (
+                <PaginationControls
+                    page={page}
+                    totalPages={
+                        notificationPage.totalPages
+                    }
+                    first={
+                        notificationPage.first
+                    }
+                    last={
+                        notificationPage.last
+                    }
+                    onPrevious={() =>
+                        handlePageChange(page - 1)
+                    }
+                    onNext={() =>
+                        handlePageChange(page + 1)
+                    }
+                />
+            )}
 
-
-            {notificationPage &&
-                !notificationPage.empty && (
-                    <PaginationControls
-                        page={page}
-                        totalPages={
-                            notificationPage.totalPages
-                        }
-                        first={
-                            notificationPage.first
-                        }
-                        last={
-                            notificationPage.last
-                        }
-                        onPrevious={() =>
-                            handlePageChange(page - 1)
-                        }
-                        onNext={() =>
-                            handlePageChange(page + 1)
-                        }
-                    />
-                )}
-
-        </div>
+    </div>
     )
 }
 export default Notifications;
