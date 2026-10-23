@@ -40,9 +40,11 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
+import { useToast } from "../hooks/useToast";
 
 function Notifications(){
     const {currentUser} = useAuth();
+    const { showToast } = useToast();
     const {
         page,
         filter,
@@ -58,110 +60,121 @@ function Notifications(){
         notificationPage,
         loading,
         error,
-        success,
         actionLoadingId,
         refreshKey
     } = state;
-
     
     const userId = currentUser?.id;
     
     
 
+    const handleMarkAsRead = useCallback(
+        async (
+            notificationId: number
+        ): Promise<void> => {
 
+            if (!userId) {
+                return;
+            }
 
-    const handleMarkAsRead = useCallback( async (notificationId:number):Promise<void>=>{
-        if (!userId) {
-            return;
-        }
+            try {
+                dispatch({
+                    type: "ACTION_START",
+                    payload: notificationId
+                });
 
-        try {
+                await markNotificationAsRead(
+                    userId,
+                    notificationId
+                );
 
-            dispatch({
-                type: "ACTION_START",
-                payload: notificationId
-            });
+                showToast(
+                    "Notification marked as read.",
+                    "success"
+                );
 
-            await markNotificationAsRead(
-                userId,
-                notificationId
-            );
+                dispatch({
+                    type: "REFRESH"
+                });
 
-            dispatch({
-                type: "ACTION_SUCCESS",
-                payload:
-                    "Notification marked as read."
-            });
+            } catch {
 
-            dispatch({
-                type: "REFRESH"
-            });
+                showToast(
+                    "Could not mark notification as read.",
+                    "error"
+                );
 
-        } catch {
+            } finally {
 
-            dispatch({
-                type: "ACTION_ERROR",
-                payload:
-                    "Could not mark notification as read."
-            });
+                dispatch({
+                    type: "ACTION_END"
+                });
+            }
 
-        } finally {
+        },
+        [
+            userId,
+            showToast
+        ]
+    );
+    const handleDelete = useCallback(
+        async (
+            notificationId: number
+        ): Promise<void> => {
 
-            dispatch({
-                type: "ACTION_END"
-            });
-        }
+            if (!userId) {
+                return;
+            }
 
-    },[userId]);
+            const confirmed =
+                window.confirm(
+                    "Are you sure you want to delete this notification?"
+                );
 
-    const handleDelete = useCallback(async (notificationId:number):Promise<void> =>{
-        if (!userId) {
-            return;
-        }
+            if (!confirmed) {
+                return;
+            }
 
-        const confirmed =window.confirm("Are you sure you want to delete this notification?");
+            try {
+                dispatch({
+                    type: "ACTION_START",
+                    payload: notificationId
+                });
 
-        if (!confirmed) {
-            return;
-        }
+                await deleteNotification(
+                    userId,
+                    notificationId
+                );
 
-        try {
-            dispatch({
-                type: "ACTION_START",
-                payload: notificationId
-            });
+                showToast(
+                    "Notification deleted successfully.",
+                    "success"
+                );
 
-            await deleteNotification(
-                userId,
-                notificationId
-            );
+                dispatch({
+                    type: "REFRESH"
+                });
 
-            dispatch({
-                type: "ACTION_SUCCESS",
-                payload:
-                    "Notification deleted successfully."
-            });
+            } catch {
 
-            dispatch({
-                type: "REFRESH"
-            });
+                showToast(
+                    "Could not delete notification.",
+                    "error"
+                );
 
-        } catch {
+            } finally {
 
-            dispatch({
-                type: "ACTION_ERROR",
-                payload:
-                    "Could not delete notification."
-            });
+                dispatch({
+                    type: "ACTION_END"
+                });
+            }
 
-        } finally {
-
-            dispatch({
-                type: "ACTION_END"
-            });
-        }
-
-    },[userId]);
+        },
+        [
+            userId,
+            showToast
+        ]
+    );
     
     useEffect(() => {
 
@@ -398,22 +411,6 @@ function Notifications(){
                 message={error}
             />
         )}
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
 
         {!loading &&
             !error &&

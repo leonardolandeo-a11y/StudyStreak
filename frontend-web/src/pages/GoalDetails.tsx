@@ -34,16 +34,18 @@ import ErrorMessage
 
 import EmptyState
     from "../components/ui/EmptyState";
+
+import { useToast } from "../hooks/useToast";
+
 function GoalDetails(){
     const {currentUser} = useAuth();
     const {goalId} = useParams();
-
+    const { showToast } = useToast();
     const [goal,setGoal]= useState<Goal|null>(null);
     const [loading, setLoading] = useState(true);
     const [error,setError] = useState<string|null>(null);
 
     const [updating,setUpdating] = useState(false);
-    const [success, setSuccess] = useState<string |null>(null);
 
     const navigate = useNavigate();
     const [deleting, setDeleting] = useState(false);
@@ -63,12 +65,23 @@ function GoalDetails(){
         try{
             setUpdating(true);
             setError(null);
-            setSuccess(null);
-            const updatedGoal = await updateGoal(currentUser.id, goal.id,updateData);
+            const updatedGoal = await updateGoal(
+                currentUser.id,
+                goal.id,
+                updateData
+            );
+
             setGoal(updatedGoal);
-            setSuccess("Goal updated successfully.");
+
+            showToast(
+                "Goal updated successfully.",
+                "success"
+            );
         }catch{
-            setError("Could not update goal.")
+            showToast(
+                "Could not update goal.",
+                "error"
+            );
         }finally{
             setUpdating(false);
         }
@@ -87,10 +100,16 @@ function GoalDetails(){
             setError(null);
 
             await deleteGoal(currentUser.id, goal.id);
-
+            showToast(
+                "Goal deleted successfully.",
+                "success"
+            );
             navigate(ROUTES.goals);
         }catch{
-            setError("Could not delete goal.")
+            showToast(
+                "Could not delete goal.",
+                "error"
+            );
         }finally{
             setDeleting(false);
         }
@@ -379,28 +398,6 @@ useEffect(() => {
                     />
                 )}
         </section>
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
-        {error && goal && (
-            <ErrorMessage
-                message={error}
-            />
-        )}
-
 
         <section>
             <GoalForm

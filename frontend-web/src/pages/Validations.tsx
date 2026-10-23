@@ -60,9 +60,12 @@ import ErrorMessage
 import EmptyState
     from "../components/ui/EmptyState";
 
+import { useToast } from "../hooks/useToast";
 function Validations(){
 
     const {currentUser}= useAuth();
+
+    const { showToast } = useToast();
 
     const [activePage, setActivePage] = useState<PageResponse<TrackingLink> |null> (null);
 
@@ -96,7 +99,6 @@ function Validations(){
 
     const [validationSaving, setValidationSaving] = useState(false);
 
-    const [validationSuccess, setValidationSuccess] = useState<string|null>(null);
 
     async function handleViewGoals(partnerId:number){
         try{
@@ -175,46 +177,113 @@ function Validations(){
         }
     }
 
+    async function handleSubmitValidation(
+        request: ValidationRequest
+    ): Promise<boolean> {
 
-    async function handleSubmitValidation(request:ValidationRequest):Promise<boolean>{
-
-        if (!selectedGoalId || !selectedDailyRecordId){
+        if (
+            !selectedGoalId ||
+            !selectedDailyRecordId
+        ) {
             return false;
         }
-        try{
+
+        try {
             setValidationSaving(true);
             setValidationError(null);
-            setValidationSuccess(null);
 
-            if (validation){
-                const updatedValidation = await updateValidation(selectedGoalId,selectedDailyRecordId,request);
-                setValidation(updatedValidation);
-                setValidationSuccess("Validation updated successfully");
+            if (validation) {
 
-            }else{
-                const createdValidation = await createValidation(selectedGoalId,selectedDailyRecordId,request);
-                setValidation(createdValidation);
-                setValidationSuccess("Validation created successfully");
+                const updatedValidation =
+                    await updateValidation(
+                        selectedGoalId,
+                        selectedDailyRecordId,
+                        request
+                    );
+
+                setValidation(
+                    updatedValidation
+                );
+
+                showToast(
+                    "Validation updated successfully.",
+                    "success"
+                );
+
+            } else {
+
+                const createdValidation =
+                    await createValidation(
+                        selectedGoalId,
+                        selectedDailyRecordId,
+                        request
+                    );
+
+                setValidation(
+                    createdValidation
+                );
+
+                showToast(
+                    "Validation created successfully.",
+                    "success"
+                );
             }
+
             return true;
-        }catch (caughtError){
-            if ( axios.isAxiosError(caughtError)){
-                const status = caughtError.response?.status;
-                if (status === 409){
-                    setValidationError(caughtError.response?.data?.message ?? "This record has already been validated.");
-                }else if (status ===403){
-                    setValidationError("You are not allowed to validate this record.");
-                }else if (status === 404){
-                    setValidationError("The selected record could not be found.");
-                }else{
-                    setValidationError("Could not save validation.")
+
+        } catch (caughtError) {
+
+            if (
+                axios.isAxiosError(
+                    caughtError
+                )
+            ) {
+                const status =
+                    caughtError.response?.status;
+
+
+                if (status === 409) {
+
+                    showToast(
+                        caughtError.response?.data?.message ??
+                            "This record has already been validated.",
+                        "error"
+                    );
+
+                } else if (status === 403) {
+
+                    showToast(
+                        "You are not allowed to validate this record.",
+                        "error"
+                    );
+
+                } else if (status === 404) {
+
+                    showToast(
+                        "The selected record could not be found.",
+                        "error"
+                    );
+
+                } else {
+
+                    showToast(
+                        "Could not save validation.",
+                        "error"
+                    );
                 }
-            }else{
-                setValidationError("Could not save validation.");
+
+            } else {
+
+                showToast(
+                    "Could not save validation.",
+                    "error"
+                );
             }
+
             return false;
-        }finally{
-            setValidationSaving(false); 
+
+        } finally {
+            setValidationSaving(false);
         }
     }
     useEffect(() => {
@@ -732,22 +801,6 @@ function Validations(){
                         message={validationError}
                     />
                 )}
-
-
-                {validationSuccess && (
-                    <div
-                        className="
-                            rounded-xl
-                            border border-emerald-900/60
-                            bg-emerald-950/40
-                            px-4 py-3
-                            text-sm text-emerald-300
-                        "
-                    >
-                        {validationSuccess}
-                    </div>
-                )}
-
 
                 {!validationLoading &&
                     !validationError && (

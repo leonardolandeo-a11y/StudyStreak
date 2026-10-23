@@ -21,21 +21,24 @@ import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
 
+import { useToast } from "../hooks/useToast";
+
 function Goals(){
     const {currentUser} = useAuth();
-    
+    const { showToast } = useToast();
+
     const [goalPage, setGoalPage] = useState<PageResponse<Goal> |null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string|null>(null);
 
     const [creating, setCreating] = useState(false);
-    const [success,setSuccess] = useState<string|null>(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
 
     const pageParam = Number(searchParams.get("page")?? "0");
     const page = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam: 0;
+
     function goToPreviousPage(){
         if (page<= 0){
             return;
@@ -52,30 +55,37 @@ function Goals(){
             page : String(page+1)
         })
     }
-    async function handleCreateGoal(goal:GoalRequest){
-        if (!currentUser){
+    async function handleCreateGoal(goal: GoalRequest) {
+        if (!currentUser) {
             return;
         }
-        try{
-            setCreating(true);
-            setError(null);
-            setSuccess(null);   
 
-            await createGoal(currentUser.id, goal);
-            if (page ===0 ){
-                const updatedGoals = await getGoals(currentUser.id,0,10);
+        try {
+            setCreating(true);
+
+            await createGoal( currentUser.id, goal );
+
+
+            if (page === 0) {
+
+                const updatedGoals = await getGoals( currentUser.id, 0, 10);
                 setGoalPage(updatedGoals);
-            }else{
+
+            } else {
+
                 setSearchParams({
-                page:"0"
+                    page: "0"
                 });
             }
-            
 
-            setSuccess("Goal created successfully.");
-        }catch{
-            setError("Could not create goal.");
-        }finally{
+
+            showToast("Goal created successfully.", "success");
+
+        } catch {
+            showToast("Could not create goal.","error");
+
+        } finally {
+
             setCreating(false);
         }
     }
@@ -170,22 +180,6 @@ return(
                 loading={creating}
             />
         </section>
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
 
         <section>
             <div

@@ -32,6 +32,7 @@ import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
 
+import { useToast } from "../hooks/useToast";
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -60,9 +61,10 @@ function DailyRecords(){
 
     const [creating, setCreating] = useState(false);
 
-    const [success, setSuccess] = useState<string|null>(null);
 
     const page = Number.isInteger(pageParam) && pageParam>= 0 ?pageParam:0;
+
+    const { showToast } = useToast();
 
     function goToPreviousPage(){
         if (page<= 0){
@@ -81,46 +83,46 @@ function DailyRecords(){
         });
     }
 
-    async function handleCreateDailyRecord(dailyRecord:DailyRecordRequest): Promise<boolean>{
-        if (parsedGoalId === null){
+    async function handleCreateDailyRecord( dailyRecord: DailyRecordRequest ): Promise<boolean> {
+
+        if (parsedGoalId === null) {
             return false;
         }
-        try{
+
+        try {
             setCreating(true);
-            setError(null);
-            setSuccess(null);
 
-            await createDailyRecord(parsedGoalId,dailyRecord);
+            await createDailyRecord( parsedGoalId,dailyRecord);
+            if (page === 0) {
 
-            if (page === 0){
-                const updatedRecords = await getDailyRecords(parsedGoalId,0,10);
+                const updatedRecords =await getDailyRecords(parsedGoalId, 0,10);
                 setRecordPage(updatedRecords);
-            }else{
+
+            } else {
+
                 setSearchParams({
-                    page:"0"
+                    page: "0"
                 });
             }
-            setSuccess("Daily record created successfully.");
+
+
+            showToast("Daily record created successfully.","success");
             return true;
 
-        }
+        } catch (caughtError) {
 
-        catch (caughtError) {
-            if (
-                axios.isAxiosError<ApiErrorResponse>(caughtError) &&
-                caughtError.response?.status === 409
-            ) {
-                setError(
-                    caughtError.response.data?.message ??
-                    "A daily record already exists for this date."
-                );
+            if (axios.isAxiosError<ApiErrorResponse>(caughtError) &&caughtError.response?.status === 409 ) {
+                showToast( caughtError.response.data?.message ??"A daily record already exists for this date.", "error");
             } else {
-                setError(
-                    "Could not create daily record."
+
+                showToast(
+                    "Could not create daily record.",
+                    "error"
                 );
             }
 
             return false;
+
         } finally {
             setCreating(false);
         }
@@ -232,23 +234,7 @@ function DailyRecords(){
             />
         </section>
 
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
-
-        {error && (
+        {error && recordPage && (
             <ErrorMessage
                 message={error}
             />
