@@ -10,39 +10,39 @@ import type {
 } from "../types/page";
 
 
-export async function getTrackingLinks(page = 0,size = 10): Promise<PageResponse<TrackingLink>> {
+export async function getTrackingLinks(page = 0,size = 10,signal?: AbortSignal): Promise<PageResponse<TrackingLink>> {
 
     const response =await apiClient.get<PageResponse<TrackingLink>>("/api/tracking-links",{
         params: { 
             page,
             size
-        }
+        },signal
     });
 
     return response.data;
 }
 
 
-export async function getPendingTrackingLinks(page = 0,size = 10): Promise<PageResponse<TrackingLink>> {
+export async function getPendingTrackingLinks(page = 0,size = 10,signal?: AbortSignal): Promise<PageResponse<TrackingLink>> {
 
     const response =await apiClient.get<PageResponse<TrackingLink>>("/api/tracking-links/pending",{
         params: {
             page,
             size
-        }
+        },signal
     });
 
     return response.data;
 }
 
 
-export async function getActiveTrackingLinks(page = 0,size = 10): Promise<PageResponse<TrackingLink>> {
+export async function getActiveTrackingLinks(page = 0,size = 10,signal?: AbortSignal): Promise<PageResponse<TrackingLink>> {
 
     const response = await apiClient.get<PageResponse<TrackingLink>>("/api/tracking-links/active",{
         params: {
             page,
             size
-        }
+        },signal
     });
 
     return response.data;

@@ -33,6 +33,13 @@ import {
     useNotificationFilters,
     NOTIFICATION_TYPES
 } from "../hooks/useNotificationFilters";
+import LoadingState from "../components/ui/LoadingState";
+
+import ErrorMessage from "../components/ui/ErrorMessage";
+
+import EmptyState from "../components/ui/EmptyState";
+
+import PaginationControls from "../components/ui/PaginationControls";
 
 function Notifications(){
     const {currentUser} = useAuth();
@@ -156,59 +163,91 @@ function Notifications(){
 
     },[userId]);
     
-
     useEffect(() => {
 
-        let cancelled = false;
+        if (!userId) {
+            return;
+        }
 
-        async function loadNotifications() {
+        const controller =new AbortController();
 
-            if (!userId) {
-                return;
-            }
+
+        async function loadNotifications(id :number) {
 
             try {
+
                 dispatch({
                     type: "LOAD_START"
                 });
 
-                let result : PageResponse<Notification>;
+                let result:PageResponse<Notification>;
 
-                if (selectedType ){
-                    result = await getNotificationsByType(userId,selectedType,page,20);
-                }else if(filter === "unread"){
-                    result = await getUnreadNotifications(userId, page, 20);
-                }else{
-                    result = await getNotifications(userId,page,20);
+
+                if (selectedType) {
+
+                    result =await getNotificationsByType(
+                                id,
+                                selectedType,
+                                page,
+                                20,
+                                controller.signal
+                            );
+
+                } else if (filter === "unread") {
+
+                    result =await getUnreadNotifications(
+                                id,
+                                page,
+                                20,
+                                controller.signal
+                            );
+
+                } else {
+
+                    result =await getNotifications(
+                                id,
+                                page,
+                                20,
+                                controller.signal
+                            );
                 }
 
-                if (!cancelled) {
-                    dispatch({
-                        type: "LOAD_SUCCESS",
-                        payload: result
-                    });
-                }
+
+                dispatch({
+                    type: "LOAD_SUCCESS",
+                    payload: result
+                });
 
             } catch {
 
-                if (!cancelled) {
-                        dispatch({
-                            type: "LOAD_ERROR",
-                            payload:
-                                "Could not load notifications."
-                        });
-                }
+                if (!controller.signal.aborted) {
 
-            } 
+                    dispatch({
+                        type: "LOAD_ERROR",
+                        payload:
+                            "Could not load notifications."
+                    });
+                }
+            }
         }
 
-        void loadNotifications();
+
+        void loadNotifications(userId);
+
 
         return () => {
-            cancelled = true;
+            controller.abort();
         };
 
-    }, [userId, page, filter,selectedType,refreshKey]);
+    }, [
+        userId,
+        page,
+        filter,
+        selectedType,
+        refreshKey
+    ]);
+    
+
     if (!currentUser){
         return null;
     }
@@ -272,16 +311,16 @@ function Notifications(){
 
 
             {loading && (
-                <p className="mt-6">
-                    Loading notifications...
-                </p>
+                <LoadingState
+                    message="Loading notifications..."
+                />
             )}
 
 
             {error && (
-                <p className="mt-6 text-red-500">
-                    {error}
-                </p>
+                <ErrorMessage
+                    message={error}
+                />
             )}
 
             {success && (
@@ -293,74 +332,59 @@ function Notifications(){
             {!loading &&
                 !error &&
                 notificationPage?.empty && (
-                    <p className="mt-6">
-                        No notifications found.
-                    </p>
-                )}
+                    <EmptyState
+                        message="No notifications found."
+                    />
+            )}
 
 
-            {!loading &&
-                !error &&
-                notificationPage && (
-                    <div className="mt-6 space-y-4">
+        {!loading &&
+            !error &&
+            notificationPage &&
+            !notificationPage.empty && (
+                <div className="mt-6 space-y-4">
 
-                        {notificationPage.content.map(
-                            (notification) => (
-                                <NotificationCard
-                                    key={notification.id}
-                                    notification={notification}
-                                    onMarkAsRead={handleMarkAsRead}
-                                    onDelete={handleDelete}
-                                    loading={
-                                        actionLoadingId ===
-                                        notification.id
-                                    }
-                                />
-                            )
-                        )}
+                    {notificationPage.content.map(
+                        (notification) => (
+                            <NotificationCard
+                                key={notification.id}
+                                notification={notification}
+                                onMarkAsRead={handleMarkAsRead}
+                                onDelete={handleDelete}
+                                loading={
+                                    actionLoadingId ===
+                                    notification.id
+                                }
+                            />
+                        )
+                    )}
 
-                    </div>
-                )}
+                </div>
+            )}
+
+
 
 
             {notificationPage &&
                 !notificationPage.empty && (
-                    <div className="mt-6 flex gap-3">
-
-                        <button
-                            type="button"
-                            disabled={
-                                notificationPage.first
-                            }
-                            onClick={() =>
-                                handlePageChange(page - 1)
-                            }
-                            className="border p-2 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-
-                        <p className="p-2">
-                            Page{" "}
-                            {notificationPage.number + 1}
-                            {" of "}
-                            {notificationPage.totalPages}
-                        </p>
-
-                        <button
-                            type="button"
-                            disabled={
-                                notificationPage.last
-                            }
-                            onClick={() =>
-                                handlePageChange(page + 1)
-                            }
-                            className="border p-2 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-
-                    </div>
+                    <PaginationControls
+                        page={page}
+                        totalPages={
+                            notificationPage.totalPages
+                        }
+                        first={
+                            notificationPage.first
+                        }
+                        last={
+                            notificationPage.last
+                        }
+                        onPrevious={() =>
+                            handlePageChange(page - 1)
+                        }
+                        onNext={() =>
+                            handlePageChange(page + 1)
+                        }
+                    />
                 )}
 
         </div>

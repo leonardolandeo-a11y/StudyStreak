@@ -3,12 +3,13 @@ import type { PageResponse } from "../types/page";
 import apiClient from "./apiClient";
 
 
-export async function getGoals(userId: number, page = 0, size = 10) : Promise<PageResponse<Goal>>{
+export async function getGoals(userId: number, page = 0, size = 10,signal?: AbortSignal) : Promise<PageResponse<Goal>>{
     const response = await apiClient.get<PageResponse<Goal>>(`/users/${userId}/goals`,{
         params:{
             page,
             size
         }
+        , signal
     });
     return response.data;
 }

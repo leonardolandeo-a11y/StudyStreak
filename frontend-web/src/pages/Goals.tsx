@@ -17,6 +17,14 @@ import {
     ROUTES
 } from "../routes/paths";
 
+import LoadingState from "../components/ui/LoadingState";
+
+import ErrorMessage from "../components/ui/ErrorMessage";
+
+import EmptyState from "../components/ui/EmptyState";
+
+import PaginationControls from "../components/ui/PaginationControls";
+
 function Goals(){
     const {currentUser} = useAuth();
     
@@ -77,47 +85,59 @@ function Goals(){
     }
 
     const userId = currentUser?.id;
-    useEffect(()=>{
-        if (userId == null){
+    useEffect(() => {
+
+        if (userId == null) {
             return;
         }
-        let cancelled = false;
-        async function loadGoals(id :number){
-            try{
+
+        const controller =new AbortController();
+
+
+        async function loadGoals(id: number) {
+
+            try {
+
                 setLoading(true);
                 setError(null);
 
-                const response = await getGoals(id, page,10);
-                if (!cancelled){
-                    setGoalPage(response)
+                const response = await getGoals(id,page,10,controller.signal);
+                setGoalPage(response);
+
+            } catch {
+
+                if (!controller.signal.aborted) {
+                    setError("Could not load goals." );
                 }
-            }catch{
-                if (!cancelled){
-                    setError("Could not load goals.");
-                }
-                
-            
-            }finally{
-                if (!cancelled){
-                setLoading(false);
+
+            } finally {
+
+                if (!controller.signal.aborted) {
+                    setLoading(false);
                 }
             }
         }
+
+
         void loadGoals(userId);
 
-        return ()=>{
-            cancelled = true;
-        }
 
-    },[userId,page]);
+        return () => {
+            controller.abort();
+        };
+
+    }, [userId, page]);
+
     if (!currentUser) {
         return <p>Please log in to view your goals.</p>;
     }
     if (loading){
-        return <p>loading goals...</p>;
+        return (<LoadingState
+            message="Loading goals..."
+        />);
     }
     if (error){
-        return <p className="text-red-500">{error}</p>;
+        return (<ErrorMessage message={error}></ErrorMessage>);
     }
     if (!goalPage){
         return null;
@@ -148,40 +168,33 @@ return(
             </p>
         )}
 
-        <div className="mt-6 space-y-4">
-            {goalPage.content.map((goal) => (
-            <GoalCard
-                key={goal.id}
-                goal={goal}
+        {goalPage.empty && (
+            <EmptyState
+                message="No goals yet."
             />
-            ))}
-        </div>
+        )}
 
-        <div className="mt-6 flex items-center gap-4">
-            <button
-                type="button"
-                onClick={goToPreviousPage}
-                disabled={page === 0}
-                className="border p-2 disabled:opacity-50"
-            >
-                Previous
-            </button>
+        {!goalPage.empty && (
+            <div className="mt-6 space-y-4">
+                {goalPage.content.map((goal) => (
+                    <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                    />
+                ))}
+            </div>
+        )}
 
-            <span>
-                Page {page + 1}
-                {goalPage.totalPages > 0 &&
-                    ` of ${goalPage.totalPages}`}
-            </span>
-
-            <button
-                type="button"
-                onClick={goToNextPage}
-                disabled={goalPage.last}
-                className="border p-2 disabled:opacity-50"
-            >
-                Next
-            </button>
-        </div>
+        {!goalPage.empty && (
+            <PaginationControls
+                page={page}
+                totalPages={goalPage.totalPages}
+                first={goalPage.first}
+                last={goalPage.last}
+                onPrevious={goToPreviousPage}
+                onNext={goToNextPage}
+            />
+        )}
     </div>
     );
 
