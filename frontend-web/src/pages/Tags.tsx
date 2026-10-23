@@ -46,12 +46,14 @@ import EmptyState
 import PaginationControls
     from "../components/ui/PaginationControls";
 
+import { useToast } from "../hooks/useToast";
+
 const PAGE_SIZE = 10;
 
 function Tags() {
 
     const { currentUser } = useAuth();
-
+    const { showToast } = useToast();
     const { goalId } = useParams();
 
     const [searchParams,setSearchParams] = useSearchParams();
@@ -62,8 +64,6 @@ function Tags() {
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
-
-    const [success, setSuccess] = useState<string | null>(null);
 
     const [creating, setCreating] = useState(false);
 
@@ -101,33 +101,35 @@ function Tags() {
         }
 
         try {
-
             setCreating(true);
-            setError(null);
-            setSuccess(null);
 
-
-            await createTag(userId,parsedGoalId,tagRequest);
+            await createTag( userId,parsedGoalId,tagRequest );
 
 
             if (page === 0) {
 
-                const updatedTags =await getTags(userId, parsedGoalId, 0,  PAGE_SIZE );
-
+                const updatedTags =await getTags(userId, parsedGoalId, 0,PAGE_SIZE);
                 setTagPage(updatedTags);
 
             } else {
-
                 handlePageChange(0);
             }
 
 
-            setSuccess("Tag created successfully.");
+            showToast(
+                "Tag created successfully.",
+                "success"
+            );
 
             return true;
 
         } catch {
-            setError("Could not create tag.");
+
+            showToast(
+                "Could not create tag.",
+                "error"
+            );
+
             return false;
 
         } finally {
@@ -135,21 +137,16 @@ function Tags() {
         }
     }
 
-
-    async function handleUpdateTag(tagId: number,tagRequest: TagRequest): Promise<boolean> {
+    async function handleUpdateTag(tagId: number,tagRequest: TagRequest ): Promise<boolean> {
 
         if (!userId || parsedGoalId === null) {
             return false;
         }
 
         try {
-
             setUpdatingId(tagId);
-            setError(null);
-            setSuccess(null);
 
-
-            const updatedTag = await updateTag( userId, parsedGoalId, tagId, tagRequest );
+            const updatedTag =await updateTag(userId,parsedGoalId,tagId,tagRequest);
 
 
             setTagPage((currentPage) => {
@@ -171,25 +168,29 @@ function Tags() {
             });
 
 
-            setSuccess(  "Tag updated successfully." );
+            showToast(
+                "Tag updated successfully.",
+                "success"
+            );
 
             return true;
 
         } catch {
 
-            setError( "Could not update tag.");
+            showToast(
+                "Could not update tag.",
+                "error"
+            );
+
             return false;
 
         } finally {
-
             setUpdatingId(null);
         }
     }
+    async function handleDeleteTag(tagId: number ): Promise<void> {
 
-
-    async function handleDeleteTag(tagId: number): Promise<void> {
-
-        if (!userId ||parsedGoalId === null) {
+        if (!userId || parsedGoalId === null) {
             return;
         }
 
@@ -202,37 +203,37 @@ function Tags() {
 
 
         try {
-
             setDeletingId(tagId);
-            setError(null);
-            setSuccess(null);
 
 
-            await deleteTag( userId, parsedGoalId, tagId);
-
-
-            if (tagPage?.content.length === 1 &&page > 0) {
+            await deleteTag(userId, parsedGoalId,tagId);
+            if (tagPage?.content.length === 1 && page > 0) {
 
                 handlePageChange(page - 1);
+
             } else {
 
-                const updatedTags =await getTags(userId,parsedGoalId,page,PAGE_SIZE);
+                const updatedTags =await getTags(userId,parsedGoalId,page, PAGE_SIZE );
                 setTagPage(updatedTags);
             }
 
 
-            setSuccess("Tag removed successfully.");
+            showToast(
+                "Tag removed successfully.",
+                "success"
+            );
 
         } catch {
 
-            setError("Could not remove tag.");
+            showToast(
+                "Could not remove tag.",
+                "error"
+            );
 
         } finally {
-
             setDeletingId(null);
         }
     }
-
 
     useEffect(() => {
 
@@ -357,22 +358,6 @@ function Tags() {
                 loading={creating}
             />
         </section>
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
 
         {error && (
             <ErrorMessage

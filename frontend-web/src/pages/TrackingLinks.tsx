@@ -39,7 +39,7 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
-
+import { useToast } from "../hooks/useToast";
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -51,7 +51,7 @@ interface ApiErrorResponse {
 function TrackingLinks() {
 
     const { currentUser } = useAuth();
-
+    const { showToast } = useToast();
     const [searchParams, setSearchParams] =useSearchParams();
 
     const [trackingPage,setTrackingPage] = useState<PageResponse<TrackingLink> | null>(null);
@@ -61,7 +61,6 @@ function TrackingLinks() {
     const [error, setError] =useState<string | null>(null);
 
     const [creating , setCreating]  = useState(false);
-    const [success, setSuccess] = useState<string|null> (null);
     const [pendingPage,setPendingPage] = useState<PageResponse<TrackingLink> | null>(null);
 
     const [activePage , setActivePage] = useState<PageResponse<TrackingLink>|null>(null);
@@ -90,47 +89,82 @@ function TrackingLinks() {
             page: String(page + 1)
         });
     }
-    async function handleCreateTrackingLink(receiverId: number): Promise<boolean> {
+    async function handleCreateTrackingLink(
+        receiverId: number
+    ): Promise<boolean> {
 
         if (!currentUser) {
             return false;
         }
 
         if (receiverId === currentUser.id) {
-            setError("You cannot create a tracking link with yourself.");
+            showToast(
+                "You cannot create a tracking link with yourself.",
+                "error"
+            );
+
             return false;
         }
 
         try {
             setCreating(true);
-            setError(null);
-            setSuccess(null);
 
             await createTrackingLink(receiverId);
 
-            const updatedLinks = await getTrackingLinks(page, 10);
+            const updatedLinks =
+                await getTrackingLinks(
+                    page,
+                    10
+                );
 
             setTrackingPage(updatedLinks);
 
-            setSuccess("Tracking request sent successfully.");
+            showToast(
+                "Tracking request sent successfully.",
+                "success"
+            );
 
             return true;
 
         } catch (caughtError) {
 
-            if (axios.isAxiosError<ApiErrorResponse>(caughtError)) {
-                const status = caughtError.response?.status;
+            if (
+                axios.isAxiosError<ApiErrorResponse>(
+                    caughtError
+                )
+            ) {
+                const status =
+                    caughtError.response?.status;
 
                 if (status === 409) {
-                    setError(caughtError.response?.data?.message ??"A tracking link already exists with this user.");
+
+                    showToast(
+                        caughtError.response?.data?.message ??
+                            "A tracking link already exists with this user.",
+                        "error"
+                    );
+
                 } else if (status === 404) {
-                    setError("The selected user does not exist.");
+
+                    showToast(
+                        "The selected user does not exist.",
+                        "error"
+                    );
+
                 } else {
-                    setError("Could not create tracking request.");
+
+                    showToast(
+                        "Could not create tracking request.",
+                        "error"
+                    );
                 }
 
             } else {
-                setError("Could not create tracking request.");
+
+                showToast(
+                    "Could not create tracking request.",
+                    "error"
+                );
             }
 
             return false;
@@ -139,58 +173,95 @@ function TrackingLinks() {
             setCreating(false);
         }
     }
-    async function handleTrackingStatus(trackingId: number,status: "ACCEPTED" | "REJECTED") {
-        try {
-            setError(null);
-            setSuccess(null);
-
-            await updateTrackingLinkStatus(trackingId,{ status });
-
-            const [updatedLinks,updatedPending, updatedActive] = await Promise.all([
-                getTrackingLinks(page, 10),
-                getPendingTrackingLinks(0, 10),
-                getActiveTrackingLinks(0,10)
-            ]);
-
-            setTrackingPage(updatedLinks);
-            setPendingPage(updatedPending);
-            setActivePage(updatedActive);
-
-            setSuccess(status === "ACCEPTED"? "Tracking request accepted.": "Tracking request rejected.");
-
-        } catch {
-            setError(
-                "Could not update tracking request."
+    async function handleDeleteTrackingLink(
+        trackingId: number
+    ) {
+        const confirmed =
+            window.confirm(
+                "Remove this tracking link?"
             );
-        }
-    }
-    async function handleDeleteTrackingLink(trackingId: number) {
-        const confirmed = window.confirm("Remove this tracking link?");
 
         if (!confirmed) {
             return;
         }
 
         try {
-            setError(null);
-            setSuccess(null);
 
-            await deleteTrackingLink(trackingId);
+            await deleteTrackingLink(
+                trackingId
+            );
 
-            const [updatedLinks,updatedPending,updatedActive] = await Promise.all([
+
+            const [
+                updatedLinks,
+                updatedPending,
+                updatedActive
+            ] = await Promise.all([
                 getTrackingLinks(page, 10),
                 getPendingTrackingLinks(0, 10),
                 getActiveTrackingLinks(0, 10)
             ]);
 
+
             setTrackingPage(updatedLinks);
             setPendingPage(updatedPending);
             setActivePage(updatedActive);
 
-            setSuccess("Tracking link removed successfully.");
+
+            showToast(
+                "Tracking link removed successfully.",
+                "success"
+            );
 
         } catch {
-            setError("Could not remove tracking link.");
+
+            showToast(
+                "Could not remove tracking link.",
+                "error"
+            );
+        }
+    }
+    async function handleTrackingStatus(
+        trackingId: number,
+        status: "ACCEPTED" | "REJECTED"
+    ) {
+        try {
+
+            await updateTrackingLinkStatus(
+                trackingId,
+                { status }
+            );
+
+
+            const [
+                updatedLinks,
+                updatedPending,
+                updatedActive
+            ] = await Promise.all([
+                getTrackingLinks(page, 10),
+                getPendingTrackingLinks(0, 10),
+                getActiveTrackingLinks(0, 10)
+            ]);
+
+
+            setTrackingPage(updatedLinks);
+            setPendingPage(updatedPending);
+            setActivePage(updatedActive);
+
+
+            showToast(
+                status === "ACCEPTED"
+                    ? "Tracking request accepted."
+                    : "Tracking request rejected.",
+                "success"
+            );
+
+        } catch {
+
+            showToast(
+                "Could not update tracking request.",
+                "error"
+            );
         }
     }
     useEffect(() => {
@@ -296,22 +367,6 @@ function TrackingLinks() {
                 loading={creating}
             />
         </section>
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
 
         {error && trackingPage && (
             <ErrorMessage

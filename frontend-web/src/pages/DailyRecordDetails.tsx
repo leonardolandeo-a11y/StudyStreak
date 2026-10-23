@@ -33,6 +33,8 @@ import ErrorMessage
 import EmptyState
     from "../components/ui/EmptyState";
 
+import { useToast } from "../hooks/useToast";
+
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
 
@@ -43,8 +45,6 @@ function DailyRecordDetails(){
     const [error, setError] =useState<string | null>(null);
 
     const [updating, setUpdating] =useState(false);
-
-    const [success, setSuccess] = useState<string|null>(null);
 
     const navigate = useNavigate();
 
@@ -57,45 +57,72 @@ function DailyRecordDetails(){
     const invalidGoalId =parsedGoalId === null ||!Number.isSafeInteger(parsedGoalId) ||parsedGoalId <= 0;
 
     const invalidDailyRecordId =parsedDailyRecordId === null ||!Number.isSafeInteger(parsedDailyRecordId) ||parsedDailyRecordId <= 0;
-    async function handleUpdateDailyRecord(updatedData: DailyRecordRequest): Promise<boolean>{
-        if(parsedGoalId===null || parsedDailyRecordId === null || !dailyRecord){
+
+    const { showToast } = useToast();
+
+    async function handleUpdateDailyRecord(updatedData: DailyRecordRequest): Promise<boolean> {
+
+        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord) {
             return false;
         }
-        try{
-            setUpdating(true);
-            setError(null);
-            setSuccess(null);
 
-            const updatedRecord = await updateDailyRecord(parsedGoalId,parsedDailyRecordId,updatedData);
+        try {
+            setUpdating(true);
+
+            const updatedRecord =await updateDailyRecord(parsedGoalId,parsedDailyRecordId, updatedData);
             setDailyRecord(updatedRecord);
-            setSuccess("Daily record updated successfully.");
+            showToast(
+                "Daily record updated successfully.",
+                "success"
+            );
             return true;
-        }catch{
-            setError("Could not update daily record");
+
+        } catch {
+
+            showToast(
+                "Could not update daily record.",
+                "error"
+            );
+
             return false;
-        }finally{
+
+        } finally {
             setUpdating(false);
         }
-        
     }
 
-    async function handleDeleteDailyRecord(){
-        if (parsedGoalId === null || parsedDailyRecordId === null ||!dailyRecord){
-            return;
-        }
-        const confirmed = window.confirm(`Delete daily record from ${dailyRecord.date}`);
-        if(!confirmed){
-            return;
-        }
-        try{
-            setDeleting(true);
-            setError(null);
+    async function handleDeleteDailyRecord() {
 
-            await deleteDailyRecord(parsedGoalId,parsedDailyRecordId);
-            navigate(dailyRecordsPath(parsedGoalId));
-        }catch{
-            setError("Could not delete daily record.");
-        }finally{
+        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord) {
+            return;
+        }
+
+        const confirmed =window.confirm(`Delete daily record from ${dailyRecord.date}?`);
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setDeleting(true);
+
+            await deleteDailyRecord(parsedGoalId,parsedDailyRecordId );
+
+            showToast(
+                "Daily record deleted successfully.",
+                "success"
+            );
+
+            navigate( dailyRecordsPath(parsedGoalId));
+
+        } catch {
+
+            showToast(
+                "Could not delete daily record.",
+                "error"
+            );
+
+        } finally {
             setDeleting(false);
         }
     }
@@ -252,28 +279,6 @@ function DailyRecordDetails(){
 
             </div>
         </section>
-
-
-        {success && (
-            <div
-                className="
-                    rounded-xl
-                    border border-emerald-900/60
-                    bg-emerald-950/40
-                    px-4 py-3
-                    text-sm text-emerald-300
-                "
-            >
-                {success}
-            </div>
-        )}
-
-
-        {error && (
-            <ErrorMessage
-                message={error}
-            />
-        )}
 
 
         <section>
