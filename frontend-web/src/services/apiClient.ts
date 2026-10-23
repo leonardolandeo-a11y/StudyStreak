@@ -3,7 +3,7 @@ import axios,{
     type InternalAxiosRequestConfig,
 } from "axios";
 import type { LoginResponse } from "../types/auth";
-
+import { ROUTES } from "../routes/paths";
 const apiClient = axios.create({
     baseURL:import.meta.env.VITE_API_BASE_URL,
     headers:{
@@ -63,7 +63,7 @@ apiClient.interceptors.response.use(
                 sessionStorage.removeItem("accessToken");
                 sessionStorage.removeItem("refreshToken");
 
-                window.location.assign("/login");
+                window.location.assign(ROUTES.login);
                 
                 return Promise.reject(refreshError);
             }
