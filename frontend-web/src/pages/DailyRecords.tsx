@@ -23,6 +23,14 @@ import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
 import {
     goalDetailsPath
 } from "../routes/paths";
+import LoadingState from "../components/ui/LoadingState";
+
+import ErrorMessage from "../components/ui/ErrorMessage";
+
+import EmptyState from "../components/ui/EmptyState";
+
+import PaginationControls from "../components/ui/PaginationControls";
+
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -116,51 +124,71 @@ function DailyRecords(){
             setCreating(false);
         }
     }
-    useEffect(()=>{
-        if (invalidGoalId|| parsedGoalId===null){
+    useEffect(() => {
+
+        if (invalidGoalId ||parsedGoalId === null) {
             return;
         }
-        let cancelled = false;
 
-        async function loadDailyRecords(id:number){
-            try{
+        const controller =new AbortController();
+
+
+        async function loadDailyRecords(id: number) {
+
+            try {
+
                 setLoading(true);
                 setError(null);
 
-                const response = await getDailyRecords(id,page,10);
+                const response =await getDailyRecords(id,page,10,controller.signal);
 
-                if (!cancelled){
-                    setRecordPage(response);
-                }
+                setRecordPage(response);
 
-            }catch{
-                if (!cancelled){
+            } catch {
+
+                if (!controller.signal.aborted) {
                     setError("Could not load daily records.");
                 }
-            }finally{
-                if(!cancelled){
+
+            } finally {
+
+                if (!controller.signal.aborted) {
                     setLoading(false);
                 }
             }
-
         }
 
-        void loadDailyRecords(parsedGoalId);
-        
-        return () =>{
-            cancelled = true;
+
+        void loadDailyRecords(
+            parsedGoalId
+        );
+
+
+        return () => {
+            controller.abort();
         };
-    },[parsedGoalId,invalidGoalId,page]);
+
+    }, [
+        parsedGoalId,
+        invalidGoalId,
+        page
+    ]);
 
     if (invalidGoalId){
         return <p>Invalid goal id.</p>;
     }
     if (loading){
-        return <p>Loading daily records...</p>;
+        return (
+            <LoadingState
+                message="Loading daily records..."
+            />
+        );
     }
     if (error && !recordPage){
         return (
-            <p className="text-red-500">{error}</p>
+            <ErrorMessage
+                message={error}
+            />
         );
     }
     if (!recordPage || parsedGoalId === null){
@@ -192,14 +220,14 @@ function DailyRecords(){
             </p>
         )}
         {error && (
-            <p className="mt-4 text-red-500">
-                {error}
-            </p>
+            <ErrorMessage
+                message={error}
+            />
         )}
         {recordPage.empty && (
-            <p className="mt-4">
-                No daily records yet.
-            </p>
+            <EmptyState
+                message="No daily records yet."
+            />
         )}
 
         <div className="mt-6 space-y-4">
@@ -214,31 +242,16 @@ function DailyRecords(){
             )}
         </div>
 
-        <div className="mt-6 flex items-center gap-4">
-            <button
-                type="button"
-                onClick={goToPreviousPage}
-                disabled={page === 0}
-                className="border p-2 disabled:opacity-50"
-            >
-                Previous
-            </button>
-
-            <span>
-            Page {page + 1}
-            {recordPage.totalPages > 0 &&
-                ` of ${recordPage.totalPages}`}
-            </span>
-
-            <button
-                type="button"
-                onClick={goToNextPage}
-                disabled={recordPage.last}
-                className="border p-2 disabled:opacity-50"
-            >
-                Next
-            </button>
-        </div>
+        {!recordPage.empty && (
+            <PaginationControls
+                page={page}
+                totalPages={recordPage.totalPages}
+                first={recordPage.first}
+                last={recordPage.last}
+                onPrevious={goToPreviousPage}
+                onNext={goToNextPage}
+            />
+        )}
     </div>
 )
 }

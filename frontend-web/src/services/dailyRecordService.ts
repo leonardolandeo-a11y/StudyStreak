@@ -10,13 +10,13 @@ import type {
 } from "../types/page";
 
 
-export async function getDailyRecords(goalId:number, page = 0, size = 10): Promise<PageResponse<DailyRecord>>{
+export async function getDailyRecords(goalId:number, page = 0, size = 10,signal?: AbortSignal): Promise<PageResponse<DailyRecord>>{
 
     const response = await apiClient.get<PageResponse<DailyRecord>>(`/api/goals/${goalId}/daily-records`, {
         params:{
             page,
             size
-        }
+        },signal
     });
     return response.data;
 }

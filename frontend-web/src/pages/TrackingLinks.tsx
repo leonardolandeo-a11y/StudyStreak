@@ -32,6 +32,14 @@ import type {
     PageResponse
 } from "../types/page";
 
+import LoadingState from "../components/ui/LoadingState";
+
+import ErrorMessage from "../components/ui/ErrorMessage";
+
+import EmptyState from "../components/ui/EmptyState";
+
+import PaginationControls from "../components/ui/PaginationControls";
+
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -187,43 +195,47 @@ function TrackingLinks() {
     }
     useEffect(() => {
 
-        let cancelled = false;
+        const controller =new AbortController();
+
 
         async function loadTrackingLinks() {
 
             try {
+
                 setLoading(true);
                 setError(null);
-                const [allLinks, pendingLinks,activeLinks] = await Promise.all([
-                    getTrackingLinks(page,10),
-                    getPendingTrackingLinks(0,10),
-                    getActiveTrackingLinks(0,10)
+
+                const [allLinks,pendingLinks,activeLinks] = await Promise.all([
+                        getTrackingLinks(page,10,controller.signal),
+                        getPendingTrackingLinks(0,10,controller.signal),
+                        getActiveTrackingLinks(0,10,controller.signal)
                 ]);
 
-                if (!cancelled) {
-                    setTrackingPage(allLinks);
-                    setPendingPage(pendingLinks);
-                    setActivePage(activeLinks);
-                }
+
+                setTrackingPage(allLinks);
+                setPendingPage(pendingLinks);
+                setActivePage(activeLinks);
 
             } catch {
 
-                if (!cancelled) {
+                if (!controller.signal.aborted) {
                     setError("Could not load tracking links.");
                 }
 
             } finally {
 
-                if (!cancelled) {
+                if (!controller.signal.aborted) {
                     setLoading(false);
                 }
             }
         }
 
+
         void loadTrackingLinks();
 
+
         return () => {
-            cancelled = true;
+            controller.abort();
         };
 
     }, [page]);
@@ -233,7 +245,11 @@ function TrackingLinks() {
     }
 
     if (loading) {
-        return <p>Loading tracking links...</p>;
+        return (
+            <LoadingState
+                message="Loading tracking links..."
+            />
+        );
     }
 
     if (error && !trackingPage) {
@@ -269,9 +285,9 @@ function TrackingLinks() {
         )}
 
         {error && trackingPage && (
-            <p className="mt-4 text-red-500">
-                {error}
-            </p>
+            <ErrorMessage
+                message={error}
+            />
         )}
 
         {pendingPage && !pendingPage.empty && (
@@ -374,51 +390,36 @@ function TrackingLinks() {
         )}
 
         {trackingPage.empty && (
-            <p className="mt-4">
-                No tracking links yet.
-            </p>
+            <EmptyState
+                message="No tracking links yet."
+            />
         )}
 
-        <div className="mt-6 space-y-4">
-            {trackingPage.content.map(
-                (trackingLink) => (
-                    <TrackingLinkCard
-                        key={trackingLink.id}
-                        trackingLink={trackingLink}
-                        currentUserId={currentUser.id}
-                    />
-                )
-            )}
-        </div>
+        {!trackingPage.empty && (
+            <div className="mt-6 space-y-4">
 
-        <div className="mt-6 flex items-center gap-4">
+                {trackingPage.content.map(
+                    (trackingLink) => (
+                        <TrackingLinkCard
+                            key={trackingLink.id}
+                            trackingLink={trackingLink}
+                            currentUserId={currentUser.id}
+                        />
+                    )
+                )}
 
-            <button
-                type="button"
-                onClick={goToPreviousPage}
-                disabled={page === 0}
-                className="border p-2 disabled:opacity-50"
-            >
-                Previous
-            </button>
-
-            <span>
-                Page {page + 1}
-
-                {trackingPage.totalPages > 0 &&
-                    ` of ${trackingPage.totalPages}`}
-            </span>
-
-            <button
-                type="button"
-                onClick={goToNextPage}
-                disabled={trackingPage.last}
-                className="border p-2 disabled:opacity-50"
-            >
-                Next
-            </button>
-
-        </div>
+            </div>
+        )}
+        {!trackingPage.empty && (
+            <PaginationControls
+                page={page}
+                totalPages={trackingPage.totalPages}
+                first={trackingPage.first}
+                last={trackingPage.last}
+                onPrevious={goToPreviousPage}
+                onNext={goToNextPage}
+            />
+        )}
 
     </div>
     );
