@@ -11,6 +11,13 @@ export const ROUTES={
     notifications:"/notifications"
 } as const;
 
+export const ROUTE_PATTERNS = {
+    goalDetails: "/goals/:goalId",
+    dailyRecords:"/goals/:goalId/daily-records",
+    dailyRecordDetails:"/goals/:goalId/daily-records/:dailyRecordId",
+    tags:"/goals/:goalId/tags"
+} as const;
+
 export function goalDetailsPath(goalId:number):string{
     return `/goals/${goalId}`;
 }

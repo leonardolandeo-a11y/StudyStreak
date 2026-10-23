@@ -10,7 +10,12 @@ import {
 } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedLayout from "./components/navigation/AuthenticatedLayout";
-import { ROUTES } from "./routes/paths";
+import {
+    ROUTES,
+    ROUTE_PATTERNS
+} from "./routes/paths";
+import LoadingState
+    from "./components/ui/LoadingState";
 
 const Home = lazy(()=> import("./pages/Home"));
 const Login = lazy(()=> import("./pages/Login"));
@@ -36,12 +41,12 @@ function App(){
   return (
     <BrowserRouter>
       <Suspense
-        fallback={
-          <p className="p-6">
-            Loading page...
-          </p>
-        }
-      > 
+          fallback={
+              <LoadingState
+                  message="Loading page..."
+              />
+          }
+      >
         
         <Routes>
           <Route path={ROUTES.home} element={<Home />} />
@@ -59,10 +64,10 @@ function App(){
           >
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>
             <Route path= {ROUTES.goals} element = {<Goals></Goals>}></Route>
-            <Route path="/goals/:goalId" element={<GoalDetails></GoalDetails>}></Route>
-            <Route path="/goals/:goalId/daily-records" element={<DailyRecords></DailyRecords>}></Route>
-            <Route path="/goals/:goalId/daily-records/:dailyRecordId" element={<DailyRecordDetails></DailyRecordDetails>}></Route>
-            <Route path="/goals/:goalId/tags" element={<Tags />}></Route>
+            <Route path={ROUTE_PATTERNS.goalDetails} element={<GoalDetails></GoalDetails>}></Route>
+            <Route path={ROUTE_PATTERNS.dailyRecords} element={<DailyRecords></DailyRecords>}></Route>
+            <Route path={ROUTE_PATTERNS.dailyRecordDetails} element={<DailyRecordDetails></DailyRecordDetails>}></Route>
+            <Route path={ROUTE_PATTERNS.tags} element={<Tags />}></Route>
             <Route path= {ROUTES.trackingLinks} element={<TrackingLinks></TrackingLinks>}></Route>
             <Route path= {ROUTES.validations} element= {<Validations></Validations>}></Route>
             <Route path= {ROUTES.notifications} element={<Notifications></Notifications>}></Route>

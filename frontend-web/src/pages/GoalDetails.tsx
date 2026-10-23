@@ -276,7 +276,11 @@ useEffect(() => {
             {success}
             </p>
         )}
-
+        {error && goal && (
+            <ErrorMessage
+                message={error}
+            />
+        )}
         <div className="mt-6">
             <GoalForm
             onSubmit={handleUpdateGoal}
