@@ -19,7 +19,7 @@ export async function createGoal(userId: number, goal:GoalRequest): Promise<Goal
 }
 
 export async function getGoal(userId: number , goalId:number,signal?:AbortSignal):Promise<Goal>{
-    const response = await apiClient.get<Goal>(`users/${userId}/goals/${goalId}`,{
+    const response = await apiClient.get<Goal>(`/users/${userId}/goals/${goalId}`,{
         signal
     });
     return response.data;

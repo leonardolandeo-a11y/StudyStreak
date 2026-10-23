@@ -17,24 +17,43 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
     const [duration, setDuration] = useState(initialValues?.duration?? 30);
     const [completed, setCompleted] = useState(initialValues?.completed?? false);
 
+    const [error, setError] = useState<string | null>(null);
 
-    async function handleSubmit(event: SubmitEvent<HTMLFormElement>){
+    async function handleSubmit(event: SubmitEvent<HTMLFormElement> ) {
         event.preventDefault();
 
+        const trimmedTopic =topic.trim();
+
+        if (trimmedTopic.length === 0) {
+            setError("Topic is required." );
+            return;
+        }
+
+        if (!Number.isSafeInteger(frequency) || frequency <= 0) {
+            setError( "Frequency must be a positive integer.");
+            return;
+        }
+
+        if ( !Number.isSafeInteger(duration) || duration <= 0) {
+            setError("Duration must be a positive integer." );
+            return;
+        }
+
+        setError(null);
+
         await onSubmit({
-            topic,
+            topic: trimmedTopic,
             frequency,
             duration,
-            completed,
+            completed
         });
-        if (resetAfterSubmit){
+
+        if (resetAfterSubmit) {
             setTopic("");
             setFrequency(1);
             setDuration(30);
             setCompleted(false);
         }
-
-
     }
     return (
     <form
@@ -69,10 +88,16 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
                 id="frequency"
                 type="number"
                 min="1"
+                step="1"
                 value={frequency}
-                onChange={(event) =>setFrequency(Number(event.target.value))}
+                onChange={(event) =>
+                    setFrequency(
+                        Number(event.target.value)
+                    )
+                }
                 className="w-full border p-2"
                 required
+
             />
         </div>
 
@@ -85,8 +110,13 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
                 id="duration"
                 type="number"
                 min="1"
+                step="1"
                 value={duration}
-                onChange={(event) =>setDuration(Number(event.target.value))}
+                onChange={(event) =>
+                    setDuration(
+                        Number(event.target.value)
+                    )
+                }
                 className="w-full border p-2"
                 required
             />
@@ -105,7 +135,11 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
                 </span>
             </label>
         </div>
-
+        {error && (
+            <p className="text-red-500">
+                {error}
+            </p>
+        )}
         <button
             type="submit"
             disabled={loading}
