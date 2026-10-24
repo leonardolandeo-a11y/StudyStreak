@@ -29,7 +29,21 @@ export async function getUnreadNotifications(userId:number,page = 0, size = 20,s
     });
     return response.data;
 }
+export async function getUnreadNotificationCount(userId: number,signal?: AbortSignal): Promise<number> {
 
+    const response =
+        await apiClient.get<PageResponse<Notification>>(`/users/${userId}/notifications/unread`,
+            {
+                params: {
+                    page: 0,
+                    size: 1
+                },
+                signal
+            }
+        );
+
+    return response.data.totalElements;
+}
 export async function getNotificationsByType(userId:number, type: NotificationType, page= 0, size = 20,signal?: AbortSignal): Promise<PageResponse<Notification>>{
     const response = await apiClient.get<PageResponse<Notification>>(`/users/${userId}/notifications/type/${type}`,{
         params:{

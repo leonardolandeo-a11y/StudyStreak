@@ -42,9 +42,13 @@ import EmptyState from "../components/ui/EmptyState";
 import PaginationControls from "../components/ui/PaginationControls";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
+import {
+    useUnreadNotifications
+} from "../hooks/useUnreadNotifications";
 function Notifications(){
     const {currentUser} = useAuth();
     const { showToast } = useToast();
+    const {refreshUnreadCount} = useUnreadNotifications();
     const confirm = useConfirm();
     const {
         page,
@@ -88,7 +92,7 @@ function Notifications(){
                     userId,
                     notificationId
                 );
-
+                await refreshUnreadCount();
                 showToast(
                     "Notification marked as read.",
                     "success"
@@ -115,7 +119,8 @@ function Notifications(){
         },
         [
             userId,
-            showToast
+            showToast,
+            refreshUnreadCount
         ]
     );
     const handleDelete = useCallback(
@@ -151,6 +156,7 @@ function Notifications(){
                     userId,
                     notificationId
                 );
+                await refreshUnreadCount();
 
                 showToast(
                     "Notification deleted successfully.",
@@ -175,12 +181,7 @@ function Notifications(){
                 });
             }
 
-        },
-        [
-            userId,
-            showToast
-        ]
-    );
+        },[userId,showToast,confirm,refreshUnreadCount]);
     
     useEffect(() => {
 

@@ -25,12 +25,14 @@ import {
 import {
     ROUTES
 } from "../../routes/paths";
-
+import {
+    useUnreadNotifications
+} from "../../hooks/useUnreadNotifications";
 
 function MobileTopbar() {
 
     const [open, setOpen] = useState(false);
-
+    const {unreadCount} = useUnreadNotifications();
     const {
         currentUser,
         logout
@@ -63,7 +65,8 @@ function MobileTopbar() {
         {
             label: "Notifications",
             to: ROUTES.notifications,
-            icon: Bell
+            icon: Bell,
+            showBadge: true
         }
     ];
 
@@ -167,7 +170,8 @@ function MobileTopbar() {
                                 ({
                                     label,
                                     to,
-                                    icon: Icon
+                                    icon: Icon,
+                                    showBadge
                                 }) => (
                                     <NavLink
                                         key={to}
@@ -189,7 +193,30 @@ function MobileTopbar() {
                                     >
                                         <Icon size={18} />
 
-                                        {label}
+                                        <span className="flex-1">
+                                            {label}
+                                        </span>
+
+                                        {showBadge &&
+                                            unreadCount > 0 && (
+                                                <span
+                                                    className="
+                                                        flex min-w-5
+                                                        items-center justify-center
+                                                        rounded-full
+                                                        bg-sky-500
+                                                        px-1.5 py-0.5
+                                                        text-[11px]
+                                                        font-bold
+                                                        leading-none
+                                                        text-slate-950
+                                                    "
+                                                >
+                                                    {unreadCount > 99
+                                                        ? "99+"
+                                                        : unreadCount}
+                                                </span>
+                                            )}
                                     </NavLink>
                                 )
                             )}
