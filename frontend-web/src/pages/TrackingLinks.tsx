@@ -40,6 +40,7 @@ import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
 import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
 interface ApiErrorResponse {
     timestamp: string;
     status: number;
@@ -53,7 +54,7 @@ function TrackingLinks() {
     const { currentUser } = useAuth();
     const { showToast } = useToast();
     const [searchParams, setSearchParams] =useSearchParams();
-
+    const confirm = useConfirm();
     const [trackingPage,setTrackingPage] = useState<PageResponse<TrackingLink> | null>(null);
 
     const [loading, setLoading] =useState(true);
@@ -177,9 +178,14 @@ function TrackingLinks() {
         trackingId: number
     ) {
         const confirmed =
-            window.confirm(
-                "Remove this tracking link?"
-            );
+            await confirm({
+                title: "Remove tracking link?",
+                message:
+                    "Are you sure you want to remove this tracking link? This action cannot be undone.",
+                confirmLabel: "Remove",
+                cancelLabel: "Cancel",
+                variant: "danger"
+            });
 
         if (!confirmed) {
             return;

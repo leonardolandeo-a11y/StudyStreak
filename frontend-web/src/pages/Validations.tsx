@@ -734,7 +734,7 @@ function Validations(){
                                                         Evidence
                                                     </p>
 
-                                                    <p className="mt-1 break-words text-sm text-slate-300">
+                                                    <p className="mt-1 wrap-break-word text-sm text-slate-300">
                                                         {dailyRecord.evidence ||
                                                             "No evidence"}
                                                     </p>
@@ -801,7 +801,6 @@ function Validations(){
                         message={validationError}
                     />
                 )}
-
                 {!validationLoading &&
                     !validationError && (
                         <div className="mt-4">

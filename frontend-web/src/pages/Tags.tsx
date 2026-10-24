@@ -47,7 +47,7 @@ import PaginationControls
     from "../components/ui/PaginationControls";
 
 import { useToast } from "../hooks/useToast";
-
+import { useConfirm } from "../hooks/useConfirm";
 const PAGE_SIZE = 10;
 
 function Tags() {
@@ -55,7 +55,7 @@ function Tags() {
     const { currentUser } = useAuth();
     const { showToast } = useToast();
     const { goalId } = useParams();
-
+    const confirm = useConfirm();
     const [searchParams,setSearchParams] = useSearchParams();
 
 
@@ -195,7 +195,15 @@ function Tags() {
         }
 
 
-        const confirmed =window.confirm("Remove this tag from the goal?");
+        const confirmed =
+            await confirm({
+                title: "Remove tag?",
+                message:
+                    "Are you sure you want to remove this tag from the goal?",
+                confirmLabel: "Remove",
+                cancelLabel: "Cancel",
+                variant: "danger"
+            });
 
         if (!confirmed) {
             return;

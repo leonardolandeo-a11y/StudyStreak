@@ -86,7 +86,7 @@ function DailyRecordCard({dailyRecord, goalId}:DailyRecordCardProps){
                 <p
                     className="
                         mt-2
-                        break-words
+                        wrap-break-word
                         text-sm
                         text-slate-300
                     "

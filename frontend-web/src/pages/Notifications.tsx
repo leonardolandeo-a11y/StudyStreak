@@ -41,10 +41,11 @@ import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
 import { useToast } from "../hooks/useToast";
-
+import { useConfirm } from "../hooks/useConfirm";
 function Notifications(){
     const {currentUser} = useAuth();
     const { showToast } = useToast();
+    const confirm = useConfirm();
     const {
         page,
         filter,
@@ -127,9 +128,14 @@ function Notifications(){
             }
 
             const confirmed =
-                window.confirm(
-                    "Are you sure you want to delete this notification?"
-                );
+                await confirm({
+                    title: "Delete notification?",
+                    message:
+                        "Are you sure you want to delete this notification? This action cannot be undone.",
+                    confirmLabel: "Delete",
+                    cancelLabel: "Cancel",
+                    variant: "danger"
+                });
 
             if (!confirmed) {
                 return;
