@@ -21,10 +21,13 @@ import org.modelmapper.ModelMapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.studystreak.event.ValidationCreatedEvent;
+
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class ValidationService {
-
+    private final ApplicationEventPublisher eventPublisher;
     private final ValidationRepository validationRepository;
     private final DailyRecordRepository dailyRecordRepository;
 
@@ -51,7 +54,8 @@ public class ValidationService {
             TrackingLinkRepository trackingLinkRepository,
             ModelMapper modelMapper,
             StreakService streakService,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            ApplicationEventPublisher eventPublisher
     ) {
 
         this.validationRepository = validationRepository;
@@ -60,6 +64,7 @@ public class ValidationService {
         this.modelMapper = modelMapper;
         this.streakService = streakService;
         this.currentUserService = currentUserService;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -217,6 +222,13 @@ public class ValidationService {
          * así que la recalculamos después de guardarla.
          */
         streakService.recalculateStreak(goalId);
+        eventPublisher.publishEvent(
+                new ValidationCreatedEvent(
+                        ownerId,
+                        validatorId,
+                        dailyRecord.getGoal().getTopic()
+                )
+        );
         return modelMapper.map(savedValidation, ValidationResponseDTO.class);
     }
 
