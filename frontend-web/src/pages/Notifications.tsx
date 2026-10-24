@@ -188,7 +188,7 @@ function Notifications(){
         if (!userId) {
             return;
         }
-
+        void refreshUnreadCount();
         const controller =new AbortController();
 
 
@@ -264,7 +264,8 @@ function Notifications(){
         page,
         filter,
         selectedType,
-        refreshKey
+        refreshKey,
+        refreshUnreadCount
     ]);
     
 
