@@ -36,6 +36,7 @@ import EmptyState
     from "../components/ui/EmptyState";
 
 import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
 
 function GoalDetails(){
     const {currentUser} = useAuth();
@@ -57,7 +58,7 @@ function GoalDetails(){
     const userId = currentUser?.id;
     const parsedGoalId = goalId ? Number(goalId): null;
     const invalidGoalId= parsedGoalId=== null || !Number.isSafeInteger(parsedGoalId) || parsedGoalId<= 0;
-
+    const confirm = useConfirm();
     async function handleUpdateGoal(updateData: GoalRequest){
         if (!currentUser|| !goal){
             return;
@@ -90,9 +91,17 @@ function GoalDetails(){
         if (!currentUser || !goal){
             return;
         }
-        const confirmed = window.confirm(`Delete "${goal.topic}"?`);
+        const confirmed =
+            await confirm({
+                title: "Delete goal?",
+                message:
+                    `Are you sure you want to delete "${goal.topic}"? This action cannot be undone.`,
+                confirmLabel: "Delete",
+                cancelLabel: "Cancel",
+                variant: "danger"
+            });
 
-        if (!confirmed){
+        if (!confirmed) {
             return;
         }
         try{

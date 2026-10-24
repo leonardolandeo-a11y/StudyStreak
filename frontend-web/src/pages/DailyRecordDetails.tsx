@@ -34,6 +34,7 @@ import EmptyState
     from "../components/ui/EmptyState";
 
 import { useToast } from "../hooks/useToast";
+import { useConfirm } from "../hooks/useConfirm";
 
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
@@ -47,7 +48,7 @@ function DailyRecordDetails(){
     const [updating, setUpdating] =useState(false);
 
     const navigate = useNavigate();
-
+    const confirm = useConfirm();
     const [deleting, setDeleting] = useState(false);
 
     const parsedGoalId =goalId ? Number(goalId) : null;
@@ -97,7 +98,15 @@ function DailyRecordDetails(){
             return;
         }
 
-        const confirmed =window.confirm(`Delete daily record from ${dailyRecord.date}?`);
+        const confirmed =
+            await confirm({
+                title: "Delete daily record?",
+                message:
+                    `Are you sure you want to delete the record from ${dailyRecord.date}? This action cannot be undone.`,
+                confirmLabel: "Delete",
+                cancelLabel: "Cancel",
+                variant: "danger"
+            });
 
         if (!confirmed) {
             return;
@@ -272,15 +281,13 @@ function DailyRecordDetails(){
                         Evidence
                     </p>
 
-                    <p className="mt-2 break-words text-slate-300">
+                    <p className="mt-2 wrap-break-word text-slate-300">
                         {dailyRecord.evidence || "No evidence"}
                     </p>
                 </div>
 
             </div>
         </section>
-
-
         <section>
             <DailyRecordForm
                 onSubmit={handleUpdateDailyRecord}
