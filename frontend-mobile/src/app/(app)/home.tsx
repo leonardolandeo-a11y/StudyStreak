@@ -1,0 +1,58 @@
+import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Screen } from '../../components/ui/Screen';
+import { ActionButton } from '../../components/ui/ActionButton';
+import { StatusMessage } from '../../components/ui/StatusMessage';
+import { useAuth } from '../../hooks/useAuth';
+import { palette } from '../../constants/palette';
+
+export default function Home() {
+  const { currentUser, signOut } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSignOut() {
+    setBusy(true);
+    setError(null);
+    try {
+      await signOut();
+    } catch {
+      setError('Could not sign out. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!currentUser) return null;
+
+  return (
+    <Screen>
+      <View style={styles.header}>
+        <Text style={styles.brand}>STUDYSTREAK</Text>
+        <Text style={styles.title}>Welcome, {currentUser.username}</Text>
+        <Text style={styles.subtitle}>{currentUser.email}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.heading}>Your session is active</Text>
+        <Text style={styles.description}>
+          This screen confirms the mobile authentication flow. Your goals,
+          daily records and streaks will be added in the next stages using
+          the existing StudyStreak API.
+        </Text>
+      </View>
+      {error ? <StatusMessage message={error} error /> : null}
+      <ActionButton title="Sign out" secondary busy={busy} onPress={() => { void handleSignOut(); }} />
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: { gap: 9, paddingTop: 36, paddingBottom: 10 },
+  brand: { color: palette.primary, letterSpacing: 2, fontWeight: '800', fontSize: 12 },
+  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
+  subtitle: { color: palette.muted, fontSize: 14 },
+  card: { borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface,
+    padding: 22, borderRadius: 18, gap: 12 },
+  heading: { color: palette.text, fontWeight: '700', fontSize: 18 },
+  description: { color: palette.muted, fontSize: 14, lineHeight: 23 },
+});
