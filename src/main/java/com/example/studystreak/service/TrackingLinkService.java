@@ -224,6 +224,10 @@ public class TrackingLinkService {
 
         response.setReceiverId(trackingLink.getReceiver().getId());
 
+        response.setRequesterUsername(trackingLink.getRequester().getUsername());
+
+        response.setReceiverUsername(trackingLink.getReceiver().getUsername());
+
         response.setStatus(trackingLink.getStatus());
 
         return response;
