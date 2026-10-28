@@ -8,6 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface DailyRecordRepository
@@ -18,6 +20,11 @@ public interface DailyRecordRepository
     Page<DailyRecord> findByGoalId(Long goalId, Pageable pageable);
 
     boolean existsByGoalIdAndDate(Long goalId, LocalDate date);
+
+    long countByGoal_User_IdAndDateBetween(Long userId, LocalDate from, LocalDate to);
+
+    @Query("select count(r) from DailyRecord r where r.goal.user.id = :userId and r.validation is null")
+    long countAwaitingReviewByUserId(@Param("userId") Long userId);
 
     boolean existsByGoalIdAndDateAndIdNot(Long goalId, LocalDate date, Long dailyRecordId);
 }
