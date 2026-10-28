@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { ActionButton } from '../../components/ui/ActionButton';
@@ -33,12 +34,9 @@ export default function Home() {
         <Text style={styles.subtitle}>{currentUser.email}</Text>
       </View>
       <View style={styles.card}>
-        <Text style={styles.heading}>Your session is active</Text>
-        <Text style={styles.description}>
-          This screen confirms the mobile authentication flow. Your goals,
-          daily records and streaks will be added in the next stages using
-          the existing StudyStreak API.
-        </Text>
+        <Text style={styles.heading}>Your study goals</Text>
+        <Text style={styles.description}>Create goals and record your daily progress.</Text>
+        <ActionButton title="Open my goals" onPress={() => router.push('/(app)/goals')} />
       </View>
       {error ? <StatusMessage message={error} error /> : null}
       <ActionButton title="Sign out" secondary busy={busy} onPress={() => { void handleSignOut(); }} />
@@ -52,7 +50,7 @@ const styles = StyleSheet.create({
   title: { color: palette.text, fontSize: 30, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14 },
   card: { borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface,
-    padding: 22, borderRadius: 18, gap: 12 },
+    padding: 22, borderRadius: 18, gap: 14 },
   heading: { color: palette.text, fontWeight: '700', fontSize: 18 },
   description: { color: palette.muted, fontSize: 14, lineHeight: 23 },
 });
