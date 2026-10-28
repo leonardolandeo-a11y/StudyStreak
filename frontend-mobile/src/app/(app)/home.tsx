@@ -38,6 +38,7 @@ export default function Home() {
         <Text style={styles.description}>Create goals and record your daily progress.</Text>
         <ActionButton title="Open my goals" onPress={() => router.push('/(app)/goals')} />
         <ActionButton title="Tracking and study partners" secondary onPress={() => router.push('/(app)/tracking')} />
+        <ActionButton title="Review validations" secondary onPress={() => router.push('/(app)/validations')} />
       </View>
       {error ? <StatusMessage message={error} error /> : null}
       <ActionButton title="Sign out" secondary busy={busy} onPress={() => { void handleSignOut(); }} />
