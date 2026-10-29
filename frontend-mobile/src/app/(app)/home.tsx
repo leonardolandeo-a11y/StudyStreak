@@ -50,6 +50,7 @@ export default function Home() {
         <Text style={styles.heading}>Your study goals</Text>
         <Text style={styles.description}>Create goals and record your daily progress.</Text>
         <ActionButton title="Open my goals" onPress={() => router.push('/(app)/goals')} />
+        <ActionButton title="Find study books" secondary onPress={() => router.push('/(app)/resources')} />
         <ActionButton title="Tracking and study partners" secondary onPress={() => router.push('/(app)/tracking')} />
         <ActionButton title="Review validations" secondary onPress={() => router.push('/(app)/validations')} />
         <ActionButton title={unreadCount !== null && unreadCount.userId === userId ? `Notifications (${unreadCount.count} unread)` : "Notifications"}

@@ -180,6 +180,8 @@ export default function GoalDetails() {
             ) : null}
           </View>
           <StreakCard key={goal.id} goalId={goal.id} />
+          <ActionButton secondary title="Find books for this goal"
+            onPress={() => router.push({ pathname: '/(app)/resources', params: { topic: goal.topic } })} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>
