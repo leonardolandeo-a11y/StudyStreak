@@ -7,6 +7,7 @@ import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { PageControls } from '../../../components/ui/PageControls';
 import { GoalForm } from '../../../components/goals/GoalForm';
 import { DailyRecordForm } from '../../../components/records/DailyRecordForm';
+import { StreakCard } from '../../../components/streaks/StreakCard';
 import { palette } from '../../../constants/palette';
 import { useAuth } from '../../../hooks/useAuth';
 import { usePagedResource } from '../../../hooks/usePagedResource';
@@ -178,6 +179,7 @@ export default function GoalDetails() {
               </>
             ) : null}
           </View>
+          <StreakCard key={goal.id} goalId={goal.id} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>
