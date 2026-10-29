@@ -14,6 +14,7 @@ public class DailyRecordResponseDTO {
     private String note;
     private String evidence;
     private boolean photoAvailable;
+    private boolean voiceAvailable;
 
     public DailyRecordResponseDTO() {}
 }

@@ -8,6 +8,7 @@ import { PageControls } from '../../../components/ui/PageControls';
 import { GoalForm } from '../../../components/goals/GoalForm';
 import { DailyRecordForm } from '../../../components/records/DailyRecordForm';
 import { RecordPhoto } from '../../../components/records/RecordPhoto';
+import { RecordVoice } from '../../../components/records/RecordVoice';
 import { StreakCard } from '../../../components/streaks/StreakCard';
 import { palette } from '../../../constants/palette';
 import { useAuth } from '../../../hooks/useAuth';
@@ -221,6 +222,11 @@ export default function GoalDetails() {
                     onDelete={records.reload} />
                   <ActionButton title={record.photoAvailable ? 'Replace photo evidence' : 'Take evidence photo'} secondary
                     disabled={busy} onPress={() => router.push({ pathname: '/(app)/camera',
+                      params: { goalId: String(goalId), recordId: String(record.id) } })} />
+                  <RecordVoice goalId={goalId} recordId={record.id} available={record.voiceAvailable}
+                    onDelete={records.reload} />
+                  <ActionButton title={record.voiceAvailable ? 'Replace voice note' : 'Record study voice note'} secondary
+                    disabled={busy} onPress={() => router.push({ pathname: '/(app)/voice',
                       params: { goalId: String(goalId), recordId: String(record.id) } })} />
                   <ActionButton title="Edit record" secondary disabled={busy}
                     onPress={() => { setEditingRecord(record); setShowCreateRecord(false); setConfirmDeleteRecord(null); setMutationError(null); }} />

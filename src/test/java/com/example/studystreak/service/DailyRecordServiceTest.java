@@ -62,7 +62,8 @@ class DailyRecordServiceTest {
                         goalRepository,
                         currentUserService,
                         trackingLinkRepository,
-                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class),
+                        mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class)
                 );
 
         assertThrows(
@@ -125,7 +126,8 @@ class DailyRecordServiceTest {
                         goalRepository,
                         currentUserService,
                         trackingLinkRepository,
-                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class),
+                        mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class)
                 );
 
         assertDoesNotThrow(
@@ -179,7 +181,8 @@ class DailyRecordServiceTest {
                         goalRepository,
                         currentUserService,
                         trackingLinkRepository,
-                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class),
+                        mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class)
                 );
 
         assertThrows(
@@ -234,7 +237,8 @@ class DailyRecordServiceTest {
                         goalRepository,
                         currentUserService,
                         trackingLinkRepository,
-                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class),
+                        mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class)
                 );
 
         assertThrows(
@@ -282,7 +286,8 @@ class DailyRecordServiceTest {
                         goalRepository,
                         currentUserService,
                         trackingLinkRepository,
-                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class),
+                        mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class)
                 );
 
         assertThrows(

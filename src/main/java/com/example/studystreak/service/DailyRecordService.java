@@ -8,6 +8,7 @@ import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.repository.DailyRecordRepository;
 import com.example.studystreak.repository.DailyRecordPhotoRepository;
+import com.example.studystreak.repository.DailyRecordVoiceRepository;
 import com.example.studystreak.repository.GoalRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -28,13 +29,15 @@ public class DailyRecordService {
     private final CurrentUserService currentUserService;
     private final TrackingLinkRepository trackingLinkRepository;
     private final DailyRecordPhotoRepository dailyRecordPhotoRepository;
+    private final DailyRecordVoiceRepository dailyRecordVoiceRepository;
 
     public DailyRecordService(DailyRecordRepository dailyRecordRepository,
                               ModelMapper modelMapper,
                               GoalRepository goalRepository,
                               CurrentUserService currentUserService,
                               TrackingLinkRepository trackingLinkRepository,
-                              DailyRecordPhotoRepository dailyRecordPhotoRepository) {
+                              DailyRecordPhotoRepository dailyRecordPhotoRepository,
+                              DailyRecordVoiceRepository dailyRecordVoiceRepository) {
 
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
@@ -42,6 +45,7 @@ public class DailyRecordService {
         this.currentUserService = currentUserService;
         this.trackingLinkRepository = trackingLinkRepository;
         this.dailyRecordPhotoRepository = dailyRecordPhotoRepository;
+        this.dailyRecordVoiceRepository = dailyRecordVoiceRepository;
     }
 
     private Goal getOwnedGoal(Long goalId) {
@@ -172,6 +176,7 @@ public class DailyRecordService {
     private DailyRecordResponseDTO toResponse(DailyRecord record) {
         DailyRecordResponseDTO response = modelMapper.map(record, DailyRecordResponseDTO.class);
         response.setPhotoAvailable(dailyRecordPhotoRepository.existsByDailyRecordId(record.getId()));
+        response.setVoiceAvailable(dailyRecordVoiceRepository.existsByDailyRecordId(record.getId()));
         return response;
     }
 
@@ -180,6 +185,7 @@ public class DailyRecordService {
 
         DailyRecord dailyRecord = getOwnedDailyRecord(goalId, dailyRecordId);
         dailyRecordPhotoRepository.deleteByDailyRecordId(dailyRecordId);
+        dailyRecordVoiceRepository.deleteByDailyRecordId(dailyRecordId);
         dailyRecordRepository.delete(dailyRecord);
     }
 }

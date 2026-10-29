@@ -40,6 +40,14 @@
           "cameraPermission": "Allow StudyStreak to take photos of your study notes.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow StudyStreak to record voice notes for study sessions.",
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
       ]
     ],
     "experiments": {
