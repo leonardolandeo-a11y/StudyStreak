@@ -80,6 +80,13 @@ export default function Notifications() {
     setBusyId(null);
     const target = notificationDestination(notification);
     switch (target.kind) {
+      case 'newRecord':
+        router.push({
+          pathname: '/(app)/goals/[goalId]/records/[recordId]',
+          params: { goalId: String(target.goalId), recordId: String(target.recordId), review: '1' },
+        });
+        break;
+      case 'validations': router.push('/(app)/validations'); break;
       case 'reviewedRecord':
         router.push({
           pathname: '/(app)/goals/[goalId]/records/[recordId]',

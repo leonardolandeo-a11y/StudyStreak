@@ -1,6 +1,7 @@
 export type NotificationType =
   | 'PENDING_CHECK_IN'
   | 'VALIDATION_RECEIVED'
+  | 'DAILY_RECORD_CREATED'
   | 'WEEKLY_SUMMARY'
   | 'GOAL_COMPLETED'
   | 'TRACKING_REQUESTED'
@@ -22,6 +23,7 @@ export interface Notification {
 export const notificationTypeLabels: Record<NotificationType, string> = {
   PENDING_CHECK_IN: 'Pending check-in',
   VALIDATION_RECEIVED: 'Validation received',
+  DAILY_RECORD_CREATED: 'New daily record',
   WEEKLY_SUMMARY: 'Weekly summary',
   GOAL_COMPLETED: 'Goal completed',
   TRACKING_REQUESTED: 'Tracking requested',

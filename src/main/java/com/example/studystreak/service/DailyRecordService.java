@@ -2,6 +2,9 @@ package com.example.studystreak.service;
 
 import com.example.studystreak.dto.DailyRecord.DailyRecordRequestDTO;
 import com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO;
+import com.example.studystreak.event.DailyRecordCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.annotation.Transactional;
 import com.example.studystreak.exceptions.ConflictException;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
@@ -16,6 +19,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import com.example.studystreak.model.TrackingLink;
 import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.repository.TrackingLinkRepository;
@@ -35,6 +41,7 @@ public class DailyRecordService {
     private final NotificationRepository notificationRepository;
     private final ValidationRepository validationRepository;
     private final StreakService streakService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DailyRecordService(DailyRecordRepository dailyRecordRepository,
                               ModelMapper modelMapper,
@@ -45,7 +52,8 @@ public class DailyRecordService {
                               DailyRecordVoiceRepository dailyRecordVoiceRepository,
                               NotificationRepository notificationRepository,
                               ValidationRepository validationRepository,
-                              StreakService streakService) {
+                              StreakService streakService,
+                              ApplicationEventPublisher eventPublisher) {
 
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
@@ -57,6 +65,7 @@ public class DailyRecordService {
         this.notificationRepository = notificationRepository;
         this.validationRepository = validationRepository;
         this.streakService = streakService;
+        this.eventPublisher = eventPublisher;
     }
 
     private Goal getOwnedGoal(Long goalId) {
@@ -130,23 +139,45 @@ public class DailyRecordService {
         return dailyRecord;
     }
 
+    // The record date is assigned by the server, never trusted from the client.
+    private LocalDate currentStudyDate(Goal goal) {
+        ZoneId zone = ZoneId.of("America/Lima");
+        try {
+            String configuredZone = goal.getUser().getTimeZone();
+            if (configuredZone != null && !configuredZone.isBlank()) {
+                zone = ZoneId.of(configuredZone);
+            }
+        } catch (DateTimeException ignored) {
+            // Missing or invalid zone falls back to the application's Lima timezone.
+        }
+        return LocalDate.now(zone);
+    }
+
+    @Transactional
     public DailyRecordResponseDTO createDailyRecord(Long goalId, DailyRecordRequestDTO dailyRecordRequest) {
 
         Goal goal = getOwnedGoal(goalId);
 
-        boolean alreadyExists = dailyRecordRepository.existsByGoalIdAndDate(goalId, dailyRecordRequest.getDate());
+        LocalDate recordedDate = currentStudyDate(goal);
+        boolean alreadyExists = dailyRecordRepository.existsByGoalIdAndDate(goalId, recordedDate);
 
         if (alreadyExists) {
-            throw new ConflictException("A daily record already exists for this goal on "
-                        + dailyRecordRequest.getDate());
+            throw new ConflictException("A daily record already exists for this goal on " + recordedDate);
         }
 
-
         DailyRecord dailyRecord = modelMapper.map(dailyRecordRequest, DailyRecord.class);
+        dailyRecord.setDate(recordedDate);
         dailyRecord.setGoal(goal);
         DailyRecord savedRecord = dailyRecordRepository.save(dailyRecord);
-
-        return toResponse(savedRecord);
+        DailyRecordResponseDTO response = toResponse(savedRecord);
+        eventPublisher.publishEvent(new DailyRecordCreatedEvent(
+                goal.getUser().getId(),
+                goal.getUser().getUsername(),
+                goal.getTopic(),
+                goal.getId(),
+                savedRecord.getId()
+        ));
+        return response;
     }
 
     public Page<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId, Pageable pageable) {
@@ -167,15 +198,12 @@ public class DailyRecordService {
                                                     DailyRecordRequestDTO dailyRecordRequest) {
 
         DailyRecord dailyRecord = getOwnedDailyRecord(goalId, dailyRecordId);
-        boolean duplicatedDate = dailyRecordRepository
-                        .existsByGoalIdAndDateAndIdNot(goalId, dailyRecordRequest.getDate(), dailyRecordId);
-
-        if (duplicatedDate) {
-            throw new ConflictException(
-                    "A daily record already exists for this goal on " + dailyRecordRequest.getDate());
+        // Editing notes/evidence is allowed, but moving a record to another date is not.
+        if (dailyRecordRequest.getDate() != null
+                && !dailyRecord.getDate().equals(dailyRecordRequest.getDate())) {
+            throw new ConflictException("The date of an existing daily record cannot be changed.");
         }
 
-        dailyRecord.setDate(dailyRecordRequest.getDate());
         dailyRecord.setNote(dailyRecordRequest.getNote());
         dailyRecord.setEvidence(dailyRecordRequest.getEvidence());
 

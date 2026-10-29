@@ -5,18 +5,23 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../../components/ui/StatusMessage';
+import { ValidationEditor } from '../../../../../components/validations/ValidationEditor';
+import { RecordPhoto } from '../../../../../components/records/RecordPhoto';
+import { RecordVoice } from '../../../../../components/records/RecordVoice';
 import { palette } from '../../../../../constants/palette';
 import { dailyRecordService } from '../../../../../services/dailyRecordService';
 import { validationService } from '../../../../../services/validationService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
 import type { DailyRecord } from '../../../../../types/dailyRecord';
-import type { Validation } from '../../../../../types/validation';
+import type { Validation, ValidationRequest } from '../../../../../types/validation';
 
 export default function ReviewedRecordDetails() {
-  const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{
+  const { goalId: goalParam, recordId: recordParam, review } = useLocalSearchParams<{
     goalId: string;
     recordId: string;
+    review?: string;
   }>();
+  const reviewRequested = review === '1';
   const goalId = Number(goalParam);
   const recordId = Number(recordParam);
   const valid = Number.isSafeInteger(goalId) && goalId > 0 &&
@@ -27,6 +32,8 @@ export default function ReviewedRecordDetails() {
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!valid) return;
@@ -38,6 +45,7 @@ export default function ReviewedRecordDetails() {
       setRecord(null);
       setValidation(null);
       setValidationError(null);
+      setSaveMessage(null);
       try {
         const current = await dailyRecordService.get(goalId, recordId, controller.signal);
         if (controller.signal.aborted) return;
@@ -59,6 +67,26 @@ export default function ReviewedRecordDetails() {
     });
     return () => controller.abort();
   }, [goalId, recordId, valid, revision]);
+
+  async function saveValidation(request: ValidationRequest): Promise<boolean> {
+    if (saving || !valid) return false;
+    setSaving(true);
+    setValidationError(null);
+    setSaveMessage(null);
+    try {
+      const result = validation
+        ? await validationService.update(goalId, recordId, request)
+        : await validationService.create(goalId, recordId, request);
+      setValidation(result);
+      setSaveMessage(validation ? 'Validation updated.' : 'Validation created.');
+      return true;
+    } catch (cause) {
+      setValidationError(getApiErrorMessage(cause, 'Could not save the validation.'));
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (!valid) return <Screen><StatusMessage error message="Invalid record link." /></Screen>;
 
@@ -96,6 +124,17 @@ export default function ReviewedRecordDetails() {
               <Text style={styles.muted}>{validationError || 'Awaiting peer review.'}</Text>
             )}
           </View>
+          {reviewRequested ? (
+            <View style={styles.card}>
+              <Text style={styles.heading}>Review this record</Text>
+              <RecordPhoto goalId={goalId} recordId={recordId} available={record.photoAvailable} readOnly />
+              <RecordVoice goalId={goalId} recordId={recordId} available={record.voiceAvailable} readOnly />
+              {saveMessage ? <StatusMessage message={saveMessage} /> : null}
+              {validationError ? <StatusMessage error message={validationError} /> : null}
+              <ValidationEditor key={validation?.id ?? 'new'} initial={validation}
+                busy={saving} onSubmit={saveValidation} />
+            </View>
+          ) : null}
           <ActionButton secondary title="View full goal" onPress={() => router.push({
             pathname: '/(app)/goals/[goalId]', params: { goalId: String(goalId) },
           })} />

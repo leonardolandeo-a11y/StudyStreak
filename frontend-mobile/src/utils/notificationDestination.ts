@@ -2,6 +2,8 @@ import type { Notification } from '../types/notification';
 
 export type NotificationDestination =
   | { kind: 'reviewedRecord'; goalId: number; recordId: number }
+  | { kind: 'newRecord'; goalId: number; recordId: number }
+  | { kind: 'validations' }
   | { kind: 'goal'; goalId: number }
   | { kind: 'goals' }
   | { kind: 'tracking' }
@@ -9,6 +11,11 @@ export type NotificationDestination =
 
 export function notificationDestination(notification: Notification): NotificationDestination {
   switch (notification.type) {
+    case 'DAILY_RECORD_CREATED':
+      if (notification.relatedGoalId && notification.relatedDailyRecordId) {
+        return { kind: 'newRecord', goalId: notification.relatedGoalId, recordId: notification.relatedDailyRecordId };
+      }
+      return { kind: 'validations' };
     case 'VALIDATION_RECEIVED':
       if (notification.relatedGoalId && notification.relatedDailyRecordId) {
         return {
@@ -36,6 +43,8 @@ export function notificationDestination(notification: Notification): Notificatio
 
 export function notificationActionLabel(notification: Notification): string {
   switch (notification.type) {
+    case 'DAILY_RECORD_CREATED':
+      return notification.relatedDailyRecordId ? 'Review new record' : 'View validations';
     case 'VALIDATION_RECEIVED':
       return notification.relatedDailyRecordId ? 'View reviewed record' : 'View my goals';
     case 'GOAL_COMPLETED': return 'View goal';

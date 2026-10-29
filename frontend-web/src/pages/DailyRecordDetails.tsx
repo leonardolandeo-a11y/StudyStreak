@@ -1,5 +1,7 @@
 import axios from 'axios';
-import { getValidation } from '../services/validationService';
+import { createValidation, getValidation, updateValidation } from '../services/validationService';
+import ValidationForm from '../components/validations/ValidationForm';
+import type { ValidationRequest } from '../types/validation';
 import type { Validation } from '../types/validation';
 import {
     useEffect,
@@ -8,7 +10,8 @@ import {
 
 import {
     useParams,
-    useNavigate
+    useNavigate,
+    useSearchParams
 } from "react-router-dom";
 import {
     getDailyRecord,
@@ -41,6 +44,9 @@ import { useConfirm } from "../hooks/useConfirm";
 
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
+    const [searchParams] = useSearchParams();
+    const reviewRequested = searchParams.get('review') === '1';
+    const [reviewSaving, setReviewSaving] = useState(false);
 
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
 
@@ -94,6 +100,25 @@ function DailyRecordDetails(){
 
         } finally {
             setUpdating(false);
+        }
+    }
+
+    async function handleSubmitReview(request: ValidationRequest): Promise<boolean> {
+        if (parsedGoalId === null || parsedDailyRecordId === null || reviewSaving) return false;
+        setReviewSaving(true);
+        setValidationError(null);
+        try {
+            const result = validation
+                ? await updateValidation(parsedGoalId, parsedDailyRecordId, request)
+                : await createValidation(parsedGoalId, parsedDailyRecordId, request);
+            setValidation(result);
+            showToast(validation ? 'Validation updated.' : 'Validation created.', 'success');
+            return true;
+        } catch {
+            setValidationError('Could not save validation. Check your tracking permissions.');
+            return false;
+        } finally {
+            setReviewSaving(false);
         }
     }
 
@@ -317,6 +342,15 @@ function DailyRecordDetails(){
                 <p className="mt-3 text-slate-400">{validationError || 'Awaiting peer review.'}</p>
             )}
         </section>
+        {reviewRequested ? (
+            <ValidationForm key={validation?.id ?? 'new'} onSubmit={handleSubmitReview}
+                loading={reviewSaving} initialValues={validation ? {
+                    approved: validation.approved,
+                    comment: validation.comment ?? ''
+                } : undefined}
+                submitLabel={validation ? 'Update validation' : 'Review and validate'} resetAfterSubmit={false} />
+        ) : (
+        <>
         <section>
             <DailyRecordForm
                 onSubmit={handleUpdateDailyRecord}
@@ -369,6 +403,8 @@ function DailyRecordDetails(){
                     : "Delete Daily Record"}
             </button>
         </section>
+        </>
+        )}
 
     </div>
     )

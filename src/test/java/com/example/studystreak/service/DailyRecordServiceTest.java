@@ -74,7 +74,8 @@ class DailyRecordServiceTest {
                         mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class),
                         mock(NotificationRepository.class),
                         mock(ValidationRepository.class),
-                        mock(StreakService.class)
+                        mock(StreakService.class),
+                        mock(org.springframework.context.ApplicationEventPublisher.class)
                 );
 
         assertThrows(
@@ -141,7 +142,8 @@ class DailyRecordServiceTest {
                         mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class),
                         mock(NotificationRepository.class),
                         mock(ValidationRepository.class),
-                        mock(StreakService.class)
+                        mock(StreakService.class),
+                        mock(org.springframework.context.ApplicationEventPublisher.class)
                 );
 
         assertDoesNotThrow(
@@ -199,7 +201,8 @@ class DailyRecordServiceTest {
                         mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class),
                         mock(NotificationRepository.class),
                         mock(ValidationRepository.class),
-                        mock(StreakService.class)
+                        mock(StreakService.class),
+                        mock(org.springframework.context.ApplicationEventPublisher.class)
                 );
 
         assertThrows(
@@ -258,7 +261,8 @@ class DailyRecordServiceTest {
                         mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class),
                         mock(NotificationRepository.class),
                         mock(ValidationRepository.class),
-                        mock(StreakService.class)
+                        mock(StreakService.class),
+                        mock(org.springframework.context.ApplicationEventPublisher.class)
                 );
 
         assertThrows(
@@ -310,7 +314,8 @@ class DailyRecordServiceTest {
                         mock(com.example.studystreak.repository.DailyRecordVoiceRepository.class),
                         mock(NotificationRepository.class),
                         mock(ValidationRepository.class),
-                        mock(StreakService.class)
+                        mock(StreakService.class),
+                        mock(org.springframework.context.ApplicationEventPublisher.class)
                 );
 
         assertThrows(
@@ -351,7 +356,8 @@ class DailyRecordServiceTest {
         DailyRecordService service = new DailyRecordService(
                 records, new ModelMapper(), goals, userService,
                 mock(TrackingLinkRepository.class), photos, voices,
-                notifications, validations, streaks
+                notifications, validations, streaks,
+                mock(org.springframework.context.ApplicationEventPublisher.class)
         );
 
         service.deleteDailyRecord(goalId, recordId);
@@ -386,7 +392,8 @@ class DailyRecordServiceTest {
                 mock(TrackingLinkRepository.class),
                 mock(DailyRecordPhotoRepository.class),
                 mock(DailyRecordVoiceRepository.class),
-                notifications, validations, streaks
+                notifications, validations, streaks,
+                mock(org.springframework.context.ApplicationEventPublisher.class)
         );
 
         assertThrows(ForbiddenException.class,
