@@ -1,19 +1,21 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { palette } from '../../constants/palette';
 import type { Notification } from '../../types/notification';
 import { notificationTypeLabels } from '../../types/notification';
+import { notificationActionLabel } from '../../utils/notificationDestination';
 
 interface Props {
   notification: Notification;
   busy: boolean;
   disabled: boolean;
   onMarkRead: () => void;
+  onOpen: () => void;
   onDelete: () => void;
 }
 
-export function NotificationCard({ notification, busy, disabled, onMarkRead, onDelete }: Props) {
+export function NotificationCard({ notification, busy, disabled, onMarkRead, onDelete, onOpen }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const formattedDate = new Date(notification.createdAt);
   const dateText = Number.isNaN(formattedDate.getTime())
@@ -28,8 +30,11 @@ export function NotificationCard({ notification, busy, disabled, onMarkRead, onD
         </Text>
         <Text style={styles.type}>{notificationTypeLabels[notification.type] ?? notification.type}</Text>
       </View>
-      <Text style={styles.message}>{notification.message}</Text>
-      <Text style={styles.date}>{dateText}</Text>
+      <Pressable accessibilityRole="button" disabled={disabled} onPress={onOpen}
+        accessibilityLabel={`${notificationActionLabel(notification)}: ${notification.message}`}>
+        <Text style={styles.message}>{notification.message}</Text>
+        <Text style={styles.date}>{dateText}</Text>
+      </Pressable>
       {confirmDelete ? (
         <View style={styles.actions}>
           <Text style={styles.warning}>Delete this notification permanently?</Text>
@@ -38,6 +43,8 @@ export function NotificationCard({ notification, busy, disabled, onMarkRead, onD
         </View>
       ) : (
         <View style={styles.actions}>
+          <ActionButton title={notificationActionLabel(notification)} disabled={disabled}
+            busy={busy} onPress={onOpen} />
           {!notification.read ? (
             <ActionButton title="Mark as read" secondary disabled={disabled} busy={busy} onPress={onMarkRead} />
           ) : null}

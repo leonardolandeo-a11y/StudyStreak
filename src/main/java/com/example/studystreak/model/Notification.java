@@ -27,6 +27,15 @@ public class Notification {
     @Column(nullable = false)
     private NotificationType type;
 
+    @Column(name = "related_goal_id")
+    private Long relatedGoalId;
+
+    @Column(name = "related_daily_record_id")
+    private Long relatedDailyRecordId;
+
+    @Column(name = "related_tracking_link_id")
+    private Long relatedTrackingLinkId;
+
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)

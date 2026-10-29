@@ -12,6 +12,7 @@ import { notificationService } from '../../../services/notificationService';
 import { getApiErrorMessage } from '../../../utils/apiError';
 import { palette } from '../../../constants/palette';
 import { notificationTypeLabels, notificationTypes } from '../../../types/notification';
+import { notificationDestination } from '../../../utils/notificationDestination';
 import type { Notification, NotificationType } from '../../../types/notification';
 import type { PageResponse } from '../../../types/page';
 
@@ -64,6 +65,36 @@ export default function Notifications() {
     }
   }
 
+  async function openNotification(notification: Notification) {
+    if (userId == null || busyId !== null) return;
+    setBusyId(notification.id);
+    setActionError(null);
+    if (!notification.read) {
+      try {
+        await notificationService.markRead(userId, notification.id);
+        reload();
+      } catch (cause) {
+        setActionError(getApiErrorMessage(cause, 'Could not mark notification as read.'));
+      }
+    }
+    setBusyId(null);
+    const target = notificationDestination(notification);
+    switch (target.kind) {
+      case 'reviewedRecord':
+        router.push({
+          pathname: '/(app)/goals/[goalId]/records/[recordId]',
+          params: { goalId: String(target.goalId), recordId: String(target.recordId) },
+        });
+        break;
+      case 'goal':
+        router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(target.goalId) } });
+        break;
+      case 'goals': router.push('/(app)/goals'); break;
+      case 'tracking': router.push('/(app)/tracking'); break;
+      case 'home': router.push('/(app)/home'); break;
+    }
+  }
+
   if (!currentUser) return null;
 
   return (
@@ -107,6 +138,7 @@ export default function Notifications() {
               busy={busyId === notification.id}
               disabled={busyId !== null}
               onMarkRead={() => { void runAction(notification.id, 'read'); }}
+              onOpen={() => { void openNotification(notification); }}
               onDelete={() => { void runAction(notification.id, 'delete'); }} />
           ))}
           <PageControls page={page} totalPages={data.totalPages} onChange={setPage} />

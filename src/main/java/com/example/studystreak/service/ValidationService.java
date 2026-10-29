@@ -226,7 +226,9 @@ public class ValidationService {
                 new ValidationCreatedEvent(
                         ownerId,
                         validatorId,
-                        dailyRecord.getGoal().getTopic()
+                        dailyRecord.getGoal().getTopic(),
+                        goalId,
+                        dailyRecordId
                 )
         );
         return modelMapper.map(savedValidation, ValidationResponseDTO.class);

@@ -16,4 +16,7 @@ export interface Notification{
     read :boolean;
     createdAt:string;
     type:NotificationType;
+    relatedGoalId?: number | null;
+    relatedDailyRecordId?: number | null;
+    relatedTrackingLinkId?: number | null;
 }

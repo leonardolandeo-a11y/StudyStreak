@@ -3,6 +3,11 @@ import type { DailyRecord, DailyRecordRequest } from '../types/dailyRecord';
 import type { PageResponse } from '../types/page';
 
 export const dailyRecordService = {
+  async get(goalId: number, recordId: number, signal?: AbortSignal): Promise<DailyRecord> {
+    const { data } = await apiClient.get<DailyRecord>(`/api/goals/${goalId}/daily-records/${recordId}`, { signal });
+    return data;
+  },
+
   async list(goalId: number, page: number, signal?: AbortSignal): Promise<PageResponse<DailyRecord>> {
     const { data } = await apiClient.get<PageResponse<DailyRecord>>(`/api/goals/${goalId}/daily-records`, {
       params: { page, size: 10 },

@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+import { notificationDestination } from '../utils/notificationDestination';
 import {
     useCallback,
     useEffect,
@@ -47,6 +49,7 @@ import {
 } from "../hooks/useUnreadNotifications";
 function Notifications(){
     const {currentUser} = useAuth();
+    const navigate = useNavigate();
     const { showToast } = useToast();
     const {refreshUnreadCount} = useUnreadNotifications();
     const confirm = useConfirm();
@@ -123,6 +126,23 @@ function Notifications(){
             refreshUnreadCount
         ]
     );
+    const handleOpen = useCallback(async (notification: Notification): Promise<void> => {
+        if (!userId || actionLoadingId !== null) return;
+
+        if (!notification.read) {
+            try {
+                dispatch({ type: 'ACTION_START', payload: notification.id });
+                await markNotificationAsRead(userId, notification.id);
+                await refreshUnreadCount();
+            } catch {
+                showToast('Could not mark notification as read.', 'error');
+            } finally {
+                dispatch({ type: 'ACTION_END' });
+            }
+        }
+        navigate(notificationDestination(notification));
+    }, [userId, actionLoadingId, refreshUnreadCount, showToast, navigate]);
+
     const handleDelete = useCallback(
         async (
             notificationId: number
@@ -478,6 +498,7 @@ function Notifications(){
                                     notification={notification}
                                     onMarkAsRead={handleMarkAsRead}
                                     onDelete={handleDelete}
+                                    onOpen={handleOpen}
                                     loading={
                                         actionLoadingId ===
                                         notification.id

@@ -58,7 +58,10 @@ public class ValidationEventListener {
         notificationService.createNotification(
                 event.getOwnerId(),
                 message,
-                NotificationType.VALIDATION_RECEIVED
+                NotificationType.VALIDATION_RECEIVED,
+                event.getGoalId(),
+                event.getDailyRecordId(),
+                null
         );
     }
 }

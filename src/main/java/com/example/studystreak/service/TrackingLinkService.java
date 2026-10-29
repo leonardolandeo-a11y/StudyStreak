@@ -73,7 +73,8 @@ public class TrackingLinkService {
         eventPublisher.publishEvent(
                 new TrackingLinkRequestedEvent(
                         savedTrackingLink.getRequester().getId(),
-                        savedTrackingLink.getReceiver().getId()
+                        savedTrackingLink.getReceiver().getId(),
+                        savedTrackingLink.getId()
                 )
         );
         return toResponse(savedTrackingLink);
@@ -160,7 +161,8 @@ public class TrackingLinkService {
                 new TrackingLinkRespondedEvent(
                         savedTrackingLink.getRequester().getId(),
                         savedTrackingLink.getReceiver().getId(),
-                        savedTrackingLink.getStatus()
+                        savedTrackingLink.getStatus(),
+                        savedTrackingLink.getId()
                 )
         );
 

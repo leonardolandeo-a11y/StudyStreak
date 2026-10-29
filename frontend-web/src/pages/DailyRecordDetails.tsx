@@ -1,3 +1,6 @@
+import axios from 'axios';
+import { getValidation } from '../services/validationService';
+import type { Validation } from '../types/validation';
 import {
     useEffect,
     useState
@@ -42,6 +45,8 @@ function DailyRecordDetails(){
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
 
     const [loading, setLoading] =useState(true);
+    const [validation, setValidation] = useState<Validation | null>(null);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const [error, setError] =useState<string | null>(null);
 
@@ -150,10 +155,21 @@ function DailyRecordDetails(){
 
                 setLoading(true);
                 setError(null);
+                setValidation(null);
+                setValidationError(null);
 
                 const response =await getDailyRecord( goalNumber, recordNumber,controller.signal );
 
                 setDailyRecord(response);
+                try {
+                    const review = await getValidation(goalNumber, recordNumber);
+                    if (!controller.signal.aborted) setValidation(review);
+                } catch (cause) {
+                    if (!controller.signal.aborted &&
+                        !(axios.isAxiosError(cause) && cause.response?.status === 404)) {
+                        setValidationError('Could not load validation status.');
+                    }
+                }
 
             } catch {
 
@@ -287,6 +303,19 @@ function DailyRecordDetails(){
                 </div>
 
             </div>
+        </section>
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <h2 className="text-xl font-semibold text-slate-100">Peer validation</h2>
+            {validation ? (
+                <div className="mt-3 space-y-2">
+                    <p className={validation.approved ? 'font-semibold text-emerald-400' : 'font-semibold text-red-400'}>
+                        {validation.approved ? 'Approved' : 'Rejected'}
+                    </p>
+                    <p className="whitespace-pre-wrap text-slate-300">{validation.comment || 'No comment provided.'}</p>
+                </div>
+            ) : (
+                <p className="mt-3 text-slate-400">{validationError || 'Awaiting peer review.'}</p>
+            )}
         </section>
         <section>
             <DailyRecordForm

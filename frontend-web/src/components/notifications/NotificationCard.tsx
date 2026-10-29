@@ -6,10 +6,13 @@ interface NotificationCardProps{
     notification :Notification;
     onMarkAsRead:(notificationId: number) =>Promise<void>;
     onDelete: (notificationId:number) =>Promise<void>;
+    onOpen: (notification: Notification) => Promise<void>;
     loading : boolean;
 }
 
-function NotificationCard({notification,onMarkAsRead,onDelete,loading}:NotificationCardProps){
+import { notificationActionLabel } from '../../utils/notificationDestination';
+
+function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:NotificationCardProps){
     return (
     <article
         className={`
@@ -33,7 +36,20 @@ function NotificationCard({notification,onMarkAsRead,onDelete,loading}:Notificat
                 gap-4
             "
         >
-            <div className="min-w-0 flex-1">
+            <div
+                role="button"
+                tabIndex={loading ? -1 : 0}
+                aria-disabled={loading}
+                onClick={() => { if (!loading) void onOpen(notification); }}
+                onKeyDown={(event) => {
+                    if (!loading && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault();
+                        void onOpen(notification);
+                    }
+                }}
+                aria-label={`${notificationActionLabel(notification)}: ${notification.message}`}
+                className="min-w-0 flex-1 cursor-pointer rounded-lg text-left focus-visible:outline-2 focus-visible:outline-sky-400"
+            >
 
                 <div className="flex flex-wrap items-center gap-2">
 
@@ -93,6 +109,14 @@ function NotificationCard({notification,onMarkAsRead,onDelete,loading}:Notificat
 
 
         <div className="mt-5 flex flex-wrap gap-3">
+            <button
+                type="button"
+                disabled={loading}
+                onClick={() => void onOpen(notification)}
+                className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+            >
+                {notificationActionLabel(notification)}
+            </button>
 
             {!notification.read && (
                 <button
