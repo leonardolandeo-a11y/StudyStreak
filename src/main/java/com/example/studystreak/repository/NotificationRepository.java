@@ -27,6 +27,12 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
     Page<Notification> findByUserIdAndTypeOrderByCreatedAtDesc(
             Long userId, NotificationType type, Pageable pageable);
 
+    // Preserve notification messages but remove navigation to a deleted record.
+    @Modifying
+    @Query("update Notification n set n.relatedDailyRecordId = null " +
+            "where n.relatedDailyRecordId = :dailyRecordId")
+    int clearDeletedDailyRecordReferences(@Param("dailyRecordId") Long dailyRecordId);
+
     // Keep notification history, but remove links to deleted resources.
     @Modifying
     @Query("update Notification n set n.relatedGoalId = null, n.relatedDailyRecordId = null " +

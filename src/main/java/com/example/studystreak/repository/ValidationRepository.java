@@ -21,6 +21,10 @@ public interface ValidationRepository extends JpaRepository<Validation, Long> {
     long countReviewedByRecordOwnerId(@Param("userId") Long userId);
 
     @Modifying
+    @Query("delete from Validation v where v.dailyRecord.id = :dailyRecordId")
+    int deleteForDailyRecord(@Param("dailyRecordId") Long dailyRecordId);
+
+    @Modifying
     @Query("delete from Validation v where v.dailyRecord.id in (select d.id from DailyRecord d where d.goal.id = :goalId)")
     int deleteForGoal(@Param("goalId") Long goalId);
 }

@@ -30,6 +30,12 @@ public interface DailyRecordRepository
 
     boolean existsByGoalIdAndDateAndIdNot(Long goalId, LocalDate date, Long dailyRecordId);
 
+    // Bulk deletion avoids stale managed Validation -> DailyRecord references.
+    // Clearing AFTER the SQL delete ensures streak recalculation reads fresh data.
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("delete from DailyRecord d where d.id = :recordId and d.goal.id = :goalId")
+    int deleteOwnedRecord(@Param("goalId") Long goalId, @Param("recordId") Long recordId);
+
     @Modifying
     @Query("delete from DailyRecord d where d.goal.id = :goalId")
     int deleteForGoal(@Param("goalId") Long goalId);

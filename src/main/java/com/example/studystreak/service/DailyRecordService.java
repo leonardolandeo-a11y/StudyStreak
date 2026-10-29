@@ -10,6 +10,8 @@ import com.example.studystreak.repository.DailyRecordRepository;
 import com.example.studystreak.repository.DailyRecordPhotoRepository;
 import com.example.studystreak.repository.DailyRecordVoiceRepository;
 import com.example.studystreak.repository.GoalRepository;
+import com.example.studystreak.repository.NotificationRepository;
+import com.example.studystreak.repository.ValidationRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +32,9 @@ public class DailyRecordService {
     private final TrackingLinkRepository trackingLinkRepository;
     private final DailyRecordPhotoRepository dailyRecordPhotoRepository;
     private final DailyRecordVoiceRepository dailyRecordVoiceRepository;
+    private final NotificationRepository notificationRepository;
+    private final ValidationRepository validationRepository;
+    private final StreakService streakService;
 
     public DailyRecordService(DailyRecordRepository dailyRecordRepository,
                               ModelMapper modelMapper,
@@ -37,7 +42,10 @@ public class DailyRecordService {
                               CurrentUserService currentUserService,
                               TrackingLinkRepository trackingLinkRepository,
                               DailyRecordPhotoRepository dailyRecordPhotoRepository,
-                              DailyRecordVoiceRepository dailyRecordVoiceRepository) {
+                              DailyRecordVoiceRepository dailyRecordVoiceRepository,
+                              NotificationRepository notificationRepository,
+                              ValidationRepository validationRepository,
+                              StreakService streakService) {
 
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
@@ -46,6 +54,9 @@ public class DailyRecordService {
         this.trackingLinkRepository = trackingLinkRepository;
         this.dailyRecordPhotoRepository = dailyRecordPhotoRepository;
         this.dailyRecordVoiceRepository = dailyRecordVoiceRepository;
+        this.notificationRepository = notificationRepository;
+        this.validationRepository = validationRepository;
+        this.streakService = streakService;
     }
 
     private Goal getOwnedGoal(Long goalId) {
@@ -184,8 +195,20 @@ public class DailyRecordService {
     public void deleteDailyRecord(Long goalId, Long dailyRecordId) {
 
         DailyRecord dailyRecord = getOwnedDailyRecord(goalId, dailyRecordId);
+        // Preserve notification history without links to a deleted record.
+        notificationRepository.clearDeletedDailyRecordReferences(dailyRecordId);
+        // Remove dependent rows before deleting the parent to satisfy foreign keys.
         dailyRecordPhotoRepository.deleteByDailyRecordId(dailyRecordId);
         dailyRecordVoiceRepository.deleteByDailyRecordId(dailyRecordId);
-        dailyRecordRepository.delete(dailyRecord);
+        validationRepository.deleteForDailyRecord(dailyRecordId);
+        // Use a bulk delete so a previously loaded Validation cannot retain
+        // a managed reference to a DailyRecord scheduled for entity removal.
+        // The repository query clears the persistence context after execution.
+        int deleted = dailyRecordRepository.deleteOwnedRecord(goalId, dailyRecordId);
+        if (deleted != 1) {
+            throw new ResourceNotFoundException("DailyRecord not found with id: " + dailyRecordId);
+        }
+        // A deleted approved record must no longer contribute to the goal streak.
+        streakService.recalculateStreak(goalId);
     }
 }

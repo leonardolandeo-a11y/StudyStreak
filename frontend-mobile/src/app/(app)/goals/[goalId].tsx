@@ -178,13 +178,13 @@ export default function GoalDetails() {
             </Text>
             <ActionButton secondary title={editingGoal ? 'Close goal editor' : 'Edit goal'}
               disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); }} />
-            {editingGoal ? <GoalForm key={goal.id} initialValues={goal} busy={busy}
+            {editingGoal ? <GoalForm key={`goal-form-${goal.id}`} initialValues={goal} busy={busy}
               onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
             {!editingGoal ? (
               <ActionButton title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}
           </View>
-          <StreakCard key={goal.id} goalId={goal.id} />
+          <StreakCard key={`streak-${goal.id}`} goalId={goal.id} />
           <ActionButton secondary title="Find books for this goal"
             onPress={() => router.push({ pathname: '/(app)/resources', params: { topic: goal.topic } })} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
@@ -203,7 +203,7 @@ export default function GoalDetails() {
               onCancel={() => setShowCreateRecord(false)} />
           ) : null}
           {editingRecord ? (
-            <DailyRecordForm key={editingRecord.id} busy={busy}
+            <DailyRecordForm key={`edit-record-${editingRecord.id}`} busy={busy}
               initialValues={{ date: editingRecord.date, note: editingRecord.note ?? '', evidence: editingRecord.evidence ?? '' }}
               onSubmit={updateRecord} onCancel={() => setEditingRecord(null)} />
           ) : null}
@@ -217,7 +217,7 @@ export default function GoalDetails() {
             <>
               <Text style={styles.muted}>{records.data.totalElements} records</Text>
               {records.data.content.map((record) => (
-                <View key={record.id} style={styles.card}>
+                <View key={`record-${record.id}`} style={styles.card}>
                   <Text style={styles.recordDate}>{record.date}</Text>
                   <Text style={styles.muted}>{record.note || 'No notes added.'}</Text>
                   {record.evidence ? <Text style={styles.muted}>Evidence: {record.evidence}</Text> : null}
