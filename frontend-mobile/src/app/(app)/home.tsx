@@ -1,16 +1,29 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { StatusMessage } from '../../components/ui/StatusMessage';
 import { useAuth } from '../../hooks/useAuth';
 import { palette } from '../../constants/palette';
+import { notificationService } from '../../services/notificationService';
 
 export default function Home() {
   const { currentUser, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<{ userId: number; count: number } | null>(null);
+  const userId = currentUser?.id;
+
+  useFocusEffect(useCallback(() => {
+    const controller = new AbortController();
+    if (userId != null) {
+      void notificationService.countUnread(userId, controller.signal)
+        .then((count) => { if (!controller.signal.aborted) setUnreadCount({ userId, count }); })
+        .catch(() => { if (!controller.signal.aborted) setUnreadCount(null); });
+    }
+    return () => controller.abort();
+  }, [userId]));
 
   async function handleSignOut() {
     setBusy(true);
@@ -39,6 +52,8 @@ export default function Home() {
         <ActionButton title="Open my goals" onPress={() => router.push('/(app)/goals')} />
         <ActionButton title="Tracking and study partners" secondary onPress={() => router.push('/(app)/tracking')} />
         <ActionButton title="Review validations" secondary onPress={() => router.push('/(app)/validations')} />
+        <ActionButton title={unreadCount !== null && unreadCount.userId === userId ? `Notifications (${unreadCount.count} unread)` : "Notifications"}
+          secondary onPress={() => router.push('/(app)/notifications')} />
       </View>
       {error ? <StatusMessage message={error} error /> : null}
       <ActionButton title="Sign out" secondary busy={busy} onPress={() => { void handleSignOut(); }} />
