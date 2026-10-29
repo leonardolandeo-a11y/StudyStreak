@@ -8,6 +8,7 @@ import { ActionButton } from '../../../components/ui/ActionButton';
 import { PageControls } from '../../../components/ui/PageControls';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { ValidationEditor } from '../../../components/validations/ValidationEditor';
+import { RecordPhoto } from '../../../components/records/RecordPhoto';
 import { palette } from '../../../constants/palette';
 import { useAuth } from '../../../hooks/useAuth';
 import { usePagedResource } from '../../../hooks/usePagedResource';
@@ -130,6 +131,7 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
       <Text style={styles.detail}>{record.note || 'No note provided.'}</Text>
       <Text style={styles.label}>Evidence</Text>
       <Text style={styles.detail}>{record.evidence || 'No evidence provided.'}</Text>
+      <RecordPhoto goalId={goalId} recordId={record.id} available={record.photoAvailable} readOnly />
       {loading ? <ActivityIndicator color={palette.primary} /> : null}
       {error ? (
         <>

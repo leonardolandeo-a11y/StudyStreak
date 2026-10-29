@@ -7,6 +7,7 @@ import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { PageControls } from '../../../components/ui/PageControls';
 import { GoalForm } from '../../../components/goals/GoalForm';
 import { DailyRecordForm } from '../../../components/records/DailyRecordForm';
+import { RecordPhoto } from '../../../components/records/RecordPhoto';
 import { StreakCard } from '../../../components/streaks/StreakCard';
 import { palette } from '../../../constants/palette';
 import { useAuth } from '../../../hooks/useAuth';
@@ -216,6 +217,11 @@ export default function GoalDetails() {
                   <Text style={styles.recordDate}>{record.date}</Text>
                   <Text style={styles.muted}>{record.note || 'No notes added.'}</Text>
                   {record.evidence ? <Text style={styles.muted}>Evidence: {record.evidence}</Text> : null}
+                  <RecordPhoto goalId={goalId} recordId={record.id} available={record.photoAvailable}
+                    onDelete={records.reload} />
+                  <ActionButton title={record.photoAvailable ? 'Replace photo evidence' : 'Take evidence photo'} secondary
+                    disabled={busy} onPress={() => router.push({ pathname: '/(app)/camera',
+                      params: { goalId: String(goalId), recordId: String(record.id) } })} />
                   <ActionButton title="Edit record" secondary disabled={busy}
                     onPress={() => { setEditingRecord(record); setShowCreateRecord(false); setConfirmDeleteRecord(null); setMutationError(null); }} />
                   <ActionButton title="Delete record" secondary disabled={busy}

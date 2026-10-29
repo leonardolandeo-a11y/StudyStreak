@@ -3,6 +3,7 @@ export interface DailyRecord {
   date: string;
   note: string | null;
   evidence: string | null;
+  photoAvailable: boolean;
 }
 
 export interface DailyRecordRequest {

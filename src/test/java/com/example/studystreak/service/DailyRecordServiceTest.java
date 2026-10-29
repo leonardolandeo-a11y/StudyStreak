@@ -61,7 +61,8 @@ class DailyRecordServiceTest {
                         new ModelMapper(),
                         goalRepository,
                         currentUserService,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
                 );
 
         assertThrows(
@@ -123,7 +124,8 @@ class DailyRecordServiceTest {
                         new ModelMapper(),
                         goalRepository,
                         currentUserService,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
                 );
 
         assertDoesNotThrow(
@@ -176,7 +178,8 @@ class DailyRecordServiceTest {
                         new ModelMapper(),
                         goalRepository,
                         currentUserService,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
                 );
 
         assertThrows(
@@ -230,7 +233,8 @@ class DailyRecordServiceTest {
                         new ModelMapper(),
                         goalRepository,
                         currentUserService,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
                 );
 
         assertThrows(
@@ -277,7 +281,8 @@ class DailyRecordServiceTest {
                         new ModelMapper(),
                         goalRepository,
                         currentUserService,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(com.example.studystreak.repository.DailyRecordPhotoRepository.class)
                 );
 
         assertThrows(

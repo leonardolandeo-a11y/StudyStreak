@@ -13,6 +13,7 @@ public class DailyRecordResponseDTO {
     private LocalDate date;
     private String note;
     private String evidence;
+    private boolean photoAvailable;
 
     public DailyRecordResponseDTO() {}
 }

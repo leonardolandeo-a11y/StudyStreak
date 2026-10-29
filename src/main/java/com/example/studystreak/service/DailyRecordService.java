@@ -7,6 +7,7 @@ import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.DailyRecord;
 import com.example.studystreak.model.Goal;
 import com.example.studystreak.repository.DailyRecordRepository;
+import com.example.studystreak.repository.DailyRecordPhotoRepository;
 import com.example.studystreak.repository.GoalRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -26,18 +27,21 @@ public class DailyRecordService {
     private final GoalRepository goalRepository;
     private final CurrentUserService currentUserService;
     private final TrackingLinkRepository trackingLinkRepository;
+    private final DailyRecordPhotoRepository dailyRecordPhotoRepository;
 
     public DailyRecordService(DailyRecordRepository dailyRecordRepository,
                               ModelMapper modelMapper,
                               GoalRepository goalRepository,
                               CurrentUserService currentUserService,
-                              TrackingLinkRepository trackingLinkRepository) {
+                              TrackingLinkRepository trackingLinkRepository,
+                              DailyRecordPhotoRepository dailyRecordPhotoRepository) {
 
         this.dailyRecordRepository = dailyRecordRepository;
         this.modelMapper = modelMapper;
         this.goalRepository = goalRepository;
         this.currentUserService = currentUserService;
         this.trackingLinkRepository = trackingLinkRepository;
+        this.dailyRecordPhotoRepository = dailyRecordPhotoRepository;
     }
 
     private Goal getOwnedGoal(Long goalId) {
@@ -127,7 +131,7 @@ public class DailyRecordService {
         dailyRecord.setGoal(goal);
         DailyRecord savedRecord = dailyRecordRepository.save(dailyRecord);
 
-        return modelMapper.map(savedRecord, DailyRecordResponseDTO.class);
+        return toResponse(savedRecord);
     }
 
     public Page<DailyRecordResponseDTO> getGoalDailyRecords(Long goalId, Pageable pageable) {
@@ -135,13 +139,13 @@ public class DailyRecordService {
         getReadableGoal(goalId);
 
         return dailyRecordRepository.findByGoalId(goalId, pageable)
-                .map(record -> modelMapper.map(record, DailyRecordResponseDTO.class));
+                .map(this::toResponse);
     }
 
     public DailyRecordResponseDTO getDailyRecordById(Long goalId, Long dailyRecordId) {
 
         DailyRecord dailyRecord = getReadableDailyRecord(goalId, dailyRecordId);
-        return modelMapper.map(dailyRecord, DailyRecordResponseDTO.class);
+        return toResponse(dailyRecord);
     }
 
     public DailyRecordResponseDTO updateDailyRecord(Long goalId, Long dailyRecordId,
@@ -162,12 +166,20 @@ public class DailyRecordService {
 
         DailyRecord updatedRecord = dailyRecordRepository.save(dailyRecord);
 
-        return modelMapper.map(updatedRecord, DailyRecordResponseDTO.class);
+        return toResponse(updatedRecord);
     }
 
+    private DailyRecordResponseDTO toResponse(DailyRecord record) {
+        DailyRecordResponseDTO response = modelMapper.map(record, DailyRecordResponseDTO.class);
+        response.setPhotoAvailable(dailyRecordPhotoRepository.existsByDailyRecordId(record.getId()));
+        return response;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
     public void deleteDailyRecord(Long goalId, Long dailyRecordId) {
 
         DailyRecord dailyRecord = getOwnedDailyRecord(goalId, dailyRecordId);
+        dailyRecordPhotoRepository.deleteByDailyRecordId(dailyRecordId);
         dailyRecordRepository.delete(dailyRecord);
     }
 }
