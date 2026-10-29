@@ -1,5 +1,7 @@
 package com.example.studystreak.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+
 import com.example.studystreak.model.Notification;
 import com.example.studystreak.model.NotificationType;
 import com.example.studystreak.model.TrackingLink;
@@ -24,4 +26,11 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
 
     Page<Notification> findByUserIdAndTypeOrderByCreatedAtDesc(
             Long userId, NotificationType type, Pageable pageable);
+
+    // Keep notification history, but remove links to deleted resources.
+    @Modifying
+    @Query("update Notification n set n.relatedGoalId = null, n.relatedDailyRecordId = null " +
+            "where n.relatedGoalId = :goalId or n.relatedDailyRecordId in " +
+            "(select d.id from DailyRecord d where d.goal.id = :goalId)")
+    int clearDeletedGoalReferences(@Param("goalId") Long goalId);
 }

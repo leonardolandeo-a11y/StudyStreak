@@ -1,5 +1,7 @@
 package com.example.studystreak.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+
 import com.example.studystreak.model.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +33,8 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             @Param("name") String name,
             @Param("userId") Long userId
     );
+
+    @Modifying
+    @Query(value = "DELETE FROM goal_tag WHERE goal_id = :goalId", nativeQuery = true)
+    int deleteLinksForGoal(@Param("goalId") Long goalId);
 }

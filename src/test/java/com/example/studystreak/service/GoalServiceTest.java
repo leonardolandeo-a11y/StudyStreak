@@ -55,7 +55,8 @@ class GoalServiceTest {
                         userRepository,
                         currentUserService,
                         eventPublisher,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(GoalDeletionService.class)
                 );
 
         assertThrows(
@@ -110,7 +111,8 @@ class GoalServiceTest {
                         userRepository,
                         currentUserService,
                         eventPublisher,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(GoalDeletionService.class)
                 );
 
         assertDoesNotThrow(
@@ -157,7 +159,8 @@ class GoalServiceTest {
                         userRepository,
                         currentUserService,
                         eventPublisher,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(GoalDeletionService.class)
                 );
 
         assertThrows(
@@ -205,7 +208,8 @@ class GoalServiceTest {
                         userRepository,
                         currentUserService,
                         eventPublisher,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        mock(GoalDeletionService.class)
                 );
 
         assertThrows(
@@ -234,6 +238,8 @@ class GoalServiceTest {
         TrackingLinkRepository trackingLinkRepository =
                 mock(TrackingLinkRepository.class);
 
+        GoalDeletionService deletionService = mock(GoalDeletionService.class);
+
         Goal goal = mock(Goal.class);
         User owner = mock(User.class);
 
@@ -256,12 +262,43 @@ class GoalServiceTest {
                         userRepository,
                         currentUserService,
                         eventPublisher,
-                        trackingLinkRepository
+                        trackingLinkRepository,
+                        deletionService
                 );
 
         assertThrows(
                 ForbiddenException.class,
                 () -> service.deleteGoal(1L)
         );
+
+        org.mockito.Mockito.verifyNoInteractions(deletionService);
+        org.mockito.Mockito.verify(goalRepository, org.mockito.Mockito.never()).delete(goal);
+    }
+
+    @Test
+    void ownerDeletesDependenciesBeforeDeletingGoal() {
+        GoalRepository goalRepository = mock(GoalRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        CurrentUserService currentUserService = mock(CurrentUserService.class);
+        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
+        TrackingLinkRepository trackingLinkRepository = mock(TrackingLinkRepository.class);
+        GoalDeletionService deletionService = mock(GoalDeletionService.class);
+        Goal goal = mock(Goal.class);
+        User owner = mock(User.class);
+
+        when(goalRepository.findById(53L)).thenReturn(Optional.of(goal));
+        when(goal.getUser()).thenReturn(owner);
+        when(owner.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUserId()).thenReturn(1L);
+
+        GoalService service = new GoalService(goalRepository, new ModelMapper(),
+                userRepository, currentUserService, eventPublisher,
+                trackingLinkRepository, deletionService);
+
+        service.deleteGoal(53L);
+
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(deletionService, goalRepository);
+        order.verify(deletionService).deleteDependencies(53L);
+        order.verify(goalRepository).delete(goal);
     }
 }

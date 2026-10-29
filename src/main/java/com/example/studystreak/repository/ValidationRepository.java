@@ -1,5 +1,7 @@
 package com.example.studystreak.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+
 import com.example.studystreak.model.Validation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -17,4 +19,8 @@ public interface ValidationRepository extends JpaRepository<Validation, Long> {
 
     @Query("select count(v) from Validation v where v.dailyRecord.goal.user.id = :userId")
     long countReviewedByRecordOwnerId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("delete from Validation v where v.dailyRecord.id in (select d.id from DailyRecord d where d.goal.id = :goalId)")
+    int deleteForGoal(@Param("goalId") Long goalId);
 }

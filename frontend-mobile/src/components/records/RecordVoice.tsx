@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { File, Paths } from 'expo-file-system';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { palette } from '../../constants/palette';
@@ -14,6 +15,14 @@ function clock(seconds: number): string {
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
 }
 
+function downloadMessage(cause: unknown): string {
+  const detail = cause instanceof Error ? cause.message : '';
+  if (/\b401\b/.test(detail)) return 'Your session expired. Sign in again to listen to this note.';
+  if (/\b403\b/.test(detail)) return 'You do not have permission to listen to this note.';
+  if (/\b404\b/.test(detail)) return 'The voice note could not be found on the server.';
+  return getApiErrorMessage(cause, 'Unable to download the voice note. Check your connection and retry.');
+}
+
 export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = false }: {
   goalId: number;
   recordId: number;
@@ -24,29 +33,68 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   const player = useAudioPlayer(null);
   const status = useAudioPlayerStatus(player);
   const [pulse] = useState(() => new Animated.Value(1));
-  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [sourceReady, setSourceReady] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Native players may fail to stream authenticated URLs. Download to the
+  // app's private temporary cache, then play the local M4A without HTTP headers.
   useFocusEffect(useCallback(() => {
+    if (!available) return;
     let active = true;
-    void tokenStorage.getAccessToken().then((value) => {
-      if (active) setToken(value);
-    }).catch(() => { if (active) setError('Unable to access your session.'); });
-    return () => { active = false; player.pause(); };
-  }, [player]));
+    let localFile: File | null = null;
 
-  useEffect(() => {
-    if (!available || !token) {
-      player.replace(null);
-      return;
+    function cleanUp(file: File | null) {
+      if (!file) return;
+      try { if (file.exists) file.delete(); } catch { /* Best-effort cache cleanup. */ }
     }
-    player.replace({
-      uri: voiceEvidenceService.url(goalId, recordId),
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }, [available, goalId, recordId, token, player]);
+
+    async function loadVoiceNote() {
+      setError(null);
+      setSourceReady(false);
+      setLoading(true);
+      player.pause();
+      player.replace(null);
+
+      try {
+        const token = await tokenStorage.getAccessToken();
+        if (!token) throw new Error('401: session not available');
+
+        const filename = `studystreak-voice-${goalId}-${recordId}-${retryKey}-${Date.now()}-${Math.random().toString(36).slice(2)}.m4a`;
+        const destination = new File(Paths.cache, filename);
+        localFile = destination;
+        const result = await File.downloadFileAsync(
+          voiceEvidenceService.url(goalId, recordId),
+          destination,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        if (!result.exists || result.size === 0) throw new Error('The downloaded voice note is empty.');
+        if (active) {
+          player.replace(result.uri);
+          setSourceReady(true);
+        } else {
+          cleanUp(localFile);
+        }
+      } catch (cause) {
+        if (active) setError(downloadMessage(cause));
+        cleanUp(localFile);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void loadVoiceNote();
+    return () => {
+      active = false;
+      player.pause();
+      player.replace(null);
+      cleanUp(localFile);
+    };
+  }, [available, goalId, recordId, retryKey, player]));
 
   useEffect(() => {
     if (!status.playing) {
@@ -79,8 +127,12 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   const elapsed = Math.max(0, status.currentTime || 0);
   const duration = Math.max(0, status.duration || 0);
   const percent = duration > 0 ? Math.min(100, Math.round((elapsed / duration) * 100)) : 0;
-  const stateLabel = status.playing ? 'Playing' : status.isBuffering ? 'Buffering' :
-    status.didJustFinish ? 'Finished' : elapsed > 0 && duration > 0 && elapsed < duration ? 'Paused' : 'Ready to play';
+  const playbackError = status.error ? 'The audio file could not be decoded or played on this device.' : null;
+  const stateLabel = loading ? 'Downloading voice note' : error ? 'Download failed' :
+    playbackError ? 'Playback failed' : !sourceReady || !status.isLoaded ? 'Loading audio' :
+      status.playing ? 'Playing' : status.isBuffering ? 'Buffering' :
+        status.didJustFinish ? 'Finished' : elapsed > 0 && duration > 0 && elapsed < duration ? 'Paused' : 'Ready to play';
+  const canPlay = sourceReady && status.isLoaded && !loading && !error && !playbackError && !busy;
 
   if (!available) return null;
   return (
@@ -98,15 +150,21 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
           <View style={[styles.progress, { width: `${percent}%` as `${number}%` }]} />
         </View>
       </View>
-      <ActionButton title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary disabled={!token || busy}
-        onPress={() => { if (status.playing) player.pause(); else player.play(); }} />
-      {status.error ? <StatusMessage error message="Voice note could not be played. Try refreshing." /> : null}
+      {loading ? <ActivityIndicator size="small" color={palette.primary} /> : null}
+      <ActionButton title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary
+        disabled={!canPlay && !status.playing}
+        onPress={() => { if (status.playing) player.pause(); else if (canPlay) player.play(); }} />
+      {error ? <StatusMessage error message={error} /> : null}
+      {playbackError ? <StatusMessage error message={playbackError} /> : null}
+      {(error || playbackError) ? (
+        <ActionButton title="Retry voice playback" secondary disabled={busy || loading}
+          onPress={() => setRetryKey((value) => value + 1)} />
+      ) : null}
       {!readOnly ? (
         <ActionButton title={confirm ? 'Cancel deletion' : 'Delete voice note'} secondary disabled={busy}
           onPress={() => setConfirm((old) => !old)} />
       ) : null}
       {confirm && !readOnly ? <ActionButton title="Confirm delete voice note" busy={busy} onPress={() => { void remove(); }} /> : null}
-      {error ? <StatusMessage error message={error} /> : null}
     </View>
   );
 }

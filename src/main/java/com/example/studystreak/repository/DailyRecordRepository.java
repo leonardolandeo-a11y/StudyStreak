@@ -1,5 +1,7 @@
 package com.example.studystreak.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+
 import com.example.studystreak.model.DailyRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -27,4 +29,8 @@ public interface DailyRecordRepository
     long countAwaitingReviewByUserId(@Param("userId") Long userId);
 
     boolean existsByGoalIdAndDateAndIdNot(Long goalId, LocalDate date, Long dailyRecordId);
+
+    @Modifying
+    @Query("delete from DailyRecord d where d.goal.id = :goalId")
+    int deleteForGoal(@Param("goalId") Long goalId);
 }

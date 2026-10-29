@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../components/ui/Screen';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
@@ -32,7 +32,6 @@ export default function GoalDetails() {
   const [goalRevision, setGoalRevision] = useState(0);
   const latestGoalRevision = useRef(goalRevision);
   const [editingGoal, setEditingGoal] = useState(false);
-  const [confirmDeleteGoal, setConfirmDeleteGoal] = useState(false);
   const [showCreateRecord, setShowCreateRecord] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DailyRecord | null>(null);
   const [confirmDeleteRecord, setConfirmDeleteRecord] = useState<number | null>(null);
@@ -84,6 +83,20 @@ export default function GoalDetails() {
       setMutationError(getApiErrorMessage(cause, 'Unable to update goal.'));
       return false;
     } finally { setBusy(false); }
+  }
+
+  function requestDeleteGoal() {
+    if (busy || !goal) return;
+
+    Alert.alert(
+      'Delete goal?',
+      `Are you sure you want to delete "${goal.topic}"? This may permanently remove its related study records and evidence. This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete permanently', style: 'destructive', onPress: () => { void deleteGoal(); } },
+      ],
+      { cancelable: true },
+    );
   }
 
   async function deleteGoal() {
@@ -164,21 +177,11 @@ export default function GoalDetails() {
               {goal.completed ? 'Completed' : 'Active'}
             </Text>
             <ActionButton secondary title={editingGoal ? 'Close goal editor' : 'Edit goal'}
-              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setConfirmDeleteGoal(false); setMutationError(null); }} />
+              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); }} />
             {editingGoal ? <GoalForm key={goal.id} initialValues={goal} busy={busy}
               onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
             {!editingGoal ? (
-              <>
-                <ActionButton title="Delete goal" secondary disabled={busy}
-                  onPress={() => setConfirmDeleteGoal(true)} />
-                {confirmDeleteGoal ? (
-                  <View style={styles.confirm}>
-                    <Text style={styles.warning}>Delete this goal and its associated records?</Text>
-                    <ActionButton title="Confirm deletion" busy={busy} onPress={() => { void deleteGoal(); }} />
-                    <ActionButton secondary title="Cancel" disabled={busy} onPress={() => setConfirmDeleteGoal(false)} />
-                  </View>
-                ) : null}
-              </>
+              <ActionButton title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}
           </View>
           <StreakCard key={goal.id} goalId={goal.id} />
