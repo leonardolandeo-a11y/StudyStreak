@@ -5,4 +5,9 @@ export interface StudyBook {
   publishedDate: string | null;
   description: string | null;
   infoLink: string | null;
+  thumbnailUrl: string | null;
+  previewLink: string | null;
+  publisher: string | null;
+  pageCount: number | null;
+  categories: string[];
 }
