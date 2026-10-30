@@ -14,44 +14,43 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder){
+    public AuthService(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public LoginResponseDTO login(LoginRequestDTO loginRequestDTO){
+    public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
         User user = userRepository.findByUsername(loginRequestDTO.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
-        // matches (raw_password, encoded_password)
-        if (!passwordEncoder.matches(loginRequestDTO.getPassword(),user.getPassword())){  // Compare the passwords
+        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())
+                || !Boolean.TRUE.equals(user.getActive())) {
+            // Do not reveal whether the account exists or is disabled.
             throw new BadCredentialsException("Invalid username or password");
         }
 
-        String token = jwtService.generateToken(user); // Create the access token
-        String refreshToken = jwtService.generateRefreshToken(user); // Create the refresh token
-
-        return new LoginResponseDTO(token, refreshToken);
+        return new LoginResponseDTO(
+                jwtService.generateToken(user),
+                jwtService.generateRefreshToken(user)
+        );
     }
 
-    public LoginResponseDTO refresh(String refreshToken){
-
+    public LoginResponseDTO refresh(String refreshToken) {
         try {
             String username = jwtService.extractUsername(refreshToken);
-
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
-            if (!jwtService.isRefreshTokenValid(refreshToken, user.getUsername())) {
+            if (!Boolean.TRUE.equals(user.getActive())
+                    || !jwtService.isRefreshTokenValid(refreshToken, user)) {
                 throw new BadCredentialsException("Invalid refresh token");
             }
 
-            String token = jwtService.generateToken(user);
-            String newRefreshToken = jwtService.generateRefreshToken(user);
-
-            return new LoginResponseDTO(token, newRefreshToken);
-
+            return new LoginResponseDTO(
+                    jwtService.generateToken(user),
+                    jwtService.generateRefreshToken(user)
+            );
         } catch (BadCredentialsException ex) {
             throw ex;
         } catch (Exception ex) {

@@ -105,54 +105,41 @@ public class JwtService {
     }
 
 
-    /*
-     fecha de expiracion
-     */
     public Date extractExpiration(String token) {
-
         return extractAllClaims(token).getExpiration();
     }
 
-
-    /*
-     Comprueba si el token expiro ya
+    /**
+     * Verify the signed token against the current database account, not just its username.
+     * Recreated accounts, disabled users, and changed roles cannot reuse older tokens.
      */
-    private boolean isTokenExpired(String token) {
-
-        return extractExpiration(token).before(new Date());
+    public boolean isTokenValid(String token, User user) {
+        return isTokenValidForUser(token, user, "access");
     }
 
+    public boolean isRefreshTokenValid(String token, User user) {
+        return isTokenValidForUser(token, user, "refresh");
+    }
 
-    /*
-     Verificamos que:
-     - El token pertenezca al usuario correcto
-     - Que no haya expirado
-     - Que sea un access token
-     */
-    public boolean isTokenValid(
-            String token,
-            String username
-    ) {
-
-        try {
-            String tokenUsername = extractUsername(token);
-            return tokenUsername.equals(username)
-                    && "access".equals(extractTokenType(token))
-                    && !isTokenExpired(token);
-        } catch (Exception e) {
+    private boolean isTokenValidForUser(String token, User user, String expectedType) {
+        if (user == null || user.getId() == null || user.getRole() == null
+                || !Boolean.TRUE.equals(user.getActive())) {
             return false;
         }
-    }
-
-
-    public boolean isRefreshTokenValid(String token, String username) {
 
         try {
-            String tokenUsername = extractUsername(token);
-            return tokenUsername.equals(username)
-                    && "refresh".equals(extractTokenType(token))
-                    && !isTokenExpired(token);
-        } catch (Exception e) {
+            Claims claims = extractAllClaims(token);
+            Number tokenUserId = claims.get("userId", Number.class);
+            Date expiresAt = claims.getExpiration();
+
+            return tokenUserId != null
+                    && user.getId().longValue() == tokenUserId.longValue()
+                    && user.getUsername().equals(claims.getSubject())
+                    && user.getRole().name().equals(claims.get("role", String.class))
+                    && expectedType.equals(claims.get("type", String.class))
+                    && expiresAt != null
+                    && expiresAt.after(new Date());
+        } catch (Exception exception) {
             return false;
         }
     }
