@@ -34,7 +34,7 @@ export default function Notifications() {
     return notificationService.list(userId, page, signal);
   }, [userId, filter, selectedType]);
 
-  const { page, setPage, data, loading, error, reload } = usePagedResource(load, userId != null);
+  const { page, setPage, data, loading, error, reload } = usePagedResource(load, userId != null, 30000);
 
   function selectFilter(next: Filter, type?: NotificationType) {
     setFilter(next);

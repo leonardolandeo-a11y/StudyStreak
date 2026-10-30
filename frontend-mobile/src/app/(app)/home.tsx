@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { AppState, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../components/ui/Screen';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { StatusMessage } from '../../components/ui/StatusMessage';
@@ -17,12 +17,35 @@ export default function Home() {
 
   useFocusEffect(useCallback(() => {
     const controller = new AbortController();
-    if (userId != null) {
+    let inFlight = false;
+
+    const refresh = () => {
+      if (userId == null || inFlight || controller.signal.aborted) return;
+      inFlight = true;
       void notificationService.countUnread(userId, controller.signal)
-        .then((count) => { if (!controller.signal.aborted) setUnreadCount({ userId, count }); })
-        .catch(() => { if (!controller.signal.aborted) setUnreadCount(null); });
-    }
-    return () => controller.abort();
+        .then((count) => {
+          if (!controller.signal.aborted) setUnreadCount({ userId, count });
+        })
+        .catch(() => {
+          // Preserve the last count during temporary network failures.
+        })
+        .finally(() => { inFlight = false; });
+    };
+
+    refresh();
+    const refreshWhenActive = () => {
+      if (AppState.currentState === 'active') refresh();
+    };
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshWhenActive();
+    });
+    const intervalId = setInterval(refreshWhenActive, 30000);
+
+    return () => {
+      controller.abort();
+      subscription.remove();
+      clearInterval(intervalId);
+    };
   }, [userId]));
 
   async function handleSignOut() {

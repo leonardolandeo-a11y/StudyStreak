@@ -83,7 +83,7 @@ function UnreadNotificationProvider({ children }: UnreadNotificationProviderProp
         refreshWhenVisible();
         window.addEventListener("focus", refreshWhenVisible);
         document.addEventListener("visibilitychange", refreshWhenVisible);
-        const intervalId = window.setInterval(refreshWhenVisible, 45000);
+        const intervalId = window.setInterval(refreshWhenVisible, 30000);
 
         return () => {
             window.removeEventListener("focus", refreshWhenVisible);
