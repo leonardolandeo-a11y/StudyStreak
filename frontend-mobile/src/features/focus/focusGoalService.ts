@@ -1,6 +1,6 @@
-import { apiClient } from '../services/apiClient';
-import type { Goal } from '../types/goal';
-import type { PageResponse } from '../types/page';
+import { apiClient } from '../../services/apiClient';
+import type { Goal } from '../../types/goal';
+import type { PageResponse } from '../../types/page';
 import type { CompletedFocusSession } from './pomodoroState';
 
 export interface FocusSummary {
