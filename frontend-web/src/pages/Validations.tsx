@@ -16,6 +16,7 @@ import PaginationControls from "../components/ui/PaginationControls";
 import LoadingState from "../components/ui/LoadingState";
 import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
+import { fallbackPage } from "../utils/pageBounds";
 
 const PAGE_SIZE = 10;
 
@@ -101,7 +102,13 @@ function Validations() {
             setPartners(null);
             try {
                 const response = await getActiveTrackingLinks(partnerPage, PAGE_SIZE, controller.signal);
-                if (!controller.signal.aborted) setPartners(response);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(partnerPage, response.totalPages);
+                if (fallback !== null) {
+                    setPartnerPage(fallback);
+                    return;
+                }
+                setPartners(response);
             } catch {
                 if (!controller.signal.aborted) setPartnersError("Could not load tracking partners.");
             } finally {
@@ -123,7 +130,13 @@ function Validations() {
             setGoals(null);
             try {
                 const response = await getGoals(partnerId!, goalPage, PAGE_SIZE, controller.signal);
-                if (!controller.signal.aborted) setGoals(response);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(goalPage, response.totalPages);
+                if (fallback !== null) {
+                    setGoalPage(fallback);
+                    return;
+                }
+                setGoals(response);
             } catch {
                 if (!controller.signal.aborted) setGoalsError("Could not load this partner's goals.");
             } finally {
@@ -145,7 +158,13 @@ function Validations() {
             setRecords(null);
             try {
                 const response = await getDailyRecords(goalId!, recordPage, PAGE_SIZE, controller.signal);
-                if (!controller.signal.aborted) setRecords(response);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(recordPage, response.totalPages);
+                if (fallback !== null) {
+                    setRecordPage(fallback);
+                    return;
+                }
+                setRecords(response);
             } catch {
                 if (!controller.signal.aborted) setRecordsError("Could not load daily records.");
             } finally {

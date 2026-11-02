@@ -20,6 +20,7 @@ import {
 } from "../services/trackingLinkService";
 import type { TrackingLink } from "../types/trackingLink";
 import type { PageResponse } from "../types/page";
+import { recoverPageParams } from "../utils/pageBounds";
 
 interface ApiErrorResponse {
     message?: string;
@@ -73,18 +74,21 @@ function TrackingLinks() {
                     getActiveTrackingLinks(activePageNumber, 10, controller.signal)
                 ]);
                 if (!controller.signal.aborted) {
+                    const recovered = recoverPageParams(searchParams, [
+                        { key: "page", current: page, totalPages: all.totalPages },
+                        { key: "pendingPage", current: pendingPageNumber, totalPages: pending.totalPages },
+                        { key: "activePage", current: activePageNumber, totalPages: active.totalPages }
+                    ]);
+                    if (recovered !== null) {
+                        setAllLinks(null);
+                        setPendingLinks(null);
+                        setActiveLinks(null);
+                        setSearchParams(recovered, { replace: true });
+                        return;
+                    }
                     setAllLinks(all);
                     setPendingLinks(pending);
                     setActiveLinks(active);
-                    if (all.totalPages > 0 && page >= all.totalPages) {
-                        setPage("page", all.totalPages - 1);
-                    }
-                    if (pending.totalPages > 0 && pendingPageNumber >= pending.totalPages) {
-                        setPage("pendingPage", pending.totalPages - 1);
-                    }
-                    if (active.totalPages > 0 && activePageNumber >= active.totalPages) {
-                        setPage("activePage", active.totalPages - 1);
-                    }
                 }
             } catch {
                 if (!controller.signal.aborted) {
@@ -98,7 +102,7 @@ function TrackingLinks() {
         };
         void load();
         return () => controller.abort();
-    }, [page, pendingPageNumber, activePageNumber, revision, currentUser?.id, setPage]);
+    }, [page, pendingPageNumber, activePageNumber, revision, currentUser?.id, searchParams, setSearchParams]);
 
     async function handleCreate(receiverId: number): Promise<boolean> {
         if (!currentUser || creating) return false;

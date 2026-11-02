@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { notificationDestination } from '../utils/notificationDestination';
+import { fallbackPage } from '../utils/pageBounds';
 import {
     useCallback,
     useEffect,
@@ -233,6 +234,11 @@ function Notifications(){
                 }
 
                 if (!controller.signal.aborted) {
+                    const fallback = fallbackPage(page, result.totalPages);
+                    if (fallback !== null) {
+                        handlePageChange(fallback, true);
+                        return;
+                    }
                     dispatch({ type: "LOAD_SUCCESS", payload: result });
                 }
             } catch {
@@ -270,7 +276,8 @@ function Notifications(){
         filter,
         selectedType,
         refreshKey,
-        refreshUnreadCount
+        refreshUnreadCount,
+        handlePageChange
     ]);
 
 

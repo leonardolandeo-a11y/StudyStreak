@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+import { useCallback, useMemo } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
@@ -64,23 +64,13 @@ export function useNotificationFilters(){
     }
 
 
-    function handlePageChange(newPage: number) {
-
+    const handlePageChange = useCallback((newPage: number, replace = false) => {
         if (selectedType) {
-
-            setSearchParams({
-                type: selectedType,
-                page: String(newPage)
-            });
-
+            setSearchParams({ type: selectedType, page: String(newPage) }, { replace });
             return;
         }
-
-        setSearchParams({
-            filter,
-            page: String(newPage)
-        });
-    }
+        setSearchParams({ filter, page: String(newPage) }, { replace });
+    }, [selectedType, filter, setSearchParams]);
 
 
     return {
