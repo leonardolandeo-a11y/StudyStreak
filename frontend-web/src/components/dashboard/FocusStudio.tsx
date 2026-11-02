@@ -271,6 +271,11 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }
 
     async function chooseTrack(selected: Soundscape) {
+        if (selected === timer.preferences.soundscape && playing) {
+            getAudio().stop();
+            setPlaying(false);
+            return;
+        }
         changePreferences({ soundscape: selected });
         setAudioError(null);
         // Selecting a track is a direct click, so it can start browser audio.
