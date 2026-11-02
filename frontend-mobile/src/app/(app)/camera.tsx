@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,17 +11,43 @@ import { getApiErrorMessage } from '../../utils/apiError';
 import { File } from 'expo-file-system';
 
 
+function deleteTemporaryPhoto(uri: string | null) {
+  if (!uri) return;
+  try {
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch { /* Temporary cache cleanup is best-effort. */ }
+}
+
 export default function StudyCamera() {
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
   const goalId = Number(goalParam);
   const recordId = Number(recordParam);
   const valid = Number.isSafeInteger(goalId) && goalId > 0 && Number.isSafeInteger(recordId) && recordId > 0;
   const camera = useRef<CameraView>(null);
+  const capturedPhoto = useRef<string | null>(null);
+  const active = useRef(true);
   const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+      deleteTemporaryPhoto(capturedPhoto.current);
+      capturedPhoto.current = null;
+    };
+  }, []);
+
+  function discardPhoto() {
+    deleteTemporaryPhoto(capturedPhoto.current);
+    capturedPhoto.current = null;
+    setPhotoUri(null);
+    setReady(false);
+  }
 
 
   async function capture() {
@@ -45,9 +71,16 @@ export default function StudyCamera() {
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
+        deleteTemporaryPhoto(photo.uri);
         setError('The photo exceeds 2 MB. Please retake it.');
         return;
       }
+      if (!active.current) {
+        deleteTemporaryPhoto(photo.uri);
+        return;
+      }
+      deleteTemporaryPhoto(capturedPhoto.current);
+      capturedPhoto.current = photo.uri;
       setPhotoUri(photo.uri);
     } catch {
       setError('The photo could not be taken. Try again.');
@@ -63,6 +96,8 @@ export default function StudyCamera() {
     setError(null);
     try {
       await photoEvidenceService.upload(goalId, recordId, photoUri);
+      deleteTemporaryPhoto(capturedPhoto.current);
+      capturedPhoto.current = null;
       router.back();
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Could not save the photo. Check your connection and try again.'));
@@ -73,7 +108,7 @@ export default function StudyCamera() {
 
   return (
     <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
         <Text style={styles.link}>‹ Back to goal</Text>
       </Pressable>
       <Text style={styles.title}>Photo evidence</Text>
@@ -101,7 +136,7 @@ export default function StudyCamera() {
         <View style={styles.card}>
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="contain" />
           <ActionButton title="Save photo to daily record" busy={busy} onPress={() => { void upload(); }} />
-          <ActionButton title="Retake photo" secondary disabled={busy} onPress={() => { setPhotoUri(null); setReady(false); }} />
+          <ActionButton title="Retake photo" secondary disabled={busy} onPress={discardPhoto} />
         </View>
       ) : null}
       {error ? <StatusMessage error message={error} /> : null}

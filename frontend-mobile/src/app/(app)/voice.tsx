@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,16 +11,32 @@ import { getApiErrorMessage } from '../../utils/apiError';
 import { File } from 'expo-file-system';
 
 
+function deleteTemporaryRecording(uri: string | null) {
+  if (!uri) return;
+  try {
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch { /* Temporary cache cleanup is best-effort. */ }
+}
+
 export default function StudyVoice() {
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
   const goalId = Number(goalParam);
   const recordId = Number(recordParam);
   const valid = Number.isSafeInteger(goalId) && goalId > 0 && Number.isSafeInteger(recordId) && recordId > 0;
   const [uri, setUri] = useState<string | null>(null);
+  const recordedFile = useRef<string | null>(null);
+  const focused = useRef(true);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY, (status) => {
         if (status.isFinished) {
           if (status.url) {
-            setUri(status.url);
+            if (!focused.current) {
+              deleteTemporaryRecording(status.url);
+            } else {
+              if (recordedFile.current !== status.url) deleteTemporaryRecording(recordedFile.current);
+              recordedFile.current = status.url;
+              setUri(status.url);
+            }
           }
           void setAudioModeAsync({allowsRecording: false,}).catch((cause: unknown) => {
             console.warn('Could not reset the audio mode:', cause);
@@ -37,14 +53,18 @@ export default function StudyVoice() {
 
   useFocusEffect(
       useCallback(() => {
+        focused.current = true;
         return () => {
+          focused.current = false;
           void (async () => {
             try {
-              if (recorder.isRecording) {
-                await recorder.stop();
-              }
+              if (recorder.isRecording) await recorder.stop();
             } finally {
-              await setAudioModeAsync({allowsRecording: false,});
+              deleteTemporaryRecording(recordedFile.current);
+              if (recorder.uri !== recordedFile.current) deleteTemporaryRecording(recorder.uri);
+              recordedFile.current = null;
+              setUri(null);
+              await setAudioModeAsync({ allowsRecording: false });
             }
           })().catch((cause: unknown) => {
             console.warn('Could not close the recording session:', cause);
@@ -65,10 +85,15 @@ export default function StudyVoice() {
       }
       setPermissionDenied(false);
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      setUri(null);
       await recorder.prepareToRecordAsync();
       recorder.record({ forDuration: 90 });
+      deleteTemporaryRecording(recordedFile.current);
+      recordedFile.current = null;
+      setUri(null);
     } catch {
+      if (!recorder.isRecording) {
+        void setAudioModeAsync({ allowsRecording: false }).catch(() => {});
+      }
       setError('The microphone could not start. Try again.');
     } finally {
       setBusy(false);
@@ -82,6 +107,7 @@ export default function StudyVoice() {
     try {
       await recorder.stop();
       if (!recorder.uri) throw new Error('No audio file returned');
+      recordedFile.current = recorder.uri;
       setUri(recorder.uri);
       await setAudioModeAsync({ allowsRecording: false });
     } catch {
@@ -112,6 +138,9 @@ export default function StudyVoice() {
       }
 
       await voiceEvidenceService.upload(goalId, recordId, uri);
+      deleteTemporaryRecording(recordedFile.current);
+      recordedFile.current = null;
+      setUri(null);
       router.back();
     } catch (cause) {
       setError(
@@ -128,7 +157,7 @@ export default function StudyVoice() {
 
   return (
     <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
         <Text style={styles.link}>‹ Back to goal</Text>
       </Pressable>
       <Text style={styles.title}>Study voice note</Text>
