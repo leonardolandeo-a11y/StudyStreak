@@ -318,7 +318,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             <button type="button" onClick={startOrPause}
                                 className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold shadow-lg ${style.button}`}>
                                 {active ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
-                                {active ? "Pause" : remaining < total ? "Resume" : "Start focus"}
+                                {active ? "Pause" : remaining < total ? "Resume" : timer.mode === "focus" ? "Start focus" : "Start break"}
                             </button>
                             <button type="button" onClick={() => setTimer(previous => resetPomodoro(previous))}
                                 aria-label="Reset current timer" title="Reset timer"
