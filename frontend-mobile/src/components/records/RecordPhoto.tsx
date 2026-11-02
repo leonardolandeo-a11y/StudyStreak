@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { File, Paths } from 'expo-file-system';
+import { File } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { palette } from '../../constants/palette';
 import { photoEvidenceService } from '../../services/photoEvidenceService';
-import { tokenStorage } from '../../services/tokenStorage';
+import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 // Images behind an authenticated API are downloaded into the app's temporary
@@ -40,20 +40,8 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
       setError(null);
       setLoading(true);
       try {
-        const token = await tokenStorage.getAccessToken();
-        if (!token) throw new Error('Session unavailable. Please sign in again.');
-
-        const filename = `studystreak-photo-${goalId}-${recordId}-retry${reloadKey}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-        const destination = new File(Paths.cache, filename);
-        localFile = destination;
-        const result = await File.downloadFileAsync(
-          photoEvidenceService.url(goalId, recordId),
-          destination,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-
-        if (!result.exists || result.size === 0) throw new Error('The saved photo is empty.');
-        if (active) setPhotoUri(result.uri);
+        localFile = await downloadEvidence(photoEvidenceService.url(goalId, recordId), 'jpg', reloadKey);
+        if (active) setPhotoUri(localFile.uri);
       } catch (cause) {
         if (active) {
           const detail = cause instanceof Error ? cause.message : '';

@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { isAxiosError } from 'axios';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Screen } from '../../../components/ui/Screen';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { palette } from '../../../constants/palette';
-import { googleBooksService } from '../../../services/googleBooksService';
+import { getBookSearchErrorMessage, googleBooksService } from '../../../services/googleBooksService';
 import type { StudyBook } from '../../../types/studyBook';
 
 type SearchRequest = { term: string; revision: number };
@@ -14,12 +13,13 @@ type SearchRequest = { term: string; revision: number };
 export default function StudyResources() {
   const { topic } = useLocalSearchParams<{ topic?: string }>();
   const initialTopic = typeof topic === 'string' ? topic.trim().slice(0, 80) : '';
+  const hasInitialSearch = initialTopic.length >= 2;
   const [query, setQuery] = useState(initialTopic);
   const [request, setRequest] = useState<SearchRequest | null>(
-    initialTopic ? { term: initialTopic, revision: 0 } : null,
+    hasInitialSearch ? { term: initialTopic, revision: 0 } : null,
   );
   const [books, setBooks] = useState<StudyBook[]>([]);
-  const [loading, setLoading] = useState(Boolean(initialTopic));
+  const [loading, setLoading] = useState(hasInitialSearch);
   const [error, setError] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<StudyBook | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -37,12 +37,7 @@ export default function StudyResources() {
         if (!controller.signal.aborted) setBooks(results);
       } catch (caught) {
         if (!controller.signal.aborted) {
-          const status = isAxiosError(caught) ? caught.response?.status : undefined;
-          setError(status === 429
-            ? 'Google Books has reached its search limit. Try again later.'
-            : status === 503
-              ? 'Google Books is not configured on the server.'
-              : 'Books could not be loaded. Check the server and try again.');
+          setError(getBookSearchErrorMessage(caught));
           setBooks([]);
         }
       } finally {
@@ -54,16 +49,25 @@ export default function StudyResources() {
   }, [request]);
 
   function submitSearch() {
+    if (loading) return;
     const term = query.trim();
     if (term.length < 2 || term.length > 80) {
       setError('Enter between 2 and 80 characters.');
+      setBooks([]);
+      setRequest(null);
       return;
     }
     setSelectedBook(null);
+    setError(null);
+    setBooks([]);
+    setLoading(true);
     setRequest((previous) => ({ term, revision: (previous?.revision ?? 0) + 1 }));
   }
 
   function retry() {
+    if (!request || loading) return;
+    setError(null);
+    setLoading(true);
     setRequest((previous) => previous ? { ...previous, revision: previous.revision + 1 } : null);
   }
 
@@ -78,6 +82,7 @@ export default function StudyResources() {
   }
 
   async function openBook(url: string) {
+    setLinkError(null);
     try {
       if (!url.startsWith('https://')) throw new Error('Invalid book URL');
       await Linking.openURL(url);
@@ -112,7 +117,7 @@ export default function StudyResources() {
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? <StatusMessage error message={error} /> : null}
       {error && request ? <ActionButton title="Retry search" secondary onPress={retry} /> : null}
-      {!request ? <Text style={styles.muted}>Enter a topic to find study books.</Text> : null}
+      {!request && !error ? <Text style={styles.muted}>Enter a topic to find study books.</Text> : null}
       {request && !loading && !error && books.length === 0 ? (
         <Text style={styles.muted}>No books were found. Try a broader topic.</Text>
       ) : null}

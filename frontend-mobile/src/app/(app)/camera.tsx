@@ -8,6 +8,8 @@ import { StatusMessage } from '../../components/ui/StatusMessage';
 import { palette } from '../../constants/palette';
 import { photoEvidenceService } from '../../services/photoEvidenceService';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { File } from 'expo-file-system';
+
 
 export default function StudyCamera() {
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
@@ -21,13 +23,31 @@ export default function StudyCamera() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+
   async function capture() {
     if (!camera.current || !ready || busy) return;
+
     setBusy(true);
     setError(null);
+
     try {
-      const photo = await camera.current.takePictureAsync({ quality: 0.4, skipProcessing: false });
-      if (!photo?.uri) throw new Error('The camera did not return an image.');
+      const photo = await camera.current.takePictureAsync({
+        quality: 0.4,
+        skipProcessing: false,
+      });
+      if (!photo?.uri) {
+        setError('The camera did not return an image.');
+        return;
+      }
+      const file = new File(photo.uri);
+      if (!file.exists || file.size <= 0) {
+        setError('The photo file is unavailable. Please try again.');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setError('The photo exceeds 2 MB. Please retake it.');
+        return;
+      }
       setPhotoUri(photo.uri);
     } catch {
       setError('The photo could not be taken. Try again.');
@@ -35,6 +55,7 @@ export default function StudyCamera() {
       setBusy(false);
     }
   }
+
 
   async function upload() {
     if (!photoUri || !valid || busy) return;

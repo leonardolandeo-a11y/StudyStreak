@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { apiClient } from './apiClient';
 import type { StudyBook } from '../types/studyBook';
 
@@ -67,3 +68,15 @@ export const googleBooksService = {
       .filter((book): book is StudyBook => book !== null);
   },
 };
+
+export function getBookSearchErrorMessage(error: unknown): string {
+  if (!isAxiosError(error)) return 'Books could not be loaded. Try again.';
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') return 'Book search timed out. Try again.';
+  if (!error.response) return 'Cannot connect to StudyStreak. Check your connection and API address.';
+  if (error.response.status === 401) return 'Your session has expired. Sign in again.';
+  if (error.response.status === 403) return 'You do not have permission to search for books.';
+  if (error.response.status === 429) return 'Google Books has reached its search limit. Try again later.';
+  if (error.response.status === 503) return 'Google Books is not configured on the server.';
+  if (error.response.status === 502 || error.response.status === 504) return 'Google Books is temporarily unavailable. Try again later.';
+  return 'Books could not be loaded. Try again.';
+}

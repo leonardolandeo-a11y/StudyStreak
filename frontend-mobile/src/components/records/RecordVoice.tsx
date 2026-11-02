@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { File, Paths } from 'expo-file-system';
+import { File } from 'expo-file-system';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
@@ -7,7 +7,7 @@ import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { palette } from '../../constants/palette';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
-import { tokenStorage } from '../../services/tokenStorage';
+import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 function clock(seconds: number): string {
@@ -60,21 +60,9 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
       player.replace(null);
 
       try {
-        const token = await tokenStorage.getAccessToken();
-        if (!token) throw new Error('401: session not available');
-
-        const filename = `studystreak-voice-${goalId}-${recordId}-${retryKey}-${Date.now()}-${Math.random().toString(36).slice(2)}.m4a`;
-        const destination = new File(Paths.cache, filename);
-        localFile = destination;
-        const result = await File.downloadFileAsync(
-          voiceEvidenceService.url(goalId, recordId),
-          destination,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-
-        if (!result.exists || result.size === 0) throw new Error('The downloaded voice note is empty.');
+        localFile = await downloadEvidence(voiceEvidenceService.url(goalId, recordId), 'm4a', retryKey);
         if (active) {
-          player.replace(result.uri);
+          player.replace(localFile.uri);
           setSourceReady(true);
         } else {
           cleanUp(localFile);

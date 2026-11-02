@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../../components/ui/ActionButton';
@@ -8,6 +8,8 @@ import { StatusMessage } from '../../components/ui/StatusMessage';
 import { palette } from '../../constants/palette';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { File } from 'expo-file-system';
+
 
 export default function StudyVoice() {
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
@@ -16,12 +18,40 @@ export default function StudyVoice() {
   const valid = Number.isSafeInteger(goalId) && goalId > 0 && Number.isSafeInteger(recordId) && recordId > 0;
   const [uri, setUri] = useState<string | null>(null);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY, (status) => {
-    if (status.isFinished && status.url) setUri(status.url);
-  });
+        if (status.isFinished) {
+          if (status.url) {
+            setUri(status.url);
+          }
+          void setAudioModeAsync({allowsRecording: false,}).catch((cause: unknown) => {
+            console.warn('Could not reset the audio mode:', cause);
+          });
+        }
+      }
+  );
+
   const state = useAudioRecorderState(recorder);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+
+  useFocusEffect(
+      useCallback(() => {
+        return () => {
+          void (async () => {
+            try {
+              if (recorder.isRecording) {
+                await recorder.stop();
+              }
+            } finally {
+              await setAudioModeAsync({allowsRecording: false,});
+            }
+          })().catch((cause: unknown) => {
+            console.warn('Could not close the recording session:', cause);
+          });
+        };
+      }, [recorder])
+  );
 
   async function start() {
     if (!valid || busy) return;
@@ -61,19 +91,40 @@ export default function StudyVoice() {
     }
   }
 
+
   async function upload() {
     if (!uri || !valid || busy) return;
+
     setBusy(true);
     setError(null);
+
     try {
+      const file = new File(uri);
+
+      if (!file.exists || file.size <= 0) {
+        setError('The recording file is unavailable. Please record again.');
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        setError('The recording exceeds 2 MB. Please record a shorter note.');
+        return;
+      }
+
       await voiceEvidenceService.upload(goalId, recordId, uri);
       router.back();
     } catch (cause) {
-      setError(getApiErrorMessage(cause, 'Could not save the voice note. Try again.'));
+      setError(
+          getApiErrorMessage(
+              cause,
+              'Could not save the voice note. Try again.'
+          )
+      );
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <Screen>
