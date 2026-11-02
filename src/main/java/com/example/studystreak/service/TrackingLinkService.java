@@ -45,15 +45,17 @@ public class TrackingLinkService {
             throw new ConflictException("A user cannot create a tracking link with themselves");
         }
 
-        User requester = userRepository.findById(requesterId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found with id: " + requesterId)
-                );
+        // Lock the same two user rows in ascending order for both invitation directions.
+        // The transaction serializes duplicate checks for the same pair on PostgreSQL.
+        Long firstId = Math.min(requesterId, receiverId);
+        Long secondId = Math.max(requesterId, receiverId);
+        User first = userRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + firstId));
+        User second = userRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + secondId));
 
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found with id: " + receiverId)
-                );
+        User requester = requesterId.equals(firstId) ? first : second;
+        User receiver = receiverId.equals(secondId) ? second : first;
 
         if (trackingLinkRepository.findLinkBetweenUsers(requesterId, receiverId).isPresent()) {
 
