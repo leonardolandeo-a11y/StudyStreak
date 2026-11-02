@@ -17,6 +17,7 @@ import com.example.studystreak.model.User;
 
 import com.example.studystreak.repository.TrackingLinkRepository;
 import com.example.studystreak.repository.UserRepository;
+import com.example.studystreak.repository.NotificationRepository;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -30,11 +31,13 @@ public class TrackingLinkService {
     private final TrackingLinkRepository trackingLinkRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationRepository notificationRepository;
 
-    public TrackingLinkService(TrackingLinkRepository trackingLinkRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
+    public TrackingLinkService(TrackingLinkRepository trackingLinkRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher, NotificationRepository notificationRepository) {
         this.trackingLinkRepository = trackingLinkRepository;
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
+        this.notificationRepository = notificationRepository;
     }
 
 
@@ -200,6 +203,8 @@ public class TrackingLinkService {
 
         Long receiverId = trackingLink.getReceiver().getId();
 
+        // Preserve notification history while removing navigation to this deleted link.
+        notificationRepository.clearDeletedTrackingLinkReferences(trackingId);
         trackingLinkRepository.delete(trackingLink);
 
         /*

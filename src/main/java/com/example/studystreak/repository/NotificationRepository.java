@@ -39,4 +39,10 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
             "where n.relatedGoalId = :goalId or n.relatedDailyRecordId in " +
             "(select d.id from DailyRecord d where d.goal.id = :goalId)")
     int clearDeletedGoalReferences(@Param("goalId") Long goalId);
+
+    // Keep notifications but remove links to tracking connections that no longer exist.
+    @Modifying
+    @Query("update Notification n set n.relatedTrackingLinkId = null " +
+            "where n.relatedTrackingLinkId = :trackingLinkId")
+    int clearDeletedTrackingLinkReferences(@Param("trackingLinkId") Long trackingLinkId);
 }

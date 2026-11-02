@@ -5,6 +5,7 @@ import com.example.studystreak.exceptions.ResourceNotFoundException;
 import com.example.studystreak.model.TrackingLink;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.TrackingLinkRepository;
+import com.example.studystreak.repository.NotificationRepository;
 import com.example.studystreak.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ class TrackingLinkLockingTest {
     private final UserRepository users = mock(UserRepository.class);
     private final TrackingLinkRepository links = mock(TrackingLinkRepository.class);
     private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
-    private final TrackingLinkService service = new TrackingLinkService(links, users, events);
+    private final TrackingLinkService service = new TrackingLinkService(links, users, events, mock(NotificationRepository.class));
 
     @BeforeEach
     void setUp() {

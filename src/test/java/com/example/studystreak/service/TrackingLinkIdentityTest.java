@@ -5,6 +5,7 @@ import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.TrackingLinkRepository;
 import com.example.studystreak.repository.UserRepository;
+import com.example.studystreak.repository.NotificationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
@@ -38,7 +39,8 @@ class TrackingLinkIdentityTest {
         TrackingLinkService service = new TrackingLinkService(
                 repository,
                 mock(UserRepository.class),
-                mock(ApplicationEventPublisher.class)
+                mock(ApplicationEventPublisher.class),
+                mock(NotificationRepository.class)
         );
         var response = service.getTrackingLinksByUserId(1L, pageable).getContent().getFirst();
 
