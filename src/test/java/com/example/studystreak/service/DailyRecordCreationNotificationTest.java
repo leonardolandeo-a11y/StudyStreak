@@ -44,6 +44,7 @@ class DailyRecordCreationNotificationTest {
         when(mapper.map(request, DailyRecord.class)).thenReturn(mock(DailyRecord.class));
         when(records.save(any(DailyRecord.class))).thenReturn(saved);
         when(saved.getId()).thenReturn(23L);
+        when(saved.getGoal()).thenReturn(goal);
         when(mapper.map(saved, com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO.class))
                 .thenReturn(mock(com.example.studystreak.dto.DailyRecord.DailyRecordResponseDTO.class));
 

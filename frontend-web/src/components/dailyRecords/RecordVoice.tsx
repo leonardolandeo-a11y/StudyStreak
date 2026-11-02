@@ -1,6 +1,5 @@
 import {
     useEffect,
-    useMemo,
     useRef,
     useState
 } from "react";
@@ -49,12 +48,8 @@ function RecordVoice({
 
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [recordedFile, setRecordedFile] = useState<File | null>(null);
-    const recordedUrl = useMemo(
-        () => recordedFile
-            ? URL.createObjectURL(recordedFile)
-            : null,
-        [recordedFile]
-    );
+    // Create temporary URLs only from event callbacks, not during render.
+    const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
     const [recording, setRecording] = useState(false);
     const [recordingSeconds, setRecordingSeconds] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -204,6 +199,7 @@ function RecordVoice({
 
             await uploadRecordVoice(goalId, recordId, file);
             setRecordedFile(null);
+            setRecordedUrl(null);
 
             showToast(
                 available
@@ -239,6 +235,7 @@ function RecordVoice({
     async function startRecording() {
         setError(null);
         setRecordedFile(null);
+        setRecordedUrl(null);
 
         if (
             !navigator.mediaDevices?.getUserMedia ||
@@ -312,13 +309,13 @@ function RecordVoice({
                     return;
                 }
 
-                setRecordedFile(
-                    new File(
-                        [blob],
-                        `study-note-${recordId}.m4a`,
-                        { type:"audio/mp4" }
-                    )
+                const file = new File(
+                    [blob],
+                    `study-note-${recordId}.m4a`,
+                    { type:"audio/mp4" }
                 );
+                setRecordedFile(file);
+                setRecordedUrl(URL.createObjectURL(file));
             };
 
             recorder.start();
@@ -466,7 +463,7 @@ function RecordVoice({
                         <button
                             type="button"
                             disabled={busy}
-                            onClick={() => setRecordedFile(null)}
+                            onClick={() => { setRecordedFile(null); setRecordedUrl(null); }}
                             className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
                         >
                             Discard

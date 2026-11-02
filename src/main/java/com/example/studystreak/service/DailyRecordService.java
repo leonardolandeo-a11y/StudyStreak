@@ -203,6 +203,7 @@ public class DailyRecordService {
 
     private DailyRecordResponseDTO toResponse(DailyRecord record) {
         DailyRecordResponseDTO response = modelMapper.map(record, DailyRecordResponseDTO.class);
+        response.setOwnerUserId(record.getGoal().getUser().getId());
         response.setPhotoAvailable(dailyRecordPhotoRepository.existsByDailyRecordId(record.getId()));
         response.setVoiceAvailable(dailyRecordVoiceRepository.existsByDailyRecordId(record.getId()));
         return response;

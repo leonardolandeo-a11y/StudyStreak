@@ -38,13 +38,7 @@ type SearchRequest = {
     revision:number;
 };
 
-function Resources() {
-    const [searchParams] = useSearchParams();
-
-    const initialTopic = (searchParams.get("topic") ?? "")
-        .trim()
-        .slice(0, 80);
-
+function ResourcesContent({ initialTopic }: { initialTopic: string }) {
     const [query, setQuery] = useState(initialTopic);
 
     const [request, setRequest] = useState<SearchRequest | null>(
@@ -368,6 +362,13 @@ function Resources() {
             )}
         </div>
     );
+}
+
+// Recreate the search state when URL topic changes, including navigation to /resources.
+function Resources() {
+    const [searchParams] = useSearchParams();
+    const initialTopic = (searchParams.get("topic") ?? "").trim().slice(0, 80);
+    return <ResourcesContent key={initialTopic} initialTopic={initialTopic} />;
 }
 
 export default Resources;

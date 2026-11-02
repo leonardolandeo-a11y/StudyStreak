@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public class DailyRecordResponseDTO {
 
     private Long id;
+    private Long ownerUserId;
     private LocalDate date;
     private String note;
     private String evidence;

@@ -1,5 +1,6 @@
 export interface DailyRecord{
     id:number;
+    ownerUserId?: number | null;
     date :string;
     note : string | null;
     evidence: string | null;
@@ -8,7 +9,7 @@ export interface DailyRecord{
 }
 
 export interface DailyRecordRequest{
-    date:string;
+    date?:string;
     note?:string;
     evidence? : string;
 }

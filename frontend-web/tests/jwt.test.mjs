@@ -33,6 +33,18 @@ test('rejects missing or invalid claims', () => {
     assert.equal(getUserFromToken(token({ ...valid(), sub: null })), null);
 });
 
+test('decodes Unicode claims as UTF-8', () => {
+    const claims = { ...valid(), sub: 'María_日本語', email: 'josé@example.invalid' };
+    assert.deepEqual(getUserFromToken(token(claims)), {
+        id: 11, username: claims.sub, email: claims.email, role: 'USER',
+    });
+});
+
+test('rejects invalid UTF-8 payloads', () => {
+    const invalid = Buffer.from([0xff, 0xfe]).toString('base64url');
+    assert.equal(getUserFromToken(`header.${invalid}.signature`), null);
+});
+
 test('rejects malformed tokens', () => {
     assert.equal(getUserFromToken('broken'), null);
     assert.equal(getUserFromToken('head.!!!!.sig'), null);
