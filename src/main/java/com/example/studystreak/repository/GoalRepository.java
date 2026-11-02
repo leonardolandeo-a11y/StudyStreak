@@ -13,6 +13,7 @@ import java.util.List;
 
 public interface GoalRepository extends JpaRepository<Goal,Long> {
     Page<Goal> findByUserId(Long userId, Pageable pageable);
+    boolean existsByUserId(Long userId);
     long countByUserId(Long userId);
     long countByUserIdAndCompletedTrue(Long userId);
 

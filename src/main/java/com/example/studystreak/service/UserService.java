@@ -29,19 +29,22 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
     private final CurrentUserService currentUserService;
+    private final UserDeletionService userDeletionService;
 
     public UserService(
             UserRepository userRepository,
             ModelMapper modelMapper,
             PasswordEncoder passwordEncoder,
             ApplicationEventPublisher eventPublisher,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            UserDeletionService userDeletionService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
         this.eventPublisher = eventPublisher;
         this.currentUserService = currentUserService;
+        this.userDeletionService = userDeletionService;
     }
 
 
@@ -150,8 +153,6 @@ public class UserService {
 
         validateUserAccess(userId);
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-
-        userRepository.delete(user);
+        userDeletionService.deleteUser(userId);
     }
 }

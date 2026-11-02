@@ -24,7 +24,7 @@ class UserServiceTimeZoneTest {
     private final CurrentUserService current = mock(CurrentUserService.class);
 
     private UserService service() {
-        return new UserService(users, mapper, encoder, events, current);
+        return new UserService(users, mapper, encoder, events, current, mock(UserDeletionService.class));
     }
 
     @Test

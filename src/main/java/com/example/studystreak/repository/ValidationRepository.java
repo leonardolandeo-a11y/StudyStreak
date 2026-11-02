@@ -16,6 +16,7 @@ public interface ValidationRepository extends JpaRepository<Validation, Long> {
     Optional<Validation> findByDailyRecordId(Long dailyRecordId);
 
     boolean existsByDailyRecordId(Long dailyRecordId);
+    boolean existsByValidatorId(Long validatorId);
 
     @Query("select count(v) from Validation v where v.dailyRecord.goal.user.id = :userId")
     long countReviewedByRecordOwnerId(@Param("userId") Long userId);

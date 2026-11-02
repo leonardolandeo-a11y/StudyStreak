@@ -18,6 +18,11 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification,Long> {
 
+    // Remove notifications owned by an account before deleting the account itself.
+    @Modifying
+    @Query("delete from Notification n where n.user.id = :userId")
+    int deleteForUser(@Param("userId") Long userId);
+
     Page<Notification> findByUserIdOrderByCreatedAtDesc(
             Long userId, Pageable pageable);
 

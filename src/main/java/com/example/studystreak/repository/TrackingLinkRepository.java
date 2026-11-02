@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface TrackingLinkRepository extends JpaRepository<TrackingLink, Long> {
 
+    boolean existsByRequesterIdOrReceiverId(Long requesterId, Long receiverId);
+
     @Query("SELECT t FROM TrackingLink t WHERE " +
             "(t.requester.id = :userId1 AND t.receiver.id = :userId2) OR " +
             "(t.requester.id = :userId2 AND t.receiver.id = :userId1)")
