@@ -15,12 +15,20 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,6 +45,7 @@ class PostgresRepositoryIntegrationTest {
     @Autowired private UserDeletionService userDeletionService;
     @Autowired private EntityManager entityManager;
     @Autowired private JdbcTemplate jdbcTemplate;
+    @Autowired private PlatformTransactionManager transactionManager;
 
     @BeforeEach
     void requireIsolatedSchema() {
@@ -146,5 +155,74 @@ class PostgresRepositoryIntegrationTest {
         assertThrows(ConflictException.class,
                 () -> trackingLinkService.createTrackingLink(second.getId(), first.getId()));
         assertTrue(trackingLinkRepository.findLinkBetweenUsers(first.getId(), second.getId()).isPresent());
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void serializesConcurrentTrackingRequestsInSameDirection() throws Exception {
+        assertConcurrentTrackingRequests(false);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void serializesConcurrentTrackingRequestsInOppositeDirections() throws Exception {
+        assertConcurrentTrackingRequests(true);
+    }
+
+    private void assertConcurrentTrackingRequests(boolean reverse) throws Exception {
+        User first = createUser();
+        User second = createUser();
+        Long firstId = first.getId();
+        Long secondId = second.getId();
+        CountDownLatch firstInserted = new CountDownLatch(1);
+        CountDownLatch releaseFirst = new CountDownLatch(1);
+        CountDownLatch secondStarted = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+
+        try {
+            Future<?> firstRequest = executor.submit(() -> transactionTemplate.executeWithoutResult(status -> {
+                // The first link is saved but remains invisible until this transaction commits.
+                trackingLinkService.createTrackingLink(firstId, secondId);
+                firstInserted.countDown();
+                try {
+                    if (!releaseFirst.await(10, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Timed out holding the first tracking transaction");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("First tracking transaction interrupted", e);
+                }
+            }));
+
+            assertTrue(firstInserted.await(10, TimeUnit.SECONDS), "First transaction did not create its link");
+            Future<Boolean> secondRequest = executor.submit(() -> {
+                secondStarted.countDown();
+                try {
+                    trackingLinkService.createTrackingLink(reverse ? secondId : firstId,
+                            reverse ? firstId : secondId);
+                    return false;
+                } catch (ConflictException e) {
+                    return true;
+                }
+            });
+
+            assertTrue(secondStarted.await(5, TimeUnit.SECONDS), "Second transaction did not start");
+            assertThrows(TimeoutException.class, () -> secondRequest.get(300, TimeUnit.MILLISECONDS),
+                    "Second transaction must not finish while the first holds the user row locks");
+
+            releaseFirst.countDown();
+            firstRequest.get(15, TimeUnit.SECONDS);
+            assertTrue(secondRequest.get(15, TimeUnit.SECONDS), "Duplicate request must return a conflict");
+            Long linkCount = jdbcTemplate.queryForObject(
+                    "select count(*) from tracking_link where " +
+                    "(requester_id = ? and receiver_id = ?) or (requester_id = ? and receiver_id = ?)",
+                    Long.class, firstId, secondId, secondId, firstId);
+            assertEquals(1L, linkCount, "Exactly one tracking link must be committed");
+        } finally {
+            releaseFirst.countDown();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(15, TimeUnit.SECONDS), "Tracking test threads did not terminate");
+        }
     }
 }
