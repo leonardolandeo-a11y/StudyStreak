@@ -67,6 +67,9 @@ jobs:
       - name: Test mobile review navigation
         run: npm run test:review
 
+      - name: Test mobile focus studio audio and timer
+        run: npm run test:focus
+
       - name: Run mobile ESLint
         run: npm run lint -- --max-warnings 0
 
