@@ -55,6 +55,18 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await tokenStorage.clear();
+    const refreshToken = await tokenStorage.getRefreshToken();
+    try {
+      if (refreshToken) {
+        await axios.post('/logout', { refreshToken }, {
+          baseURL: apiClient.defaults.baseURL,
+          timeout: 3500,
+        });
+      }
+    } catch {
+      // A network failure must not prevent local sign-out.
+    } finally {
+      await tokenStorage.clear();
+    }
   },
 };

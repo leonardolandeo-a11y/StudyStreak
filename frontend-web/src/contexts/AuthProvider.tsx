@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import { AuthContext } from "./AuthContext";
+import axios from "axios";
 
 import {login as loginRequest } from "../services/authService";
 import { getUserFromToken } from "../utils/jwt";
@@ -39,6 +40,12 @@ export function AuthProvider({children}:AuthProviderProps){
         setCurrentUser(user);
     }
     function logout():void{
+        const refreshToken = sessionStorage.getItem("refreshToken");
+        if (refreshToken) {
+            // Best-effort server revocation; local logout must not depend on connectivity.
+            void axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`,
+                { refreshToken }, { timeout: 3500 }).catch(() => undefined);
+        }
         sessionStorage.removeItem("accessToken");
         sessionStorage.removeItem("refreshToken");
         setCurrentUser(null);

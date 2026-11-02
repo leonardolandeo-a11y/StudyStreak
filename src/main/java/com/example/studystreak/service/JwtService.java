@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import io.jsonwebtoken.security.Keys;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -49,7 +50,22 @@ public class JwtService {
     }
 
     public String generateRefreshToken(User user){
-        return generateToken(user, refreshExpiration, "refresh");
+        return generateRefreshToken(user, UUID.randomUUID());
+    }
+
+    public String generateRefreshToken(User user, UUID sessionId) {
+        // A fresh jti is mandatory: tokens issued in the same millisecond must differ.
+        return Jwts.builder().subject(user.getUsername())
+                .claim("userId", user.getId())
+                .claim("email", user.getEmail())
+                .claim("role", user.getRole().name())
+                .claim("type", "refresh")
+                .claim("sid", sessionId.toString())
+                .id(UUID.randomUUID().toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(getSigningKey())
+                .compact();
     }
 
     private String generateToken(User user, long expiration, String type){
@@ -63,6 +79,14 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())  // Token use the secret key
                 .compact(); // Convert everything into the final token string (header.payload.signature)
+    }
+
+    public String extractRefreshSessionId(String token) {
+        return extractAllClaims(token).get("sid", String.class);
+    }
+
+    public String extractRefreshTokenId(String token) {
+        return extractAllClaims(token).getId();
     }
 
     public String extractUsername(String token){
@@ -137,6 +161,8 @@ public class JwtService {
                     && user.getUsername().equals(claims.getSubject())
                     && user.getRole().name().equals(claims.get("role", String.class))
                     && expectedType.equals(claims.get("type", String.class))
+                    && (!"refresh".equals(expectedType)
+                        || (claims.getId() != null && claims.get("sid", String.class) != null))
                     && expiresAt != null
                     && expiresAt.after(new Date());
         } catch (Exception exception) {

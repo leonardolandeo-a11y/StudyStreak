@@ -45,15 +45,27 @@ apiClient.interceptors.response.use(
     if (!refreshToken) return Promise.reject(error);
 
     try {
+      const currentAccess = await tokenStorage.getAccessToken();
+      const requestAccess = original.headers.get('Authorization');
+      if (currentAccess && requestAccess !== `Bearer ${currentAccess}`) {
+        original.headers.set('Authorization', `Bearer ${currentAccess}`);
+        return apiClient(original);
+      }
       if (!refreshTask) {
         refreshTask = create({ timeout: 15000 })
           .post<LoginResponse>(`${apiBaseUrl}/refresh`, { refreshToken }, { timeout: 15000 })
-          .then((response) => response.data)
+          .then(async (response) => {
+            // Persist before releasing the single-flight promise to other requests.
+            if (await tokenStorage.getRefreshToken() !== refreshToken) {
+              throw new Error('Authentication session changed during refresh');
+            }
+            await tokenStorage.setTokens(response.data);
+            return response.data;
+          })
           .finally(() => { refreshTask = null; });
       }
 
       const tokens = await refreshTask;
-      await tokenStorage.setTokens(tokens);
       original.headers.set('Authorization', `Bearer ${tokens.token}`);
       return apiClient(original);
     } catch (refreshError) {

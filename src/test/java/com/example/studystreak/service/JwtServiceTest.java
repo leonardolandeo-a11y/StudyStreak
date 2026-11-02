@@ -61,6 +61,15 @@ class JwtServiceTest {
     }
 
     @Test
+    void twoRefreshTokensIssuedImmediatelyAreUnique() {
+        String first = jwtService.generateRefreshToken(user);
+        String second = jwtService.generateRefreshToken(user);
+        assertNotEquals(first, second);
+        assertNotEquals(jwtService.extractRefreshTokenId(first), jwtService.extractRefreshTokenId(second));
+        assertNotNull(jwtService.extractRefreshSessionId(first));
+    }
+
+    @Test
     void refreshTokenShouldBeValid() {
         String token =
                 jwtService.generateRefreshToken(user);
