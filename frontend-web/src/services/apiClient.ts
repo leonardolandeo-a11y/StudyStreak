@@ -6,8 +6,11 @@ import type { LoginResponse } from "../types/auth";
 import { getUserFromToken } from "../utils/jwt";
 import { ROUTES } from "../routes/paths";
 
+const API_REQUEST_TIMEOUT_MS = 15000;
+
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
+    timeout: API_REQUEST_TIMEOUT_MS,
     headers: { "Content-Type": "application/json" },
 });
 
@@ -46,6 +49,7 @@ apiClient.interceptors.response.use(
             if (!refreshTask) {
                 refreshTask = axios.post<LoginResponse>(
                     `${import.meta.env.VITE_API_BASE_URL}/refresh`, { refreshToken },
+                    { timeout: API_REQUEST_TIMEOUT_MS },
                 ).then((response) => {
                     if (sessionStorage.getItem("refreshToken") !== refreshToken) {
                         throw new Error("Authentication session changed during refresh");
