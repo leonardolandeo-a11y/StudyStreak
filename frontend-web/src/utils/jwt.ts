@@ -2,7 +2,9 @@ import type { AuthenticatedUser, JwtPayload } from "../types/auth";
 
 function decodeBase64Url(value: string): string {
     const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-    return atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+    const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 
 export function getUserFromToken(token: string): AuthenticatedUser | null {

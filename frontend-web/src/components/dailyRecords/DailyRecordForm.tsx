@@ -20,9 +20,8 @@ function DailyRecordForm({
     submitLabel = "Create Daily Record",
     resetAfterSubmit = true,
 }: DailyRecordFormProps) {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-    const date = initialValues?.date ?? today;
+    // The backend assigns a new record date using the account time zone.
+    const date = initialValues?.date;
 
     const [note, setNote] = useState(initialValues?.note ?? "");
 
@@ -31,7 +30,7 @@ function DailyRecordForm({
     async function handleSubmit(event : SubmitEvent<HTMLFormElement>){
         event.preventDefault();
 
-        const submitted = await onSubmit({date, note,evidence});
+        const submitted = await onSubmit({ ...(date ? { date } : {}), note, evidence });
 
         if (submitted && resetAfterSubmit){
             setNote("");
@@ -74,7 +73,7 @@ function DailyRecordForm({
                 <input
                     id="date"
                     type="text"
-                    value={date}
+                    value={date ?? "Assigned by server (account time zone)"}
                     readOnly
                     aria-readonly="true"
                     className="
@@ -89,7 +88,7 @@ function DailyRecordForm({
                     required
                 />
                 <p className="mt-2 text-xs text-slate-400">
-                    The record date is assigned by the server and cannot be changed.
+                    The server assigns today's date in your account time zone. Existing record dates cannot be changed.
                 </p>
             </div>
 
