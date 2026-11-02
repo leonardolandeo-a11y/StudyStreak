@@ -69,6 +69,12 @@ export default function Home() {
         <Text style={styles.title}>Welcome, {currentUser.username}</Text>
         <Text style={styles.subtitle}>{currentUser.email}</Text>
       </View>
+      <View style={styles.focusCard}>
+        <Text style={styles.focusEyebrow}>♫  YOUR PERSONAL LISTENING ROOM</Text>
+        <Text style={styles.focusTitle}>Focus Studio</Text>
+        <Text style={styles.focusDescription}>A Pomodoro timer, classical-inspired music, lo-fi, white and brown noise, and more — all offline.</Text>
+        <ActionButton title="Open Focus Studio" onPress={() => router.push('/(app)/focus-studio')} />
+      </View>
       <View style={styles.card}>
         <Text style={styles.heading}>Your study goals</Text>
         <Text style={styles.description}>Create goals and record your daily progress.</Text>
@@ -93,5 +99,9 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface,
     padding: 22, borderRadius: 18, gap: 14 },
   heading: { color: palette.text, fontWeight: '700', fontSize: 18 },
+  focusCard: { backgroundColor: '#133325', borderColor: '#245b3b', borderWidth: 1, borderRadius: 22, padding: 21, gap: 12 },
+  focusEyebrow: { color: '#86efac', fontWeight: '800', letterSpacing: 1.6, fontSize: 10 },
+  focusTitle: { color: '#fff', fontWeight: '900', fontSize: 28 },
+  focusDescription: { color: '#c1dfd1', lineHeight: 21, fontSize: 13 },
   description: { color: palette.muted, fontSize: 14, lineHeight: 23 },
 });

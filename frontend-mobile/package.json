@@ -48,7 +48,8 @@
     "lint": "eslint src",
     "test:auth": "node --experimental-strip-types --test tests/authSession.test.mjs tests/jwt.test.mjs",
     "test:pagination": "node --experimental-strip-types --test tests/pagination.test.mjs",
-    "test:review": "node --experimental-strip-types --test tests/reviewNavigation.test.mjs"
+    "test:review": "node --experimental-strip-types --test tests/reviewNavigation.test.mjs",
+    "test:focus": "node --experimental-strip-types --test tests/focusTimer.test.mjs tests/focusCatalog.test.mjs tests/focusSoundSynthesis.test.mjs"
   },
   "private": true
 }
