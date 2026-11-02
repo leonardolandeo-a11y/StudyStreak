@@ -1,5 +1,6 @@
 import {
     useEffect,
+    useMemo,
     useRef,
     useState
 } from "react";
@@ -48,7 +49,12 @@ function RecordVoice({
 
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [recordedFile, setRecordedFile] = useState<File | null>(null);
-    const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+    const recordedUrl = useMemo(
+        () => recordedFile
+            ? URL.createObjectURL(recordedFile)
+            : null,
+        [recordedFile]
+    );
     const [recording, setRecording] = useState(false);
     const [recordingSeconds, setRecordingSeconds] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -96,7 +102,6 @@ function RecordVoice({
 
     useEffect(() => {
         if (!available) {
-            setAudioUrl(null);
             return;
         }
 
@@ -155,16 +160,12 @@ function RecordVoice({
     ]);
 
     useEffect(() => {
-        if (!recordedFile) {
-            setRecordedUrl(null);
-            return;
-        }
-
-        const objectUrl = URL.createObjectURL(recordedFile);
-        setRecordedUrl(objectUrl);
-
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [recordedFile]);
+        return () => {
+            if (recordedUrl) {
+                URL.revokeObjectURL(recordedUrl);
+            }
+        };
+    }, [recordedUrl]);
 
     function validateM4a(file:File):string | null {
         const validType =
@@ -409,7 +410,7 @@ function RecordVoice({
                 </p>
             )}
 
-            {audioUrl && (
+            {available && audioUrl && (
                 <audio
                     className="mt-4 w-full"
                     controls
