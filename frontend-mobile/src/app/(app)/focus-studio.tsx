@@ -245,13 +245,17 @@ export default function FocusStudioMobile() {
       const current = Date.now();
       setNow(current);
       setTimer(previous => advancePomodoro(previous, current));
-      failed.current.clear();
-      setSyncRevision(previous => previous + 1);
     };
     refresh();
+    failed.current.clear();
+    setSyncRevision(previous => previous + 1);
     const clock = setInterval(refresh, 500);
     const sub = AppState.addEventListener('change', state => {
-      if (state === 'active') refresh();
+      if (state === 'active') {
+        refresh();
+        failed.current.clear();
+        setSyncRevision(previous => previous + 1);
+      }
     });
     return () => {
       focused.current = false;
