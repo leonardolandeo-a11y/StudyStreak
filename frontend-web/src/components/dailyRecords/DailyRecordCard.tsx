@@ -97,6 +97,23 @@ function DailyRecordCard({dailyRecord, goalId}:DailyRecordCardProps){
 
         </div>
 
+        {(dailyRecord.photoAvailable ||
+            dailyRecord.voiceAvailable) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+                {dailyRecord.photoAvailable && (
+                    <span className="rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300">
+                        Photo evidence
+                    </span>
+                )}
+
+                {dailyRecord.voiceAvailable && (
+                    <span className="rounded-full bg-violet-950/60 px-3 py-1 text-xs font-semibold text-violet-300">
+                        Voice note
+                    </span>
+                )}
+            </div>
+        )}
+
 
         <div className="mt-5">
             <Link
