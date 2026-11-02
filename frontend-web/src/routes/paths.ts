@@ -3,6 +3,7 @@ export const ROUTES={
     login: "/login",
     register:"/register",
     dashboard:"/dashboard",
+    focusStudio:"/focus-studio",
 
     goals:"/goals",
     resources:"/resources",

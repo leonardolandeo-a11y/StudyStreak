@@ -16,8 +16,8 @@ import MobileTopbar from "../layout/MobileTopbar";
 function AuthenticatedLayout() {
     const location = useLocation();
 
-    const isDashboard =
-        location.pathname === ROUTES.dashboard;
+    const isImmersivePage =
+        location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -30,7 +30,7 @@ function AuthenticatedLayout() {
                     
                     <MobileTopbar />
 
-                    {!isDashboard && (
+                    {!isImmersivePage && (
                         <header
                             className="
                                 border-b border-slate-800

@@ -2,6 +2,7 @@ import {
     Bell,
     BadgeCheck,
     BookOpen,
+    Headphones,
     LayoutDashboard,
     Link2,
     LogOut,
@@ -36,6 +37,11 @@ function AppSidebar() {
             label: "Dashboard",
             to: ROUTES.dashboard,
             icon: LayoutDashboard
+        },
+        {
+            label: "Focus Studio",
+            to: ROUTES.focusStudio,
+            icon: Headphones
         },
         {
             label: "Goals",
@@ -146,7 +152,9 @@ function AppSidebar() {
                                 transition-colors
                                 ${
                                     isActive
-                                        ? "bg-slate-800 text-slate-100"
+                                        ? to === ROUTES.focusStudio
+                                            ? "bg-emerald-950/60 text-emerald-100"
+                                            : "bg-slate-800 text-slate-100"
                                         : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                                 }
                             `}
@@ -158,7 +166,7 @@ function AppSidebar() {
                                         strokeWidth={1.8}
                                         className={
                                             isActive
-                                                ? "text-sky-400"
+                                                ? to === ROUTES.focusStudio ? "text-emerald-400" : "text-sky-400"
                                                 : "text-slate-500 group-hover:text-slate-300"
                                         }
                                     />

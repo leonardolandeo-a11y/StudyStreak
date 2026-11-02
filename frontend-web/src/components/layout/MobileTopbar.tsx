@@ -2,6 +2,7 @@ import {
     BadgeCheck,
     Bell,
     BookOpen,
+    Headphones,
     LayoutDashboard,
     Link2,
     LogOut,
@@ -47,6 +48,11 @@ function MobileTopbar() {
             label: "Dashboard",
             to: ROUTES.dashboard,
             icon: LayoutDashboard
+        },
+        {
+            label: "Focus Studio",
+            to: ROUTES.focusStudio,
+            icon: Headphones
         },
         {
             label: "Goals",
@@ -192,7 +198,9 @@ function MobileTopbar() {
                                             text-sm font-medium
                                             ${
                                                 isActive
-                                                    ? "bg-slate-800 text-white"
+                                                    ? to === ROUTES.focusStudio
+                                                        ? "bg-emerald-950/60 text-emerald-100"
+                                                        : "bg-slate-800 text-white"
                                                     : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                                             }
                                         `}

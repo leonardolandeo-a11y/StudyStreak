@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    Check, Clock3, Headphones, Music2, Pause, Play,
-    RotateCcw, SlidersHorizontal, Sparkles, Volume2, VolumeX
+    Check, ChevronDown, Clock3, CloudRain, Disc3, Headphones,
+    MoonStar, Music2, Pause, Piano, Play, RotateCcw,
+    Settings2, Sparkles, Volume2, VolumeX, Waves
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
 import {
@@ -22,136 +23,182 @@ import type {
     PomodoroState, Soundscape
 } from "./pomodoroState";
 
-const CIRCUMFERENCE = 2 * Math.PI * 104;
+const CIRCUMFERENCE = 2 * Math.PI * 110;
 
-const MODE_LABEL: Record<PomodoroMode, string> = {
-    focus: "Focus",
-    shortBreak: "Short break",
-    longBreak: "Long break"
-};
+const MODES: { id: PomodoroMode; label: string }[] = [
+    { id: "focus", label: "Focus" },
+    { id: "shortBreak", label: "Short break" },
+    { id: "longBreak", label: "Long break" }
+];
 
-const MODE_DESCRIPTION: Record<PomodoroMode, string> = {
-    focus: "One thing at a time. You've got this.",
-    shortBreak: "A little space to recharge.",
-    longBreak: "You've earned a longer reset."
-};
-
-const THEME: Record<FocusTheme, {
-    name: string;
-    panel: string;
-    halo: string;
-    ring: string;
-    text: string;
-    button: string;
-    active: string;
+const THEMES: Record<FocusTheme, {
+    label: string;
+    background: string;
+    tint: string;
+    accent: string;
+    strong: string;
+    selected: string;
+    outline: string;
+    swatch: string;
 }> = {
     aurora: {
-        name: "Aurora",
-        panel: "from-emerald-950/90 via-slate-950 to-cyan-950/80",
-        halo: "bg-emerald-400/15",
-        ring: "#5eead4",
-        text: "text-emerald-200",
-        button: "bg-emerald-300 text-slate-950 hover:bg-emerald-200",
-        active: "border-emerald-400/70 bg-emerald-400/15 text-emerald-100"
+        label: "Aurora",
+        background: "from-emerald-950 via-[#13241f] to-[#111a1a]",
+        tint: "bg-emerald-400/15",
+        accent: "text-emerald-300",
+        strong: "bg-emerald-400 text-slate-950 hover:bg-emerald-300",
+        selected: "border-emerald-400/50 bg-emerald-400/10 text-emerald-200",
+        outline: "#34d399",
+        swatch: "bg-emerald-400"
     },
     sunset: {
-        name: "Sunset",
-        panel: "from-rose-950/90 via-slate-950 to-amber-950/70",
-        halo: "bg-rose-400/15",
-        ring: "#fda4af",
-        text: "text-rose-200",
-        button: "bg-rose-300 text-slate-950 hover:bg-rose-200",
-        active: "border-rose-400/70 bg-rose-400/15 text-rose-100"
+        label: "Sunset",
+        background: "from-rose-950 via-[#2d1b28] to-[#15151e]",
+        tint: "bg-rose-400/15",
+        accent: "text-rose-300",
+        strong: "bg-rose-300 text-slate-950 hover:bg-rose-200",
+        selected: "border-rose-400/50 bg-rose-400/10 text-rose-200",
+        outline: "#fda4af",
+        swatch: "bg-rose-300"
     },
     ocean: {
-        name: "Ocean",
-        panel: "from-blue-950/90 via-slate-950 to-indigo-950/80",
-        halo: "bg-sky-400/15",
-        ring: "#7dd3fc",
-        text: "text-sky-200",
-        button: "bg-sky-300 text-slate-950 hover:bg-sky-200",
-        active: "border-sky-400/70 bg-sky-400/15 text-sky-100"
+        label: "Ocean",
+        background: "from-blue-950 via-[#14243d] to-[#101923]",
+        tint: "bg-sky-400/15",
+        accent: "text-sky-300",
+        strong: "bg-sky-300 text-slate-950 hover:bg-sky-200",
+        selected: "border-sky-400/50 bg-sky-400/10 text-sky-200",
+        outline: "#7dd3fc",
+        swatch: "bg-sky-300"
     }
 };
 
-const SOUND_OPTIONS: { id: Soundscape; title: string; subtitle: string }[] = [
-    { id: "dream", title: "Dream pads", subtitle: "Airy ambient melodies" },
-    { id: "keys", title: "Soft keys", subtitle: "Gentle piano-like notes" },
-    { id: "rain", title: "Rainfall", subtitle: "Soft rain noise" }
+const TRACKS: {
+    id: Soundscape;
+    title: string;
+    kind: string;
+    description: string;
+    color: string;
+}[] = [
+    {
+        id: "dream",
+        title: "Midnight Drift",
+        kind: "Dream pads",
+        description: "Weightless ambient chords for uninterrupted concentration.",
+        color: "from-violet-800 via-indigo-900 to-slate-950"
+    },
+    {
+        id: "keys",
+        title: "Slow Motion",
+        kind: "Soft keys",
+        description: "Warm, delicate keys to find your study rhythm.",
+        color: "from-orange-700 via-rose-900 to-slate-950"
+    },
+    {
+        id: "rain",
+        title: "After the Rain",
+        kind: "Rainfall",
+        description: "A quiet blanket of rain for a clear mind.",
+        color: "from-cyan-800 via-blue-900 to-slate-950"
+    }
 ];
 
-function loadPomodoro(key: string): PomodoroState {
+type DurationField = "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
+
+function readSavedTimer(key: string): PomodoroState {
     try {
-        const value = window.localStorage.getItem(key);
-        return value ? restorePomodoro(JSON.parse(value) as unknown, Date.now()) : newPomodoro();
+        const saved = window.localStorage.getItem(key);
+        return saved ? restorePomodoro(JSON.parse(saved) as unknown, Date.now()) : newPomodoro();
     } catch {
         return newPomodoro();
     }
 }
 
-function MinuteControl({
-    label, name, min, max, value, disabled, onChange
-}: {
+function TrackArtwork({ track, compact = false }: {
+    track: Soundscape;
+    compact?: boolean;
+}) {
+    const color = TRACKS.find(item => item.id === track)?.color ?? TRACKS[0].color;
+    const Icon = track === "dream" ? MoonStar : track === "keys" ? Piano : CloudRain;
+
+    return (
+        <div className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : "aspect-square w-full rounded-2xl"}`}>
+            <div aria-hidden="true" className="absolute -right-1/4 -top-1/4 h-3/4 w-3/4 rounded-full bg-white/10 blur-2xl" />
+            <div aria-hidden="true" className={`absolute rounded-full border border-white/20 bg-slate-950/25 shadow-2xl shadow-black/30 ${compact ? "h-11 w-11" : "h-[70%] w-[70%]"}`}>
+                <div className="absolute inset-[13%] rounded-full border border-white/15" />
+                <div className="absolute inset-[27%] rounded-full border border-white/10" />
+                <div className="absolute inset-[42%] rounded-full border border-white/20 bg-white/15" />
+            </div>
+            <Icon aria-hidden="true" className={`relative drop-shadow-lg ${compact ? "h-5 w-5" : "h-16 w-16 sm:h-20 sm:w-20"}`} strokeWidth={1.25} />
+            {!compact && <span className="absolute bottom-4 left-5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/60">STUDYSTREAK ORIGINALS</span>}
+        </div>
+    );
+}
+
+function DurationInput({ label, value, min, max, disabled, onChange }: {
     label: string;
-    name: "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
+    value: number;
     min: number;
     max: number;
-    value: number;
     disabled: boolean;
-    onChange: (name: "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes", value: number) => void;
+    onChange: (value: number) => void;
 }) {
     return (
-        <label className="flex flex-1 items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-3">
+        <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3">
             <span className="text-xs font-medium text-slate-300">{label}</span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
                 <input
-                    aria-label={label + " minutes"}
                     type="number"
                     inputMode="numeric"
+                    aria-label={label + " minutes"}
                     min={min}
                     max={max}
                     step={1}
-                    value={value}
                     disabled={disabled}
+                    value={value}
                     onChange={event => {
-                        if (event.target.value !== "") onChange(name, Number(event.target.value));
+                        if (event.target.value !== "") onChange(Number(event.target.value));
                     }}
-                    className="w-14 rounded-md border border-slate-700 bg-slate-900 px-1.5 py-1 text-center text-sm font-semibold text-slate-100"
+                    className="w-16 rounded-md border border-white/15 bg-slate-950 px-2 py-1 text-center text-sm font-semibold text-white"
                 />
-                <span className="text-xs text-slate-500">m</span>
+                <span className="text-xs text-slate-500">min</span>
             </span>
         </label>
     );
 }
 
+/**
+ * The timer and audio live on the dedicated Focus Studio page.
+ * Time is wall-clock based and persists locally per user; audio only starts after a click.
+ */
 export default function FocusStudio({ userId }: { userId: number }) {
     const storageKey = `studystreak:focus-studio:v1:${userId}`;
-    const [timer, setTimer] = useState<PomodoroState>(() => loadPomodoro(storageKey));
-    const [clockNow, setClockNow] = useState(() => Date.now());
-    const [musicPlaying, setMusicPlaying] = useState(false);
+    const [timer, setTimer] = useState<PomodoroState>(() => readSavedTimer(storageKey));
+    const [now, setNow] = useState(() => Date.now());
+    const [playing, setPlaying] = useState(false);
     const [audioError, setAudioError] = useState<string | null>(null);
-    const [showSettings, setShowSettings] = useState(false);
-    const audioRef = useRef<PomodoroAudio | null>(null);
-    const notifiedAtRef = useRef<number | null>(timer.lastCompletedAt);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const audio = useRef<PomodoroAudio | null>(null);
+    const notifiedAt = useRef<number | null>(timer.lastCompletedAt);
 
-    const getAudio = () => {
-        if (!audioRef.current) audioRef.current = new PomodoroAudio();
-        return audioRef.current;
-    };
+    function getAudio(): PomodoroAudio {
+        if (!audio.current) audio.current = new PomodoroAudio();
+        return audio.current;
+    }
 
     useEffect(() => {
-        const update = () => {
+        const tick = () => {
             const current = Date.now();
-            setClockNow(current);
+            setNow(current);
             setTimer(previous => advancePomodoro(previous, current));
         };
-        const interval = window.setInterval(update, 500);
-        window.addEventListener("focus", update);
-        document.addEventListener("visibilitychange", update);
+        const interval = window.setInterval(tick, 500);
+        window.addEventListener("focus", tick);
+        document.addEventListener("visibilitychange", tick);
         return () => {
             window.clearInterval(interval);
-            window.removeEventListener("focus", update);
-            document.removeEventListener("visibilitychange", update);
+            window.removeEventListener("focus", tick);
+            document.removeEventListener("visibilitychange", tick);
         };
     }, []);
 
@@ -159,294 +206,328 @@ export default function FocusStudio({ userId }: { userId: number }) {
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(timer));
         } catch {
-            // Private browsing and limited storage should not prevent using the timer.
+            // The feature continues to work when browser storage is disabled.
         }
     }, [storageKey, timer]);
 
     useEffect(() => {
-        if (timer.lastCompletedAt !== null && timer.lastCompletedAt !== notifiedAtRef.current) {
-            notifiedAtRef.current = timer.lastCompletedAt;
-            if (timer.preferences.soundEffects) {
-                void getAudio().cue("complete", timer.preferences.volume);
-            }
+        if (timer.lastCompletedAt === null || timer.lastCompletedAt === notifiedAt.current) return;
+        notifiedAt.current = timer.lastCompletedAt;
+        if (timer.preferences.soundEffects) {
+            void getAudio().cue("complete", timer.preferences.volume);
         }
     }, [timer.lastCompletedAt, timer.preferences.soundEffects, timer.preferences.volume]);
 
-    useEffect(() => () => {
-        audioRef.current?.dispose();
-        audioRef.current = null;
+    useEffect(() => {
+        const previousTitle = document.title;
+        return () => {
+            document.title = previousTitle;
+            audio.current?.dispose();
+            audio.current = null;
+        };
     }, []);
 
-    const remaining = remainingPomodoroMs(timer, clockNow);
+    const remaining = remainingPomodoroMs(timer, now);
     const total = durationMs(timer.mode, timer.preferences);
     const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0;
-    const active = timer.endsAt !== null;
-    const style = THEME[timer.preferences.theme];
-    const currentCycle = timer.focusSessions % 4;
-    const statusLabel = timer.lastCompletedAt && !active
-        ? timer.lastCompletedMode === "focus" && timer.mode !== "focus"
-            ? "Focus complete. Your break is ready."
-            : timer.lastCompletedMode !== "focus" && timer.mode === "focus"
-                ? "Break finished. Ready to focus?"
-                : MODE_DESCRIPTION[timer.mode]
-        : MODE_DESCRIPTION[timer.mode];
+    const running = timer.endsAt !== null;
+    const style = THEMES[timer.preferences.theme];
+    const track = TRACKS.find(item => item.id === timer.preferences.soundscape) ?? TRACKS[0];
+    const cycle = timer.focusSessions % 4;
+    const remainingLabel = formatPomodoroTime(remaining);
 
-    function cue(kind: "start" | "pause") {
-        if (timer.preferences.soundEffects) {
-            void getAudio().cue(kind, timer.preferences.volume);
-        }
-    }
+    useEffect(() => {
+        document.title = `${remainingLabel} • Focus Studio | StudyStreak`;
+    }, [remainingLabel]);
 
-    function startOrPause() {
-        const current = Date.now();
-        setClockNow(current);
-        if (active) {
-            setTimer(previous => pausePomodoro(previous, current));
-            cue("pause");
-        } else {
-            setTimer(previous => startPomodoro(previous, current));
-            cue("start");
-        }
-    }
-
-    function changeMode(mode: PomodoroMode) {
-        setTimer(previous => selectPomodoroMode(previous, mode));
-    }
-
-    function changeMinutes(name: "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes", value: number) {
-        if (active) return;
-        const updates: Partial<PomodoroPreferences> = { [name]: value };
-        setTimer(previous => updatePomodoroPreferences(previous, updates));
-    }
-
-    function updatePreference(changes: Partial<PomodoroPreferences>) {
+    function changePreferences(changes: Partial<PomodoroPreferences>) {
         setTimer(previous => updatePomodoroPreferences(previous, changes));
     }
 
-    async function toggleMusic() {
-        if (musicPlaying) {
+    function changeDuration(field: DurationField, value: number) {
+        if (running) return;
+        changePreferences({ [field]: value });
+    }
+
+    function toggleTimer() {
+        const current = Date.now();
+        setNow(current);
+        setTimer(previous => running ? pausePomodoro(previous, current) : startPomodoro(previous, current));
+        if (timer.preferences.soundEffects) {
+            void getAudio().cue(running ? "pause" : "start", timer.preferences.volume);
+        }
+    }
+
+    async function toggleAudio() {
+        if (playing) {
             getAudio().stop();
-            setMusicPlaying(false);
+            setPlaying(false);
             return;
         }
         setAudioError(null);
-        const played = await getAudio().start(timer.preferences.soundscape, timer.preferences.volume);
-        if (played) setMusicPlaying(true);
-        else setAudioError("Audio is unavailable. Check your browser settings.");
+        const started = await getAudio().start(timer.preferences.soundscape, timer.preferences.volume);
+        setPlaying(started);
+        if (!started) setAudioError("Audio playback is unavailable. Check your browser audio settings.");
     }
 
-    async function chooseSoundscape(selected: Soundscape) {
-        updatePreference({ soundscape: selected });
-        if (musicPlaying) {
-            const played = await getAudio().start(selected, timer.preferences.volume);
-            if (!played) {
-                setMusicPlaying(false);
-                setAudioError("Audio could not be restarted.");
-            }
+    async function chooseTrack(selected: Soundscape) {
+        if (selected === timer.preferences.soundscape && playing) {
+            getAudio().stop();
+            setPlaying(false);
+            return;
         }
+        changePreferences({ soundscape: selected });
+        setAudioError(null);
+        // Selecting a track is a direct click, so it can start browser audio.
+        const started = await getAudio().start(selected, timer.preferences.volume);
+        setPlaying(started);
+        if (!started) setAudioError("Audio playback is unavailable. Check your browser audio settings.");
     }
 
     function changeVolume(value: number) {
-        updatePreference({ volume: value });
-        audioRef.current?.setVolume(value);
+        changePreferences({ volume: value });
+        audio.current?.setVolume(value);
     }
 
     return (
-        <section aria-label="Focus Studio Pomodoro timer" className="overflow-hidden rounded-3xl border border-slate-700/70 bg-slate-900/70 shadow-xl shadow-black/20">
-            <div className={`relative isolate overflow-hidden bg-gradient-to-br ${style.panel} p-5 sm:p-8`}>
-                <div aria-hidden="true" className={`pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full blur-3xl ${style.halo}`} />
-                <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 left-10 h-64 w-96 rounded-full bg-indigo-400/10 blur-3xl" />
+        <div className="space-y-7 pb-6">
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-emerald-400">
+                        <Headphones size={15} aria-hidden="true" /> Your personal listening room
+                    </p>
+                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Focus Studio<span className="text-emerald-400">.</span></h1>
+                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Settle into deep work with a Pomodoro timer and original ambient soundscapes.</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300">
+                    <Sparkles size={15} className="text-emerald-400" aria-hidden="true" />
+                    {timer.focusSessions} completed {timer.focusSessions === 1 ? "session" : "sessions"}
+                </div>
+            </header>
 
-                <div className="relative flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <p className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] ${style.text}`}>
-                            <Sparkles size={15} aria-hidden="true" /> YOUR FOCUS SPACE
+            <section aria-label="Featured focus mix" className={`relative isolate overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br ${style.background} p-5 sm:p-8`}>
+                <div aria-hidden="true" className={`pointer-events-none absolute -right-20 -top-32 h-96 w-96 rounded-full blur-[80px] ${style.tint}`} />
+                <div className="relative grid items-center gap-6 sm:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
+                    <TrackArtwork track={timer.preferences.soundscape} />
+                    <div className="min-w-0">
+                        <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] ${style.accent}`}>
+                            <Disc3 size={16} aria-hidden="true" /> YOUR FOCUS MIX
                         </p>
-                        <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">Focus Studio</h2>
-                        <p className="mt-1 text-sm text-slate-300">Study with a rhythm that works for you.</p>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/40 px-3 py-2 text-xs font-medium text-slate-200">
-                        <Clock3 size={15} aria-hidden="true" />
-                        {timer.focusSessions} completed focus {timer.focusSessions === 1 ? "session" : "sessions"}
-                    </div>
-                </div>
-
-                <div className="relative mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center">
-                    <div className="flex flex-col items-center">
-                        <div className="inline-flex w-full max-w-md items-center justify-center gap-1 rounded-2xl border border-white/10 bg-slate-950/50 p-1">
-                            {(["focus", "shortBreak", "longBreak"] as const).map(mode => (
-                                <button
-                                    key={mode}
-                                    type="button"
-                                    aria-pressed={timer.mode === mode}
-                                    disabled={active}
-                                    onClick={() => changeMode(mode)}
-                                    className={`flex-1 rounded-xl border px-2 py-2 text-xs font-semibold sm:text-sm ${
-                                        timer.mode === mode
-                                            ? style.active
-                                            : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
-                                    }`}
-                                >
-                                    {MODE_LABEL[mode]}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="relative mt-5 aspect-square w-full max-w-[275px]">
-                            <svg viewBox="0 0 240 240" className="h-full w-full -rotate-90" aria-hidden="true">
-                                <circle cx="120" cy="120" r="104" stroke="white" strokeOpacity="0.1" strokeWidth="9" fill="none" />
-                                <circle cx="120" cy="120" r="104" stroke={style.ring}
-                                    strokeWidth="9" strokeLinecap="round" fill="none"
-                                    strokeDasharray={CIRCUMFERENCE}
-                                    strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
-                                    className="transition-[stroke-dashoffset] duration-500"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                <span className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
-                                    {timer.mode === "focus" ? "DEEP WORK" : "REST MODE"}
-                                </span>
-                                <span role="timer" aria-label={`${formatPomodoroTime(remaining)} remaining`}
-                                    className="mt-2 font-mono text-5xl font-bold tracking-tight tabular-nums text-white sm:text-6xl">
-                                    {formatPomodoroTime(remaining)}
-                                </span>
-                                <span className="mt-2 text-xs font-medium text-slate-300">{active ? "IN PROGRESS" : "READY WHEN YOU ARE"}</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-4 flex w-full max-w-sm items-center justify-center gap-3">
-                            <button type="button" onClick={startOrPause}
-                                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 font-bold shadow-lg ${style.button}`}>
-                                {active ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
-                                {active ? "Pause" : remaining < total ? "Resume" : timer.mode === "focus" ? "Start focus" : "Start break"}
+                        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">Get in the zone.</h2>
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-slate-200/80">Less noise. More momentum. Put on a soundscape, choose a session, and make some space for the work that matters.</p>
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                            <button type="button" onClick={() => void toggleAudio()}
+                                aria-label={playing ? "Pause ambient audio" : "Play ambient audio"}
+                                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-lg shadow-black/20 ${style.strong}`}>
+                                {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                                {playing ? "Pause mix" : "Play mix"}
                             </button>
-                            <button type="button" onClick={() => setTimer(previous => resetPomodoro(previous))}
-                                aria-label="Reset current timer" title="Reset timer"
-                                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 p-3 text-slate-200 hover:bg-white/10">
-                                <RotateCcw size={20} />
-                            </button>
-                        </div>
-                        <p aria-live="polite" className="mt-4 text-center text-sm text-slate-300">{statusLabel}</p>
-                        <div className="mt-3 flex items-center gap-2" aria-label={`${currentCycle} of 4 sessions toward the next long break`}>
-                            {[0, 1, 2, 3].map(index => (
-                                <span key={index} className={`flex h-6 w-6 items-center justify-center rounded-full border text-xs ${index < currentCycle
-                                    ? "border-emerald-400/60 bg-emerald-500/30 text-emerald-100"
-                                    : "border-white/15 bg-white/5 text-slate-500"}`}>
-                                    {index < currentCycle ? <Check size={13} aria-hidden="true" /> : index + 1}
-                                </span>
-                            ))}
-                            <span className="ml-2 text-xs text-slate-400">Long break every 4 sessions</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-5 backdrop-blur-sm">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <p className="flex items-center gap-2 text-base font-semibold text-white">
-                                        <Headphones size={19} className={style.text} aria-hidden="true" /> Background audio
-                                    </p>
-                                    <p className="mt-1 text-xs text-slate-400">Original music and soundscapes, generated locally.</p>
-                                </div>
-                                <button type="button" aria-pressed={musicPlaying} onClick={() => void toggleMusic()}
-                                    className={`rounded-xl px-3 py-2 text-xs font-bold ${musicPlaying
-                                        ? style.button : "border border-white/15 bg-white/10 text-white hover:bg-white/20"}`}>
-                                    {musicPlaying ? "Stop audio" : "Play audio"}
-                                </button>
-                            </div>
-
-                            <div className="mt-4 space-y-2">
-                                {SOUND_OPTIONS.map(sound => (
-                                    <button type="button" key={sound.id}
-                                        onClick={() => void chooseSoundscape(sound.id)}
-                                        aria-pressed={timer.preferences.soundscape === sound.id}
-                                        className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                                            timer.preferences.soundscape === sound.id
-                                                ? style.active
-                                                : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25"
-                                        }`}>
-                                        <span className="flex items-center gap-3">
-                                            <Music2 size={18} aria-hidden="true" />
-                                            <span>
-                                                <span className="block text-sm font-semibold">{sound.title}</span>
-                                                <span className="block text-xs opacity-70">{sound.subtitle}</span>
-                                            </span>
-                                        </span>
-                                        {timer.preferences.soundscape === sound.id && <Check size={16} aria-hidden="true" />}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="mt-5 flex items-center gap-3">
-                                {timer.preferences.volume === 0 ? <VolumeX size={18} className="text-slate-400" /> :
-                                    <Volume2 size={18} className="text-slate-400" />}
-                                <input type="range" aria-label="Background audio volume" min={0} max={100} step={5}
-                                    value={Math.round(timer.preferences.volume * 100)}
-                                    onChange={event => changeVolume(Number(event.target.value) / 100)}
-                                    className="w-full cursor-pointer accent-emerald-300" />
-                                <span className="w-10 text-right text-xs tabular-nums text-slate-400">
-                                    {Math.round(timer.preferences.volume * 100)}%
-                                </span>
-                            </div>
-
-                            <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm text-slate-300">
-                                <span>Session sound effects</span>
-                                <input type="checkbox" checked={timer.preferences.soundEffects}
-                                    onChange={event => updatePreference({ soundEffects: event.target.checked })}
-                                    className="h-4 w-4 accent-emerald-300" />
-                            </label>
-                            {audioError && <p role="alert" className="mt-3 text-xs text-rose-300">{audioError}</p>}
-                        </div>
-
-                        <div className="rounded-2xl border border-white/10 bg-slate-950/55 p-5 backdrop-blur-sm">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <p className="text-base font-semibold text-white">Make it yours</p>
-                                    <p className="mt-1 text-xs text-slate-400">Set your mood and study intervals.</p>
-                                </div>
-                                <button type="button" aria-expanded={showSettings} aria-controls="pomodoro-settings"
-                                    onClick={() => setShowSettings(!showSettings)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-xs text-slate-200 hover:bg-white/10">
-                                    <SlidersHorizontal size={15} /> {showSettings ? "Hide" : "Customize"}
-                                </button>
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap gap-2" aria-label="Pomodoro appearance">
-                                {(["aurora", "sunset", "ocean"] as const).map(theme => (
-                                    <button type="button" key={theme}
-                                        aria-pressed={timer.preferences.theme === theme}
-                                        onClick={() => updatePreference({ theme })}
-                                        className={`rounded-full border px-3 py-2 text-xs font-semibold ${timer.preferences.theme === theme
-                                            ? style.active : "border-white/10 bg-white/5 text-slate-400 hover:text-white"}`}>
-                                        {THEME[theme].name}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {showSettings && (
-                                <div id="pomodoro-settings" className="mt-4">
-                                    <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
-                                        <MinuteControl label="Focus" name="focusMinutes" min={5} max={120}
-                                            disabled={active} value={timer.preferences.focusMinutes} onChange={changeMinutes} />
-                                        <MinuteControl label="Short" name="shortBreakMinutes" min={1} max={30}
-                                            disabled={active} value={timer.preferences.shortBreakMinutes} onChange={changeMinutes} />
-                                        <MinuteControl label="Long" name="longBreakMinutes" min={5} max={60}
-                                            disabled={active} value={timer.preferences.longBreakMinutes} onChange={changeMinutes} />
-                                    </div>
-                                    <p className="mt-3 text-xs leading-5 text-slate-400">
-                                        Pause to change durations. A duration change resets the selected interval.
-                                    </p>
-                                </div>
-                            )}
+                            <span className="text-sm text-slate-300">{track.title} <span className="mx-1 text-slate-500">·</span> {track.kind}</span>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div className="relative mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4 text-xs text-slate-400">
-                    <span>Stay in the zone. Progress and preferences are saved in this browser.</span>
-                    <span>Music stops when you leave the dashboard; your timer keeps its time.</span>
+            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(350px,0.9fr)]">
+                <section aria-label="Pomodoro session timer" className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                <Clock3 size={19} className={style.accent} aria-hidden="true" /> Your session
+                            </p>
+                            <p className="mt-1 text-xs text-slate-400">One task. One session. No distractions.</p>
+                        </div>
+                        <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
+                            {running ? "● In progress" : "Ready to begin"}
+                        </span>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1" aria-label="Session type">
+                        {MODES.map(mode => (
+                            <button type="button" key={mode.id} disabled={running}
+                                aria-pressed={timer.mode === mode.id}
+                                onClick={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
+                                className={`min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm ${
+                                    timer.mode === mode.id ? style.selected : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
+                                }`}>
+                                {mode.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative mx-auto mt-5 aspect-square w-full max-w-[285px]">
+                        <svg viewBox="0 0 250 250" aria-hidden="true" className="h-full w-full -rotate-90">
+                            <circle cx="125" cy="125" r="110" fill="none" stroke="#334155" strokeOpacity="0.42" strokeWidth="8" />
+                            <circle cx="125" cy="125" r="110" fill="none" stroke={style.outline} strokeWidth="8" strokeLinecap="round"
+                                strokeDasharray={CIRCUMFERENCE} strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
+                                className="transition-[stroke-dashoffset] duration-500" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <p className={`text-[11px] font-bold uppercase tracking-[0.28em] ${style.accent}`}>
+                                {timer.mode === "focus" ? "DEEP WORK" : "TAKE A BREATH"}
+                            </p>
+                            <span role="timer" aria-live="off" aria-label={remainingLabel + " remaining"}
+                                className="mt-3 font-mono text-5xl font-bold tracking-tight tabular-nums text-white sm:text-6xl">{remainingLabel}</span>
+                            <p className="mt-2 text-xs font-medium text-slate-400">{running ? "STAY IN THE FLOW" : "ON YOUR TERMS"}</p>
+                        </div>
+                    </div>
+
+                    <div className="mx-auto mt-2 flex max-w-sm items-center gap-3">
+                        <button type="button" onClick={toggleTimer}
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold ${style.strong}`}>
+                            {running ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
+                            {running ? "Pause timer" : remaining < total ? "Resume session" : timer.mode === "focus" ? "Start focusing" : "Start break"}
+                        </button>
+                        <button type="button" onClick={() => setTimer(previous => resetPomodoro(previous))}
+                            title="Reset current session" aria-label="Reset current session"
+                            className="rounded-full border border-white/15 bg-white/5 p-3.5 text-slate-200 hover:bg-white/10">
+                            <RotateCcw size={19} aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    <p aria-live="polite" className="mt-5 text-center text-sm text-slate-400">
+                        {timer.mode === "focus" ? "Stay curious. Small steps add up." : "Recharge now. Come back refreshed."}
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>
+                        {[0, 1, 2, 3].map(index => (
+                            <span key={index} className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
+                                index < cycle ? style.selected : "border-white/10 bg-white/5 text-slate-500"
+                            }`}>
+                                {index < cycle ? <Check size={13} aria-hidden="true" /> : index + 1}
+                            </span>
+                        ))}
+                        <span className="ml-2 text-xs text-slate-500">Long break every 4 focus sessions</span>
+                    </div>
+                </section>
+
+                <div className="space-y-5">
+                    <section aria-label="Now playing" className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
+                        <div className="flex items-center justify-between gap-3">
+                            <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                <Music2 size={18} className={style.accent} aria-hidden="true" /> Now playing
+                            </p>
+                            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                                <span className={`h-2 w-2 rounded-full ${playing ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`} />
+                                {playing ? "Live" : "Paused"}
+                            </span>
+                        </div>
+                        <div className="mt-6 flex items-center gap-4">
+                            <TrackArtwork track={timer.preferences.soundscape} compact />
+                            <div className="min-w-0">
+                                <h3 className="truncate text-lg font-bold text-white">{track.title}</h3>
+                                <p className="mt-1 truncate text-xs text-slate-400">{track.kind} · StudyStreak Originals</p>
+                            </div>
+                        </div>
+                        <div className="mt-5 flex items-center justify-center gap-5 border-b border-white/10 pb-5">
+                            <button type="button" onClick={() => void toggleAudio()}
+                                aria-label={playing ? "Pause soundscape" : "Play soundscape"}
+                                className={`flex h-12 w-12 items-center justify-center rounded-full transition hover:scale-105 ${style.strong}`}>
+                                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
+                            </button>
+                            <span className="text-xs text-slate-400">Original audio · No ads · No streaming</span>
+                        </div>
+                        <div className="mt-5 flex items-center gap-3">
+                            {timer.preferences.volume === 0 ? <VolumeX size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
+                                : <Volume2 size={18} className="shrink-0 text-slate-400" aria-hidden="true" />}
+                            <input aria-label="Soundscape volume" type="range" min={0} max={100} step={5}
+                                value={Math.round(timer.preferences.volume * 100)}
+                                onChange={event => changeVolume(Number(event.target.value) / 100)}
+                                className="w-full cursor-pointer accent-emerald-400" />
+                            <span className="w-10 text-right text-xs tabular-nums text-slate-400">{Math.round(timer.preferences.volume * 100)}%</span>
+                        </div>
+                        <label className="mt-5 flex cursor-pointer items-center justify-between gap-3 text-xs font-medium text-slate-300">
+                            Session start, pause and finish sounds
+                            <input type="checkbox" checked={timer.preferences.soundEffects}
+                                onChange={event => changePreferences({ soundEffects: event.target.checked })}
+                                className="h-4 w-4 accent-emerald-400" />
+                        </label>
+                        {audioError && <p role="alert" className="mt-4 text-xs text-rose-300">{audioError}</p>}
+                    </section>
+
+                    <section className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                    <Settings2 size={18} className={style.accent} aria-hidden="true" /> Make it yours
+                                </p>
+                                <p className="mt-1 text-xs text-slate-400">Your preferred look and study rhythm.</p>
+                            </div>
+                            <button type="button" onClick={() => setSettingsOpen(open => !open)}
+                                aria-expanded={settingsOpen} aria-controls="focus-studio-settings"
+                                className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10">
+                                {settingsOpen ? "Hide settings" : "Customize"} <ChevronDown size={15} className={settingsOpen ? "rotate-180" : ""} />
+                            </button>
+                        </div>
+                        <div className="mt-5 flex flex-wrap gap-2" aria-label="Focus Studio color theme">
+                            {(["aurora", "sunset", "ocean"] as const).map(theme => (
+                                <button key={theme} type="button" aria-pressed={timer.preferences.theme === theme}
+                                    onClick={() => changePreferences({ theme })}
+                                    className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
+                                        timer.preferences.theme === theme
+                                            ? style.selected
+                                            : "border-white/10 bg-white/5 text-slate-400 hover:text-white"
+                                    }`}>
+                                    <span className={`h-2.5 w-2.5 rounded-full ${THEMES[theme].swatch}`} />
+                                    {THEMES[theme].label}
+                                </button>
+                            ))}
+                        </div>
+                        {settingsOpen && (
+                            <div id="focus-studio-settings" className="mt-5 grid gap-2 border-t border-white/10 pt-5 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+                                <DurationInput label="Focus" value={timer.preferences.focusMinutes} min={5} max={120}
+                                    disabled={running} onChange={value => changeDuration("focusMinutes", value)} />
+                                <DurationInput label="Short break" value={timer.preferences.shortBreakMinutes} min={1} max={30}
+                                    disabled={running} onChange={value => changeDuration("shortBreakMinutes", value)} />
+                                <DurationInput label="Long break" value={timer.preferences.longBreakMinutes} min={5} max={60}
+                                    disabled={running} onChange={value => changeDuration("longBreakMinutes", value)} />
+                                <p className="col-span-full mt-1 text-xs leading-5 text-slate-500">Pause the timer to adjust durations. Changing the current interval resets it.</p>
+                            </div>
+                        )}
+                    </section>
                 </div>
             </div>
-        </section>
+
+            <section aria-label="Ambient soundscape library" className="space-y-4">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h2 className="text-2xl font-extrabold tracking-tight text-white">Made for your focus</h2>
+                        <p className="mt-1 text-sm text-slate-400">Pick a soundscape to play. Each mix is generated right in your browser.</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500"><Waves size={16} aria-hidden="true" /> 3 original soundscapes</div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                    {TRACKS.map((item, index) => {
+                        const selected = timer.preferences.soundscape === item.id;
+                        return (
+                            <button type="button" key={item.id} onClick={() => void chooseTrack(item.id)}
+                                aria-pressed={selected}
+                                aria-label={`Play ${item.title}, ${item.kind}`}
+                                className={`group min-w-0 rounded-2xl border p-4 text-left transition hover:-translate-y-1 hover:bg-white/[0.075] ${
+                                    selected ? "border-emerald-400/50 bg-emerald-400/[0.06]" : "border-white/10 bg-[#151c25]"
+                                }`}>
+                                <div className="relative">
+                                    <TrackArtwork track={item.id} />
+                                    <span className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-400 text-slate-950 shadow-lg shadow-black/30 transition group-hover:scale-110">
+                                        {selected && playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
+                                    </span>
+                                </div>
+                                <div className="mt-4 flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+                                    <h3 className="truncate text-base font-bold text-white">{item.title}</h3>
+                                    {selected && <Check size={15} className="ml-auto shrink-0 text-emerald-400" aria-label="Selected" />}
+                                </div>
+                                <p className="mt-1 text-xs font-semibold text-emerald-300">{item.kind}</p>
+                                <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{item.description}</p>
+                            </button>
+                        );
+                    })}
+                </div>
+            </section>
+
+            <p className="flex items-center gap-2 border-t border-white/10 pt-5 text-xs text-slate-500">
+                <Headphones size={15} aria-hidden="true" />
+                Timer and preferences are saved in this browser. Music stops when you leave Focus Studio; your timer keeps its time.
+            </p>
+        </div>
     );
 }
