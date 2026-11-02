@@ -46,7 +46,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint src",
-    "test:auth": "node --experimental-strip-types --test tests/authSession.test.mjs tests/jwt.test.mjs"
+    "test:auth": "node --experimental-strip-types --test tests/authSession.test.mjs tests/jwt.test.mjs",
+    "test:pagination": "node --experimental-strip-types --test tests/pagination.test.mjs"
   },
   "private": true
 }

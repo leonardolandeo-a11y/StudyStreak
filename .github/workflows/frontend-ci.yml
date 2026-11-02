@@ -61,6 +61,9 @@ jobs:
       - name: Run mobile session and JWT tests
         run: npm run test:auth
 
+      - name: Test mobile pagination
+        run: npm run test:pagination
+
       - name: Run mobile ESLint
         run: npm run lint -- --max-warnings 0
 

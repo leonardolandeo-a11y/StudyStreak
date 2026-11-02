@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { AppState } from 'react-native';
 import type { PageResponse } from '../types/page';
 import { getApiErrorMessage } from '../utils/apiError';
+import { getPageFallback } from '../utils/pageBounds';
 
 export function usePagedResource<T>(
   load: (page: number, signal: AbortSignal) => Promise<PageResponse<T>>,
@@ -39,6 +40,11 @@ export function usePagedResource<T>(
       try {
         const response = await load(page, controller.signal);
         if (isCurrent()) {
+          const fallback = getPageFallback(page, response.totalPages);
+          if (fallback !== null) {
+            setPage(fallback);
+            return;
+          }
           setData(response);
           if (silent) setError(null);
         }

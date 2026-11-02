@@ -6,6 +6,7 @@ import { StatusMessage } from '../ui/StatusMessage';
 import { palette } from '../../constants/palette';
 import { userSearchService } from '../../services/userSearchService';
 import { getApiErrorMessage } from '../../utils/apiError';
+import { getPageFallback } from '../../utils/pageBounds';
 import type { PageResponse } from '../../types/page';
 import type { UserSearchResult } from '../../types/userSearch';
 
@@ -29,7 +30,11 @@ export function PartnerSearch({ onSend, busy }: {
       setSearchError(null);
       void userSearchService.search(searchTerm, page, controller.signal)
         .then((response) => {
-          if (!controller.signal.aborted) setResults(response);
+          if (!controller.signal.aborted) {
+            const fallback = getPageFallback(page, response.totalPages);
+            if (fallback !== null) setPage(fallback);
+            else setResults(response);
+          }
         })
         .catch((cause) => {
           if (!controller.signal.aborted) {
