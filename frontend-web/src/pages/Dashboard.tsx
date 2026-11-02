@@ -1,7 +1,6 @@
 import { ArrowRight, BadgeCheck, Bell, BookOpen, Flame, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 import SummaryCard from "../components/dashboard/SummaryCard";
-import FocusStudio from "../components/dashboard/FocusStudio";
 import { useAuth } from "../hooks/useAuth";
 import { useUnreadNotifications } from "../hooks/useUnreadNotifications";
 import { ROUTES } from "../routes/paths";
@@ -34,8 +33,6 @@ function Dashboard() {
                     View Goals <ArrowRight size={16} />
                 </Link>
             </section>
-
-            <FocusStudio key={currentUser.id} userId={currentUser.id} />
 
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Study statistics">
                 <SummaryCard

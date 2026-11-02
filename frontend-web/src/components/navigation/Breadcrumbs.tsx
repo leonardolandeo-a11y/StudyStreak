@@ -22,6 +22,8 @@ function Breadcrumbs(){
         switch(segment){
             case "dashboard":
                 return "Dashboard";
+            case "focus-studio":
+                return "Focus Studio";
             case "goals":
                 return "Goals";
             case "daily-records":
