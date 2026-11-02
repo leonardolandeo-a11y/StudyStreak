@@ -59,7 +59,6 @@ function RecordPhoto({
 
     useEffect(() => {
         if (!available) {
-            setPreviewUrl(null);
             return;
         }
 
@@ -263,7 +262,7 @@ function RecordPhoto({
                 </p>
             )}
 
-            {previewUrl && (
+            {available && previewUrl && (
                 <img
                     src={previewUrl}
                     alt="Daily record evidence"
