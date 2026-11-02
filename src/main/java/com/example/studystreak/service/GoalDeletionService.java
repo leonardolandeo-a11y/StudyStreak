@@ -3,6 +3,7 @@ package com.example.studystreak.service;
 import com.example.studystreak.repository.DailyRecordPhotoRepository;
 import com.example.studystreak.repository.DailyRecordRepository;
 import com.example.studystreak.repository.DailyRecordVoiceRepository;
+import com.example.studystreak.repository.FocusSessionRepository;
 import com.example.studystreak.repository.NotificationRepository;
 import com.example.studystreak.repository.TagRepository;
 import com.example.studystreak.repository.ValidationRepository;
@@ -19,6 +20,7 @@ public class GoalDeletionService {
     private final ValidationRepository validationRepository;
     private final DailyRecordRepository dailyRecordRepository;
     private final TagRepository tagRepository;
+    private final FocusSessionRepository focusSessionRepository;
 
     public GoalDeletionService(
             NotificationRepository notificationRepository,
@@ -26,7 +28,8 @@ public class GoalDeletionService {
             DailyRecordVoiceRepository voiceRepository,
             ValidationRepository validationRepository,
             DailyRecordRepository dailyRecordRepository,
-            TagRepository tagRepository
+            TagRepository tagRepository,
+            FocusSessionRepository focusSessionRepository
     ) {
         this.notificationRepository = notificationRepository;
         this.photoRepository = photoRepository;
@@ -34,6 +37,7 @@ public class GoalDeletionService {
         this.validationRepository = validationRepository;
         this.dailyRecordRepository = dailyRecordRepository;
         this.tagRepository = tagRepository;
+        this.focusSessionRepository = focusSessionRepository;
     }
 
     // The caller must have checked ownership and opened a transaction.
@@ -45,6 +49,7 @@ public class GoalDeletionService {
         voiceRepository.deleteForGoal(goalId);
         validationRepository.deleteForGoal(goalId);
         dailyRecordRepository.deleteForGoal(goalId);
+        focusSessionRepository.deleteByGoalId(goalId);
         // Delete only join rows; tags themselves can be shared by other goals.
         tagRepository.deleteLinksForGoal(goalId);
     }
