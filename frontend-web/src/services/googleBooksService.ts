@@ -132,7 +132,7 @@ export function getBookSearchErrorMessage(
         case 429:
             return "Google Books has reached its search limit. Try again later.";
         case 503:
-            return "Google Books is not configured on the server.";
+            return "Google Books API access is not configured correctly on the server. Check the API key and its restrictions.";
         case 502:
         case 504:
             return "Google Books is temporarily unavailable. Try again later.";

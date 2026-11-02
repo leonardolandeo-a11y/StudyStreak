@@ -4,6 +4,8 @@ import com.example.studystreak.dto.Books.StudyBookDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -24,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class GoogleBooksService {
+    private static final Logger log = LoggerFactory.getLogger(GoogleBooksService.class);
     private static final String ENDPOINT = "https://www.googleapis.com/books/v1/volumes";
     private static final long CACHE_MILLIS = Duration.ofMinutes(10).toMillis();
     private static final int MAX_CACHE_ENTRIES = 100;
@@ -70,22 +73,27 @@ public class GoogleBooksService {
         HttpResponse<String> response;
         try {
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // Retry transient upstream server responses once, without retrying quota/key errors.
+            if (response.statusCode() >= 500 && response.statusCode() <= 599) {
+                Thread.sleep(250);
+                response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            }
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
+            log.warn("Google Books request interrupted");
             throw new BookSearchException(HttpStatus.BAD_GATEWAY,
                     "Google Books request was interrupted.");
         } catch (IOException exception) {
+            // Do not log exception messages or request URLs: they can contain the API key.
+            log.warn("Google Books network failure: {}", exception.getClass().getSimpleName());
             throw new BookSearchException(HttpStatus.BAD_GATEWAY,
                     "Google Books is temporarily unreachable.");
         }
 
-        if (response.statusCode() == 429) {
-            throw new BookSearchException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Google Books quota reached. Please try again later.");
-        }
         if (response.statusCode() != 200) {
-            throw new BookSearchException(HttpStatus.BAD_GATEWAY,
-                    "Google Books could not complete the search.");
+            // Upstream numeric status is enough to diagnose key errors without exposing secrets.
+            log.warn("Google Books API returned HTTP {}", response.statusCode());
+            throw classifyUpstreamFailure(response.statusCode());
         }
 
         List<StudyBookDTO> books = parseBooks(response.body());
@@ -94,6 +102,19 @@ public class GoogleBooksService {
         }
         cache.put(cacheKey, new CacheEntry(books, now + CACHE_MILLIS));
         return books;
+    }
+
+    static BookSearchException classifyUpstreamFailure(int upstreamStatus) {
+        return switch (upstreamStatus) {
+            case 401, 403 -> new BookSearchException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Google Books API access was denied. Check the server API key, restrictions and enabled API.");
+            case 429 -> new BookSearchException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Google Books quota reached. Please try again later.");
+            case 400 -> new BookSearchException(HttpStatus.BAD_GATEWAY,
+                    "Google Books rejected the search request. Check the server API configuration.");
+            default -> new BookSearchException(HttpStatus.BAD_GATEWAY,
+                    "Google Books could not complete the search.");
+        };
     }
 
     List<StudyBookDTO> parseBooks(String json) {
