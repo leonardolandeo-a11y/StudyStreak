@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:auth": "node --experimental-strip-types --test tests/jwt.test.mjs",
-    "test:web": "node --experimental-strip-types --test tests/jwt.test.mjs tests/pageBounds.test.mjs tests/validationAccess.test.mjs tests/apiTimeout.test.mjs tests/recordAccess.test.mjs"
+    "test:web": "node --experimental-strip-types --test tests/jwt.test.mjs tests/pageBounds.test.mjs tests/validationAccess.test.mjs tests/apiTimeout.test.mjs tests/recordAccess.test.mjs tests/pomodoroState.test.mjs"
   },
   "dependencies": {
     "axios": "^1.20.0",
