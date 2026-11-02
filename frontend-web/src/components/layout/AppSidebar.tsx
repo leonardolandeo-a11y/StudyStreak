@@ -1,6 +1,7 @@
 import {
     Bell,
     BadgeCheck,
+    BookOpen,
     LayoutDashboard,
     Link2,
     LogOut,
@@ -40,6 +41,11 @@ function AppSidebar() {
             label: "Goals",
             to: ROUTES.goals,
             icon: Target
+        },
+        {
+            label: "Resources",
+            to: ROUTES.resources,
+            icon: BookOpen
         },
         {
             label: "Tracking",

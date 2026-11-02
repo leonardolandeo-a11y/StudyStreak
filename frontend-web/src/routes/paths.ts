@@ -5,6 +5,7 @@ export const ROUTES={
     dashboard:"/dashboard",
 
     goals:"/goals",
+    resources:"/resources",
 
     trackingLinks:"/tracking-links",
     validations: "/validations",
@@ -32,4 +33,12 @@ export function dailyRecordDetailsPath(goalId:number, dailyRecordId:number):stri
 
 export function tagsPath(goalId: number): string {
     return `/goals/${goalId}/tags`;
+}
+
+export function resourcesPath(topic?:string):string {
+    if (!topic) {
+        return ROUTES.resources;
+    }
+
+    return `${ROUTES.resources}?topic=${encodeURIComponent(topic)}`;
 }

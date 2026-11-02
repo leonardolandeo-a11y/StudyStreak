@@ -12,6 +12,8 @@ import type { DailyRecord } from "../types/dailyRecord";
 import type { Validation, ValidationRequest } from "../types/validation";
 import type { PageResponse } from "../types/page";
 import ValidationForm from "../components/validations/ValidationForm";
+import RecordPhoto from "../components/dailyRecords/RecordPhoto";
+import RecordVoice from "../components/dailyRecords/RecordVoice";
 import PaginationControls from "../components/ui/PaginationControls";
 import LoadingState from "../components/ui/LoadingState";
 import ErrorMessage from "../components/ui/ErrorMessage";
@@ -403,6 +405,24 @@ function Validations() {
                     {validationError && <><ErrorMessage message={validationError} /><RetryButton onClick={() => setValidationRevision(value => value + 1)} /></>}
                     {!validationLoading && !validationError && (
                         <>
+                            {selectedGoal && (
+                                <div className="mb-5 grid gap-4 lg:grid-cols-2">
+                                    <RecordPhoto
+                                        goalId={selectedGoal.id}
+                                        recordId={selectedRecord.id}
+                                        available={selectedRecord.photoAvailable}
+                                        readOnly
+                                    />
+
+                                    <RecordVoice
+                                        goalId={selectedGoal.id}
+                                        recordId={selectedRecord.id}
+                                        available={selectedRecord.voiceAvailable}
+                                        readOnly
+                                    />
+                                </div>
+                            )}
+
                             {validation && (
                                 <p className="mb-4 rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
                                     Current decision: <span className="font-semibold text-slate-100">{validation.approved ? "Approved" : "Rejected"}</span>

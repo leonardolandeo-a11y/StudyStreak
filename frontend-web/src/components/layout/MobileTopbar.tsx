@@ -1,6 +1,7 @@
 import {
     BadgeCheck,
     Bell,
+    BookOpen,
     LayoutDashboard,
     Link2,
     LogOut,
@@ -51,6 +52,11 @@ function MobileTopbar() {
             label: "Goals",
             to: ROUTES.goals,
             icon: Target
+        },
+        {
+            label: "Resources",
+            to: ROUTES.resources,
+            icon: BookOpen
         },
         {
             label: "Tracking",

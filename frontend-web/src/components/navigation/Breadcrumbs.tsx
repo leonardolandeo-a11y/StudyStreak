@@ -26,6 +26,8 @@ function Breadcrumbs(){
                 return "Goals";
             case "daily-records":
                 return "Daily Records";
+            case "resources":
+                return "Resources";
             case "tracking-links":
                 return "Tracking Links";
             case "validations":
