@@ -25,6 +25,8 @@ import type{
 } from "../types/dailyRecord";
 
 import DailyRecordForm from "../components/dailyRecords/DailyRecordForm";
+import RecordPhoto from "../components/dailyRecords/RecordPhoto";
+import RecordVoice from "../components/dailyRecords/RecordVoice";
 
 import {
     dailyRecordsPath
@@ -49,6 +51,7 @@ function DailyRecordDetails(){
     const reviewRequested = searchParams.get('review') === '1';
     const [reviewSaving, setReviewSaving] = useState(false);
     const [reviewRevision, setReviewRevision] = useState(0);
+    const [evidenceRevision, setEvidenceRevision] = useState(0);
 
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
 
@@ -229,7 +232,8 @@ function DailyRecordDetails(){
         parsedDailyRecordId,
         invalidGoalId,
         invalidDailyRecordId,
-        reviewRevision
+        reviewRevision,
+        evidenceRevision
     ]);
     if (invalidGoalId ||invalidDailyRecordId) {
         return ( <ErrorMessage message="Invalid daily record id."/>);
@@ -336,6 +340,40 @@ function DailyRecordDetails(){
 
             </div>
         </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <div className="mb-5">
+                <h2 className="text-xl font-semibold text-slate-100">
+                    Multimedia evidence
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                    Photo and voice evidence attached to this daily record.
+                </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+                <RecordPhoto
+                    goalId={parsedGoalId}
+                    recordId={dailyRecord.id}
+                    available={dailyRecord.photoAvailable}
+                    readOnly={reviewRequested}
+                    onChanged={() =>
+                        setEvidenceRevision(value => value + 1)
+                    }
+                />
+
+                <RecordVoice
+                    goalId={parsedGoalId}
+                    recordId={dailyRecord.id}
+                    available={dailyRecord.voiceAvailable}
+                    readOnly={reviewRequested}
+                    onChanged={() =>
+                        setEvidenceRevision(value => value + 1)
+                    }
+                />
+            </div>
+        </section>
+
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
             <h2 className="text-xl font-semibold text-slate-100">Peer validation</h2>
             {validation ? (
