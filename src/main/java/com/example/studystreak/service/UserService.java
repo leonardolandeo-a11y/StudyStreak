@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.DateTimeException;
 
 @Service
 public class UserService {
@@ -57,8 +59,22 @@ public class UserService {
     }
 
 
+    private String validateTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            throw new IllegalArgumentException("A valid time zone is required");
+        }
+        String normalized = timeZone.trim();
+        try {
+            ZoneId.of(normalized);
+        } catch (DateTimeException ex) {
+            throw new IllegalArgumentException("Invalid time zone. Use an identifier such as America/Lima");
+        }
+        return normalized;
+    }
+
     @Transactional
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
+        String timeZone = validateTimeZone(userRequestDTO.getTimeZone());
 
         if (userRepository.existsByUsername(userRequestDTO.getUsername())) {
             throw new ConflictException("Username already exists");
@@ -71,6 +87,7 @@ public class UserService {
         User user = modelMapper.map(userRequestDTO, User.class);
 
         user.setRegistrationDate(LocalDate.now());
+        user.setTimeZone(timeZone);
         user.setActive(true);
         user.setRole(Role.USER);
 
@@ -98,6 +115,7 @@ public class UserService {
     public UserResponseDTO updateUserDetails(Long userId, UserUpdateRequestDTO request) {
 
         validateUserAccess(userId);
+        String timeZone = request.getTimeZone() == null ? null : validateTimeZone(request.getTimeZone());
 
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -117,8 +135,8 @@ public class UserService {
             user.setEmail(request.getEmail());
         }
 
-        if (request.getTimeZone() != null) {
-            user.setTimeZone(request.getTimeZone());
+        if (timeZone != null) {
+            user.setTimeZone(timeZone);
         }
 
         User updatedUser = userRepository.save(user);
