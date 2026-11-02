@@ -36,24 +36,28 @@ function Goals(){
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const pageParam = Number(searchParams.get("page")?? "0");
-    const page = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam: 0;
+    const pageParam = Number(searchParams.get("page") ?? "0");
+    const page = Number.isSafeInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
+    const sizeParam = Number(searchParams.get("size") ?? "10");
+    const size = [10, 25, 50, 100].includes(sizeParam) ? sizeParam : 10;
 
-    function goToPreviousPage(){
-        if (page<= 0){
-            return;
-        }
-        setSearchParams({
-            page:String(page-1)
+    function changePage(nextPage: number) {
+        if (nextPage < 0 || (nextPage > 0 && goalPage && nextPage >= goalPage.totalPages)) return;
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (nextPage === 0) next.delete("page");
+            else next.set("page", String(nextPage));
+            return next;
         });
     }
-    function goToNextPage(){
-        if (!goalPage||goalPage.last){
-            return;
-        }
-        setSearchParams({
-            page : String(page+1)
-        })
+
+    function changeSize(nextSize: number) {
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set("size", String(nextSize));
+            next.delete("page");
+            return next;
+        });
     }
     async function handleCreateGoal(goal: GoalRequest) {
         if (!currentUser) {
@@ -68,14 +72,12 @@ function Goals(){
 
             if (page === 0) {
 
-                const updatedGoals = await getGoals( currentUser.id, 0, 10);
+                const updatedGoals = await getGoals(currentUser.id, 0, size);
                 setGoalPage(updatedGoals);
 
             } else {
 
-                setSearchParams({
-                    page: "0"
-                });
+                changePage(0);
             }
 
 
@@ -107,7 +109,7 @@ function Goals(){
                 setLoading(true);
                 setError(null);
 
-                const response = await getGoals(id,page,10,controller.signal);
+                const response = await getGoals(id, page, size, controller.signal);
                 setGoalPage(response);
 
             } catch {
@@ -132,7 +134,7 @@ function Goals(){
             controller.abort();
         };
 
-    }, [userId, page]);
+    }, [userId, page, size]);
 
     if (!currentUser) {
         return <p>Please log in to view your goals.</p>;
@@ -248,8 +250,12 @@ return(
                     totalPages={goalPage.totalPages}
                     first={goalPage.first}
                     last={goalPage.last}
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
+                    onPrevious={() => changePage(page - 1)}
+                    onNext={() => changePage(page + 1)}
+                    onPageChange={changePage}
+                    size={size}
+                    totalElements={goalPage.totalElements}
+                    onPageSizeChange={changeSize}
                 />
             )}
         </section>
