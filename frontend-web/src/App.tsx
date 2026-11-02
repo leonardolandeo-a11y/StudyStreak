@@ -25,6 +25,7 @@ const NotFound = lazy(()=> import("./pages/NotFound"));
 
 const Goals = lazy(()=>import ("./pages/Goals"));
 const GoalDetails = lazy(() =>import ("./pages/GoalDetails"));
+const Resources = lazy(() => import("./pages/Resources"));
 
 const DailyRecords = lazy(()=>import("./pages/DailyRecords"));
 const DailyRecordDetails = lazy(()=>import ("./pages/DailyRecordDetails"));
@@ -64,6 +65,7 @@ function App(){
           >
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>
             <Route path= {ROUTES.goals} element = {<Goals></Goals>}></Route>
+            <Route path={ROUTES.resources} element={<Resources />}></Route>
             <Route path={ROUTE_PATTERNS.goalDetails} element={<GoalDetails></GoalDetails>}></Route>
             <Route path={ROUTE_PATTERNS.dailyRecords} element={<DailyRecords></DailyRecords>}></Route>
             <Route path={ROUTE_PATTERNS.dailyRecordDetails} element={<DailyRecordDetails></DailyRecordDetails>}></Route>
