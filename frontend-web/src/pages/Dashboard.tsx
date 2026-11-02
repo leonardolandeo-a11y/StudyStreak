@@ -117,7 +117,7 @@ function Dashboard() {
                         </div>
                         <Target size={23} className="shrink-0 text-sky-400" />
                     </div>
-                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <Link to={ROUTES.goals} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
                             <p className="font-medium text-slate-100">1. Create a goal</p>
                             <p className="mt-1 text-sm text-slate-400">Set your study target.</p>
@@ -129,6 +129,10 @@ function Dashboard() {
                         <Link to={ROUTES.validations} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
                             <p className="font-medium text-slate-100">3. Validate</p>
                             <p className="mt-1 text-sm text-slate-400">Support a study partner.</p>
+                        </Link>
+                        <Link to={ROUTES.resources} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
+                            <p className="font-medium text-slate-100">4. Find resources</p>
+                            <p className="mt-1 text-sm text-slate-400">Search books for your study topics.</p>
                         </Link>
                     </div>
                     <Link to={ROUTES.notifications} className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:bg-slate-800/60">
