@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    Check, ChevronDown, Clock3, CloudRain, Disc3, Headphones,
-    MoonStar, Music2, Pause, Piano, Play, RotateCcw,
-    Settings2, Sparkles, Volume2, VolumeX, Waves
+    AudioLines, Check, ChevronDown, Clock3, CloudRain, Coffee, Disc3,
+    Flame, Headphones, MoonStar, Music2, Pause, Piano, Play,
+    Radio, RotateCcw, Settings2, Sparkles, Trees, Volume2,
+    VolumeX, Waves
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
+import { SOUNDSCAPES, SOUND_CATEGORIES, soundscapeById } from "./soundscapes";
+import type { SoundCategory } from "./soundscapes";
 import {
     advancePomodoro,
     durationMs,
@@ -73,35 +76,20 @@ const THEMES: Record<FocusTheme, {
     }
 };
 
-const TRACKS: {
-    id: Soundscape;
-    title: string;
-    kind: string;
-    description: string;
-    color: string;
-}[] = [
-    {
-        id: "dream",
-        title: "Midnight Drift",
-        kind: "Dream pads",
-        description: "Weightless ambient chords for uninterrupted concentration.",
-        color: "from-violet-800 via-indigo-900 to-slate-950"
-    },
-    {
-        id: "keys",
-        title: "Slow Motion",
-        kind: "Soft keys",
-        description: "Warm, delicate keys to find your study rhythm.",
-        color: "from-orange-700 via-rose-900 to-slate-950"
-    },
-    {
-        id: "rain",
-        title: "After the Rain",
-        kind: "Rainfall",
-        description: "A quiet blanket of rain for a clear mind.",
-        color: "from-cyan-800 via-blue-900 to-slate-950"
-    }
-];
+const TRACK_ICONS: Record<Soundscape, typeof MoonStar> = {
+    dream: MoonStar,
+    keys: Piano,
+    classical: Music2,
+    lofi: Disc3,
+    white: Radio,
+    pink: AudioLines,
+    brown: Waves,
+    rain: CloudRain,
+    forest: Trees,
+    ocean: Waves,
+    cafe: Coffee,
+    fireplace: Flame
+};
 
 type DurationField = "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
 
@@ -118,8 +106,8 @@ function TrackArtwork({ track, compact = false }: {
     track: Soundscape;
     compact?: boolean;
 }) {
-    const color = TRACKS.find(item => item.id === track)?.color ?? TRACKS[0].color;
-    const Icon = track === "dream" ? MoonStar : track === "keys" ? Piano : CloudRain;
+    const color = soundscapeById(track).gradient;
+    const Icon = TRACK_ICONS[track];
 
     return (
         <div className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : "aspect-square w-full rounded-2xl"}`}>
@@ -178,6 +166,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
     const [playing, setPlaying] = useState(false);
     const [audioError, setAudioError] = useState<string | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [soundCategory, setSoundCategory] = useState<SoundCategory | "all">("all");
     const audio = useRef<PomodoroAudio | null>(null);
     const notifiedAt = useRef<number | null>(timer.lastCompletedAt);
 
@@ -232,7 +221,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
     const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0;
     const running = timer.endsAt !== null;
     const style = THEMES[timer.preferences.theme];
-    const track = TRACKS.find(item => item.id === timer.preferences.soundscape) ?? TRACKS[0];
+    const track = soundscapeById(timer.preferences.soundscape);
+    const visibleTracks = SOUNDSCAPES.filter(item => soundCategory === "all" || item.category === soundCategory);
     const cycle = timer.focusSessions % 4;
     const remainingLabel = formatPomodoroTime(remaining);
 
@@ -297,7 +287,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <Headphones size={15} aria-hidden="true" /> Your personal listening room
                     </p>
                     <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Focus Studio<span className="text-emerald-400">.</span></h1>
-                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Settle into deep work with a Pomodoro timer and original ambient soundscapes.</p>
+                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Explore instrumental music, color noise and soothing spaces alongside your Pomodoro timer.</p>
                 </div>
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300">
                     <Sparkles size={15} className="text-emerald-400" aria-hidden="true" />
@@ -491,12 +481,26 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                         <h2 className="text-2xl font-extrabold tracking-tight text-white">Made for your focus</h2>
-                        <p className="mt-1 text-sm text-slate-400">Pick a soundscape to play. Each mix is generated right in your browser.</p>
+                        <p className="mt-1 text-sm text-slate-400">Original instrumentals, noise colors and nature atmospheres. No streaming needed.</p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500"><Waves size={16} aria-hidden="true" /> 3 original soundscapes</div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500"><Waves size={16} aria-hidden="true" /> {SOUNDSCAPES.length} original soundscapes</div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                    {TRACKS.map((item, index) => {
+                <div className="flex flex-wrap gap-2" aria-label="Filter study sounds by category">
+                    {SOUND_CATEGORIES.map(category => (
+                        <button key={category.id} type="button"
+                            onClick={() => setSoundCategory(category.id)}
+                            aria-pressed={soundCategory === category.id}
+                            className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                                soundCategory === category.id
+                                    ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200"
+                                    : "border-white/10 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white"
+                            }`}>
+                            {category.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {visibleTracks.map((item) => {
                         const selected = timer.preferences.soundscape === item.id;
                         return (
                             <button type="button" key={item.id} onClick={() => void chooseTrack(item.id)}
@@ -512,7 +516,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                     </span>
                                 </div>
                                 <div className="mt-4 flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+                                    <span className="text-xs font-semibold text-slate-500">{String(SOUNDSCAPES.findIndex(sound => sound.id === item.id) + 1).padStart(2, "0")}</span>
                                     <h3 className="truncate text-base font-bold text-white">{item.title}</h3>
                                     {selected && <Check size={15} className="ml-auto shrink-0 text-emerald-400" aria-label="Selected" />}
                                 </div>
@@ -526,7 +530,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
 
             <p className="flex items-center gap-2 border-t border-white/10 pt-5 text-xs text-slate-500">
                 <Headphones size={15} aria-hidden="true" />
-                Timer and preferences are saved in this browser. Music stops when you leave Focus Studio; your timer keeps its time.
+                Audio is generated locally and plays without ads. Choose a low volume; some tasks are easier in silence. Timer and preferences remain saved in this browser.
             </p>
         </div>
     );
