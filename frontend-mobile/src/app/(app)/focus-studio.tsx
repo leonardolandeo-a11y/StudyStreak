@@ -191,6 +191,8 @@ export default function FocusStudioMobile() {
   }, [selectionKey, selectionReady, selectedGoalId]);
 
   useFocusEffect(useCallback(() => {
+    // The revision dependency intentionally starts a new request after tapping Retry.
+    void goalsRevision;
     const controller = new AbortController();
     void Promise.resolve().then(async () => {
       if (userId == null || controller.signal.aborted) return;
@@ -209,6 +211,8 @@ export default function FocusStudioMobile() {
   }, [userId, goalsRevision]));
 
   useFocusEffect(useCallback(() => {
+    // Re-fetch on successful sync even when the selected Goal remains unchanged.
+    void syncRevision;
     if (!selectionReady || selectedGoalId === null) return;
     const controller = new AbortController();
     void getMobileFocusSummary(selectedGoalId, controller.signal).then(data => {
