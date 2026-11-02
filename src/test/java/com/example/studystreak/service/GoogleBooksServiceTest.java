@@ -62,6 +62,24 @@ class GoogleBooksServiceTest {
     }
 
     @Test
+    void upstreamAuthFailuresIndicateConfigurationInsteadOfTemporaryOutage() {
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE,
+                GoogleBooksService.classifyUpstreamFailure(403).getStatus());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE,
+                GoogleBooksService.classifyUpstreamFailure(401).getStatus());
+    }
+
+    @Test
+    void quotaAndTransientErrorsKeepDistinctStatuses() {
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS,
+                GoogleBooksService.classifyUpstreamFailure(429).getStatus());
+        assertEquals(HttpStatus.BAD_GATEWAY,
+                GoogleBooksService.classifyUpstreamFailure(503).getStatus());
+        assertEquals(HttpStatus.BAD_GATEWAY,
+                GoogleBooksService.classifyUpstreamFailure(400).getStatus());
+    }
+
+    @Test
     void validationRejectsInvalidSearch() {
         assertThrows(IllegalArgumentException.class, () -> service.search("x"));
     }
