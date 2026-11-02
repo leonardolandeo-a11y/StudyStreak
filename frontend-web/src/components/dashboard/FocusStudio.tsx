@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import {
-    AudioLines, Check, ChevronDown, Clock3, CloudRain, Coffee, Disc3,
+    AudioLines, BookOpen, Check, ChevronDown, Clock3, CloudRain, Coffee, Disc3,
     Flame, Headphones, MoonStar, Music2, Pause, Piano, Play,
     Radio, RotateCcw, Settings2, Sparkles, Trees, Volume2,
     VolumeX, Waves
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
+import { Link, useSearchParams } from "react-router-dom";
+import { getAllActiveGoals } from "../../services/activeGoalsService";
+import { getFocusSummary, recordFocusCompletion } from "../../services/focusSessionService";
+import type { FocusSummary } from "../../services/focusSessionService";
+import { ROUTES, goalDetailsPath } from "../../routes/paths";
+import type { Goal } from "../../types/goal";
 import { SOUNDSCAPES, SOUND_CATEGORIES, soundscapeById } from "./soundscapes";
 import type { SoundCategory } from "./soundscapes";
 import {
     advancePomodoro,
+    discardPendingFocusSession,
     durationMs,
     formatPomodoroTime,
     newPomodoro,
@@ -22,7 +29,7 @@ import {
     updatePomodoroPreferences
 } from "./pomodoroState";
 import type {
-    FocusTheme, PomodoroMode, PomodoroPreferences,
+    CompletedFocusSession, FocusTheme, PomodoroMode, PomodoroPreferences,
     PomodoroState, Soundscape
 } from "./pomodoroState";
 
@@ -93,6 +100,16 @@ const TRACK_ICONS: Record<Soundscape, typeof MoonStar> = {
 
 type DurationField = "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
 
+function readSelectedGoal(key: string): number | null {
+    try {
+        const raw = window.localStorage.getItem(key);
+        const id = raw ? Number(raw) : null;
+        return id !== null && Number.isSafeInteger(id) && id > 0 ? id : null;
+    } catch {
+        return null;
+    }
+}
+
 function readSavedTimer(key: string): PomodoroState {
     try {
         const saved = window.localStorage.getItem(key);
@@ -161,12 +178,27 @@ function DurationInput({ label, value, min, max, disabled, onChange }: {
  */
 export default function FocusStudio({ userId }: { userId: number }) {
     const storageKey = `studystreak:focus-studio:v1:${userId}`;
+    const goalKey = `studystreak:focus-studio:goal:v1:${userId}`;
+    const [searchParams] = useSearchParams();
+    const requestedGoalId = Number(searchParams.get("goalId"));
     const [timer, setTimer] = useState<PomodoroState>(() => readSavedTimer(storageKey));
     const [now, setNow] = useState(() => Date.now());
     const [playing, setPlaying] = useState(false);
     const [audioError, setAudioError] = useState<string | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [soundCategory, setSoundCategory] = useState<SoundCategory | "all">("all");
+    const [goals, setGoals] = useState<Goal[]>([]);
+    const [goalsLoading, setGoalsLoading] = useState(true);
+    const [goalsError, setGoalsError] = useState<string | null>(null);
+    const [selectedGoalId, setSelectedGoalId] = useState<number | null>(() =>
+        Number.isSafeInteger(requestedGoalId) && requestedGoalId > 0
+            ? requestedGoalId : readSelectedGoal(goalKey)
+    );
+    const [goalSummary, setGoalSummary] = useState<FocusSummary | null>(null);
+    const [summaryError, setSummaryError] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const inFlight = useRef(new Set<string>());
+    const failed = useRef(new Set<string>());
     const audio = useRef<PomodoroAudio | null>(null);
     const notifiedAt = useRef<number | null>(timer.lastCompletedAt);
 
@@ -174,6 +206,70 @@ export default function FocusStudio({ userId }: { userId: number }) {
         if (!audio.current) audio.current = new PomodoroAudio();
         return audio.current;
     }
+
+    useEffect(() => {
+        const controller = new AbortController();
+        void getAllActiveGoals(userId, controller.signal).then(result => {
+            if (controller.signal.aborted) return;
+            setGoals(result);
+            setGoalsError(null);
+            setSelectedGoalId(previous =>
+                previous !== null && result.some(goal => goal.id === previous) ? previous : null
+            );
+        }).catch(() => {
+            if (!controller.signal.aborted) setGoalsError("Could not load your Goals. Try reloading the page.");
+        }).finally(() => {
+            if (!controller.signal.aborted) setGoalsLoading(false);
+        });
+        return () => controller.abort();
+    }, [userId]);
+
+    useEffect(() => {
+        try {
+            if (selectedGoalId === null) window.localStorage.removeItem(goalKey);
+            else window.localStorage.setItem(goalKey, String(selectedGoalId));
+        } catch {
+            // Browser privacy settings may prevent persistence.
+        }
+    }, [goalKey, selectedGoalId]);
+
+    useEffect(() => {
+        if (selectedGoalId === null) return;
+        const controller = new AbortController();
+        void getFocusSummary(selectedGoalId, controller.signal).then(summary => {
+            if (!controller.signal.aborted) {
+                setGoalSummary(summary);
+                setSummaryError(false);
+            }
+        }).catch(() => {
+            if (!controller.signal.aborted) setSummaryError(true);
+        });
+        return () => controller.abort();
+    }, [selectedGoalId]);
+
+    useEffect(() => {
+        for (const pending of timer.pendingFocusSessions) {
+            if (failed.current.has(pending.sessionId) || inFlight.current.has(pending.sessionId)) {
+                continue;
+            }
+            inFlight.current.add(pending.sessionId);
+            void recordFocusCompletion(pending).then(() => {
+                failed.current.delete(pending.sessionId);
+                setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
+                setSaveError(null);
+                if (selectedGoalId === pending.goalId) {
+                    void getFocusSummary(pending.goalId).then(setGoalSummary).catch(() => {
+                        setSummaryError(true);
+                    });
+                }
+            }).catch(() => {
+                failed.current.add(pending.sessionId);
+                setSaveError("A completed session is pending sync. Retry when the server is available.");
+            }).finally(() => {
+                inFlight.current.delete(pending.sessionId);
+            });
+        }
+    }, [timer.pendingFocusSessions, selectedGoalId]);
 
     useEffect(() => {
         const tick = () => {
@@ -217,6 +313,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }, []);
 
     const remaining = remainingPomodoroMs(timer, now);
+    const chosenGoal = goals.find(goal => goal.id === selectedGoalId);
+    const linkedSession = timer.activeFocusSession;
+    const goalLocked = linkedSession !== null;
+    const pendingSync = timer.pendingFocusSessions.length;
     const total = durationMs(timer.mode, timer.preferences);
     const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0;
     const running = timer.endsAt !== null;
@@ -242,7 +342,17 @@ export default function FocusStudio({ userId }: { userId: number }) {
     function toggleTimer() {
         const current = Date.now();
         setNow(current);
-        setTimer(previous => running ? pausePomodoro(previous, current) : startPomodoro(previous, current));
+        // Snapshot goal + duration at session start; switching tabs or pausing never reassigns minutes.
+        const completion: CompletedFocusSession | null =
+            !running && timer.mode === "focus" && !timer.activeFocusSession && selectedGoalId !== null
+                ? {
+                    sessionId: crypto.randomUUID(),
+                    goalId: selectedGoalId,
+                    durationMinutes: timer.preferences.focusMinutes
+                }
+                : null;
+        setTimer(previous => running ? pausePomodoro(previous, current)
+            : startPomodoro(previous, current, completion));
         if (timer.preferences.soundEffects) {
             void getAudio().cue(running ? "pause" : "start", timer.preferences.volume);
         }
@@ -272,6 +382,13 @@ export default function FocusStudio({ userId }: { userId: number }) {
         const started = await getAudio().start(selected, timer.preferences.volume);
         setPlaying(started);
         if (!started) setAudioError("Audio playback is unavailable. Check your browser audio settings.");
+    }
+
+    function retryPending() {
+        failed.current.clear();
+        setSaveError(null);
+        // Give React a fresh queue reference to trigger the sync effect.
+        setTimer(previous => ({ ...previous, pendingFocusSessions: [...previous.pendingFocusSessions] }));
     }
 
     function changeVolume(value: number) {
@@ -330,6 +447,84 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
                             {running ? "● In progress" : "Ready to begin"}
                         </span>
+                    </div>
+
+                    <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-950/20 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                    <BookOpen size={16} className="text-emerald-300" aria-hidden="true" />
+                                    Study toward a Goal
+                                </p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    A completed focus interval adds its full minutes to your selected Goal.
+                                </p>
+                            </div>
+                            <Link to={ROUTES.goals} className="shrink-0 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
+                                My Goals
+                            </Link>
+                        </div>
+                        <label htmlFor="focus-goal-select" className="mt-4 block text-xs font-semibold text-slate-300">
+                            Link this focus session
+                        </label>
+                        <select id="focus-goal-select"
+                            value={selectedGoalId ?? ""}
+                            disabled={goalsLoading || goalLocked}
+                            onChange={event => {
+                                setSelectedGoalId(event.target.value ? Number(event.target.value) : null);
+                                setGoalSummary(null);
+                                setSummaryError(false);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                            <option value="">No Goal — timer only</option>
+                            {goals.map(goal => (
+                                <option key={goal.id} value={goal.id}>{goal.topic}</option>
+                            ))}
+                        </select>
+                        {goalsLoading && <p className="mt-2 text-xs text-slate-400">Loading Goals…</p>}
+                        {goalsError && <p role="alert" className="mt-2 text-xs text-rose-300">{goalsError}</p>}
+                        {!goalsLoading && !goalsError && goals.length === 0 && (
+                            <p className="mt-2 text-xs text-slate-400">No active Goals yet. Create one to track focus time.</p>
+                        )}
+                        {goalLocked && (
+                            <p className="mt-2 text-xs text-emerald-300">
+                                This session is linked to its original Goal until you complete or reset it.
+                            </p>
+                        )}
+                        {chosenGoal && (
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-xs text-slate-300">
+                                    Recorded: <strong className="text-emerald-300">
+                                        {goalSummary?.goalId === selectedGoalId
+                                            ? `${goalSummary.totalMinutes} min / ${goalSummary.completedSessions} sessions`
+                                            : summaryError ? "Unavailable" : "Loading…"}
+                                    </strong>
+                                </p>
+                                <Link to={goalDetailsPath(chosenGoal.id)}
+                                    className="text-xs font-semibold text-emerald-300 hover:underline">
+                                    Goal details
+                                </Link>
+                            </div>
+                        )}
+                        {!chosenGoal && !goalsLoading && (
+                            <p className="mt-2 text-xs text-amber-200/80">
+                                Pomodoro still works, but unlinked focus time is not recorded.
+                            </p>
+                        )}
+                        {pendingSync > 0 && (
+                            <p className="mt-3 text-xs font-semibold text-amber-200">
+                                {pendingSync} completed {pendingSync === 1 ? "session" : "sessions"} waiting to sync.
+                            </p>
+                        )}
+                        {saveError && (
+                            <div role="alert" className="mt-3 flex flex-wrap items-center gap-3">
+                                <span className="text-xs text-rose-300">{saveError}</span>
+                                <button type="button" onClick={retryPending}
+                                    className="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-950/40">
+                                    Retry sync
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1" aria-label="Session type">
