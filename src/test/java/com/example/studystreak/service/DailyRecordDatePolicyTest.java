@@ -56,6 +56,7 @@ class DailyRecordDatePolicyTest {
         when(mapper.map(request, DailyRecord.class)).thenReturn(mapped);
         when(records.save(mapped)).thenReturn(saved);
         when(saved.getId()).thenReturn(22L);
+        when(saved.getGoal()).thenReturn(goal);
         when(mapper.map(saved, DailyRecordResponseDTO.class)).thenReturn(mock(DailyRecordResponseDTO.class));
 
         service().createDailyRecord(7L, request);
