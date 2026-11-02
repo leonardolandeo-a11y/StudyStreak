@@ -122,14 +122,14 @@ function TrackArtwork({ track, compact = false }: {
     const Icon = track === "dream" ? MoonStar : track === "keys" ? Piano : CloudRain;
 
     return (
-        <div className={\`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br \${color} \${compact ? "h-14 w-14 rounded-lg" : "aspect-square w-full rounded-2xl"}\`}>
+        <div className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : "aspect-square w-full rounded-2xl"}`}>
             <div aria-hidden="true" className="absolute -right-1/4 -top-1/4 h-3/4 w-3/4 rounded-full bg-white/10 blur-2xl" />
-            <div aria-hidden="true" className={\`absolute rounded-full border border-white/20 bg-slate-950/25 shadow-2xl shadow-black/30 \${compact ? "h-11 w-11" : "h-[70%] w-[70%]"}\`}>
+            <div aria-hidden="true" className={`absolute rounded-full border border-white/20 bg-slate-950/25 shadow-2xl shadow-black/30 ${compact ? "h-11 w-11" : "h-[70%] w-[70%]"}`}>
                 <div className="absolute inset-[13%] rounded-full border border-white/15" />
                 <div className="absolute inset-[27%] rounded-full border border-white/10" />
                 <div className="absolute inset-[42%] rounded-full border border-white/20 bg-white/15" />
             </div>
-            <Icon aria-hidden="true" className={\`relative drop-shadow-lg \${compact ? "h-5 w-5" : "h-16 w-16 sm:h-20 sm:w-20"}\`} strokeWidth={1.25} />
+            <Icon aria-hidden="true" className={`relative drop-shadow-lg ${compact ? "h-5 w-5" : "h-16 w-16 sm:h-20 sm:w-20"}`} strokeWidth={1.25} />
             {!compact && <span className="absolute bottom-4 left-5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/60">STUDYSTREAK ORIGINALS</span>}
         </div>
     );
@@ -172,7 +172,7 @@ function DurationInput({ label, value, min, max, disabled, onChange }: {
  * Time is wall-clock based and persists locally per user; audio only starts after a click.
  */
 export default function FocusStudio({ userId }: { userId: number }) {
-    const storageKey = \`studystreak:focus-studio:v1:\${userId}\`;
+    const storageKey = `studystreak:focus-studio:v1:${userId}`;
     const [timer, setTimer] = useState<PomodoroState>(() => readSavedTimer(storageKey));
     const [now, setNow] = useState(() => Date.now());
     const [playing, setPlaying] = useState(false);
@@ -237,7 +237,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
     const remainingLabel = formatPomodoroTime(remaining);
 
     useEffect(() => {
-        document.title = \`\${remainingLabel} • Focus Studio | StudyStreak\`;
+        document.title = `${remainingLabel} • Focus Studio | StudyStreak`;
     }, [remainingLabel]);
 
     function changePreferences(changes: Partial<PomodoroPreferences>) {
@@ -300,12 +300,12 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 </div>
             </header>
 
-            <section aria-label="Featured focus mix" className={\`relative isolate overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br \${style.background} p-5 sm:p-8\`}>
-                <div aria-hidden="true" className={\`pointer-events-none absolute -right-20 -top-32 h-96 w-96 rounded-full blur-[80px] \${style.tint}\`} />
+            <section aria-label="Featured focus mix" className={`relative isolate overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br ${style.background} p-5 sm:p-8`}>
+                <div aria-hidden="true" className={`pointer-events-none absolute -right-20 -top-32 h-96 w-96 rounded-full blur-[80px] ${style.tint}`} />
                 <div className="relative grid items-center gap-6 sm:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
                     <TrackArtwork track={timer.preferences.soundscape} />
                     <div className="min-w-0">
-                        <p className={\`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] \${style.accent}\`}>
+                        <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] ${style.accent}`}>
                             <Disc3 size={16} aria-hidden="true" /> YOUR FOCUS MIX
                         </p>
                         <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">Get in the zone.</h2>
@@ -313,7 +313,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                             <button type="button" onClick={() => void toggleAudio()}
                                 aria-label={playing ? "Pause ambient audio" : "Play ambient audio"}
-                                className={\`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-lg shadow-black/20 \${style.strong}\`}>
+                                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-lg shadow-black/20 ${style.strong}`}>
                                 {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
                                 {playing ? "Pause mix" : "Play mix"}
                             </button>
@@ -332,7 +332,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             </p>
                             <p className="mt-1 text-xs text-slate-400">One task. One session. No distractions.</p>
                         </div>
-                        <span className={\`rounded-full border px-3 py-1.5 text-[11px] font-semibold \${style.selected}\`}>
+                        <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
                             {running ? "● In progress" : "Ready to begin"}
                         </span>
                     </div>
@@ -342,9 +342,9 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             <button type="button" key={mode.id} disabled={running}
                                 aria-pressed={timer.mode === mode.id}
                                 onClick={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
-                                className={\`min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm \${
+                                className={`min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm ${
                                     timer.mode === mode.id ? style.selected : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
-                                }\`}>
+                                }`}>
                                 {mode.label}
                             </button>
                         ))}
@@ -358,7 +358,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 className="transition-[stroke-dashoffset] duration-500" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <p className={\`text-[11px] font-bold uppercase tracking-[0.28em] \${style.accent}\`}>
+                            <p className={`text-[11px] font-bold uppercase tracking-[0.28em] ${style.accent}`}>
                                 {timer.mode === "focus" ? "DEEP WORK" : "TAKE A BREATH"}
                             </p>
                             <span role="timer" aria-live="off" aria-label={remainingLabel + " remaining"}
@@ -369,7 +369,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
 
                     <div className="mx-auto mt-2 flex max-w-sm items-center gap-3">
                         <button type="button" onClick={toggleTimer}
-                            className={\`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold \${style.strong}\`}>
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold ${style.strong}`}>
                             {running ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
                             {running ? "Pause timer" : remaining < total ? "Resume session" : timer.mode === "focus" ? "Start focusing" : "Start break"}
                         </button>
@@ -383,11 +383,11 @@ export default function FocusStudio({ userId }: { userId: number }) {
                     <p aria-live="polite" className="mt-5 text-center text-sm text-slate-400">
                         {timer.mode === "focus" ? "Stay curious. Small steps add up." : "Recharge now. Come back refreshed."}
                     </p>
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label={\`\${cycle} of 4 sessions until your next long break\`}>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>
                         {[0, 1, 2, 3].map(index => (
-                            <span key={index} className={\`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] \${
+                            <span key={index} className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
                                 index < cycle ? style.selected : "border-white/10 bg-white/5 text-slate-500"
-                            }\`}>
+                            }`}>
                                 {index < cycle ? <Check size={13} aria-hidden="true" /> : index + 1}
                             </span>
                         ))}
@@ -402,7 +402,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 <Music2 size={18} className={style.accent} aria-hidden="true" /> Now playing
                             </p>
                             <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-                                <span className={\`h-2 w-2 rounded-full \${playing ? "animate-pulse bg-emerald-400" : "bg-slate-600"}\`} />
+                                <span className={`h-2 w-2 rounded-full ${playing ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`} />
                                 {playing ? "Live" : "Paused"}
                             </span>
                         </div>
@@ -416,7 +416,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <div className="mt-5 flex items-center justify-center gap-5 border-b border-white/10 pb-5">
                             <button type="button" onClick={() => void toggleAudio()}
                                 aria-label={playing ? "Pause soundscape" : "Play soundscape"}
-                                className={\`flex h-12 w-12 items-center justify-center rounded-full transition hover:scale-105 \${style.strong}\`}>
+                                className={`flex h-12 w-12 items-center justify-center rounded-full transition hover:scale-105 ${style.strong}`}>
                                 {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
                             </button>
                             <span className="text-xs text-slate-400">Original audio · No ads · No streaming</span>
@@ -457,12 +457,12 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             {(["aurora", "sunset", "ocean"] as const).map(theme => (
                                 <button key={theme} type="button" aria-pressed={timer.preferences.theme === theme}
                                     onClick={() => changePreferences({ theme })}
-                                    className={\`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold \${
+                                    className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
                                         timer.preferences.theme === theme
                                             ? style.selected
                                             : "border-white/10 bg-white/5 text-slate-400 hover:text-white"
-                                    }\`}>
-                                    <span className={\`h-2.5 w-2.5 rounded-full \${THEMES[theme].swatch}\`} />
+                                    }`}>
+                                    <span className={`h-2.5 w-2.5 rounded-full ${THEMES[theme].swatch}`} />
                                     {THEMES[theme].label}
                                 </button>
                             ))}
@@ -496,10 +496,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         return (
                             <button type="button" key={item.id} onClick={() => void chooseTrack(item.id)}
                                 aria-pressed={selected}
-                                aria-label={\`Play \${item.title}, \${item.kind}\`}
-                                className={\`group min-w-0 rounded-2xl border p-4 text-left transition hover:-translate-y-1 hover:bg-white/[0.075] \${
+                                aria-label={`Play ${item.title}, ${item.kind}`}
+                                className={`group min-w-0 rounded-2xl border p-4 text-left transition hover:-translate-y-1 hover:bg-white/[0.075] ${
                                     selected ? "border-emerald-400/50 bg-emerald-400/[0.06]" : "border-white/10 bg-[#151c25]"
-                                }\`}>
+                                }`}>
                                 <div className="relative">
                                     <TrackArtwork track={item.id} />
                                     <span className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-400 text-slate-950 shadow-lg shadow-black/30 transition group-hover:scale-110">
