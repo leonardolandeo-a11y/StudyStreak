@@ -21,13 +21,15 @@ class DashboardServiceTest {
     private final StreakRepository streakRepository = mock(StreakRepository.class);
     private final DailyRecordRepository dailyRecordRepository = mock(DailyRecordRepository.class);
     private final ValidationRepository validationRepository = mock(ValidationRepository.class);
+    private final StreakService streakService = mock(StreakService.class);
 
     private final DashboardService service = new DashboardService(
             currentUserService,
             goalRepository,
             streakRepository,
             dailyRecordRepository,
-            validationRepository
+            validationRepository,
+            streakService
     );
 
     @Test
@@ -44,7 +46,12 @@ class DashboardServiceTest {
 
     @Test
     void findsHighestStreaks() {
-        when(currentUserService.getCurrentUserId()).thenReturn(9L);
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(9L);
+        when(user.getTimeZone()).thenReturn("America/Lima");
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        LocalDate today = StudyDatePolicy.today(user);
+        when(goalRepository.findGoalsWithOutdatedStreaks(9L, today)).thenReturn(java.util.List.of(3L));
         when(streakRepository.findHighestCurrentStreak(9L)).thenReturn(6);
         when(streakRepository.findHighestBestStreak(9L)).thenReturn(12);
 
@@ -52,6 +59,7 @@ class DashboardServiceTest {
 
         assertEquals(6, result.current());
         assertEquals(12, result.best());
+        org.mockito.Mockito.verify(streakService).recalculateStreak(3L);
     }
 
     @Test

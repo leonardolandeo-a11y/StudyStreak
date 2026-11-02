@@ -12,10 +12,7 @@ import com.example.studystreak.repository.ValidationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 
 @Service
 @Transactional(readOnly = true)
@@ -26,19 +23,22 @@ public class DashboardService {
     private final StreakRepository streakRepository;
     private final DailyRecordRepository dailyRecordRepository;
     private final ValidationRepository validationRepository;
+    private final StreakService streakService;
 
     public DashboardService(
             CurrentUserService currentUserService,
             GoalRepository goalRepository,
             StreakRepository streakRepository,
             DailyRecordRepository dailyRecordRepository,
-            ValidationRepository validationRepository
+            ValidationRepository validationRepository,
+            StreakService streakService
     ) {
         this.currentUserService = currentUserService;
         this.goalRepository = goalRepository;
         this.streakRepository = streakRepository;
         this.dailyRecordRepository = dailyRecordRepository;
         this.validationRepository = validationRepository;
+        this.streakService = streakService;
     }
 
     public GoalSummaryDTO getGoalSummary() {
@@ -48,8 +48,14 @@ public class DashboardService {
         return new GoalSummaryDTO(total - completed, completed);
     }
 
+    @Transactional
     public StreakSummaryDTO getStreakSummary() {
-        Long userId = currentUserService.getCurrentUserId();
+        User user = currentUserService.getCurrentUser();
+        Long userId = user.getId();
+        LocalDate today = StudyDatePolicy.today(user);
+        for (Long goalId : goalRepository.findGoalsWithOutdatedStreaks(userId, today)) {
+            streakService.recalculateStreak(goalId);
+        }
         return new StreakSummaryDTO(
                 streakRepository.findHighestCurrentStreak(userId),
                 streakRepository.findHighestBestStreak(userId)
@@ -58,15 +64,7 @@ public class DashboardService {
 
     public RecordSummaryDTO getRecordSummary() {
         User user = currentUserService.getCurrentUser();
-        ZoneId zone = ZoneOffset.UTC;
-        try {
-            if (user.getTimeZone() != null) {
-                zone = ZoneId.of(user.getTimeZone());
-            }
-        } catch (DateTimeException ignored) {
-            zone = ZoneOffset.UTC;
-        }
-        LocalDate today = LocalDate.now(zone);
+        LocalDate today = StudyDatePolicy.today(user);
         return new RecordSummaryDTO(
                 dailyRecordRepository.countByGoal_User_IdAndDateBetween(
                         user.getId(), today.minusDays(6), today

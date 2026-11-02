@@ -87,21 +87,15 @@ public class StreakService {
      * Solo el dueño del Goal puede consultar su racha
      * mediante este endpoint.
      */
+    @Transactional
     public StreakDTO getGoalStreak(Long goalId) {
+        Goal goal = getOwnedGoal(goalId);
+        LocalDate today = StudyDatePolicy.today(goal.getUser());
 
-        getOwnedGoal(goalId);
-
-        return streakRepository
-                .findByGoalId(goalId)
-                .map(streak ->
-                        modelMapper.map(
-                                streak,
-                                StreakDTO.class
-                        )
-                )
-                .orElseGet(() ->
-                        recalculateStreak(goalId)
-                );
+        return streakRepository.findByGoalId(goalId)
+                .filter(streak -> today.equals(streak.getLastUpdateDate()))
+                .map(streak -> modelMapper.map(streak, StreakDTO.class))
+                .orElseGet(() -> recalculateStreak(goalId));
     }
 
 
@@ -145,11 +139,10 @@ public class StreakService {
                         )
                 );
 
-        List<LocalDate> approvedDates =
-                getApprovedDates(goalId);
+        LocalDate today = StudyDatePolicy.today(goal.getUser());
+        List<LocalDate> approvedDates = getApprovedDates(goalId, today);
 
-        int currentStreak =
-                calculateCurrentStreak(approvedDates);
+        int currentStreak = calculateCurrentStreak(approvedDates, today);
 
         int bestStreak =
                 calculateBestStreak(approvedDates);
@@ -168,7 +161,7 @@ public class StreakService {
 
         streak.setCurrentStreak(currentStreak);
         streak.setBestStreak(bestStreak);
-        streak.setLastUpdateDate(LocalDate.now());
+        streak.setLastUpdateDate(today);
 
         streak = streakRepository.save(streak);
 
@@ -186,13 +179,10 @@ public class StreakService {
      * - tengan Validation
      * - hayan sido aprobadas
      */
-    private List<LocalDate> getApprovedDates(Long goalId) {
+    private List<LocalDate> getApprovedDates(Long goalId, LocalDate today) {
 
         List<DailyRecord> dailyRecords =
                 dailyRecordRepository.findByGoalId(goalId);
-
-        LocalDate today =
-                LocalDate.now();
 
         return dailyRecords.stream()
                 .filter(record ->
@@ -250,16 +240,8 @@ public class StreakService {
     }
 
 
-    private int calculateCurrentStreak(
-            List<LocalDate> dates
-    ) {
-
-        if (dates.isEmpty()) {
-            return 0;
-        }
-
-        LocalDate today =
-                LocalDate.now();
+    private int calculateCurrentStreak(List<LocalDate> dates, LocalDate today) {
+        if (dates.isEmpty()) return 0;
 
         LocalDate lastDate =
                 dates.get(dates.size() - 1);

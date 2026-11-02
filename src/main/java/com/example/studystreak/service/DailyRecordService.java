@@ -19,9 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import com.example.studystreak.model.TrackingLink;
 import com.example.studystreak.model.TrackingStatus;
 import com.example.studystreak.repository.TrackingLinkRepository;
@@ -141,16 +139,7 @@ public class DailyRecordService {
 
     // The record date is assigned by the server, never trusted from the client.
     private LocalDate currentStudyDate(Goal goal) {
-        ZoneId zone = ZoneId.of("America/Lima");
-        try {
-            String configuredZone = goal.getUser().getTimeZone();
-            if (configuredZone != null && !configuredZone.isBlank()) {
-                zone = ZoneId.of(configuredZone);
-            }
-        } catch (DateTimeException ignored) {
-            // Missing or invalid zone falls back to the application's Lima timezone.
-        }
-        return LocalDate.now(zone);
+        return StudyDatePolicy.today(goal.getUser());
     }
 
     @Transactional
