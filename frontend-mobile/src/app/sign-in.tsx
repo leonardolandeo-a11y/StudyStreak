@@ -10,7 +10,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { palette } from '../constants/palette';
 
 export default function SignIn() {
-  const { signIn } = useAuth();
+  const { signIn, isLoading, sessionRestoreError, retrySession } = useAuth();
   const { registered } = useLocalSearchParams<{ registered?: string }>();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -44,6 +44,12 @@ export default function SignIn() {
           secureTextEntry autoComplete="current-password" editable={!busy} />
         {registered === '1' ? <StatusMessage message="Account created. Sign in to continue." /> : null}
         {error ? <StatusMessage error message={error} /> : null}
+        {sessionRestoreError ? (
+          <View style={styles.recovery}>
+            <StatusMessage error message="Cannot restore your previous session. Check your connection and retry, or sign in again." />
+            <ActionButton title="Retry previous session" onPress={() => { void retrySession(); }} busy={isLoading} />
+          </View>
+        ) : null}
         <ActionButton title="Sign in" onPress={() => { void submit(); }} busy={busy} />
       </View>
       <Text style={styles.footer}>New to StudyStreak? <Link href="/sign-up" style={styles.link}>Create an account</Link></Text>
@@ -58,6 +64,7 @@ const styles = StyleSheet.create({
   description: { color: palette.muted, fontSize: 15, lineHeight: 23 },
   card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border,
     padding: 20, borderRadius: 18, gap: 18 },
+  recovery: { gap: 10 },
   footer: { textAlign: 'center', color: palette.muted, lineHeight: 22 },
   link: { color: palette.primary, fontWeight: '700' },
 });

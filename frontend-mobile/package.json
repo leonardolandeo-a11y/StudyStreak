@@ -45,7 +45,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test:auth": "node --experimental-strip-types --test tests/authSession.test.mjs tests/jwt.test.mjs"
   },
   "private": true
 }

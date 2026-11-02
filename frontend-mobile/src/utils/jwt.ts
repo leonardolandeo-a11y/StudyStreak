@@ -35,9 +35,9 @@ export function getUserFromToken(token: string): AuthenticatedUser | null {
     const pieces = token.split('.');
     if (pieces.length !== 3) return null;
     const payload = JSON.parse(decodeBase64Url(pieces[1])) as JwtPayload;
-    if (payload.type !== 'access' || typeof payload.exp !== 'number') return null;
+    if (payload.type !== 'access' || typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) return null;
     if (payload.exp * 1000 <= Date.now() + 15_000) return null;
-    if (typeof payload.userId !== 'number' || !Number.isSafeInteger(payload.userId)) return null;
+    if (typeof payload.userId !== 'number' || !Number.isSafeInteger(payload.userId) || payload.userId <= 0) return null;
     if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') return null;
     if (payload.role !== 'USER' && payload.role !== 'ADMIN') return null;
     return { id: payload.userId, username: payload.sub, email: payload.email, role: payload.role };

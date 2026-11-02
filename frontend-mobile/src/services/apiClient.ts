@@ -5,6 +5,8 @@ import {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { tokenStorage } from './tokenStorage';
+import { isSessionRejection, notifySessionExpired } from './authSession';
+import { getUserFromToken } from '../utils/jwt';
 import type { LoginResponse } from '../types/auth';
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
@@ -34,15 +36,28 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const original = error.config as RetryConfig | undefined;
-    const isAuthEndpoint = /^\/(login|register|refresh)(\?|$)/.test(original?.url ?? '');
+    const isAuthEndpoint = /^\/(login|register|refresh|logout)(\?|$)/.test(original?.url ?? '');
 
-    if (error.response?.status !== 401 || !original || original._retry || isAuthEndpoint) {
+    if (error.response?.status !== 401 || !original || isAuthEndpoint) {
+      return Promise.reject(error);
+    }
+
+    if (original._retry) {
+      const currentAccess = await tokenStorage.getAccessToken();
+      if (currentAccess && original.headers.get('Authorization') === `Bearer ${currentAccess}`) {
+        await tokenStorage.clear();
+        notifySessionExpired();
+      }
       return Promise.reject(error);
     }
 
     original._retry = true;
     const refreshToken = await tokenStorage.getRefreshToken();
-    if (!refreshToken) return Promise.reject(error);
+    if (!refreshToken) {
+      await tokenStorage.clear();
+      notifySessionExpired();
+      return Promise.reject(error);
+    }
 
     try {
       const currentAccess = await tokenStorage.getAccessToken();
@@ -53,9 +68,11 @@ apiClient.interceptors.response.use(
       }
       if (!refreshTask) {
         refreshTask = create({ timeout: 15000 })
-          .post<LoginResponse>(`${apiBaseUrl}/refresh`, { refreshToken }, { timeout: 15000 })
+          .post<LoginResponse>(`${apiBaseUrl}/refresh`, { refreshToken })
           .then(async (response) => {
-            // Persist before releasing the single-flight promise to other requests.
+            if (!getUserFromToken(response.data.token)) {
+              throw new Error('Invalid access token returned by refresh.');
+            }
             if (await tokenStorage.getRefreshToken() !== refreshToken) {
               throw new Error('Authentication session changed during refresh');
             }
@@ -69,8 +86,10 @@ apiClient.interceptors.response.use(
       original.headers.set('Authorization', `Bearer ${tokens.token}`);
       return apiClient(original);
     } catch (refreshError) {
-      if (isAxiosError(refreshError) && [400, 401, 403].includes(refreshError.response?.status ?? 0)) {
+      if (isAxiosError(refreshError) && isSessionRejection(refreshError.response?.status) &&
+          await tokenStorage.getRefreshToken() === refreshToken) {
         await tokenStorage.clear();
+        notifySessionExpired();
       }
       return Promise.reject(refreshError);
     }
