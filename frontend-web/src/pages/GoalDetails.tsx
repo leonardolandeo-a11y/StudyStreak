@@ -12,6 +12,7 @@ import type { Goal,GoalRequest } from "../types/goal";
 import {
     ROUTES,
     dailyRecordsPath,
+    resourcesPath,
     tagsPath
 } from "../routes/paths";
 
@@ -369,6 +370,21 @@ useEffect(() => {
                     "
                 >
                     Manage Tags
+                </Link>
+
+                <Link
+                    to={resourcesPath(goal.topic)}
+                    className="
+                        rounded-lg
+                        border border-violet-900
+                        bg-violet-950/30
+                        px-4 py-2.5
+                        text-sm font-medium
+                        text-violet-300
+                        hover:bg-violet-950/60
+                    "
+                >
+                    Find Study Books
                 </Link>
 
             </div>
