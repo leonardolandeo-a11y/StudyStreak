@@ -3,6 +3,7 @@ import axios, {
     type InternalAxiosRequestConfig,
 } from "axios";
 import type { LoginResponse } from "../types/auth";
+import { getUserFromToken } from "../utils/jwt";
 import { ROUTES } from "../routes/paths";
 
 const apiClient = axios.create({
@@ -49,6 +50,9 @@ apiClient.interceptors.response.use(
                     if (sessionStorage.getItem("refreshToken") !== refreshToken) {
                         throw new Error("Authentication session changed during refresh");
                     }
+                    if (!getUserFromToken(response.data.token)) {
+                        throw new Error("Invalid access token returned by refresh.");
+                    }
                     sessionStorage.setItem("accessToken", response.data.token);
                     sessionStorage.setItem("refreshToken", response.data.refreshToken);
                     return response.data;
@@ -57,7 +61,8 @@ apiClient.interceptors.response.use(
             await refreshTask;
             return apiClient(original);
         } catch (refreshError) {
-            if (sessionStorage.getItem("refreshToken") === refreshToken) {
+            if (axios.isAxiosError(refreshError) && [400, 401, 403].includes(refreshError.response?.status ?? 0) &&
+                sessionStorage.getItem("refreshToken") === refreshToken) {
                 sessionStorage.removeItem("accessToken");
                 sessionStorage.removeItem("refreshToken");
                 window.location.assign(ROUTES.login);
