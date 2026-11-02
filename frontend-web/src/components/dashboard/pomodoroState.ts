@@ -1,5 +1,5 @@
 export type PomodoroMode = "focus" | "shortBreak" | "longBreak";
-export type Soundscape = "dream" | "keys" | "rain";
+export type Soundscape = "dream" | "keys" | "rain" | "classical" | "lofi" | "white" | "pink" | "brown" | "forest" | "ocean" | "cafe" | "fireplace";
 export type FocusTheme = "aurora" | "sunset" | "ocean";
 
 export interface PomodoroPreferences {
@@ -32,6 +32,11 @@ export const DEFAULT_PREFERENCES: PomodoroPreferences = {
     theme: "aurora"
 };
 
+const SOUND_IDS: readonly Soundscape[] = [
+    "dream", "keys", "rain", "classical", "lofi",
+    "white", "pink", "brown", "forest", "ocean", "cafe", "fireplace"
+];
+
 const LIMITS = {
     focusMinutes: [5, 120],
     shortBreakMinutes: [1, 30],
@@ -54,8 +59,8 @@ export function normalizePreferences(value: unknown): PomodoroPreferences {
         volume: typeof data.volume === "number" && Number.isFinite(data.volume)
             ? Math.min(1, Math.max(0, data.volume)) : 0.3,
         soundEffects: typeof data.soundEffects === "boolean" ? data.soundEffects : true,
-        soundscape: data.soundscape === "keys" || data.soundscape === "rain"
-            ? data.soundscape : "dream",
+        soundscape: SOUND_IDS.includes(data.soundscape as Soundscape)
+            ? data.soundscape as Soundscape : "dream",
         theme: data.theme === "sunset" || data.theme === "ocean"
             ? data.theme : "aurora"
     };
