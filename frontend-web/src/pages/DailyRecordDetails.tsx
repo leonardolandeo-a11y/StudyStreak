@@ -10,8 +10,7 @@ import {
 
 import {
     useParams,
-    useNavigate,
-    useSearchParams
+    useNavigate
 } from "react-router-dom";
 import {
     getDailyRecord,
@@ -44,16 +43,21 @@ import EmptyState
 import { useToast } from "../hooks/useToast";
 import { validationLookupState } from "../utils/validationAccess";
 import { useConfirm } from "../hooks/useConfirm";
+import { useAuth } from "../hooks/useAuth";
+import { recordAccess } from "../utils/recordAccess";
 
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
-    const [searchParams] = useSearchParams();
-    const reviewRequested = searchParams.get('review') === '1';
+    const { currentUser } = useAuth();
     const [reviewSaving, setReviewSaving] = useState(false);
     const [reviewRevision, setReviewRevision] = useState(0);
     const [evidenceRevision, setEvidenceRevision] = useState(0);
 
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
+    // Derive controls from server ownership, never from the ?review query parameter.
+    const access = recordAccess(dailyRecord?.ownerUserId, currentUser?.id);
+    const canEdit = access === "owner";
+    const canReview = access === "reviewer";
 
     const [loading, setLoading] =useState(true);
     const [validation, setValidation] = useState<Validation | null>(null);
@@ -79,7 +83,7 @@ function DailyRecordDetails(){
 
     async function handleUpdateDailyRecord(updatedData: DailyRecordRequest): Promise<boolean> {
 
-        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord) {
+        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord || !canEdit) {
             return false;
         }
 
@@ -109,7 +113,7 @@ function DailyRecordDetails(){
     }
 
     async function handleSubmitReview(request: ValidationRequest): Promise<boolean> {
-        if (parsedGoalId === null || parsedDailyRecordId === null || reviewSaving) return false;
+        if (parsedGoalId === null || parsedDailyRecordId === null || reviewSaving || !canReview) return false;
         setReviewSaving(true);
         setValidationError(null);
         try {
@@ -132,7 +136,7 @@ function DailyRecordDetails(){
 
     async function handleDeleteDailyRecord() {
 
-        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord) {
+        if (parsedGoalId === null ||parsedDailyRecordId === null ||!dailyRecord || !canEdit) {
             return;
         }
 
@@ -193,6 +197,7 @@ function DailyRecordDetails(){
 
                 const response =await getDailyRecord( goalNumber, recordNumber,controller.signal );
 
+                if (controller.signal.aborted) return;
                 setDailyRecord(response);
                 try {
                     const review = await getValidation(goalNumber, recordNumber);
@@ -356,7 +361,7 @@ function DailyRecordDetails(){
                     goalId={parsedGoalId}
                     recordId={dailyRecord.id}
                     available={dailyRecord.photoAvailable}
-                    readOnly={reviewRequested}
+                    readOnly={!canEdit}
                     onChanged={() =>
                         setEvidenceRevision(value => value + 1)
                     }
@@ -366,7 +371,7 @@ function DailyRecordDetails(){
                     goalId={parsedGoalId}
                     recordId={dailyRecord.id}
                     available={dailyRecord.voiceAvailable}
-                    readOnly={reviewRequested}
+                    readOnly={!canEdit}
                     onChanged={() =>
                         setEvidenceRevision(value => value + 1)
                     }
@@ -387,7 +392,7 @@ function DailyRecordDetails(){
                 <p className="mt-3 text-slate-400">{validationError || 'Awaiting peer review.'}</p>
             )}
         </section>
-        {reviewRequested ? (
+        {canReview ? (
             validationError ? (
                 <button type="button" onClick={() => setReviewRevision(value => value + 1)}
                     className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
@@ -401,7 +406,7 @@ function DailyRecordDetails(){
                     } : undefined}
                     submitLabel={validation ? 'Update validation' : 'Review and validate'} resetAfterSubmit={false} />
             )
-        ) : (
+        ) : canEdit ? (
         <>
         <section>
             <DailyRecordForm
@@ -456,6 +461,10 @@ function DailyRecordDetails(){
             </button>
         </section>
         </>
+        ) : (
+            <p className="text-sm text-amber-300" role="status">
+                Record ownership could not be confirmed. Editing and reviewing are unavailable until the backend provides ownerUserId.
+            </p>
         )}
 
     </div>
