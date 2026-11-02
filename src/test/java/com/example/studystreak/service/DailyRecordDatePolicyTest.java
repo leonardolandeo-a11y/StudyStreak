@@ -47,7 +47,7 @@ class DailyRecordDatePolicyTest {
 
     @Test
     void creationAlwaysUsesAccountDateEvenWhenClientSuppliesPastDate() {
-        ownedGoal();
+        Goal goal = ownedGoal();
         DailyRecordRequestDTO request = new DailyRecordRequestDTO();
         request.setDate(LocalDate.of(2020, 1, 1));
         request.setNote("Study session");
