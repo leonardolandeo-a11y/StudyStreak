@@ -37,6 +37,7 @@ import EmptyState
 
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function GoalDetails(){
     const {currentUser} = useAuth();
@@ -59,31 +60,19 @@ function GoalDetails(){
     const parsedGoalId = goalId ? Number(goalId): null;
     const invalidGoalId= parsedGoalId=== null || !Number.isSafeInteger(parsedGoalId) || parsedGoalId<= 0;
     const confirm = useConfirm();
-    async function handleUpdateGoal(updateData: GoalRequest){
-        if (!currentUser|| !goal){
-            return;
-        }
-        try{
-            setUpdating(true);
-            setError(null);
-            const updatedGoal = await updateGoal(
-                currentUser.id,
-                goal.id,
-                updateData
-            );
-
+    async function handleUpdateGoal(updateData: GoalRequest): Promise<boolean> {
+        if (!currentUser || !goal || updating) return false;
+        setUpdating(true);
+        setError(null);
+        try {
+            const updatedGoal = await updateGoal(currentUser.id, goal.id, updateData);
             setGoal(updatedGoal);
-
-            showToast(
-                "Goal updated successfully.",
-                "success"
-            );
-        }catch{
-            showToast(
-                "Could not update goal.",
-                "error"
-            );
-        }finally{
+            showToast("Goal updated successfully.", "success");
+            return true;
+        } catch (cause) {
+            showToast(getApiErrorMessage(cause, "Could not update goal."), "error");
+            return false;
+        } finally {
             setUpdating(false);
         }
     }

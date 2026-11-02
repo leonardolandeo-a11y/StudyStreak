@@ -1,5 +1,7 @@
 import { useState,type SubmitEvent } from "react";
 import { useAuth } from "../hooks/useAuth";
+import axios from "axios";
+import { getApiErrorMessage } from "../utils/apiError";
 import {
     Link,
     useNavigate
@@ -20,16 +22,19 @@ function Login(){
 
     async function handleSubmit(event:SubmitEvent<HTMLFormElement>){
         event.preventDefault();
+        if (loading) return;
+        if (!username.trim() || !password) { setError("Enter your username and password."); return; }
         setLoading(true);
         setError(null);
         setSuccess(false);
 
         try {
-            await login(username,password );
+            await login(username.trim(), password);
             setSuccess(true);
             navigate(ROUTES.dashboard);
-        }catch{
-            setError("Invalid username or password.");
+        }catch (cause){
+            const status = axios.isAxiosError(cause) ? cause.response?.status : null;
+            setError(status === 400 || status === 401 || status === 403 ? "Invalid username or password." : getApiErrorMessage(cause, "Could not sign in. Please try again."));
         }finally{
             setLoading(false);
         }
@@ -78,6 +83,7 @@ function Login(){
 
                 <form
                     onSubmit={handleSubmit}
+                    aria-busy={loading}
                     className="
                         rounded-2xl
                         border border-slate-800

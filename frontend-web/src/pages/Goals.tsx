@@ -22,6 +22,7 @@ import EmptyState from "../components/ui/EmptyState";
 import PaginationControls from "../components/ui/PaginationControls";
 
 import { useToast } from "../hooks/useToast";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function Goals(){
     const {currentUser} = useAuth();
@@ -59,35 +60,24 @@ function Goals(){
             return next;
         });
     }
-    async function handleCreateGoal(goal: GoalRequest) {
-        if (!currentUser) {
-            return;
-        }
-
+    async function handleCreateGoal(goal: GoalRequest): Promise<boolean> {
+        if (!currentUser || creating) return false;
+        setCreating(true);
         try {
-            setCreating(true);
-
-            await createGoal( currentUser.id, goal );
-
-
-            if (page === 0) {
-
-                const updatedGoals = await getGoals(currentUser.id, 0, size);
-                setGoalPage(updatedGoals);
-
-            } else {
-
-                changePage(0);
+            await createGoal(currentUser.id, goal);
+            try {
+                if (page === 0) setGoalPage(await getGoals(currentUser.id, 0, size));
+                else changePage(0);
+            } catch {
+                showToast("Goal saved, but the list could not refresh. Reload the page to see it.", "error");
+                return true;
             }
-
-
             showToast("Goal created successfully.", "success");
-
-        } catch {
-            showToast("Could not create goal.","error");
-
+            return true;
+        } catch (cause) {
+            showToast(getApiErrorMessage(cause, "Could not create goal."), "error");
+            return false;
         } finally {
-
             setCreating(false);
         }
     }
