@@ -55,13 +55,13 @@ function AlbumArt({ sound, size = 66 }: { sound: Soundscape; size?: number }) {
   );
 }
 
-function MiniButton({ label, disabled, onPress }: {
-  label: string; disabled?: boolean; onPress: () => void;
+function MiniButton({ label, symbol, disabled, onPress }: {
+  label: string; symbol: string; disabled?: boolean; onPress: () => void;
 }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label}
       disabled={disabled} onPress={onPress} style={[styles.miniButton, disabled && styles.disabled]}>
-      <Text style={styles.miniButtonText}>{label}</Text>
+      <Text style={styles.miniButtonText}>{symbol}</Text>
     </Pressable>
   );
 }
@@ -74,10 +74,10 @@ function DurationRow({ label, value, min, max, disabled, onChange }: {
     <View style={styles.durationRow}>
       <Text style={styles.durationLabel}>{label}</Text>
       <View style={styles.durationControls}>
-        <MiniButton label={`Decrease ${label}`} disabled={disabled || value <= min}
+        <MiniButton label={`Decrease ${label}`} symbol="−" disabled={disabled || value <= min}
           onPress={() => onChange(Math.max(min, value - 1))} />
         <Text style={styles.durationValue}>{value} min</Text>
-        <MiniButton label={`Increase ${label}`} disabled={disabled || value >= max}
+        <MiniButton label={`Increase ${label}`} symbol="+" disabled={disabled || value >= max}
           onPress={() => onChange(Math.min(max, value + 1))} />
       </View>
     </View>
