@@ -9,7 +9,6 @@ import {
     durationMs,
     formatPomodoroTime,
     newPomodoro,
-    normalizePreferences,
     pausePomodoro,
     remainingPomodoroMs,
     resetPomodoro,
