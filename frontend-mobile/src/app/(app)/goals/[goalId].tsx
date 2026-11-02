@@ -14,6 +14,8 @@ import { palette } from '../../../constants/palette';
 import { useAuth } from '../../../hooks/useAuth';
 import { usePagedResource } from '../../../hooks/usePagedResource';
 import { goalService } from '../../../services/goalService';
+import { getMobileFocusSummary } from '../../../features/focus/focusGoalService';
+import type { FocusSummary } from '../../../features/focus/focusGoalService';
 import { dailyRecordService } from '../../../services/dailyRecordService';
 import { getApiErrorMessage } from '../../../utils/apiError';
 import type { Goal, GoalRequest } from '../../../types/goal';
@@ -29,6 +31,8 @@ export default function GoalDetails() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [goalLoading, setGoalLoading] = useState(true);
   const [goalError, setGoalError] = useState<string | null>(null);
+  const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
+  const [focusSummaryError, setFocusSummaryError] = useState(false);
   const [goalRevision, setGoalRevision] = useState(0);
   const latestGoalRevision = useRef(goalRevision);
   const [editingGoal, setEditingGoal] = useState(false);
@@ -62,6 +66,20 @@ export default function GoalDetails() {
     });
     return () => controller.abort();
   }, [valid, userId, goalId, goalRevision]));
+
+  useFocusEffect(useCallback(() => {
+    if (!valid) return;
+    const controller = new AbortController();
+    void getMobileFocusSummary(goalId, controller.signal).then(data => {
+      if (!controller.signal.aborted) {
+        setFocusSummary(data);
+        setFocusSummaryError(false);
+      }
+    }).catch(() => {
+      if (!controller.signal.aborted) setFocusSummaryError(true);
+    });
+    return () => controller.abort();
+  }, [valid, goalId]));
 
   const loadRecords = useCallback((page: number, signal: AbortSignal): Promise<PageResponse<DailyRecord>> => {
     if (!valid) throw new Error('Invalid goal');
@@ -184,6 +202,22 @@ export default function GoalDetails() {
               <ActionButton title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}
           </View>
+          <View style={styles.focusCard}>
+            <Text style={styles.focusHeading}>Focus Studio progress</Text>
+            <Text style={styles.muted}>
+              {focusSummary?.goalId === goal.id
+                ? `${focusSummary.totalMinutes} min · ${focusSummary.completedSessions} completed focus sessions`
+                : focusSummaryError ? 'Focus totals unavailable' : 'Loading focus totals…'}
+            </Text>
+            <Text style={styles.focusNote}>
+              Only completed linked Pomodoros count. Daily records and streaks remain separate.
+            </Text>
+            {!goal.completed && (
+              <ActionButton title="Study this Goal" onPress={() => router.push({
+                pathname: '/(app)/focus-studio', params: { goalId: String(goal.id) },
+              })} />
+            )}
+          </View>
           <StreakCard key={`streak-${goal.id}`} goalId={goal.id} />
           <ActionButton secondary title="Find books for this goal"
             onPress={() => router.push({ pathname: '/(app)/resources', params: { topic: goal.topic } })} />
@@ -265,4 +299,8 @@ const styles = StyleSheet.create({
   completed: { color: palette.success, fontWeight: '700' },
   confirm: { borderRadius: 12, padding: 13, backgroundColor: palette.surfaceRaised, gap: 10 },
   warning: { color: palette.error, fontSize: 14, lineHeight: 20 },
+  focusCard: { backgroundColor: '#143326', borderColor: '#275e41', borderWidth: 1,
+    borderRadius: 16, padding: 17, gap: 12 },
+  focusHeading: { color: '#a7f3d0', fontWeight: '900', fontSize: 17 },
+  focusNote: { color: '#9db9ac', fontSize: 12, lineHeight: 18 },
 });
