@@ -64,6 +64,9 @@ jobs:
       - name: Test mobile pagination
         run: npm run test:pagination
 
+      - name: Test mobile review navigation
+        run: npm run test:review
+
       - name: Run mobile ESLint
         run: npm run lint -- --max-warnings 0
 

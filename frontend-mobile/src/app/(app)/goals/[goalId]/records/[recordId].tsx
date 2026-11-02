@@ -12,6 +12,7 @@ import { palette } from '../../../../../constants/palette';
 import { dailyRecordService } from '../../../../../services/dailyRecordService';
 import { validationService } from '../../../../../services/validationService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
+import { reviewedRecordExit, validationLookupState } from '../../../../../utils/reviewNavigation';
 import type { DailyRecord } from '../../../../../types/dailyRecord';
 import type { Validation, ValidationRequest } from '../../../../../types/validation';
 
@@ -31,6 +32,7 @@ export default function ReviewedRecordDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationAccess, setValidationAccess] = useState<'forbidden' | 'unavailable' | null>(null);
   const [revision, setRevision] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -45,6 +47,7 @@ export default function ReviewedRecordDetails() {
       setRecord(null);
       setValidation(null);
       setValidationError(null);
+      setValidationAccess(null);
       setSaveMessage(null);
       try {
         const current = await dailyRecordService.get(goalId, recordId, controller.signal);
@@ -54,9 +57,14 @@ export default function ReviewedRecordDetails() {
           const review = await validationService.get(goalId, recordId, controller.signal);
           if (!controller.signal.aborted) setValidation(review);
         } catch (cause) {
-          if (!controller.signal.aborted &&
-              !(isAxiosError(cause) && cause.response?.status === 404)) {
-            setValidationError(getApiErrorMessage(cause, 'Unable to load peer validation.'));
+          if (!controller.signal.aborted) {
+            const result = validationLookupState(isAxiosError(cause) ? cause.response?.status : undefined);
+            if (result !== 'missing') {
+              setValidationAccess(result);
+              setValidationError(result === 'forbidden'
+                ? 'This record was already validated by another user.'
+                : getApiErrorMessage(cause, 'Unable to load peer validation.'));
+            }
           }
         }
       } catch (cause) {
@@ -131,13 +139,22 @@ export default function ReviewedRecordDetails() {
               <RecordVoice goalId={goalId} recordId={recordId} available={record.voiceAvailable} readOnly />
               {saveMessage ? <StatusMessage message={saveMessage} /> : null}
               {validationError ? <StatusMessage error message={validationError} /> : null}
-              <ValidationEditor key={validation?.id ?? 'new'} initial={validation}
-                busy={saving} onSubmit={saveValidation} />
+              {validationAccess === 'unavailable' ? (
+                <ActionButton secondary title="Retry validation" onPress={() => setRevision((n) => n + 1)} />
+              ) : null}
+              {validationAccess === null ? (
+                <ValidationEditor key={validation?.id ?? 'new'} initial={validation}
+                  busy={saving} onSubmit={saveValidation} />
+              ) : null}
             </View>
           ) : null}
-          <ActionButton secondary title="View full goal" onPress={() => router.push({
-            pathname: '/(app)/goals/[goalId]', params: { goalId: String(goalId) },
-          })} />
+          {reviewedRecordExit(reviewRequested) === 'validations' ? (
+            <ActionButton secondary title="Browse partner goals" onPress={() => router.push('/(app)/validations')} />
+          ) : (
+            <ActionButton secondary title="View full goal" onPress={() => router.push({
+              pathname: '/(app)/goals/[goalId]', params: { goalId: String(goalId) },
+            })} />
+          )}
         </>
       ) : null}
     </Screen>
