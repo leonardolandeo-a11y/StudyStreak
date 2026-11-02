@@ -1,636 +1,295 @@
-import {
-    useEffect,
-    useState
-} from "react";
-
-import {
-    useSearchParams
-} from "react-router-dom";
-
-import {
-    getTrackingLinks,
-    createTrackingLink,
-    getPendingTrackingLinks,
-    updateTrackingLinkStatus,
-    getActiveTrackingLinks,
-    deleteTrackingLink
-} from "../services/trackingLinkService";
-
-import TrackingLinkCard
-    from "../components/trackingLinks/TrackingLinkCard";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
-
+import TrackingLinkCard from "../components/trackingLinks/TrackingLinkCard";
 import TrackingLinkForm from "../components/trackingLinks/TrackingLinkForm";
-import { useAuth }
-    from "../hooks/useAuth";
-
-import type {
-    TrackingLink
-} from "../types/trackingLink";
-
-import type {
-    PageResponse
-} from "../types/page";
-
-import LoadingState from "../components/ui/LoadingState";
-
-import ErrorMessage from "../components/ui/ErrorMessage";
-
-import EmptyState from "../components/ui/EmptyState";
-
 import PaginationControls from "../components/ui/PaginationControls";
+import LoadingState from "../components/ui/LoadingState";
+import ErrorMessage from "../components/ui/ErrorMessage";
+import EmptyState from "../components/ui/EmptyState";
+import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
+import {
+    createTrackingLink,
+    deleteTrackingLink,
+    getActiveTrackingLinks,
+    getPendingTrackingLinks,
+    getTrackingLinks,
+    updateTrackingLinkStatus
+} from "../services/trackingLinkService";
+import type { TrackingLink } from "../types/trackingLink";
+import type { PageResponse } from "../types/page";
+import { recoverPageParams } from "../utils/pageBounds";
+
 interface ApiErrorResponse {
-    timestamp: string;
-    status: number;
-    error: string;
-    message: string;
-    path: string;
+    message?: string;
+}
+
+type PageKey = "page" | "pendingPage" | "activePage";
+
+function parsePage(value: string | null) {
+    const parsed = Number(value ?? "0");
+    return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
 }
 
 function TrackingLinks() {
-
     const { currentUser } = useAuth();
     const { showToast } = useToast();
-    const [searchParams, setSearchParams] =useSearchParams();
     const confirm = useConfirm();
-    const [trackingPage,setTrackingPage] = useState<PageResponse<TrackingLink> | null>(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const page = parsePage(searchParams.get("page"));
+    const pendingPageNumber = parsePage(searchParams.get("pendingPage"));
+    const activePageNumber = parsePage(searchParams.get("activePage"));
+    const [allLinks, setAllLinks] = useState<PageResponse<TrackingLink> | null>(null);
+    const [pendingLinks, setPendingLinks] = useState<PageResponse<TrackingLink> | null>(null);
+    const [activeLinks, setActiveLinks] = useState<PageResponse<TrackingLink> | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [creating, setCreating] = useState(false);
+    const [busyId, setBusyId] = useState<number | null>(null);
+    const [revision, setRevision] = useState(0);
 
-    const [loading, setLoading] =useState(true);
-
-    const [error, setError] =useState<string | null>(null);
-
-    const [creating , setCreating]  = useState(false);
-    const [pendingPage,setPendingPage] = useState<PageResponse<TrackingLink> | null>(null);
-
-    const [activePage , setActivePage] = useState<PageResponse<TrackingLink>|null>(null);
-
-
-    const pageParam =Number(searchParams.get("page") ?? "0");
-
-    const page =Number.isInteger(pageParam) && pageParam >= 0 ? pageParam: 0;
-
-    function goToPreviousPage() {
-        if (page <= 0) {
-            return;
-        }
-
-        setSearchParams({
-            page: String(page - 1)
-        });
-    }
-
-    function goToNextPage() {
-        if (!trackingPage ||trackingPage.last) {
-            return;
-        }
-
-        setSearchParams({
-            page: String(page + 1)
-        });
-    }
-    async function handleCreateTrackingLink(
-        receiverId: number
-    ): Promise<boolean> {
-
-        if (!currentUser) {
-            return false;
-        }
-
-        if (receiverId === currentUser.id) {
-            showToast(
-                "You cannot create a tracking link with yourself.",
-                "error"
-            );
-
-            return false;
-        }
-
-        try {
-            setCreating(true);
-
-            await createTrackingLink(receiverId);
-
-            const updatedLinks =
-                await getTrackingLinks(
-                    page,
-                    10
-                );
-
-            setTrackingPage(updatedLinks);
-
-            showToast(
-                "Tracking request sent successfully.",
-                "success"
-            );
-
-            return true;
-
-        } catch (caughtError) {
-
-            if (
-                axios.isAxiosError<ApiErrorResponse>(
-                    caughtError
-                )
-            ) {
-                const status =
-                    caughtError.response?.status;
-
-                if (status === 409) {
-
-                    showToast(
-                        caughtError.response?.data?.message ??
-                            "A tracking link already exists with this user.",
-                        "error"
-                    );
-
-                } else if (status === 404) {
-
-                    showToast(
-                        "The selected user does not exist.",
-                        "error"
-                    );
-
-                } else {
-
-                    showToast(
-                        "Could not create tracking request.",
-                        "error"
-                    );
-                }
-
+    const setPage = useCallback((key: PageKey, nextPage: number) => {
+        setSearchParams((previous) => {
+            const updated = new URLSearchParams(previous);
+            if (nextPage <= 0) {
+                updated.delete(key);
             } else {
-
-                showToast(
-                    "Could not create tracking request.",
-                    "error"
-                );
+                updated.set(key, String(nextPage));
             }
+            return updated;
+        });
+    }, [setSearchParams]);
 
-            return false;
-
-        } finally {
-            setCreating(false);
-        }
-    }
-    async function handleDeleteTrackingLink(
-        trackingId: number
-    ) {
-        const confirmed =
-            await confirm({
-                title: "Remove tracking link?",
-                message:
-                    "Are you sure you want to remove this tracking link? This action cannot be undone.",
-                confirmLabel: "Remove",
-                cancelLabel: "Cancel",
-                variant: "danger"
-            });
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-
-            await deleteTrackingLink(
-                trackingId
-            );
-
-
-            const [
-                updatedLinks,
-                updatedPending,
-                updatedActive
-            ] = await Promise.all([
-                getTrackingLinks(page, 10),
-                getPendingTrackingLinks(0, 10),
-                getActiveTrackingLinks(0, 10)
-            ]);
-
-
-            setTrackingPage(updatedLinks);
-            setPendingPage(updatedPending);
-            setActivePage(updatedActive);
-
-
-            showToast(
-                "Tracking link removed successfully.",
-                "success"
-            );
-
-        } catch {
-
-            showToast(
-                "Could not remove tracking link.",
-                "error"
-            );
-        }
-    }
-    async function handleTrackingStatus(
-        trackingId: number,
-        status: "ACCEPTED" | "REJECTED"
-    ) {
-        try {
-
-            await updateTrackingLinkStatus(
-                trackingId,
-                { status }
-            );
-
-
-            const [
-                updatedLinks,
-                updatedPending,
-                updatedActive
-            ] = await Promise.all([
-                getTrackingLinks(page, 10),
-                getPendingTrackingLinks(0, 10),
-                getActiveTrackingLinks(0, 10)
-            ]);
-
-
-            setTrackingPage(updatedLinks);
-            setPendingPage(updatedPending);
-            setActivePage(updatedActive);
-
-
-            showToast(
-                status === "ACCEPTED"
-                    ? "Tracking request accepted."
-                    : "Tracking request rejected.",
-                "success"
-            );
-
-        } catch {
-
-            showToast(
-                "Could not update tracking request.",
-                "error"
-            );
-        }
-    }
     useEffect(() => {
-
-        const controller =new AbortController();
-
-
-        async function loadTrackingLinks() {
-
+        const controller = new AbortController();
+        const load = async () => {
+            setLoading(true);
+            setError(null);
             try {
-
-                setLoading(true);
-                setError(null);
-
-                const [allLinks,pendingLinks,activeLinks] = await Promise.all([
-                        getTrackingLinks(page,10,controller.signal),
-                        getPendingTrackingLinks(0,10,controller.signal),
-                        getActiveTrackingLinks(0,10,controller.signal)
+                const [all, pending, active] = await Promise.all([
+                    getTrackingLinks(page, 10, controller.signal),
+                    getPendingTrackingLinks(pendingPageNumber, 10, controller.signal),
+                    getActiveTrackingLinks(activePageNumber, 10, controller.signal)
                 ]);
-
-
-                setTrackingPage(allLinks);
-                setPendingPage(pendingLinks);
-                setActivePage(activeLinks);
-
-            } catch {
-
                 if (!controller.signal.aborted) {
-                    setError("Could not load tracking links.");
+                    const recovered = recoverPageParams(searchParams, [
+                        { key: "page", current: page, totalPages: all.totalPages },
+                        { key: "pendingPage", current: pendingPageNumber, totalPages: pending.totalPages },
+                        { key: "activePage", current: activePageNumber, totalPages: active.totalPages }
+                    ]);
+                    if (recovered !== null) {
+                        setAllLinks(null);
+                        setPendingLinks(null);
+                        setActiveLinks(null);
+                        setSearchParams(recovered, { replace: true });
+                        return;
+                    }
+                    setAllLinks(all);
+                    setPendingLinks(pending);
+                    setActiveLinks(active);
                 }
-
+            } catch {
+                if (!controller.signal.aborted) {
+                    setError("Could not load tracking links. Please try again.");
+                }
             } finally {
-
                 if (!controller.signal.aborted) {
                     setLoading(false);
                 }
             }
-        }
-
-
-        void loadTrackingLinks();
-
-
-        return () => {
-            controller.abort();
         };
+        void load();
+        return () => controller.abort();
+    }, [page, pendingPageNumber, activePageNumber, revision, currentUser?.id, searchParams, setSearchParams]);
 
-    }, [page]);
-
-    if (!currentUser) {
-        return null;
+    async function handleCreate(receiverId: number): Promise<boolean> {
+        if (!currentUser || creating) return false;
+        if (receiverId === currentUser.id) {
+            showToast("You cannot send a tracking request to yourself.", "error");
+            return false;
+        }
+        setCreating(true);
+        try {
+            await createTrackingLink(receiverId);
+            setRevision((value) => value + 1);
+            showToast("Tracking request sent successfully.", "success");
+            return true;
+        } catch (caughtError) {
+            const response = axios.isAxiosError<ApiErrorResponse>(caughtError) ? caughtError.response : undefined;
+            const message = response?.status === 409
+                ? response.data?.message ?? "A tracking link already exists with this user."
+                : response?.status === 404
+                    ? "The selected user could not be found."
+                    : "Could not create tracking request.";
+            showToast(message, "error");
+            return false;
+        } finally {
+            setCreating(false);
+        }
     }
 
-    if (loading) {
+    async function handleStatus(id: number, status: "ACCEPTED" | "REJECTED") {
+        if (busyId !== null) return;
+        setBusyId(id);
+        try {
+            await updateTrackingLinkStatus(id, { status });
+            setRevision((value) => value + 1);
+            showToast(status === "ACCEPTED" ? "Tracking request accepted." : "Tracking request rejected.", "success");
+        } catch {
+            showToast("Could not update tracking request.", "error");
+        } finally {
+            setBusyId(null);
+        }
+    }
+
+    async function handleRemove(id: number) {
+        if (busyId !== null) return;
+        const confirmed = await confirm({
+            title: "Remove tracking link?",
+            message: "This tracking connection will be removed. This cannot be undone.",
+            confirmLabel: "Remove",
+            cancelLabel: "Cancel",
+            variant: "danger"
+        });
+        if (!confirmed) return;
+        setBusyId(id);
+        try {
+            await deleteTrackingLink(id);
+            setRevision((value) => value + 1);
+            showToast("Tracking link removed successfully.", "success");
+        } catch {
+            showToast("Could not remove tracking link.", "error");
+        } finally {
+            setBusyId(null);
+        }
+    }
+
+    function pagination(key: PageKey, currentPage: number, data: PageResponse<TrackingLink>) {
+        if (data.totalPages <= 1) return null;
         return (
-            <LoadingState
-                message="Loading tracking links..."
+            <PaginationControls
+                page={currentPage}
+                totalPages={data.totalPages}
+                first={data.first}
+                last={data.last}
+                onPrevious={() => setPage(key, currentPage - 1)}
+                onNext={() => setPage(key, currentPage + 1)}
             />
         );
     }
 
-    if (error && !trackingPage) {
-        return (
-            <ErrorMessage
-                message={error}
-            />
-        );
-    }
-
-    if (!trackingPage) {
-        return null;
-    }
+    if (!currentUser) return null;
 
     return (
-    <div className="space-y-8">
+        <div className="space-y-8">
+            <header>
+                <p className="text-sm font-medium text-sky-400">Connections</p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Tracking Links</h1>
+                <p className="mt-2 max-w-2xl text-slate-400">Send requests, manage invitations and review your study partners.</p>
+            </header>
 
-        <section>
-            <p className="text-sm font-medium text-sky-400">
-                Connections
-            </p>
+            <TrackingLinkForm onSubmit={handleCreate} loading={creating} />
+            {loading && <LoadingState message="Loading tracking connections..." />}
+            {error && <ErrorMessage message={error} />}
+            {error && (
+                <button
+                    type="button"
+                    onClick={() => setRevision((value) => value + 1)}
+                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
+                >
+                    Retry
+                </button>
+            )}
 
-            <h1
-                className="
-                    mt-2
-                    text-3xl font-bold
-                    tracking-tight
-                    text-slate-100
-                "
-            >
-                Tracking Links
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-slate-400">
-                Send tracking requests, manage invitations,
-                and review your active study connections.
-            </p>
-        </section>
-
-
-        <section>
-            <TrackingLinkForm
-                onSubmit={handleCreateTrackingLink}
-                loading={creating}
-            />
-        </section>
-
-        {error && trackingPage && (
-            <ErrorMessage
-                message={error}
-            />
-        )}
-
-
-        {pendingPage && !pendingPage.empty && (
-            <section>
-                <div className="mb-5">
-                    <h2 className="text-xl font-semibold text-slate-100">
-                        Pending Invitations
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Requests waiting for your response.
-                    </p>
-                </div>
-
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {pendingPage.content.map(
-                        (trackingLink) => (
-                            <article
-                                key={trackingLink.id}
-                                className="
-                                    rounded-2xl
-                                    border border-amber-900/40
-                                    bg-amber-950/10
-                                    p-5
-                                "
-                            >
-                                <p className="text-sm text-slate-300">
-                                    User{" "}
-                                    <span className="font-semibold text-slate-100">
-                                        {trackingLink.requesterId}
-                                    </span>{" "}
-                                    sent you a tracking request.
-                                </p>
-
-                                <div className="mt-4 flex flex-wrap gap-3">
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleTrackingStatus(
-                                                trackingLink.id,
-                                                "ACCEPTED"
-                                            )
-                                        }
-                                        className="
-                                            rounded-lg
-                                            bg-emerald-500
-                                            px-4 py-2
-                                            text-sm font-semibold
-                                            text-slate-950
-                                            hover:bg-emerald-400
-                                        "
-                                    >
-                                        Accept
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleTrackingStatus(
-                                                trackingLink.id,
-                                                "REJECTED"
-                                            )
-                                        }
-                                        className="
-                                            rounded-lg
-                                            border border-red-900
-                                            bg-red-950/30
-                                            px-4 py-2
-                                            text-sm font-medium
-                                            text-red-300
-                                            hover:bg-red-950/60
-                                        "
-                                    >
-                                        Reject
-                                    </button>
-
-                                </div>
-                            </article>
-                        )
-                    )}
-                </div>
-            </section>
-        )}
-
-
-        {activePage && !activePage.empty && (
-            <section>
-                <div className="mb-5">
-                    <h2 className="text-xl font-semibold text-slate-100">
-                        Active Tracking Links
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Users currently connected to your progress.
-                    </p>
-                </div>
-
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {activePage.content.map(
-                        (trackingLink) => {
-
-                            const otherUserId =
-                                trackingLink.requesterId === currentUser.id
-                                    ? trackingLink.receiverId
-                                    : trackingLink.requesterId;
-
-                            return (
-                                <article
-                                    key={trackingLink.id}
-                                    className="
-                                        rounded-2xl
-                                        border border-slate-800
-                                        bg-slate-900/70
-                                        p-5
-                                    "
-                                >
-                                    <div
-                                        className="
-                                            flex
-                                            flex-wrap
-                                            items-start
-                                            justify-between
-                                            gap-4
-                                        "
-                                    >
-                                        <div>
-                                            <p className="text-xs uppercase tracking-wide text-slate-500">
-                                                Tracking with
-                                            </p>
-
-                                            <p className="mt-1 text-lg font-semibold text-slate-100">
-                                                User {otherUserId}
-                                            </p>
-                                        </div>
-
-                                        <span
-                                            className="
-                                                rounded-full
-                                                bg-emerald-950/60
-                                                px-3 py-1
-                                                text-xs font-semibold
-                                                text-emerald-300
-                                            "
-                                        >
-                                            {trackingLink.status}
-                                        </span>
+            {!loading && !error && pendingLinks && (
+                <section>
+                    <h2 className="text-xl font-semibold text-slate-100">Pending Invitations</h2>
+                    <p className="mt-1 text-sm text-slate-400">Requests waiting for your response.</p>
+                    {pendingLinks.empty ? (
+                        <div className="mt-4"><EmptyState message="No pending invitations." /></div>
+                    ) : (
+                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                            {pendingLinks.content.map((link) => (
+                                <article key={link.id} className="rounded-2xl border border-amber-900/40 bg-amber-950/10 p-5">
+                                    <p className="text-sm text-slate-200">
+                                        <span className="font-semibold">@{link.requesterUsername || "Unknown user"}</span> sent you a tracking request.
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap gap-3">
+                                        <button
+                                            type="button"
+                                            disabled={busyId !== null}
+                                            onClick={() => handleStatus(link.id, "ACCEPTED")}
+                                            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                                        >Accept</button>
+                                        <button
+                                            type="button"
+                                            disabled={busyId !== null}
+                                            onClick={() => handleStatus(link.id, "REJECTED")}
+                                            className="rounded-lg border border-red-900 bg-red-950/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-950/60 disabled:opacity-50"
+                                        >Reject</button>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleDeleteTrackingLink(
-                                                trackingLink.id
-                                            )
-                                        }
-                                        className="
-                                            mt-5
-                                            rounded-lg
-                                            border border-red-900
-                                            bg-red-950/30
-                                            px-4 py-2
-                                            text-sm font-medium
-                                            text-red-300
-                                            hover:bg-red-950/60
-                                        "
-                                    >
-                                        Remove Tracking Link
-                                    </button>
                                 </article>
-                            );
-                        }
+                            ))}
+                        </div>
                     )}
-                </div>
-            </section>
-        )}
-
-
-        <section>
-            <div
-                className="
-                    mb-5
-                    flex flex-wrap
-                    items-end
-                    justify-between
-                    gap-3
-                "
-            >
-                <div>
-                    <h2 className="text-xl font-semibold text-slate-100">
-                        All Tracking Links
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-400">
-                        Complete history of your tracking connections.
-                    </p>
-                </div>
-
-                {!trackingPage.empty && (
-                    <span
-                        className="
-                            rounded-full
-                            border border-slate-800
-                            bg-slate-900
-                            px-3 py-1
-                            text-xs font-medium
-                            text-slate-400
-                        "
-                    >
-                        {trackingPage.totalElements} total
-                    </span>
-                )}
-            </div>
-
-
-            {trackingPage.empty && (
-                <EmptyState
-                    message="No tracking links yet."
-                />
+                    {pagination("pendingPage", pendingPageNumber, pendingLinks)}
+                </section>
             )}
 
-
-            {!trackingPage.empty && (
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {trackingPage.content.map(
-                        (trackingLink) => (
-                            <TrackingLinkCard
-                                key={trackingLink.id}
-                                trackingLink={trackingLink}
-                                currentUserId={currentUser.id}
-                            />
-                        )
+            {!loading && !error && activeLinks && (
+                <section>
+                    <h2 className="text-xl font-semibold text-slate-100">Active Tracking Links</h2>
+                    <p className="mt-1 text-sm text-slate-400">Partners currently connected to your progress.</p>
+                    {activeLinks.empty ? (
+                        <div className="mt-4"><EmptyState message="No active connections." /></div>
+                    ) : (
+                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                            {activeLinks.content.map((link) => {
+                                const partnerName = link.requesterId === currentUser.id ? link.receiverUsername : link.requesterUsername;
+                                return (
+                                    <article key={link.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+                                        <p className="text-xs uppercase tracking-wide text-slate-500">Tracking with</p>
+                                        <p className="mt-1 text-lg font-semibold text-slate-100">@{partnerName || "Unknown user"}</p>
+                                        <span className="mt-2 inline-block rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300">ACCEPTED</span>
+                                        <button
+                                            type="button"
+                                            disabled={busyId !== null}
+                                            onClick={() => handleRemove(link.id)}
+                                            className="mt-4 block rounded-lg border border-red-900 bg-red-950/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-950/60 disabled:opacity-50"
+                                        >Remove Tracking Link</button>
+                                    </article>
+                                );
+                            })}
+                        </div>
                     )}
-                </div>
+                    {pagination("activePage", activePageNumber, activeLinks)}
+                </section>
             )}
 
-
-            {!trackingPage.empty && (
-                <PaginationControls
-                    page={page}
-                    totalPages={trackingPage.totalPages}
-                    first={trackingPage.first}
-                    last={trackingPage.last}
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
-                />
+            {!loading && !error && allLinks && (
+                <section>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-100">All Tracking Links</h2>
+                            <p className="mt-1 text-sm text-slate-400">Complete history of your tracking connections.</p>
+                        </div>
+                        <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-400">{allLinks.totalElements} total</span>
+                    </div>
+                    {allLinks.empty ? (
+                        <div className="mt-4"><EmptyState message="No tracking links yet." /></div>
+                    ) : (
+                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                            {allLinks.content.map((link) => (
+                                <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id} />
+                            ))}
+                        </div>
+                    )}
+                    {pagination("page", page, allLinks)}
+                </section>
             )}
-        </section>
-
-    </div>
+        </div>
     );
 }
 

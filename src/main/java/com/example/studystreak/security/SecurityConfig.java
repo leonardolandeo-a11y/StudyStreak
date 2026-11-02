@@ -3,6 +3,7 @@ package com.example.studystreak.security;
 import com.example.studystreak.dto.ErrorResponseDTO;
 import tools.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -25,6 +27,9 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtRequestFilter jwtRequestFilter;
     private final ObjectMapper objectMapper;
+
+    @Value("${APP_CORS_ALLOWED_ORIGINS:http://localhost:*}")
+    private String allowedOrigins;
 
     public SecurityConfig(JwtRequestFilter jwtRequestFilter, ObjectMapper objectMapper){
         this.jwtRequestFilter = jwtRequestFilter;
@@ -39,6 +44,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
+
+                // AuthController handles /logout and revokes the database-backed refresh token.
+                .logout(logout -> logout.disable())
 
                 .cors(cors -> cors.configurationSource(
                         corsConfigurationSource()
@@ -79,7 +87,7 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/refresh")
+                        .requestMatchers("/login", "/register", "/refresh", "/logout")
                         .permitAll()
                         .anyRequest()
                         .authenticated()
@@ -100,7 +108,10 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(
-                List.of("http://localhost:*")
+                Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(origin -> !origin.isBlank())
+                        .toList()
         );
 
         configuration.setAllowedMethods(

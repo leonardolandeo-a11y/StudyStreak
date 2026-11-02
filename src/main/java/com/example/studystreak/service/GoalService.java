@@ -30,6 +30,7 @@ public class GoalService {
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
     private final TrackingLinkRepository trackingLinkRepository;
+    private final GoalDeletionService goalDeletionService;
 
 
     public GoalService(
@@ -38,7 +39,8 @@ public class GoalService {
             UserRepository userRepository,
             CurrentUserService currentUserService,
             ApplicationEventPublisher eventPublisher,
-            TrackingLinkRepository trackingLinkRepository
+            TrackingLinkRepository trackingLinkRepository,
+            GoalDeletionService goalDeletionService
     ) {
         this.goalRepository = goalRepository;
         this.modelMapper = modelMapper;
@@ -46,6 +48,7 @@ public class GoalService {
         this.currentUserService = currentUserService;
         this.eventPublisher = eventPublisher;
         this.trackingLinkRepository = trackingLinkRepository;
+        this.goalDeletionService = goalDeletionService;
     }
 
     private void validateCurrentUser(Long userId) {
@@ -156,6 +159,8 @@ public class GoalService {
 
         Goal goal = getOwnedGoal(goalId);
 
+        // Keep the existing Streak cascade on Goal; clean up the other links first.
+        goalDeletionService.deleteDependencies(goalId);
         goalRepository.delete(goal);
     }
 

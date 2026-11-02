@@ -20,8 +20,10 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
+import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function Goals(){
     const {currentUser} = useAuth();
@@ -36,56 +38,47 @@ function Goals(){
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const pageParam = Number(searchParams.get("page")?? "0");
-    const page = Number.isInteger(pageParam) && pageParam >= 0 ? pageParam: 0;
+    const pageParam = Number(searchParams.get("page") ?? "0");
+    const page = Number.isSafeInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
+    const sizeParam = Number(searchParams.get("size") ?? "10");
+    const size = [10, 25, 50, 100].includes(sizeParam) ? sizeParam : 10;
 
-    function goToPreviousPage(){
-        if (page<= 0){
-            return;
-        }
-        setSearchParams({
-            page:String(page-1)
+    function changePage(nextPage: number) {
+        if (nextPage < 0 || (nextPage > 0 && goalPage && nextPage >= goalPage.totalPages)) return;
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (nextPage === 0) next.delete("page");
+            else next.set("page", String(nextPage));
+            return next;
         });
     }
-    function goToNextPage(){
-        if (!goalPage||goalPage.last){
-            return;
-        }
-        setSearchParams({
-            page : String(page+1)
-        })
+
+    function changeSize(nextSize: number) {
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set("size", String(nextSize));
+            next.delete("page");
+            return next;
+        });
     }
-    async function handleCreateGoal(goal: GoalRequest) {
-        if (!currentUser) {
-            return;
-        }
-
+    async function handleCreateGoal(goal: GoalRequest): Promise<boolean> {
+        if (!currentUser || creating) return false;
+        setCreating(true);
         try {
-            setCreating(true);
-
-            await createGoal( currentUser.id, goal );
-
-
-            if (page === 0) {
-
-                const updatedGoals = await getGoals( currentUser.id, 0, 10);
-                setGoalPage(updatedGoals);
-
-            } else {
-
-                setSearchParams({
-                    page: "0"
-                });
+            await createGoal(currentUser.id, goal);
+            try {
+                if (page === 0) setGoalPage(await getGoals(currentUser.id, 0, size));
+                else changePage(0);
+            } catch {
+                showToast("Goal saved, but the list could not refresh. Reload the page to see it.", "error");
+                return true;
             }
-
-
             showToast("Goal created successfully.", "success");
-
-        } catch {
-            showToast("Could not create goal.","error");
-
+            return true;
+        } catch (cause) {
+            showToast(getApiErrorMessage(cause, "Could not create goal."), "error");
+            return false;
         } finally {
-
             setCreating(false);
         }
     }
@@ -107,7 +100,19 @@ function Goals(){
                 setLoading(true);
                 setError(null);
 
-                const response = await getGoals(id,page,10,controller.signal);
+                const response = await getGoals(id, page, size, controller.signal);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(page, response.totalPages);
+                if (fallback !== null) {
+                    setGoalPage(null);
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current);
+                        if (fallback === 0) next.delete("page");
+                        else next.set("page", String(fallback));
+                        return next;
+                    });
+                    return;
+                }
                 setGoalPage(response);
 
             } catch {
@@ -132,7 +137,7 @@ function Goals(){
             controller.abort();
         };
 
-    }, [userId, page]);
+    }, [userId, page, size, setSearchParams]);
 
     if (!currentUser) {
         return <p>Please log in to view your goals.</p>;
@@ -248,8 +253,12 @@ return(
                     totalPages={goalPage.totalPages}
                     first={goalPage.first}
                     last={goalPage.last}
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
+                    onPrevious={() => changePage(page - 1)}
+                    onNext={() => changePage(page + 1)}
+                    onPageChange={changePage}
+                    size={size}
+                    totalElements={goalPage.totalElements}
+                    onPageSizeChange={changeSize}
                 />
             )}
         </section>

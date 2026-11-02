@@ -15,12 +15,23 @@ import java.util.Optional;
 @Repository
 public interface TrackingLinkRepository extends JpaRepository<TrackingLink, Long> {
 
+    boolean existsByRequesterIdOrReceiverId(Long requesterId, Long receiverId);
+
     @Query("SELECT t FROM TrackingLink t WHERE " +
             "(t.requester.id = :userId1 AND t.receiver.id = :userId2) OR " +
             "(t.requester.id = :userId2 AND t.receiver.id = :userId1)")
     Optional<TrackingLink> findLinkBetweenUsers(
             @Param("userId1") Long userId1,
             @Param("userId2") Long userId2);
+
+    // Both directions are allowed; only accepted tracking partners are notified.
+    @Query("SELECT DISTINCT CASE WHEN t.requester.id = :ownerId " +
+            "THEN t.receiver.id ELSE t.requester.id END FROM TrackingLink t " +
+            "WHERE (t.requester.id = :ownerId OR t.receiver.id = :ownerId) " +
+            "AND t.status = :status")
+    List<Long> findPartnerIdsByUserIdAndStatus(
+            @Param("ownerId") Long ownerId,
+            @Param("status") TrackingStatus status);
 
     /*
     @Query nos permite escribir consultas personalizadas, @Param le dice a Spring boot el nombre de las variables

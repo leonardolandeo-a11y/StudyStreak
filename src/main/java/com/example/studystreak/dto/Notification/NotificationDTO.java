@@ -26,5 +26,9 @@ public class NotificationDTO {
     @NotNull(message = "Notification type is required")
     private NotificationType type;
 
+    private Long relatedGoalId;
+    private Long relatedDailyRecordId;
+    private Long relatedTrackingLinkId;
+
     protected NotificationDTO(){}
 }

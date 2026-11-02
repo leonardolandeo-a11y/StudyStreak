@@ -1,5 +1,7 @@
 package com.example.studystreak.repository;
 
+import org.springframework.data.jpa.repository.Modifying;
+
 import com.example.studystreak.model.Notification;
 import com.example.studystreak.model.NotificationType;
 import com.example.studystreak.model.TrackingLink;
@@ -16,6 +18,11 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification,Long> {
 
+    // Remove notifications owned by an account before deleting the account itself.
+    @Modifying
+    @Query("delete from Notification n where n.user.id = :userId")
+    int deleteForUser(@Param("userId") Long userId);
+
     Page<Notification> findByUserIdOrderByCreatedAtDesc(
             Long userId, Pageable pageable);
 
@@ -24,4 +31,23 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
 
     Page<Notification> findByUserIdAndTypeOrderByCreatedAtDesc(
             Long userId, NotificationType type, Pageable pageable);
+
+    // Preserve notification messages but remove navigation to a deleted record.
+    @Modifying
+    @Query("update Notification n set n.relatedDailyRecordId = null " +
+            "where n.relatedDailyRecordId = :dailyRecordId")
+    int clearDeletedDailyRecordReferences(@Param("dailyRecordId") Long dailyRecordId);
+
+    // Keep notification history, but remove links to deleted resources.
+    @Modifying
+    @Query("update Notification n set n.relatedGoalId = null, n.relatedDailyRecordId = null " +
+            "where n.relatedGoalId = :goalId or n.relatedDailyRecordId in " +
+            "(select d.id from DailyRecord d where d.goal.id = :goalId)")
+    int clearDeletedGoalReferences(@Param("goalId") Long goalId);
+
+    // Keep notifications but remove links to tracking connections that no longer exist.
+    @Modifying
+    @Query("update Notification n set n.relatedTrackingLinkId = null " +
+            "where n.relatedTrackingLinkId = :trackingLinkId")
+    int clearDeletedTrackingLinkReferences(@Param("trackingLinkId") Long trackingLinkId);
 }

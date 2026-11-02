@@ -4,6 +4,8 @@ import {
     useNavigate
 } from "react-router-dom";
 import { register } from "../services/authService";
+import axios from "axios";
+import { getApiErrorMessage } from "../utils/apiError";
 
 import {
     ROUTES
@@ -66,6 +68,7 @@ function Register(){
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 
         event.preventDefault();
+        if (loading) return;
 
         const validationError = validateForm();
 
@@ -89,10 +92,9 @@ function Register(){
 
             navigate( ROUTES.login );
 
-        } catch {
-
-            setError("Registration failed.");
-
+        } catch (cause) {
+            const status = axios.isAxiosError(cause) ? cause.response?.status : null;
+            setError(status === 409 ? "This username or email is already registered." : getApiErrorMessage(cause, "Registration failed. Please try again."));
         } finally {
             setLoading(false);
         }
@@ -141,6 +143,7 @@ function Register(){
 
                 <form
                     onSubmit={handleSubmit}
+                    aria-busy={loading}
                     className="
                         rounded-2xl
                         border border-slate-800

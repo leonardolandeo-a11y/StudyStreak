@@ -30,7 +30,11 @@ public class Goal {
     @OneToMany(mappedBy = "goal")
     private List<DailyRecord> dailyRecords;
 
-    @OneToOne(mappedBy = "goal")
+    @OneToOne(
+            mappedBy = "goal",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
     private Streak streak;
 
     @ManyToMany(mappedBy = "goals")

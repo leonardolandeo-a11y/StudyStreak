@@ -30,12 +30,23 @@ public class NotificationService {
 
     @Transactional
     public NotificationDTO createNotification(Long userId, String message, NotificationType type) {
+        return createNotification(userId, message, type, null, null, null);
+    }
+
+    @Transactional
+    public NotificationDTO createNotification(
+            Long userId, String message, NotificationType type,
+            Long relatedGoalId, Long relatedDailyRecordId, Long relatedTrackingLinkId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found with id: " + userId));
 
         Notification notification = new Notification(message, false, LocalDateTime.now(), type, user);
+
+        notification.setRelatedGoalId(relatedGoalId);
+        notification.setRelatedDailyRecordId(relatedDailyRecordId);
+        notification.setRelatedTrackingLinkId(relatedTrackingLinkId);
 
         Notification savedNotification = notificationRepository.save(notification);
 
@@ -69,6 +80,7 @@ public class NotificationService {
         }
 
         notification.setRead(true);
+
         Notification savedNotification = notificationRepository.save(notification);
 
         return toResponse(savedNotification);
@@ -93,7 +105,7 @@ public class NotificationService {
 
         String message = "Â¡Felicidades! Has completado la meta con id: " + goalId;
 
-        return createNotification(userId, message, NotificationType.GOAL_COMPLETED);
+        return createNotification(userId, message, NotificationType.GOAL_COMPLETED, goalId, null, null);
     }
 }
 

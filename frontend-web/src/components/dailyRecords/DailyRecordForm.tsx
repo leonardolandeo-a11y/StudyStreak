@@ -20,15 +20,13 @@ function DailyRecordForm({
     submitLabel = "Create Daily Record",
     resetAfterSubmit = true,
 }: DailyRecordFormProps) {
-    const [date, setDate] = useState(initialValues?.date ?? "");
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    const date = initialValues?.date ?? today;
 
     const [note, setNote] = useState(initialValues?.note ?? "");
 
     const [evidence, setEvidence] = useState(initialValues?.evidence ?? "");
-
-    const now = new Date();
-
-    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
 
     async function handleSubmit(event : SubmitEvent<HTMLFormElement>){
         event.preventDefault();
@@ -36,7 +34,6 @@ function DailyRecordForm({
         const submitted = await onSubmit({date, note,evidence});
 
         if (submitted && resetAfterSubmit){
-            setDate("");
             setNote("");
             setEvidence("");
         }
@@ -76,12 +73,10 @@ function DailyRecordForm({
 
                 <input
                     id="date"
-                    type="date"
+                    type="text"
                     value={date}
-                    max={today}
-                    onChange={(event) =>
-                        setDate(event.target.value)
-                    }
+                    readOnly
+                    aria-readonly="true"
                     className="
                         w-full
                         rounded-lg
@@ -93,6 +88,9 @@ function DailyRecordForm({
                     "
                     required
                 />
+                <p className="mt-2 text-xs text-slate-400">
+                    The record date is assigned by the server and cannot be changed.
+                </p>
             </div>
 
 

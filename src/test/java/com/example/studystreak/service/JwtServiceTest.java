@@ -43,6 +43,7 @@ class JwtServiceTest {
         when(user.getUsername()).thenReturn("test_user");
         when(user.getEmail()).thenReturn("test@example.com");
         when(user.getRole()).thenReturn(Role.USER);
+        when(user.getActive()).thenReturn(true);
     }
 
     @Test
@@ -50,10 +51,7 @@ class JwtServiceTest {
         String token = jwtService.generateToken(user);
 
         assertTrue(
-                jwtService.isTokenValid(
-                        token,
-                        "test_user"
-                )
+                jwtService.isTokenValid(token, user)
         );
 
         assertEquals(
@@ -63,15 +61,21 @@ class JwtServiceTest {
     }
 
     @Test
+    void twoRefreshTokensIssuedImmediatelyAreUnique() {
+        String first = jwtService.generateRefreshToken(user);
+        String second = jwtService.generateRefreshToken(user);
+        assertNotEquals(first, second);
+        assertNotEquals(jwtService.extractRefreshTokenId(first), jwtService.extractRefreshTokenId(second));
+        assertNotNull(jwtService.extractRefreshSessionId(first));
+    }
+
+    @Test
     void refreshTokenShouldBeValid() {
         String token =
                 jwtService.generateRefreshToken(user);
 
         assertTrue(
-                jwtService.isRefreshTokenValid(
-                        token,
-                        "test_user"
-                )
+                jwtService.isRefreshTokenValid(token, user)
         );
 
         assertEquals(
@@ -86,10 +90,57 @@ class JwtServiceTest {
                 jwtService.generateRefreshToken(user);
 
         assertFalse(
-                jwtService.isTokenValid(
-                        refreshToken,
-                        "test_user"
-                )
+                jwtService.isTokenValid(refreshToken, user)
         );
     }
+
+    @Test
+    void accessTokenCannotAuthenticateDifferentAccountWithSameUsername() {
+        String token = jwtService.generateToken(user);
+        when(user.getId()).thenReturn(2L);
+
+        assertFalse(jwtService.isTokenValid(token, user));
+    }
+
+    @Test
+    void refreshTokenCannotAuthenticateDifferentAccountWithSameUsername() {
+        String token = jwtService.generateRefreshToken(user);
+        when(user.getId()).thenReturn(2L);
+
+        assertFalse(jwtService.isRefreshTokenValid(token, user));
+    }
+
+    @Test
+    void disabledAccountCannotUseAccessOrRefreshTokens() {
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        when(user.getActive()).thenReturn(false);
+
+        assertFalse(jwtService.isTokenValid(accessToken, user));
+        assertFalse(jwtService.isRefreshTokenValid(refreshToken, user));
+    }
+
+    @Test
+    void missingActiveFlagIsTreatedAsDisabled() {
+        String token = jwtService.generateToken(user);
+        when(user.getActive()).thenReturn(null);
+
+        assertFalse(jwtService.isTokenValid(token, user));
+    }
+
+    @Test
+    void oldRoleCannotBeReusedAfterRoleChange() {
+        String token = jwtService.generateToken(user);
+        when(user.getRole()).thenReturn(Role.ADMIN);
+
+        assertFalse(jwtService.isTokenValid(token, user));
+    }
+
+    @Test
+    void accessTokenCannotBeUsedToRefreshSession() {
+        String token = jwtService.generateToken(user);
+
+        assertFalse(jwtService.isRefreshTokenValid(token, user));
+    }
+
 }

@@ -1,3 +1,8 @@
+import axios from 'axios';
+import { createValidation, getValidation, updateValidation } from '../services/validationService';
+import ValidationForm from '../components/validations/ValidationForm';
+import type { ValidationRequest } from '../types/validation';
+import type { Validation } from '../types/validation';
 import {
     useEffect,
     useState
@@ -5,7 +10,8 @@ import {
 
 import {
     useParams,
-    useNavigate
+    useNavigate,
+    useSearchParams
 } from "react-router-dom";
 import {
     getDailyRecord,
@@ -34,14 +40,21 @@ import EmptyState
     from "../components/ui/EmptyState";
 
 import { useToast } from "../hooks/useToast";
+import { validationLookupState } from "../utils/validationAccess";
 import { useConfirm } from "../hooks/useConfirm";
 
 function DailyRecordDetails(){
     const {goalId,dailyRecordId} = useParams();
+    const [searchParams] = useSearchParams();
+    const reviewRequested = searchParams.get('review') === '1';
+    const [reviewSaving, setReviewSaving] = useState(false);
+    const [reviewRevision, setReviewRevision] = useState(0);
 
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
 
     const [loading, setLoading] =useState(true);
+    const [validation, setValidation] = useState<Validation | null>(null);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const [error, setError] =useState<string | null>(null);
 
@@ -89,6 +102,28 @@ function DailyRecordDetails(){
 
         } finally {
             setUpdating(false);
+        }
+    }
+
+    async function handleSubmitReview(request: ValidationRequest): Promise<boolean> {
+        if (parsedGoalId === null || parsedDailyRecordId === null || reviewSaving) return false;
+        setReviewSaving(true);
+        setValidationError(null);
+        try {
+            const result = validation
+                ? await updateValidation(parsedGoalId, parsedDailyRecordId, request)
+                : await createValidation(parsedGoalId, parsedDailyRecordId, request);
+            setValidation(result);
+            showToast(validation ? 'Validation updated.' : 'Validation created.', 'success');
+            return true;
+        } catch (cause) {
+            const status = axios.isAxiosError(cause) ? cause.response?.status : undefined;
+            setValidationError(status === 403 || status === 409
+                ? 'You cannot submit this review. The record may already have been validated.'
+                : 'Could not save validation. Please try again.');
+            return false;
+        } finally {
+            setReviewSaving(false);
         }
     }
 
@@ -150,10 +185,22 @@ function DailyRecordDetails(){
 
                 setLoading(true);
                 setError(null);
+                setValidation(null);
+                setValidationError(null);
 
                 const response =await getDailyRecord( goalNumber, recordNumber,controller.signal );
 
                 setDailyRecord(response);
+                try {
+                    const review = await getValidation(goalNumber, recordNumber);
+                    if (!controller.signal.aborted) setValidation(review);
+                } catch (cause) {
+                    if (controller.signal.aborted) return;
+                    const status = axios.isAxiosError(cause) ? cause.response?.status : undefined;
+                    const state = validationLookupState(status);
+                    if (state === 'blocked') setValidationError('You cannot view or change this review.');
+                    if (state === 'retry') setValidationError('Could not load validation status. Please try again.');
+                }
 
             } catch {
 
@@ -181,7 +228,8 @@ function DailyRecordDetails(){
         parsedGoalId,
         parsedDailyRecordId,
         invalidGoalId,
-        invalidDailyRecordId
+        invalidDailyRecordId,
+        reviewRevision
     ]);
     if (invalidGoalId ||invalidDailyRecordId) {
         return ( <ErrorMessage message="Invalid daily record id."/>);
@@ -288,6 +336,35 @@ function DailyRecordDetails(){
 
             </div>
         </section>
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <h2 className="text-xl font-semibold text-slate-100">Peer validation</h2>
+            {validation ? (
+                <div className="mt-3 space-y-2">
+                    <p className={validation.approved ? 'font-semibold text-emerald-400' : 'font-semibold text-red-400'}>
+                        {validation.approved ? 'Approved' : 'Rejected'}
+                    </p>
+                    <p className="whitespace-pre-wrap text-slate-300">{validation.comment || 'No comment provided.'}</p>
+                </div>
+            ) : (
+                <p className="mt-3 text-slate-400">{validationError || 'Awaiting peer review.'}</p>
+            )}
+        </section>
+        {reviewRequested ? (
+            validationError ? (
+                <button type="button" onClick={() => setReviewRevision(value => value + 1)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                    Retry loading review
+                </button>
+            ) : (
+                <ValidationForm key={validation?.id ?? 'new'} onSubmit={handleSubmitReview}
+                    loading={reviewSaving} initialValues={validation ? {
+                        approved: validation.approved,
+                        comment: validation.comment ?? ''
+                    } : undefined}
+                    submitLabel={validation ? 'Update validation' : 'Review and validate'} resetAfterSubmit={false} />
+            )
+        ) : (
+        <>
         <section>
             <DailyRecordForm
                 onSubmit={handleUpdateDailyRecord}
@@ -340,6 +417,8 @@ function DailyRecordDetails(){
                     : "Delete Daily Record"}
             </button>
         </section>
+        </>
+        )}
 
     </div>
     )

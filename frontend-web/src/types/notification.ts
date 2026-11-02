@@ -2,6 +2,7 @@
 export type NotificationType =
     | "PENDING_CHECK_IN"
     | "VALIDATION_RECEIVED"
+    | "DAILY_RECORD_CREATED"
     | "WEEKLY_SUMMARY"
     | "GOAL_COMPLETED"
     | "TRACKING_REQUESTED"
@@ -16,4 +17,7 @@ export interface Notification{
     read :boolean;
     createdAt:string;
     type:NotificationType;
+    relatedGoalId?: number | null;
+    relatedDailyRecordId?: number | null;
+    relatedTrackingLinkId?: number | null;
 }

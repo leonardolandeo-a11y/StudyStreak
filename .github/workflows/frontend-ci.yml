@@ -31,5 +31,44 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Test web authentication and navigation
+        run: npm run test:web
+
       - name: Build frontend
         run: npm run build
+
+  mobile:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend-mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend-mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run mobile session and JWT tests
+        run: npm run test:auth
+
+      - name: Test mobile pagination
+        run: npm run test:pagination
+
+      - name: Test mobile review navigation
+        run: npm run test:review
+
+      - name: Run mobile ESLint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Validate mobile TypeScript
+        run: npx --no-install tsc --noEmit

@@ -46,7 +46,9 @@ public class TrackingLinkEventListener {
 
         String message = requester.getUsername() + " sent you a tracking request";
 
-        notificationService.createNotification(event.getReceiverId(), message, NotificationType.TRACKING_REQUESTED);
+        notificationService.createNotification(
+                event.getReceiverId(), message, NotificationType.TRACKING_REQUESTED,
+                null, null, event.getTrackingLinkId());
     }
 
 
@@ -71,7 +73,9 @@ public class TrackingLinkEventListener {
 
             String message = receiver.getUsername() + " accepted your tracking request";
 
-            notificationService.createNotification(event.getRequesterId(), message, NotificationType.TRACKING_ACCEPTED);
+            notificationService.createNotification(
+                    event.getRequesterId(), message, NotificationType.TRACKING_ACCEPTED,
+                    null, null, event.getTrackingLinkId());
 
         } else if (
                 event.getStatus() == TrackingStatus.REJECTED
@@ -79,7 +83,9 @@ public class TrackingLinkEventListener {
 
             String message = receiver.getUsername() + " rejected your tracking request";
 
-            notificationService.createNotification(event.getRequesterId(), message, NotificationType.TRACKING_REJECTED);
+            notificationService.createNotification(
+                    event.getRequesterId(), message, NotificationType.TRACKING_REJECTED,
+                    null, null, event.getTrackingLinkId());
         }
     }
 

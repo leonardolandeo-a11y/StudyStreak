@@ -31,6 +31,7 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
+import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
 interface ApiErrorResponse {
@@ -62,24 +63,28 @@ function DailyRecords(){
     const [creating, setCreating] = useState(false);
 
 
-    const page = Number.isInteger(pageParam) && pageParam>= 0 ?pageParam:0;
+    const page = Number.isSafeInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
+    const sizeParam = Number(searchParams.get("size") ?? "10");
+    const size = [10, 25, 50, 100].includes(sizeParam) ? sizeParam : 10;
 
     const { showToast } = useToast();
 
-    function goToPreviousPage(){
-        if (page<= 0){
-            return;
-        }
-        setSearchParams({
-            page:String(page-1),
-        })
+    function changePage(nextPage: number) {
+        if (nextPage < 0 || (nextPage > 0 && recordPage && nextPage >= recordPage.totalPages)) return;
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            if (nextPage === 0) next.delete("page");
+            else next.set("page", String(nextPage));
+            return next;
+        });
     }
-    function goToNextPage(){
-        if(!recordPage || recordPage.last){
-            return;
-        }
-        setSearchParams({
-            page:String(page+1)
+
+    function changeSize(nextSize: number) {
+        setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set("size", String(nextSize));
+            next.delete("page");
+            return next;
         });
     }
 
@@ -95,14 +100,12 @@ function DailyRecords(){
             await createDailyRecord( parsedGoalId,dailyRecord);
             if (page === 0) {
 
-                const updatedRecords =await getDailyRecords(parsedGoalId, 0,10);
+                const updatedRecords = await getDailyRecords(parsedGoalId, 0, size);
                 setRecordPage(updatedRecords);
 
             } else {
 
-                setSearchParams({
-                    page: "0"
-                });
+                changePage(0);
             }
 
 
@@ -143,8 +146,20 @@ function DailyRecords(){
                 setLoading(true);
                 setError(null);
 
-                const response =await getDailyRecords(id,page,10,controller.signal);
+                const response = await getDailyRecords(id, page, size, controller.signal);
 
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(page, response.totalPages);
+                if (fallback !== null) {
+                    setRecordPage(null);
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current);
+                        if (fallback === 0) next.delete("page");
+                        else next.set("page", String(fallback));
+                        return next;
+                    });
+                    return;
+                }
                 setRecordPage(response);
 
             } catch {
@@ -174,7 +189,9 @@ function DailyRecords(){
     }, [
         parsedGoalId,
         invalidGoalId,
-        page
+        page,
+        size,
+        setSearchParams
     ]);
 
     if (invalidGoalId){
@@ -311,8 +328,12 @@ function DailyRecords(){
                     totalPages={recordPage.totalPages}
                     first={recordPage.first}
                     last={recordPage.last}
-                    onPrevious={goToPreviousPage}
-                    onNext={goToNextPage}
+                    onPrevious={() => changePage(page - 1)}
+                    onNext={() => changePage(page + 1)}
+                    onPageChange={changePage}
+                    size={size}
+                    totalElements={recordPage.totalElements}
+                    onPageSizeChange={changeSize}
                 />
             )}
         </section>

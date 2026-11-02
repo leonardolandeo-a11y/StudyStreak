@@ -1,6 +1,7 @@
 package com.example.studystreak.security;
 
-import com.example.studystreak.service.CustomUserDetailsService;
+import com.example.studystreak.model.User;
+import com.example.studystreak.repository.UserRepository;
 import com.example.studystreak.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,14 +20,11 @@ import java.io.IOException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final CustomUserDetailsService customUserDetailsService;
+    private final UserRepository userRepository;
 
-    public JwtRequestFilter(
-            JwtService jwtService,
-            CustomUserDetailsService customUserDetailsService
-    ) {
+    public JwtRequestFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
-        this.customUserDetailsService = customUserDetailsService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -36,12 +34,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authorizationHeader =
-                request.getHeader("Authorization");
-
-        if (authorizationHeader == null
-                || !authorizationHeader.startsWith("Bearer ")) {
-
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,41 +43,20 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String token = authorizationHeader.substring(7);
 
         try {
-            String username =
-                    jwtService.extractUsername(token);
+            String username = jwtService.extractUsername(token);
 
-            String tokenRole =
-                    jwtService.extractRole(token);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = userRepository.findByUsername(username).orElse(null);
 
-            if (username != null
-                    && SecurityContextHolder
-                    .getContext()
-                    .getAuthentication() == null) {
+                // A username can be reused. The token must still belong to the same database user.
+                if (user != null && Boolean.TRUE.equals(user.getActive())
+                        && jwtService.isTokenValid(token, user)) {
+                    UserDetails userDetails = org.springframework.security.core.userdetails.User
+                            .withUsername(user.getUsername())
+                            .password(user.getPassword())
+                            .roles(user.getRole().name())
+                            .build();
 
-                UserDetails userDetails =
-                        customUserDetailsService
-                                .loadUserByUsername(username);
-
-                boolean validToken =
-                        jwtService.isTokenValid(
-                                token,
-                                userDetails.getUsername()
-                        );
-
-                String expectedAuthority =
-                        "ROLE_" + tokenRole;
-
-                boolean validRole =
-                        userDetails
-                                .getAuthorities()
-                                .stream()
-                                .anyMatch(authority ->
-                                        authority
-                                                .getAuthority()
-                                                .equals(expectedAuthority)
-                                );
-
-                if (validToken && validRole) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -92,16 +65,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                             );
 
                     authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
+                            new WebAuthenticationDetailsSource().buildDetails(request)
                     );
-
-                    SecurityContextHolder
-                            .getContext()
-                            .setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (Exception exception) {
+            // Invalid credentials must never establish an authenticated context.
             SecurityContextHolder.clearContext();
         }
 

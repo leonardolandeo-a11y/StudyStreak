@@ -1,3 +1,6 @@
+import { useNavigate } from 'react-router-dom';
+import { notificationDestination } from '../utils/notificationDestination';
+import { fallbackPage } from '../utils/pageBounds';
 import {
     useCallback,
     useEffect,
@@ -47,6 +50,7 @@ import {
 } from "../hooks/useUnreadNotifications";
 function Notifications(){
     const {currentUser} = useAuth();
+    const navigate = useNavigate();
     const { showToast } = useToast();
     const {refreshUnreadCount} = useUnreadNotifications();
     const confirm = useConfirm();
@@ -123,6 +127,23 @@ function Notifications(){
             refreshUnreadCount
         ]
     );
+    const handleOpen = useCallback(async (notification: Notification): Promise<void> => {
+        if (!userId || actionLoadingId !== null) return;
+
+        if (!notification.read) {
+            try {
+                dispatch({ type: 'ACTION_START', payload: notification.id });
+                await markNotificationAsRead(userId, notification.id);
+                await refreshUnreadCount();
+            } catch {
+                showToast('Could not mark notification as read.', 'error');
+            } finally {
+                dispatch({ type: 'ACTION_END' });
+            }
+        }
+        navigate(notificationDestination(notification));
+    }, [userId, actionLoadingId, refreshUnreadCount, showToast, navigate]);
+
     const handleDelete = useCallback(
         async (
             notificationId: number
@@ -184,90 +205,81 @@ function Notifications(){
         },[userId,showToast,confirm,refreshUnreadCount]);
     
     useEffect(() => {
-
         if (!userId) {
             return;
         }
-        void refreshUnreadCount();
-        const controller =new AbortController();
 
+        const controller = new AbortController();
+        let inFlight = false;
 
-        async function loadNotifications(id :number) {
+        async function loadNotifications(id: number, silent = false) {
+            if (inFlight || controller.signal.aborted) {
+                return;
+            }
+
+            inFlight = true;
+            if (!silent) {
+                dispatch({ type: "LOAD_START" });
+            }
 
             try {
-
-                dispatch({
-                    type: "LOAD_START"
-                });
-
-                let result:PageResponse<Notification>;
-
+                let result: PageResponse<Notification>;
 
                 if (selectedType) {
-
-                    result =await getNotificationsByType(
-                                id,
-                                selectedType,
-                                page,
-                                20,
-                                controller.signal
-                            );
-
+                    result = await getNotificationsByType(id, selectedType, page, 20, controller.signal);
                 } else if (filter === "unread") {
-
-                    result =await getUnreadNotifications(
-                                id,
-                                page,
-                                20,
-                                controller.signal
-                            );
-
+                    result = await getUnreadNotifications(id, page, 20, controller.signal);
                 } else {
-
-                    result =await getNotifications(
-                                id,
-                                page,
-                                20,
-                                controller.signal
-                            );
+                    result = await getNotifications(id, page, 20, controller.signal);
                 }
-
-
-                dispatch({
-                    type: "LOAD_SUCCESS",
-                    payload: result
-                });
-
-            } catch {
 
                 if (!controller.signal.aborted) {
-
-                    dispatch({
-                        type: "LOAD_ERROR",
-                        payload:
-                            "Could not load notifications."
-                    });
+                    const fallback = fallbackPage(page, result.totalPages);
+                    if (fallback !== null) {
+                        handlePageChange(fallback, true);
+                        return;
+                    }
+                    dispatch({ type: "LOAD_SUCCESS", payload: result });
                 }
+            } catch {
+                // A background refresh must not hide notifications already on screen.
+                if (!silent && !controller.signal.aborted) {
+                    dispatch({ type: "LOAD_ERROR", payload: "Could not load notifications." });
+                }
+            } finally {
+                inFlight = false;
             }
         }
 
-
+        void refreshUnreadCount();
         void loadNotifications(userId);
 
-
-        return () => {
-            controller.abort();
+        const refreshWhenVisible = () => {
+            if (document.visibilityState === "visible") {
+                void loadNotifications(userId, true);
+            }
         };
 
+        window.addEventListener("focus", refreshWhenVisible);
+        document.addEventListener("visibilitychange", refreshWhenVisible);
+        const intervalId = window.setInterval(refreshWhenVisible, 30000);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener("focus", refreshWhenVisible);
+            document.removeEventListener("visibilitychange", refreshWhenVisible);
+            controller.abort();
+        };
     }, [
         userId,
         page,
         filter,
         selectedType,
         refreshKey,
-        refreshUnreadCount
+        refreshUnreadCount,
+        handlePageChange
     ]);
-    
+
 
     if (!currentUser){
         return null;
@@ -478,6 +490,7 @@ function Notifications(){
                                     notification={notification}
                                     onMarkAsRead={handleMarkAsRead}
                                     onDelete={handleDelete}
+                                    onOpen={handleOpen}
                                     loading={
                                         actionLoadingId ===
                                         notification.id

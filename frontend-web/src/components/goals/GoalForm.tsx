@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from "react";
 import type { GoalRequest } from "../../types/goal";
 
 interface GoalFormProps{
-    onSubmit: (goal:GoalRequest) =>Promise<void>;
+    onSubmit: (goal:GoalRequest) => Promise<boolean>;
     loading:boolean;
 
     initialValues?:GoalRequest;
@@ -21,6 +21,7 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement> ) {
         event.preventDefault();
+        if (loading) return;
 
         const trimmedTopic =topic.trim();
 
@@ -41,14 +42,9 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
 
         setError(null);
 
-        await onSubmit({
-            topic: trimmedTopic,
-            frequency,
-            duration,
-            completed
-        });
+        const submitted = await onSubmit({ topic: trimmedTopic, frequency, duration, completed });
 
-        if (resetAfterSubmit) {
+        if (submitted && resetAfterSubmit) {
             setTopic("");
             setFrequency(1);
             setDuration(30);
@@ -204,6 +200,7 @@ function GoalForm({onSubmit,loading, initialValues,submitLabel="Create Goal", re
 
             {error && (
                 <p
+                    role="alert"
                     className="
                         rounded-lg
                         border border-red-900/60

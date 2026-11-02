@@ -11,6 +11,8 @@ public class TrackingLinkResponseDTO {
     private Long id;
     private Long requesterId;
     private Long receiverId;
+    private String requesterUsername;
+    private String receiverUsername;
     private TrackingStatus status;
 
     public TrackingLinkResponseDTO() {}

@@ -17,6 +17,7 @@ import com.example.studystreak.model.User;
 
 import com.example.studystreak.repository.TrackingLinkRepository;
 import com.example.studystreak.repository.UserRepository;
+import com.example.studystreak.repository.NotificationRepository;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -30,11 +31,13 @@ public class TrackingLinkService {
     private final TrackingLinkRepository trackingLinkRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificationRepository notificationRepository;
 
-    public TrackingLinkService(TrackingLinkRepository trackingLinkRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
+    public TrackingLinkService(TrackingLinkRepository trackingLinkRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher, NotificationRepository notificationRepository) {
         this.trackingLinkRepository = trackingLinkRepository;
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
+        this.notificationRepository = notificationRepository;
     }
 
 
@@ -45,15 +48,17 @@ public class TrackingLinkService {
             throw new ConflictException("A user cannot create a tracking link with themselves");
         }
 
-        User requester = userRepository.findById(requesterId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found with id: " + requesterId)
-                );
+        // Lock the same two user rows in ascending order for both invitation directions.
+        // The transaction serializes duplicate checks for the same pair on PostgreSQL.
+        Long firstId = Math.min(requesterId, receiverId);
+        Long secondId = Math.max(requesterId, receiverId);
+        User first = userRepository.findByIdForUpdate(firstId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + firstId));
+        User second = userRepository.findByIdForUpdate(secondId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + secondId));
 
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("User not found with id: " + receiverId)
-                );
+        User requester = requesterId.equals(firstId) ? first : second;
+        User receiver = receiverId.equals(secondId) ? second : first;
 
         if (trackingLinkRepository.findLinkBetweenUsers(requesterId, receiverId).isPresent()) {
 
@@ -73,7 +78,8 @@ public class TrackingLinkService {
         eventPublisher.publishEvent(
                 new TrackingLinkRequestedEvent(
                         savedTrackingLink.getRequester().getId(),
-                        savedTrackingLink.getReceiver().getId()
+                        savedTrackingLink.getReceiver().getId(),
+                        savedTrackingLink.getId()
                 )
         );
         return toResponse(savedTrackingLink);
@@ -160,7 +166,8 @@ public class TrackingLinkService {
                 new TrackingLinkRespondedEvent(
                         savedTrackingLink.getRequester().getId(),
                         savedTrackingLink.getReceiver().getId(),
-                        savedTrackingLink.getStatus()
+                        savedTrackingLink.getStatus(),
+                        savedTrackingLink.getId()
                 )
         );
 
@@ -196,6 +203,8 @@ public class TrackingLinkService {
 
         Long receiverId = trackingLink.getReceiver().getId();
 
+        // Preserve notification history while removing navigation to this deleted link.
+        notificationRepository.clearDeletedTrackingLinkReferences(trackingId);
         trackingLinkRepository.delete(trackingLink);
 
         /*
@@ -223,6 +232,10 @@ public class TrackingLinkService {
         response.setRequesterId(trackingLink.getRequester().getId());
 
         response.setReceiverId(trackingLink.getReceiver().getId());
+
+        response.setRequesterUsername(trackingLink.getRequester().getUsername());
+
+        response.setReceiverUsername(trackingLink.getReceiver().getUsername());
 
         response.setStatus(trackingLink.getStatus());
 

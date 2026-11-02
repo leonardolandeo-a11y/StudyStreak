@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+import { useCallback, useMemo } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
@@ -9,6 +9,7 @@ import type{
 export const NOTIFICATION_TYPES:NotificationType[] = [
     "PENDING_CHECK_IN",
     "VALIDATION_RECEIVED",
+    "DAILY_RECORD_CREATED",
     "WEEKLY_SUMMARY",
     "GOAL_COMPLETED",
     "TRACKING_REQUESTED",
@@ -63,23 +64,13 @@ export function useNotificationFilters(){
     }
 
 
-    function handlePageChange(newPage: number) {
-
+    const handlePageChange = useCallback((newPage: number, replace = false) => {
         if (selectedType) {
-
-            setSearchParams({
-                type: selectedType,
-                page: String(newPage)
-            });
-
+            setSearchParams({ type: selectedType, page: String(newPage) }, { replace });
             return;
         }
-
-        setSearchParams({
-            filter,
-            page: String(newPage)
-        });
-    }
+        setSearchParams({ filter, page: String(newPage) }, { replace });
+    }, [selectedType, filter, setSearchParams]);
 
 
     return {
