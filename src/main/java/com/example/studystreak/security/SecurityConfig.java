@@ -45,6 +45,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
 
+                // AuthController handles /logout and revokes the database-backed refresh token.
+                .logout(logout -> logout.disable())
+
                 .cors(cors -> cors.configurationSource(
                         corsConfigurationSource()
                 ))
