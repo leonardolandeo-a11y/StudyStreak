@@ -39,6 +39,8 @@ import EmptyState
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
 import { getApiErrorMessage } from "../utils/apiError";
+import { getFocusSummary } from "../services/focusSessionService";
+import type { FocusSummary } from "../services/focusSessionService";
 
 function GoalDetails(){
     const {currentUser} = useAuth();
@@ -57,6 +59,7 @@ function GoalDetails(){
     const [streakLoading, setStreakLoading] =useState(true);
 
     const [streakError, setStreakError] = useState<string | null>(null);
+    const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
     const userId = currentUser?.id;
     const parsedGoalId = goalId ? Number(goalId): null;
     const invalidGoalId= parsedGoalId=== null || !Number.isSafeInteger(parsedGoalId) || parsedGoalId<= 0;
@@ -204,6 +207,15 @@ useEffect(() => {
         parsedGoalId,
         invalidGoalId
     ]);
+    useEffect(() => {
+        if (parsedGoalId === null || invalidGoalId || userId === null || userId === undefined) return;
+        const controller = new AbortController();
+        void getFocusSummary(parsedGoalId, controller.signal)
+            .then(result => { if (!controller.signal.aborted) setFocusSummary(result); })
+            .catch(() => { /* Keep the rest of Goal details available if focus history fails. */ });
+        return () => controller.abort();
+    }, [parsedGoalId, invalidGoalId, userId]);
+
     if (!currentUser) {
         return <p>Please log in to view this goal.</p>;
     }
@@ -340,8 +352,26 @@ useEffect(() => {
             </div>
 
 
+            <div className="mt-6 rounded-xl border border-emerald-900/60 bg-emerald-950/20 px-4 py-3">
+                <p className="text-sm font-semibold text-emerald-300">Focus Studio progress</p>
+                <p className="mt-1 text-sm text-slate-300">
+                    {focusSummary
+                        ? `${focusSummary.totalMinutes} minutes · ${focusSummary.completedSessions} completed focus sessions`
+                        : "Focus totals unavailable or still loading."}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                    Only full linked Pomodoro sessions count. Daily records and streaks are tracked separately.
+                </p>
+            </div>
+
             <div className="mt-6 flex flex-wrap gap-3">
 
+                {!goal.completed && (
+                    <Link to={`${ROUTES.focusStudio}?goalId=${goal.id}`}
+                        className="rounded-lg bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 hover:bg-emerald-300">
+                        Study this Goal
+                    </Link>
+                )}
                 <Link
                     to={dailyRecordsPath(goal.id)}
                     className="
