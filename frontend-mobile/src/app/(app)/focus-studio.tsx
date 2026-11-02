@@ -108,8 +108,6 @@ export default function FocusStudioMobile() {
 
   useEffect(() => {
     let active = true;
-    setReady(false);
-    setTimer(newPomodoro());
     const restore = async () => {
       if (!key) return;
       let restored = newPomodoro();
