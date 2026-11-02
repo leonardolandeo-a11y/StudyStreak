@@ -40,6 +40,7 @@ import EmptyState
     from "../components/ui/EmptyState";
 
 import { useToast } from "../hooks/useToast";
+import { validationLookupState } from "../utils/validationAccess";
 import { useConfirm } from "../hooks/useConfirm";
 
 function DailyRecordDetails(){
@@ -47,6 +48,7 @@ function DailyRecordDetails(){
     const [searchParams] = useSearchParams();
     const reviewRequested = searchParams.get('review') === '1';
     const [reviewSaving, setReviewSaving] = useState(false);
+    const [reviewRevision, setReviewRevision] = useState(0);
 
     const [dailyRecord, setDailyRecord] =useState<DailyRecord | null>(null);
 
@@ -114,8 +116,11 @@ function DailyRecordDetails(){
             setValidation(result);
             showToast(validation ? 'Validation updated.' : 'Validation created.', 'success');
             return true;
-        } catch {
-            setValidationError('Could not save validation. Check your tracking permissions.');
+        } catch (cause) {
+            const status = axios.isAxiosError(cause) ? cause.response?.status : undefined;
+            setValidationError(status === 403 || status === 409
+                ? 'You cannot submit this review. The record may already have been validated.'
+                : 'Could not save validation. Please try again.');
             return false;
         } finally {
             setReviewSaving(false);
@@ -190,10 +195,11 @@ function DailyRecordDetails(){
                     const review = await getValidation(goalNumber, recordNumber);
                     if (!controller.signal.aborted) setValidation(review);
                 } catch (cause) {
-                    if (!controller.signal.aborted &&
-                        !(axios.isAxiosError(cause) && cause.response?.status === 404)) {
-                        setValidationError('Could not load validation status.');
-                    }
+                    if (controller.signal.aborted) return;
+                    const status = axios.isAxiosError(cause) ? cause.response?.status : undefined;
+                    const state = validationLookupState(status);
+                    if (state === 'blocked') setValidationError('You cannot view or change this review.');
+                    if (state === 'retry') setValidationError('Could not load validation status. Please try again.');
                 }
 
             } catch {
@@ -222,7 +228,8 @@ function DailyRecordDetails(){
         parsedGoalId,
         parsedDailyRecordId,
         invalidGoalId,
-        invalidDailyRecordId
+        invalidDailyRecordId,
+        reviewRevision
     ]);
     if (invalidGoalId ||invalidDailyRecordId) {
         return ( <ErrorMessage message="Invalid daily record id."/>);
@@ -343,12 +350,19 @@ function DailyRecordDetails(){
             )}
         </section>
         {reviewRequested ? (
-            <ValidationForm key={validation?.id ?? 'new'} onSubmit={handleSubmitReview}
-                loading={reviewSaving} initialValues={validation ? {
-                    approved: validation.approved,
-                    comment: validation.comment ?? ''
-                } : undefined}
-                submitLabel={validation ? 'Update validation' : 'Review and validate'} resetAfterSubmit={false} />
+            validationError ? (
+                <button type="button" onClick={() => setReviewRevision(value => value + 1)}
+                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                    Retry loading review
+                </button>
+            ) : (
+                <ValidationForm key={validation?.id ?? 'new'} onSubmit={handleSubmitReview}
+                    loading={reviewSaving} initialValues={validation ? {
+                        approved: validation.approved,
+                        comment: validation.comment ?? ''
+                    } : undefined}
+                    submitLabel={validation ? 'Update validation' : 'Review and validate'} resetAfterSubmit={false} />
+            )
         ) : (
         <>
         <section>

@@ -31,6 +31,7 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
+import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
 interface ApiErrorResponse {
@@ -147,6 +148,18 @@ function DailyRecords(){
 
                 const response = await getDailyRecords(id, page, size, controller.signal);
 
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(page, response.totalPages);
+                if (fallback !== null) {
+                    setRecordPage(null);
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current);
+                        if (fallback === 0) next.delete("page");
+                        else next.set("page", String(fallback));
+                        return next;
+                    });
+                    return;
+                }
                 setRecordPage(response);
 
             } catch {
@@ -177,7 +190,8 @@ function DailyRecords(){
         parsedGoalId,
         invalidGoalId,
         page,
-        size
+        size,
+        setSearchParams
     ]);
 
     if (invalidGoalId){

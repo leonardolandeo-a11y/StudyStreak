@@ -45,6 +45,7 @@ import EmptyState
 
 import PaginationControls
     from "../components/ui/PaginationControls";
+import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
@@ -262,6 +263,18 @@ function Tags() {
 
 
                 const response =await getTags(id,goalNumber,page,PAGE_SIZE,controller.signal);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(page, response.totalPages);
+                if (fallback !== null) {
+                    setTagPage(null);
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current);
+                        if (fallback === 0) next.delete("page");
+                        else next.set("page", String(fallback));
+                        return next;
+                    });
+                    return;
+                }
                 setTagPage(response);
 
             } catch {
@@ -290,7 +303,8 @@ function Tags() {
         userId,
         parsedGoalId,
         invalidGoalId,
-        page
+        page,
+        setSearchParams
     ]);
 
 

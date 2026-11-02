@@ -20,6 +20,7 @@ import ErrorMessage from "../components/ui/ErrorMessage";
 import EmptyState from "../components/ui/EmptyState";
 
 import PaginationControls from "../components/ui/PaginationControls";
+import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
 import { getApiErrorMessage } from "../utils/apiError";
@@ -100,6 +101,18 @@ function Goals(){
                 setError(null);
 
                 const response = await getGoals(id, page, size, controller.signal);
+                if (controller.signal.aborted) return;
+                const fallback = fallbackPage(page, response.totalPages);
+                if (fallback !== null) {
+                    setGoalPage(null);
+                    setSearchParams(current => {
+                        const next = new URLSearchParams(current);
+                        if (fallback === 0) next.delete("page");
+                        else next.set("page", String(fallback));
+                        return next;
+                    });
+                    return;
+                }
                 setGoalPage(response);
 
             } catch {
@@ -124,7 +137,7 @@ function Goals(){
             controller.abort();
         };
 
-    }, [userId, page, size]);
+    }, [userId, page, size, setSearchParams]);
 
     if (!currentUser) {
         return <p>Please log in to view your goals.</p>;

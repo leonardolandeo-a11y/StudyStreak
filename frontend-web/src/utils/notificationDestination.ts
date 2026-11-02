@@ -4,9 +4,6 @@ import type { Notification } from '../types/notification';
 export function notificationDestination(notification: Notification): string {
   switch (notification.type) {
     case 'DAILY_RECORD_CREATED':
-      if (notification.relatedGoalId && notification.relatedDailyRecordId) {
-        return dailyRecordDetailsPath(notification.relatedGoalId, notification.relatedDailyRecordId) + '?review=1';
-      }
       return ROUTES.validations;
     case 'VALIDATION_RECEIVED':
       if (notification.relatedGoalId && notification.relatedDailyRecordId) {
@@ -29,7 +26,7 @@ export function notificationDestination(notification: Notification): string {
 
 export function notificationActionLabel(notification: Notification): string {
   switch (notification.type) {
-    case 'DAILY_RECORD_CREATED': return notification.relatedDailyRecordId ? 'Review new record' : 'View validations';
+    case 'DAILY_RECORD_CREATED': return 'View validations';
     case 'VALIDATION_RECEIVED': return notification.relatedDailyRecordId ? 'View reviewed record' : 'View my goals';
     case 'GOAL_COMPLETED': return 'View goal';
     case 'TRACKING_REQUESTED':
