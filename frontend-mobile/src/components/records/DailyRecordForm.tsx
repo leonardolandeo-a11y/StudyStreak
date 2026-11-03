@@ -13,13 +13,8 @@ type Props = {
   onCancel: () => void;
 };
 
-function todayLocal(): string {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
 export function DailyRecordForm({ initialValues, busy, onSubmit, onCancel }: Props) {
-  const date = initialValues?.date ?? todayLocal();
+  const date = initialValues?.date;
   const [note, setNote] = useState(initialValues?.note ?? '');
   const [evidence, setEvidence] = useState(initialValues?.evidence ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -27,15 +22,19 @@ export function DailyRecordForm({ initialValues, busy, onSubmit, onCancel }: Pro
   async function submit() {
     if (note.length > 1000) { setError('Notes cannot exceed 1000 characters.'); return; }
     setError(null);
-    await onSubmit({ date, note: note.trim(), evidence: evidence.trim() });
+    await onSubmit({ note: note.trim(), evidence: evidence.trim() });
   }
 
   return (
     <View style={styles.form}>
       <Text style={styles.heading}>{initialValues ? 'Edit daily record' : 'Add daily record'}</Text>
       <View>
-        <Text style={styles.dateLabel}>Date: {date}</Text>
-        <Text style={styles.dateHint}>Assigned by the server; it cannot be changed.</Text>
+        <Text style={styles.dateLabel}>
+          {date ? `Original date: ${date}` : 'Date: automatically assigned on save'}
+        </Text>
+        <Text style={styles.dateHint}>
+          Uses your account time zone, not your phone clock. Existing dates cannot be changed.
+        </Text>
       </View>
       <FormField label="Notes" hint={`${note.length}/1000 characters`} value={note}
         onChangeText={setNote} multiline numberOfLines={4} maxLength={1000}
