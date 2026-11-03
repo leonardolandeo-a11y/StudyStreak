@@ -23,7 +23,7 @@ export default function StudyRoomsPage() {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState(() => Date.now());
     const refreshing = useRef(false);
 
     const showRoom = useCallback((room: StudyRoom) => {

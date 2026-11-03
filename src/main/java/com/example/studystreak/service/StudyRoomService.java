@@ -62,7 +62,7 @@ public class StudyRoomService {
     private StudyRoomSnapshot snapshot(StudyRoom room, long userId, Instant now) {
         boolean running = "RUNNING".equals(room.getTimerStatus());
         long remaining = running && room.getEndsAt() != null
-                ? Math.max(0, Duration.between(now, room.getEndsAt()).toSeconds() + 1)
+                ? Math.max(0, (Duration.between(now, room.getEndsAt()).toMillis() + 999) / 1000)
                 : room.getRemainingSeconds();
         String status = running && remaining == 0 ? "COMPLETE" : room.getTimerStatus();
         Instant cutoff = now.minusSeconds(35);
@@ -146,7 +146,7 @@ public class StudyRoomService {
         }
         Instant now = Instant.now();
         int remaining = "RUNNING".equals(room.getTimerStatus()) && room.getEndsAt() != null
-                ? (int) Math.max(0, Duration.between(now, room.getEndsAt()).toSeconds() + 1)
+                ? (int) Math.max(0, (Duration.between(now, room.getEndsAt()).toMillis() + 999) / 1000)
                 : room.getRemainingSeconds();
         switch (request.action()) {
             case START -> {
