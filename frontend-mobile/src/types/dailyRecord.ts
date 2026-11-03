@@ -8,7 +8,7 @@ export interface DailyRecord {
 }
 
 export interface DailyRecordRequest {
-  date: string;
+  date?: string;
   note?: string;
   evidence?: string;
 }

@@ -354,11 +354,20 @@ useEffect(() => {
 
             <div className="mt-6 rounded-xl border border-emerald-900/60 bg-emerald-950/20 px-4 py-3">
                 <p className="text-sm font-semibold text-emerald-300">Focus Studio progress</p>
-                <p className="mt-1 text-sm text-slate-300">
-                    {focusSummary
-                        ? `${focusSummary.totalMinutes} minutes · ${focusSummary.completedSessions} completed focus sessions`
-                        : "Focus totals unavailable or still loading."}
-                </p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-slate-950/70 p-3">
+                        <p className="text-3xl font-black tabular-nums text-white">
+                            {focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : "—"}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-950/70 p-3">
+                        <p className="text-3xl font-black tabular-nums text-white">
+                            {focusSummary?.goalId === goal.id ? focusSummary.completedSessions : "—"}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
+                    </div>
+                </div>
                 <p className="mt-1 text-xs text-slate-500">
                     Only full linked Pomodoro sessions count. Daily records and streaks are tracked separately.
                 </p>

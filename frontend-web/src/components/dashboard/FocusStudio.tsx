@@ -6,6 +6,7 @@ import {
     VolumeX, Waves
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
+import FocusInsights from "./FocusInsights";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllActiveGoals } from "../../services/activeGoalsService";
 import { getFocusSummary, recordFocusCompletion } from "../../services/focusSessionService";
@@ -195,6 +196,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
             ? requestedGoalId : readSelectedGoal(goalKey)
     );
     const [goalSummary, setGoalSummary] = useState<FocusSummary | null>(null);
+    const [summaryRevision, setSummaryRevision] = useState(0);
+    const [statisticsRevision, setStatisticsRevision] = useState(0);
     const [summaryError, setSummaryError] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const inFlight = useRef(new Set<string>());
@@ -244,8 +247,17 @@ export default function FocusStudio({ userId }: { userId: number }) {
         }).catch(() => {
             if (!controller.signal.aborted) setSummaryError(true);
         });
-        return () => controller.abort();
-    }, [selectedGoalId]);
+        const reloadVisible = () => {
+            if (document.visibilityState === "visible") setSummaryRevision(value => value + 1);
+        };
+        window.addEventListener("focus", reloadVisible);
+        document.addEventListener("visibilitychange", reloadVisible);
+        return () => {
+            controller.abort();
+            window.removeEventListener("focus", reloadVisible);
+            document.removeEventListener("visibilitychange", reloadVisible);
+        };
+    }, [selectedGoalId, summaryRevision]);
 
     useEffect(() => {
         for (const pending of timer.pendingFocusSessions) {
@@ -257,11 +269,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 failed.current.delete(pending.sessionId);
                 setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
                 setSaveError(null);
-                if (selectedGoalId === pending.goalId) {
-                    void getFocusSummary(pending.goalId).then(setGoalSummary).catch(() => {
-                        setSummaryError(true);
-                    });
-                }
+                setSummaryRevision(value => value + 1);
+                setStatisticsRevision(value => value + 1);
             }).catch(() => {
                 failed.current.add(pending.sessionId);
                 setSaveError("A completed session is pending sync. Retry when the server is available.");
@@ -492,18 +501,40 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             </p>
                         )}
                         {chosenGoal && (
-                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-xs text-slate-300">
-                                    Recorded: <strong className="text-emerald-300">
-                                        {goalSummary?.goalId === selectedGoalId
-                                            ? `${goalSummary.totalMinutes} min / ${goalSummary.completedSessions} sessions`
-                                            : summaryError ? "Unavailable" : "Loading…"}
-                                    </strong>
-                                </p>
+                            <div className="mt-4 rounded-xl border border-emerald-400/30 bg-slate-950/80 p-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">
+                                        Recorded for this Goal
+                                    </p>
+                                    <button type="button" onClick={() => setSummaryRevision(value => value + 1)}
+                                        className="text-xs font-semibold text-slate-300 hover:text-white">
+                                        Refresh
+                                    </button>
+                                </div>
+                                <div className="mt-3 grid grid-cols-2 gap-3" aria-live="polite">
+                                    <div className="rounded-lg bg-emerald-950/30 p-3">
+                                        <p className="text-3xl font-black tabular-nums text-white">
+                                            {goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : "—"}
+                                        </p>
+                                        <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
+                                    </div>
+                                    <div className="rounded-lg bg-emerald-950/30 p-3">
+                                        <p className="text-3xl font-black tabular-nums text-white">
+                                            {goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : "—"}
+                                        </p>
+                                        <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
+                                    </div>
+                                </div>
+                                {summaryError && (
+                                    <p role="alert" className="mt-2 text-xs text-rose-300">Totals could not be updated. Tap Refresh.</p>
+                                )}
                                 <Link to={goalDetailsPath(chosenGoal.id)}
-                                    className="text-xs font-semibold text-emerald-300 hover:underline">
-                                    Goal details
+                                    className="mt-3 inline-block text-xs font-semibold text-emerald-300 hover:underline">
+                                    View Goal details
                                 </Link>
+                                <p className="mt-2 text-[11px] text-slate-500">
+                                    Confirmed by the server, shared with Mobile. Pending sessions appear separately.
+                                </p>
                             </div>
                         )}
                         {!chosenGoal && !goalsLoading && (
@@ -671,6 +702,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                     </section>
                 </div>
             </div>
+
+            <FocusInsights refreshKey={statisticsRevision} />
 
             <section aria-label="Ambient soundscape library" className="space-y-4">
                 <div className="flex flex-wrap items-end justify-between gap-3">

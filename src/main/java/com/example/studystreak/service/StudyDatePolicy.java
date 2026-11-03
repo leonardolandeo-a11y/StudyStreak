@@ -17,6 +17,10 @@ final class StudyDatePolicy {
     }
 
     static LocalDate today(User user, Clock clock) {
+        return LocalDate.now(clock.withZone(zone(user)));
+    }
+
+    static ZoneId zone(User user) {
         ZoneId zone = DEFAULT_ZONE;
         try {
             if (user != null && user.getTimeZone() != null && !user.getTimeZone().isBlank()) {
@@ -25,6 +29,6 @@ final class StudyDatePolicy {
         } catch (DateTimeException ignored) {
             // Use the same fallback as daily record creation.
         }
-        return LocalDate.now(clock.withZone(zone));
+        return zone;
     }
 }

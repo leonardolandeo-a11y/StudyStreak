@@ -30,7 +30,7 @@ function DailyRecordForm({
     async function handleSubmit(event : SubmitEvent<HTMLFormElement>){
         event.preventDefault();
 
-        const submitted = await onSubmit({ ...(date ? { date } : {}), note, evidence });
+        const submitted = await onSubmit({ note, evidence });
 
         if (submitted && resetAfterSubmit){
             setNote("");
@@ -55,7 +55,7 @@ function DailyRecordForm({
             </h2>
 
             <p className="mt-1 text-sm text-slate-400">
-                Record your progress and attach any useful evidence.
+                Record your progress and attach any useful evidence. The date is assigned automatically.
             </p>
         </div>
 
@@ -85,7 +85,6 @@ function DailyRecordForm({
                         text-slate-100
                         hover:border-slate-600
                     "
-                    required
                 />
                 <p className="mt-2 text-xs text-slate-400">
                     The server assigns today's date in your account time zone. Existing record dates cannot be changed.

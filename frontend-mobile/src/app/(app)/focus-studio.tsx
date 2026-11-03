@@ -8,6 +8,7 @@ import { Screen } from '../../components/ui/Screen';
 import { useAuth } from '../../hooks/useAuth';
 import { palette } from '../../constants/palette';
 import { MobileFocusAudio } from '../../features/focus/mobileFocusAudio';
+import { FocusInsightsMobile } from '../../components/focus/FocusInsightsMobile';
 import {
   advancePomodoro, discardPendingFocusSession, durationMs, formatPomodoroTime, newPomodoro,
   pausePomodoro, remainingPomodoroMs, resetPomodoro, restorePomodoro,
@@ -461,16 +462,36 @@ export default function FocusStudioMobile() {
             </Text>
           )}
           {selectedGoal && (
-            <View style={styles.goalStats}>
-              <Text style={styles.goalInfo}>
-                {summary?.goalId === selectedGoal.id
-                  ? `${summary.totalMinutes} min · ${summary.completedSessions} completed sessions`
-                  : summaryError ? 'Focus totals unavailable' : 'Loading focus totals…'}
-              </Text>
+            <View style={styles.recordedCard}>
+              <View style={styles.recordedHeading}>
+                <Text style={styles.recordedLabel}>RECORDED FOR THIS GOAL</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="Refresh recorded minutes"
+                  onPress={() => setSyncRevision(value => value + 1)}>
+                  <Text style={styles.goalLink}>↻ Refresh</Text>
+                </Pressable>
+              </View>
+              <View style={styles.recordedTotals}>
+                <View style={styles.recordedMetric}>
+                  <Text style={styles.recordedNumber}>
+                    {summary?.goalId === selectedGoal.id ? summary.totalMinutes : '—'}
+                  </Text>
+                  <Text style={styles.recordedUnit}>minutes saved</Text>
+                </View>
+                <View style={styles.recordedMetric}>
+                  <Text style={styles.recordedNumber}>
+                    {summary?.goalId === selectedGoal.id ? summary.completedSessions : '—'}
+                  </Text>
+                  <Text style={styles.recordedUnit}>sessions saved</Text>
+                </View>
+              </View>
+              {summaryError && (
+                <Text style={styles.goalError}>Totals unavailable. Tap Refresh.</Text>
+              )}
+              <Text style={styles.goalInfo}>Confirmed by Spring Boot; shared with Web.</Text>
               <Pressable accessibilityRole="button"
                 onPress={() => router.push({ pathname: '/(app)/goals/[goalId]',
                   params: { goalId: String(selectedGoal.id) } })}>
-                <Text style={styles.goalLink}>Details ›</Text>
+                <Text style={styles.goalLink}>Goal details ›</Text>
               </Pressable>
             </View>
           )}
@@ -574,6 +595,8 @@ export default function FocusStudioMobile() {
           </View>
         ) : null}
       </View>
+
+      <FocusInsightsMobile refreshKey={syncRevision} />
 
       <View style={styles.library}>
         <Text style={styles.libraryTitle}>Made for your focus</Text>
@@ -734,4 +757,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 8 },
   retryButtonText: { color: '#fde68a', fontSize: 12, fontWeight: '800' },
   goalStats: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  recordedCard: { backgroundColor: '#071d16', borderWidth: 1, borderColor: '#386b4c',
+    borderRadius: 14, padding: 14, gap: 12, marginTop: 5 },
+  recordedHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  recordedLabel: { color: '#86efac', fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
+  recordedTotals: { flexDirection: 'row', gap: 9 },
+  recordedMetric: { backgroundColor: '#153c2a', borderRadius: 11, flex: 1, padding: 12 },
+  recordedNumber: { color: '#fff', fontSize: 35, fontWeight: '900', fontVariant: ['tabular-nums'] },
+  recordedUnit: { color: '#bbf7d0', fontSize: 11, fontWeight: '700', marginTop: 2 },
 });
