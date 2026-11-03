@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isAxiosError } from 'axios';
 import { router, useFocusEffect } from 'expo-router';
 import {
   ActivityIndicator, Alert, AppState, Pressable,
@@ -67,7 +68,16 @@ export default function StudyRooms() {
           setError(null);
         }
       } catch (cause) {
-        if (active) setError(getApiErrorMessage(cause, 'Could not synchronize room.'));
+        if (active) {
+          if (isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0)) {
+            setRoomId(null);
+            setSnapshot(null);
+            setError('The room was closed or your access changed.');
+            void refreshLobby().catch(() => {});
+          } else {
+            setError(getApiErrorMessage(cause, 'Could not synchronize room.'));
+          }
+        }
       } finally { inFlight.current = false; }
     };
     const heartbeat = async () => {
@@ -91,7 +101,7 @@ export default function StudyRooms() {
       clearInterval(pulse);
       subscription.remove();
     };
-  }, [roomId]));
+  }, [roomId, refreshLobby]));
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 500);
@@ -108,7 +118,7 @@ export default function StudyRooms() {
       const room = await studyRoomService.create(roomName.trim());
       setRoomName('');
       showRoom(room);
-      void refreshLobby();
+      void refreshLobby().catch(() => {});
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Could not create study room.'));
     } finally { setBusy(false); }
@@ -120,7 +130,7 @@ export default function StudyRooms() {
       const room = await studyRoomService.join(code);
       setCode('');
       showRoom(room);
-      void refreshLobby();
+      void refreshLobby().catch(() => {});
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Invalid study room invitation.'));
     } finally { setBusy(false); }
@@ -247,7 +257,7 @@ export default function StudyRooms() {
             <View style={styles.timerBox}>
               <Text style={styles.timerLabel}>{room.phase === 'FOCUS' ? 'SHARED FOCUS' : 'GROUP BREAK'}</Text>
               <Text style={styles.timer}>{displayRoomTime(remaining)}</Text>
-              <Text style={styles.description}>{room.timerStatus === 'RUNNING' && remaining === 0 ?
+              <Text style={styles.description}>{room.timerStatus === 'COMPLETE' || (room.timerStatus === 'RUNNING' && remaining === 0) ?
                 'Session finished' : room.timerStatus === 'RUNNING' ? 'Timer running' : 'Waiting for host'}</Text>
             </View>
             {room.host ? (

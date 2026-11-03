@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import { Check, Clock3, Copy, DoorOpen, Headphones, Pause, Play, RefreshCw, RotateCcw, Shield, Users } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { getApiErrorMessage } from "../utils/apiError";
@@ -75,7 +76,16 @@ export default function StudyRoomsPage() {
                     setError(null);
                 }
             } catch (cause) {
-                if (active) setError(getApiErrorMessage(cause, "Unable to sync this room."));
+                if (active) {
+                    if (isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0)) {
+                        setSnapshot(null);
+                        setRoomId(null);
+                        setError("The room was closed or your access changed.");
+                        void refreshLobby().catch(() => {});
+                    } else {
+                        setError(getApiErrorMessage(cause, "Unable to sync this room."));
+                    }
+                }
             } finally {
                 refreshing.current = false;
             }
@@ -85,7 +95,9 @@ export default function StudyRoomsPage() {
             try {
                 await heartbeatStudyRoom(roomId, studyingRef.current);
             } catch (cause) {
-                if (active) setError(getApiErrorMessage(cause, "Could not update your presence."));
+                if (active && !(isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0))) {
+                    setError(getApiErrorMessage(cause, "Could not update your presence."));
+                }
             }
         };
         void heartbeat();
@@ -100,7 +112,7 @@ export default function StudyRoomsPage() {
             window.clearInterval(pulse);
             document.removeEventListener("visibilitychange", visible);
         };
-    }, [roomId]);
+    }, [roomId, refreshLobby]);
 
     async function create() {
         if (roomName.trim().length < 3 || roomName.trim().length > 60) {
@@ -112,7 +124,7 @@ export default function StudyRoomsPage() {
             const room = await createStudyRoom(roomName.trim());
             setRoomName("");
             showRoom(room);
-            void refreshLobby();
+            void refreshLobby().catch(() => {});
         } catch (cause) {
             setError(getApiErrorMessage(cause, "Unable to create the study room."));
         } finally { setBusy(false); }
@@ -124,7 +136,7 @@ export default function StudyRoomsPage() {
             const room = await joinStudyRoom(invite);
             setInvite("");
             showRoom(room);
-            void refreshLobby();
+            void refreshLobby().catch(() => {});
         } catch (cause) {
             setError(getApiErrorMessage(cause, "Invalid or expired invitation code."));
         } finally { setBusy(false); }
@@ -249,7 +261,7 @@ export default function StudyRoomsPage() {
                         <div className="mt-8 mx-auto max-w-md rounded-3xl border border-white/10 bg-slate-950/60 px-5 py-8 text-center">
                             <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">{room.phase === "FOCUS" ? "SHARED FOCUS" : "GROUP BREAK"}</p>
                             <p role="timer" className="mt-3 font-mono text-6xl font-black tabular-nums text-white sm:text-7xl">{displayRoomTime(seconds)}</p>
-                            <p className="mt-2 text-xs font-semibold text-slate-400">{room.timerStatus === "RUNNING" && seconds === 0 ? "Session finished" : room.timerStatus === "RUNNING" ? "Timer running" : "Waiting for host"}</p>
+                            <p className="mt-2 text-xs font-semibold text-slate-400">{room.timerStatus === "COMPLETE" || (room.timerStatus === "RUNNING" && seconds === 0) ? "Session finished" : room.timerStatus === "RUNNING" ? "Timer running" : "Waiting for host"}</p>
                             {room.host ? (
                                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                                     <button type="button" disabled={busy} onClick={() => void control(room.timerStatus === "RUNNING" && seconds > 0 ? "PAUSE" : "START")}
