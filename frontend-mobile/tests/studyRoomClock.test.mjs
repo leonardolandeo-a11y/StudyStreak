@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sharedTimeRemaining, displayRoomTime } from '../src/services/studyRoomClock.ts';
+import { sharedTimeRemaining, displayRoomTime, isNewerRoom } from '../src/services/studyRoomClock.ts';
 
 const room = {
   timerStatus: 'RUNNING', remainingSeconds: 1500,
@@ -24,3 +24,11 @@ test('paused, finished and invalid timer payloads never become negative', () => 
   assert.equal(displayRoomTime(0), '00:00');
   assert.equal(displayRoomTime(-90), '00:00');
 });
+
+ test('late responses cannot restore an old timer, owner, or another room', () => {
+   const current = { ...room, id: 'a', version: 5 };
+   assert.equal(isNewerRoom(current, { ...current, version: 4, serverNow: '2026-11-04T00:00:00Z' }), false);
+   assert.equal(isNewerRoom(current, { ...current, serverNow: '2026-11-02T00:00:00Z' }), false);
+   assert.equal(isNewerRoom(current, { ...current, version: 6 }), true);
+   assert.equal(isNewerRoom(current, { ...current, id: 'b', version: 6 }), false);
+ });

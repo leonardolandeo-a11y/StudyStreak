@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { router, useFocusEffect } from 'expo-router';
 import {
@@ -14,6 +14,8 @@ import {
 } from '../../services/studyRoomService';
 import type { StudyRoom, StudyRoomAction } from '../../services/studyRoomService';
 
+import { isNewerRoom } from "../../services/studyRoomClock";
+
 type Snapshot = { room: StudyRoom; receivedAt: number };
 
 export default function StudyRooms() {
@@ -23,22 +25,24 @@ export default function StudyRooms() {
   const [code, setCode] = useState('');
   const [roomId, setRoomId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
-  const [studying, setStudying] = useState(false);
-  const studyingRef = useRef(false);
-  const [now, setNow] = useState(() => Date.now());
+  const studying = snapshot?.room.members.find(member => member.userId === currentUser?.id)?.studying ?? false;
+
+  const [now, setNow] = useState(() => performance.now());
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const inFlight = useRef(false);
+
 
   const showRoom = useCallback((room: StudyRoom) => {
-    setSnapshot({ room, receivedAt: Date.now() });
+    setSnapshot({ room, receivedAt: performance.now() });
     setRoomId(room.id);
-    const value = room.members.find(member => member.userId === currentUser?.id)?.studying ?? false;
-    studyingRef.current = value;
-    setStudying(value);
     setError(null);
-  }, [currentUser?.id]);
+  }, []);
+
+  const acceptRoom = useCallback((room: StudyRoom) => {
+    setSnapshot(previous => previous && isNewerRoom(previous.room, room)
+      ? { room, receivedAt: performance.now() } : previous);
+  }, []);
 
   const refreshLobby = useCallback(async () => {
     setRooms(await studyRoomService.list());
@@ -58,13 +62,15 @@ export default function StudyRooms() {
   useFocusEffect(useCallback(() => {
     if (!roomId) return;
     let active = true;
+        let refreshing = false;
+        let pulsing = false;
     const refresh = async () => {
-      if (!active || AppState.currentState !== 'active' || inFlight.current) return;
-      inFlight.current = true;
+      if (!active || AppState.currentState !== 'active' || refreshing) return;
+      refreshing = true;
       try {
         const room = await studyRoomService.get(roomId);
         if (active) {
-          setSnapshot({ room, receivedAt: Date.now() });
+          acceptRoom(room);
           setError(null);
         }
       } catch (cause) {
@@ -75,18 +81,20 @@ export default function StudyRooms() {
             setError('The room was closed or your access changed.');
             void refreshLobby().catch(() => {});
           } else {
-            setError(getApiErrorMessage(cause, 'Could not synchronize room.'));
+            setError(getApiErrorMessage(cause, 'Connection interrupted. Retrying automatically…'));
           }
         }
-      } finally { inFlight.current = false; }
+      } finally { refreshing = false; }
     };
     const heartbeat = async () => {
-      if (!active || AppState.currentState !== 'active') return;
+      if (!active || pulsing || AppState.currentState !== 'active') return;
+      pulsing = true;
       try {
-        await studyRoomService.heartbeat(roomId, studyingRef.current);
+        const room = await studyRoomService.heartbeat(roomId, null);
+        if (active) acceptRoom(room);
       } catch {
         if (active) setError('Presence update failed. Check your connection.');
-      }
+      } finally { pulsing = false; }
     };
     void heartbeat();
     void refresh();
@@ -101,10 +109,10 @@ export default function StudyRooms() {
       clearInterval(pulse);
       subscription.remove();
     };
-  }, [roomId, refreshLobby]));
+  }, [roomId, refreshLobby, acceptRoom]));
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 500);
+    const interval = setInterval(() => setNow(performance.now()), 500);
     return () => clearInterval(interval);
   }, []);
 
@@ -137,39 +145,49 @@ export default function StudyRooms() {
   }
 
   async function timer(action: StudyRoomAction) {
-    if (!snapshot?.room.host || busy) return;
+    if (!snapshot?.room.host || busy || stale) return;
     setBusy(true); setError(null);
     try {
-      const room = await studyRoomService.timer(snapshot.room.id, action);
-      setSnapshot({ room, receivedAt: Date.now() });
+      const room = await studyRoomService.timer(snapshot.room.id, action, snapshot.room.version);
+      acceptRoom(room);
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Could not change shared timer.'));
     } finally { setBusy(false); }
   }
 
   async function changeStudying() {
-    if (!snapshot || busy) return;
+    if (!snapshot || busy || stale) return;
     setBusy(true); setError(null);
     try {
-      const next = !studyingRef.current;
+      const next = !studying;
       const room = await studyRoomService.heartbeat(snapshot.room.id, next);
-      studyingRef.current = next;
-      setStudying(next);
-      setSnapshot({ room, receivedAt: Date.now() });
+      acceptRoom(room);
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Could not update study status.'));
     } finally { setBusy(false); }
   }
 
+  async function manageRoom(userId?: number) {
+    if (!snapshot?.room.host || busy || stale) return;
+    setBusy(true);
+    try {
+      const updated = userId === undefined
+        ? await studyRoomService.regenerateCode(snapshot.room.id)
+        : await studyRoomService.transferHost(snapshot.room.id, userId);
+      acceptRoom(updated);
+      setError(null);
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, 'Room changed or connection interrupted. Please retry.'));
+    } finally { setBusy(false); }
+  }
+
   async function leave() {
-    if (!snapshot || busy) return;
+    if (!snapshot || busy || stale) return;
     setBusy(true); setError(null);
     try {
       await studyRoomService.leave(snapshot.room.id);
       setRoomId(null);
       setSnapshot(null);
-      studyingRef.current = false;
-      setStudying(false);
       await refreshLobby();
     } catch (cause) {
       setError(getApiErrorMessage(cause, 'Could not leave the room.'));
@@ -188,6 +206,7 @@ export default function StudyRooms() {
       ]);
   }
 
+  const stale = snapshot !== null && now - snapshot.receivedAt > 15_000;
   const room = snapshot?.room;
   const remaining = room && snapshot ? sharedTimeRemaining(room, snapshot.receivedAt, now) : 0;
   const online = room?.members.filter(m => m.online).length ?? 0;
@@ -204,6 +223,7 @@ export default function StudyRooms() {
         <Text style={styles.title}>Study Rooms<Text style={styles.green}>.</Text></Text>
         <Text style={styles.description}>Private spaces. One shared Pomodoro. Friends studying together.</Text>
       </View>
+      {room && <Text accessibilityLiveRegion="polite" style={styles.description}>{stale ? "Reconnecting… Controls resume when room updates arrive." : "Connected · Room updates automatically"}</Text>}
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
 
       {!room ? (
@@ -263,18 +283,18 @@ export default function StudyRooms() {
             {room.host ? (
               <View style={styles.controls}>
                 <ActionButton title={room.timerStatus === 'RUNNING' && remaining > 0 ? 'Pause timer' : 'Start timer'}
-                  busy={busy} onPress={() => { void timer(room.timerStatus === 'RUNNING' && remaining > 0 ? 'PAUSE' : 'START'); }}/>
+                  busy={busy} disabled={stale} onPress={() => { void timer(room.timerStatus === 'RUNNING' && remaining > 0 ? 'PAUSE' : 'START'); }}/>
                 <View style={styles.controlRow}>
-                  <Pressable accessibilityRole="button" disabled={busy} style={styles.controlButton}
+                  <Pressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
                     onPress={() => { void timer('RESET'); }}><Text style={styles.controlText}>↻ Reset</Text></Pressable>
-                  <Pressable accessibilityRole="button" disabled={busy} style={styles.controlButton}
+                  <Pressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
                     onPress={() => { void timer(room.phase === 'FOCUS' ? 'BREAK' : 'FOCUS'); }}>
                     <Text style={styles.controlText}>{room.phase === 'FOCUS' ? '5-min break' : '25-min focus'}</Text>
                   </Pressable>
                 </View>
               </View>
             ) : <Text style={styles.description}>Only the host can control the shared timer.</Text>}
-            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void changeStudying(); }}
+            <Pressable accessibilityRole="button" disabled={busy || stale} onPress={() => { void changeStudying(); }}
               style={[styles.studyButton, studying && styles.studyingActive]}>
               <Text style={[styles.studyButtonText, studying && styles.activeText]}>
                 {studying ? '✓ I am studying' : 'Mark me as studying'}
@@ -283,11 +303,13 @@ export default function StudyRooms() {
           </View>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Studying together</Text>
+            {room.host && <ActionButton secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => Alert.alert('Replace invitation?', 'The previous code will stop working.', [{ text: 'Cancel' }, { text: 'Replace', onPress: () => { void manageRoom(); } }])}/> }
             {room.members.map(member => (
               <View key={member.userId} style={styles.memberRow}>
                 <View style={styles.avatar}><Text style={styles.avatarText}>{member.username.charAt(0).toUpperCase()}</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.memberName}>{member.username}{member.host ? ' · Host' : ''}</Text>
+                  {room.host && !member.host && <ActionButton secondary title="Make host" disabled={busy || stale} onPress={() => Alert.alert('Transfer host?', `Give controls to ${member.username}?`, [{ text: 'Cancel' }, { text: 'Transfer', onPress: () => { void manageRoom(member.userId); } }])}/> }
                   <Text style={[styles.description, member.studying && styles.green]}>
                     {member.studying ? '● Studying now' : member.online ? '● Online' : '○ Offline'}
                   </Text>
@@ -297,7 +319,7 @@ export default function StudyRooms() {
           </View>
           <Text style={styles.footer}>Room state refreshes every 4 seconds using the server clock. Personal Focus Studio minutes and Goals are separate.</Text>
           <ActionButton secondary title={room.host ? 'Close room for everyone' : 'Leave room'}
-            disabled={busy} onPress={askLeave} />
+            disabled={busy || stale} onPress={askLeave} />
         </>
       )}
     </Screen>
