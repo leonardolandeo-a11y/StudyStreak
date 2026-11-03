@@ -4,6 +4,7 @@ export const ROUTES={
     register:"/register",
     dashboard:"/dashboard",
     focusStudio:"/focus-studio",
+    studyRooms:"/study-rooms",
 
     goals:"/goals",
     resources:"/resources",

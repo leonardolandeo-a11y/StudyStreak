@@ -75,6 +75,12 @@ export default function Home() {
         <Text style={styles.focusDescription}>A Pomodoro timer, classical-inspired music, lo-fi, white and brown noise, and more — all offline.</Text>
         <ActionButton title="Open Focus Studio" onPress={() => router.push('/(app)/focus-studio')} />
       </View>
+      <View style={styles.roomCard}>
+        <Text style={styles.focusEyebrow}>● FRIENDS & FOCUS</Text>
+        <Text style={styles.roomTitle}>Study Rooms</Text>
+        <Text style={styles.focusDescription}>Create a private room, invite friends and follow one synchronized group Pomodoro.</Text>
+        <ActionButton title="Open Study Rooms" onPress={() => router.push('/(app)/study-rooms')} />
+      </View>
       <View style={styles.card}>
         <Text style={styles.heading}>Your study goals</Text>
         <Text style={styles.description}>Create goals and record your daily progress.</Text>
@@ -99,6 +105,8 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface,
     padding: 22, borderRadius: 18, gap: 14 },
   heading: { color: palette.text, fontWeight: '700', fontSize: 18 },
+  roomCard: { backgroundColor: '#122b34', borderColor: '#225d55', borderWidth: 1, borderRadius: 22, padding: 21, gap: 12 },
+  roomTitle: { color: '#fff', fontSize: 27, fontWeight: '900' },
   focusCard: { backgroundColor: '#133325', borderColor: '#245b3b', borderWidth: 1, borderRadius: 22, padding: 21, gap: 12 },
   focusEyebrow: { color: '#86efac', fontWeight: '800', letterSpacing: 1.6, fontSize: 10 },
   focusTitle: { color: '#fff', fontWeight: '900', fontSize: 28 },
