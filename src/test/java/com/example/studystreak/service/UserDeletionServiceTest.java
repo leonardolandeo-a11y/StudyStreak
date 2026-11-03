@@ -7,6 +7,8 @@ import com.example.studystreak.repository.GoalRepository;
 import com.example.studystreak.repository.NotificationRepository;
 import com.example.studystreak.repository.TrackingLinkRepository;
 import com.example.studystreak.repository.UserRepository;
+import com.example.studystreak.repository.StudyRoomRepository;
+import com.example.studystreak.repository.StudyRoomMemberRepository;
 import com.example.studystreak.repository.ValidationRepository;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +23,9 @@ class UserDeletionServiceTest {
     private final ValidationRepository validations = mock(ValidationRepository.class);
     private final TrackingLinkRepository links = mock(TrackingLinkRepository.class);
     private final NotificationRepository notifications = mock(NotificationRepository.class);
-    private final UserDeletionService service = new UserDeletionService(users, goals, validations, links, notifications);
+    private final StudyRoomRepository rooms = mock(StudyRoomRepository.class);
+    private final StudyRoomMemberRepository roomMembers = mock(StudyRoomMemberRepository.class);
+    private final UserDeletionService service = new UserDeletionService(users, goals, validations, links, notifications, rooms, roomMembers);
     private final User user = mock(User.class);
 
     private void existingUser() {
@@ -66,6 +70,14 @@ class UserDeletionServiceTest {
 
         assertThrows(ConflictException.class, () -> service.deleteUser(7L));
         verifyNoInteractions(notifications);
+        verify(users, never()).delete(any());
+    }
+
+    @Test
+    void activeStudyRoomMembershipBlocksAccountRemoval() {
+        existingUser();
+        when(roomMembers.existsByUserId(7L)).thenReturn(true);
+        assertThrows(ConflictException.class, () -> service.deleteUser(7L));
         verify(users, never()).delete(any());
     }
 
