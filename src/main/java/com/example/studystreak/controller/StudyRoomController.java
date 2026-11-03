@@ -45,6 +45,14 @@ public class StudyRoomController {
         return service.timer(id, request);
     }
 
+    @PostMapping("/{id}/invitation")
+    public StudyRoomSnapshot regenerateCode(@PathVariable UUID id) { return service.regenerateCode(id); }
+
+    @PostMapping("/{id}/host")
+    public StudyRoomSnapshot transferHost(@PathVariable UUID id, @Valid @RequestBody StudyRoomHostRequest request) {
+        return service.transferHost(id, request.userId());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> leave(@PathVariable UUID id) {
         service.leave(id);

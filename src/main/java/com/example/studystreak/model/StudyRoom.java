@@ -10,7 +10,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "study_room", indexes = @Index(name = "idx_study_room_code", columnList = "invite_code"))
+@Table(name = "study_room", indexes = {@Index(name = "idx_study_room_code", columnList = "invite_code"),
+        @Index(name = "idx_room_expiry", columnList = "timerStatus,endsAt")})
 public class StudyRoom {
     @Id
     private UUID id;

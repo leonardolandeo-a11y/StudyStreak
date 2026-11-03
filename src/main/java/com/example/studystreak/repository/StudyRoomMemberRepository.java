@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public interface StudyRoomMemberRepository extends JpaRepository<StudyRoomMember, Long> {
     Optional<StudyRoomMember> findByRoomIdAndUserId(UUID roomId, Long userId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "user")
     List<StudyRoomMember> findByRoomId(UUID roomId);
     long countByRoomId(UUID roomId);
     boolean existsByUserId(Long userId);

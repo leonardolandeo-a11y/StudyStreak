@@ -28,6 +28,24 @@ public class StudyRoomService {
     private static final String CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    private final java.util.Map<Long, long[]> attempts = new java.util.LinkedHashMap<>();
+
+    private synchronized void checkInvitationRate(long userId) {
+        long now = System.currentTimeMillis();
+        attempts.entrySet().removeIf(entry -> now - entry.getValue()[0] >= 60_000);
+        long[] window = attempts.get(userId);
+        if (window == null) {
+            if (attempts.size() >= 10_000)
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Please retry in a minute");
+            window = new long[]{now, 0};
+            attempts.put(userId, window);
+        }
+        if (++window[1] > 20)
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Too many invitations; retry in a minute");
+    }
+
     private final CurrentUserService currentUser;
     private final StudyRoomRepository rooms;
     private final StudyRoomMemberRepository members;
@@ -77,12 +95,13 @@ public class StudyRoomService {
         return new StudyRoomSnapshot(room.getId(), room.getName(), room.getInviteCode(),
                 room.getOwner().getId(), room.getOwner().getId().equals(userId),
                 room.getPhase(), status, (int) Math.min(Integer.MAX_VALUE, remaining),
-                room.getEndsAt(), now, participants);
+                room.getEndsAt(), now, room.getVersion(), participants);
     }
 
     @Transactional
     public StudyRoomSnapshot create(StudyRoomRequest request) {
         User user = currentUser.getCurrentUser();
+        checkInvitationRate(user.getId());
         Instant now = Instant.now();
         StudyRoom room = rooms.save(new StudyRoom(UUID.randomUUID(), inviteCode(),
                 request.name().trim(), user, now));
@@ -93,15 +112,14 @@ public class StudyRoomService {
     @Transactional
     public StudyRoomSnapshot join(StudyRoomJoinRequest request) {
         Long userId = currentUser.getCurrentUserId();
+        checkInvitationRate(userId);
         String code = request.code().strip().toUpperCase(Locale.ROOT);
         if (!code.matches("[A-HJ-NP-Z2-9]{10}")) {
             throw new ResourceNotFoundException("No room found for that invitation code");
         }
-        StudyRoom room = rooms.findByInviteCode(code)
+        StudyRoom room = rooms.findByCodeForUpdate(code)
                 .orElseThrow(() -> new ResourceNotFoundException("No room found for that invitation code"));
-        // Lock the room before checking capacity to serialize concurrent joins.
-        room = rooms.findByIdForUpdate(room.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Study room closed"));
+        // Lookup and capacity checks share one lock, including code rotation and closure.
         if (members.findByRoomIdAndUserId(room.getId(), userId).isEmpty()) {
             if (members.countByRoomId(room.getId()) >= MAX_MEMBERS) {
                 throw new ConflictException("This study room is full (12 members)");
@@ -128,9 +146,9 @@ public class StudyRoomService {
     @Transactional
     public StudyRoomSnapshot heartbeat(UUID roomId, StudyRoomHeartbeat request) {
         long userId = currentUser.getCurrentUserId();
-        StudyRoom room = ownedRoom(roomId, userId);
+        StudyRoom room = lockedMemberRoom(roomId, userId);
         StudyRoomMember member = members.findByRoomIdAndUserId(roomId, userId).orElseThrow();
-        member.setStudying(request.studying());
+        if (request.studying() != null) member.setStudying(request.studying());
         member.setLastSeenAt(Instant.now());
         return snapshot(room, userId, Instant.now());
     }
@@ -144,12 +162,16 @@ public class StudyRoomService {
                 || !room.getOwner().getId().equals(userId)) {
             throw new ForbiddenException("Only the study room host can control the shared timer");
         }
+        if (request.expectedVersion() != null && !request.expectedVersion().equals(room.getVersion())) {
+            throw new ConflictException("Room changed on another device. Refresh and try again.");
+        }
         Instant now = Instant.now();
         int remaining = "RUNNING".equals(room.getTimerStatus()) && room.getEndsAt() != null
                 ? (int) Math.max(0, (Duration.between(now, room.getEndsAt()).toMillis() + 999) / 1000)
                 : room.getRemainingSeconds();
         switch (request.action()) {
             case START -> {
+                if ("RUNNING".equals(room.getTimerStatus()) && remaining > 0) break;
                 int time = remaining > 0 ? remaining : "FOCUS".equals(room.getPhase()) ? FOCUS_SECONDS : BREAK_SECONDS;
                 room.setRemainingSeconds(time);
                 room.setEndsAt(now.plusSeconds(time));
@@ -173,14 +195,50 @@ public class StudyRoomService {
                 room.setTimerStatus("PAUSED");
             }
         }
-        rooms.save(room);
+        rooms.saveAndFlush(room);
         return snapshot(room, userId, now);
+    }
+
+    private StudyRoom lockedMemberRoom(UUID id, long userId) {
+        StudyRoom room = rooms.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Study room not found"));
+        if (members.findByRoomIdAndUserId(id, userId).isEmpty())
+            throw new ForbiddenException("You are not a member of this private study room");
+        return room;
+    }
+
+    private StudyRoom lockedHostRoom(UUID id, long userId) {
+        StudyRoom room = lockedMemberRoom(id, userId);
+        if (!room.getOwner().getId().equals(userId))
+            throw new ForbiddenException("Only the host can manage this room");
+        return room;
+    }
+
+    @Transactional
+    public StudyRoomSnapshot regenerateCode(UUID id) {
+        long userId = currentUser.getCurrentUserId();
+        checkInvitationRate(userId);
+        StudyRoom room = lockedHostRoom(id, userId);
+        room.setInviteCode(inviteCode());
+        rooms.saveAndFlush(room);
+        return snapshot(room, userId, Instant.now());
+    }
+
+    @Transactional
+    public StudyRoomSnapshot transferHost(UUID id, Long nextHostId) {
+        long userId = currentUser.getCurrentUserId();
+        StudyRoom room = lockedHostRoom(id, userId);
+        StudyRoomMember next = members.findByRoomIdAndUserId(id, nextHostId)
+                .orElseThrow(() -> new ConflictException("New host must still be a member"));
+        room.setOwner(next.getUser());
+        rooms.saveAndFlush(room);
+        return snapshot(room, userId, Instant.now());
     }
 
     @Transactional
     public void leave(UUID roomId) {
         long userId = currentUser.getCurrentUserId();
-        StudyRoom room = ownedRoom(roomId, userId);
+        StudyRoom room = lockedMemberRoom(roomId, userId);
         if (room.getOwner().getId().equals(userId)) {
             members.deleteByRoomId(roomId);
             rooms.delete(room);

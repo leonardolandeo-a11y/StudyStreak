@@ -10,6 +10,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "study_room_member",
+        indexes = @Index(name = "idx_room_member_user", columnList = "user_id"),
         uniqueConstraints = @UniqueConstraint(name = "uk_room_member_user", columnNames = {"room_id", "user_id"}))
 public class StudyRoomMember {
     @Id

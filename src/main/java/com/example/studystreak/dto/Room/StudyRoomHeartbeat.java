@@ -1,4 +1,4 @@
 package com.example.studystreak.dto.Room;
 
-import jakarta.validation.constraints.NotNull;
-public record StudyRoomHeartbeat(@NotNull Boolean studying) {}
+/** Null means presence only; only explicit user actions change study status. */
+public record StudyRoomHeartbeat(Boolean studying) {}

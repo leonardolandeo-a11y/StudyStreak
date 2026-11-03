@@ -9,7 +9,7 @@ public record StudyRoomSnapshot(
         UUID id, String name, String inviteCode, Long ownerId,
         boolean host, String phase, String timerStatus,
         int remainingSeconds, Instant endsAt, Instant serverNow,
-        List<Member> members
+        Long version, List<Member> members
 ) {
     public record Member(Long userId, String username, boolean online, boolean studying, boolean host) {}
 }
