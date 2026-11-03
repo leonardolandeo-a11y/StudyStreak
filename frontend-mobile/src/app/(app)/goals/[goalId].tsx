@@ -204,11 +204,21 @@ export default function GoalDetails() {
           </View>
           <View style={styles.focusCard}>
             <Text style={styles.focusHeading}>Focus Studio progress</Text>
-            <Text style={styles.muted}>
-              {focusSummary?.goalId === goal.id
-                ? `${focusSummary.totalMinutes} min · ${focusSummary.completedSessions} completed focus sessions`
-                : focusSummaryError ? 'Focus totals unavailable' : 'Loading focus totals…'}
-            </Text>
+            <View style={styles.focusTotals}>
+              <View style={styles.focusMetric}>
+                <Text style={styles.focusValue}>
+                  {focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : '—'}
+                </Text>
+                <Text style={styles.focusUnit}>minutes saved</Text>
+              </View>
+              <View style={styles.focusMetric}>
+                <Text style={styles.focusValue}>
+                  {focusSummary?.goalId === goal.id ? focusSummary.completedSessions : '—'}
+                </Text>
+                <Text style={styles.focusUnit}>sessions saved</Text>
+              </View>
+            </View>
+            {focusSummaryError && <Text style={styles.warning}>Focus totals unavailable. Reopen the Goal to refresh.</Text>}
             <Text style={styles.focusNote}>
               Only completed linked Pomodoros count. Daily records and streaks remain separate.
             </Text>
@@ -303,4 +313,8 @@ const styles = StyleSheet.create({
     borderRadius: 16, padding: 17, gap: 12 },
   focusHeading: { color: '#a7f3d0', fontWeight: '900', fontSize: 17 },
   focusNote: { color: '#9db9ac', fontSize: 12, lineHeight: 18 },
+  focusTotals: { flexDirection: 'row', gap: 10 },
+  focusMetric: { flex: 1, backgroundColor: '#091f17', padding: 13, borderRadius: 12 },
+  focusValue: { color: '#fff', fontSize: 31, fontWeight: '900' },
+  focusUnit: { color: '#86efac', fontSize: 11, fontWeight: '700', marginTop: 3 },
 });
