@@ -24,6 +24,8 @@ function Breadcrumbs(){
                 return "Dashboard";
             case "focus-studio":
                 return "Focus Studio";
+            case "study-rooms":
+                return "Study Rooms";
             case "goals":
                 return "Goals";
             case "daily-records":

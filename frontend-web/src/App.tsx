@@ -21,6 +21,7 @@ const Home = lazy(()=> import("./pages/Home"));
 const Login = lazy(()=> import("./pages/Login"));
 const Dashboard = lazy(()=>import("./pages/Dashboard"));
 const FocusStudioPage = lazy(() => import("./pages/FocusStudioPage"));
+const StudyRoomsPage = lazy(() => import("./pages/StudyRoomsPage"));
 const Register = lazy(() => import("./pages/Register"))
 const NotFound = lazy(()=> import("./pages/NotFound"));
 
@@ -66,6 +67,7 @@ function App(){
           >
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>
             <Route path={ROUTES.focusStudio} element={<FocusStudioPage />} />
+            <Route path={ROUTES.studyRooms} element={<StudyRoomsPage />} />
             <Route path= {ROUTES.goals} element = {<Goals></Goals>}></Route>
             <Route path={ROUTES.resources} element={<Resources />}></Route>
             <Route path={ROUTE_PATTERNS.goalDetails} element={<GoalDetails></GoalDetails>}></Route>

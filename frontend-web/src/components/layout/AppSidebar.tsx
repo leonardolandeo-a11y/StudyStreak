@@ -6,7 +6,8 @@ import {
     LayoutDashboard,
     Link2,
     LogOut,
-    Target
+    Target,
+    Users
 } from "lucide-react";
 
 import {
@@ -42,6 +43,11 @@ function AppSidebar() {
             label: "Focus Studio",
             to: ROUTES.focusStudio,
             icon: Headphones
+        },
+        {
+            label: "Study Rooms",
+            to: ROUTES.studyRooms,
+            icon: Users
         },
         {
             label: "Goals",

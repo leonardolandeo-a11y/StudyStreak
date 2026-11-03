@@ -8,6 +8,7 @@ import {
     LogOut,
     Menu,
     Target,
+    Users,
     X
 } from "lucide-react";
 
@@ -53,6 +54,11 @@ function MobileTopbar() {
             label: "Focus Studio",
             to: ROUTES.focusStudio,
             icon: Headphones
+        },
+        {
+            label: "Study Rooms",
+            to: ROUTES.studyRooms,
+            icon: Users
         },
         {
             label: "Goals",
