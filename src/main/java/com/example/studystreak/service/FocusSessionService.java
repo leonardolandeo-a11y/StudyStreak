@@ -61,21 +61,17 @@ public class FocusSessionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid focus session duration or id");
         }
 
-        var previous = focusSessionRepository.findById(request.sessionId());
-        if (previous.isPresent()) {
-            FocusSession existing = previous.get();
-            if (!existing.getGoal().getId().equals(goalId)
-                    || !existing.getDurationMinutes().equals(request.durationMinutes())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "This session id already belongs to another completion");
-            }
-            return toResponse(existing);
+        // PostgreSQL arbitrates concurrent retries before reading the winner.
+        // Never merge a client UUID: merge can overwrite another completion in a race.
+        focusSessionRepository.insertIfAbsent(request.sessionId(), goal.getId(),
+                request.durationMinutes(), Instant.now());
+        FocusSession existing = focusSessionRepository.findById(request.sessionId()).orElseThrow();
+        if (!existing.getGoal().getId().equals(goalId)
+                || !existing.getDurationMinutes().equals(request.durationMinutes())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This session id already belongs to another completion");
         }
-
-        FocusSession session = focusSessionRepository.saveAndFlush(new FocusSession(
-                request.sessionId(), goal, request.durationMinutes(), Instant.now()
-        ));
-        return toResponse(session);
+        return toResponse(existing);
     }
 
     @Transactional(readOnly = true)

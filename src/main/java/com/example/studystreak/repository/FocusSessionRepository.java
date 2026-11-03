@@ -12,6 +12,12 @@ import java.util.List;
 
 public interface FocusSessionRepository extends JpaRepository<FocusSession, UUID> {
 
+    @Modifying
+    @Query(value = "insert into focus_session (id, goal_id, duration_minutes, completed_at) " +
+            "values (:id, :goalId, :minutes, :completedAt) on conflict (id) do nothing", nativeQuery = true)
+    int insertIfAbsent(@Param("id") UUID id, @Param("goalId") Long goalId,
+                       @Param("minutes") int minutes, @Param("completedAt") Instant completedAt);
+
     @Query("select coalesce(sum(f.durationMinutes), 0) from FocusSession f where f.goal.id = :goalId")
     Long sumMinutesByGoalId(@Param("goalId") Long goalId);
 

@@ -38,20 +38,19 @@ class FocusSessionServiceTest {
     @Test
     void completesFocusAndCountsOnlyOnceForSameUuid() {
         UUID id = UUID.randomUUID();
-        when(sessions.findById(id)).thenReturn(Optional.empty());
-        when(sessions.saveAndFlush(any(FocusSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(sessions.findById(id)).thenReturn(Optional.of(new FocusSession(id, goal, 25, Instant.now())));
 
         var saved = service.recordCompletion(42L, new FocusSessionRequestDTO(id, 25));
         assertEquals(id, saved.sessionId());
         assertEquals(42L, saved.goalId());
         assertEquals(25, saved.durationMinutes());
-        verify(sessions).saveAndFlush(any(FocusSession.class));
+        verify(sessions).insertIfAbsent(eq(id), eq(42L), eq(25), any(Instant.class));
 
         FocusSession existing = new FocusSession(id, goal, 25, Instant.now());
         when(sessions.findById(id)).thenReturn(Optional.of(existing));
         var retried = service.recordCompletion(42L, new FocusSessionRequestDTO(id, 25));
         assertEquals(id, retried.sessionId());
-        verify(sessions, times(1)).saveAndFlush(any(FocusSession.class));
+        verify(sessions, times(2)).insertIfAbsent(eq(id), eq(42L), eq(25), any(Instant.class));
     }
 
     @Test

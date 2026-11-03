@@ -110,4 +110,14 @@ class GlobalExceptionHandlerTest {
                 response.getBody().getTimestamp()
         );
     }
+    @Test
+    void preservesRateLimitAndFocusConflictStatus() {
+        for (var status : new org.springframework.http.HttpStatus[]{
+                org.springframework.http.HttpStatus.TOO_MANY_REQUESTS,
+                org.springframework.http.HttpStatus.CONFLICT}) {
+            assertEquals(status, handler.statusHandler(
+                    new org.springframework.web.server.ResponseStatusException(status, "Retry"),
+                    new MockHttpServletRequest()).getStatusCode());
+        }
+    }
 }

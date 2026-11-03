@@ -72,3 +72,10 @@ test("old saved timer state and invalid pending payloads restore safely", () => 
     }, 500);
     assert.deepEqual(invalid.pendingFocusSessions, [linked]);
 });
+
+test('restoring more than 100 offline sessions never silently drops completions', () => {
+    const pending = Array.from({ length: 125 }, (_, i) => ({ ...linked,
+        sessionId: `a963d0e1-a442-4c37-909f-${String(i).padStart(12, '0')}` }));
+    assert.deepEqual(restorePomodoro({ ...newPomodoro(), pendingFocusSessions: pending }, 1000)
+        .pendingFocusSessions, pending);
+});
