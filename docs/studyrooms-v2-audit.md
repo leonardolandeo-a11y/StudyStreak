@@ -102,3 +102,40 @@ Se recuperaron los cambios modificados/no rastreados en la misma rama; no se enc
 - Chrome no pudo navegar mediante la herramienta de automatización (`timeoutMs`); no se afirma validación visual interactiva ni de Mobile nativo. Audio, notificaciones y suspensión/terminación real de Android/iOS siguen requiriendo dispositivos.
 
 Para reproducir las integraciones, usar una base desechable vacía, crear un esquema `ss_audit_*`, indicar `currentSchema` en JDBC y `-Dspring.jpa.properties.hibernate.default_schema=<esquema>` a Maven. Se observó que Hibernate puede omitir secuencias cuando ya existen homónimas en otro esquema de la misma base. Las pruebas HTTP de login también requieren la migración existente `db/migrations/2026-10-30_create_refresh_sessions.sql` y un secreto JWT Base64 válido.
+
+## Fase 3 — recuperación y rediseño Web/Mobile (2026-11-05)
+
+### Estado recuperado
+
+Se conservó la rama `feat/studyrooms-v2-collaboration-analytics` y el PR #119. Al iniciar había un commit local no publicado, `3699890` (tokens carbón/menta, BarChart, MetricCard y helpers en ambos clientes, Screen/ActionButton y navegación), sin staging pendiente. Los archivos modificados eran:
+
+- Web: `FocusInsights.tsx`, `StudyAnalyticsDetails.tsx`, `StudyRoomGoal.tsx`, `AppSidebar.tsx`, `StudyRoomsPage.tsx`.
+- Mobile: `study-rooms.tsx`, `FocusInsightsMobile.tsx`, `StudyAnalyticsDetails.tsx`, `StudyRoomGoal.tsx`.
+- Sin seguimiento: `ParticipantCard.tsx` y `RecordedSummary.tsx` de ambos clientes. Existían y tenían contenido completo; se inspeccionaron, integraron y mejoraron.
+
+`/tmp/phase3-rooms.py` no existía. No se ejecutó ningún script antiguo, ni se descartaron archivos, staging o commits. El commit de Fase 2 seguía siendo `dd6a102`.
+
+### Resultado implementado
+
+- Sistema compartido carbón/menta, ámbar para pendientes, superficies y bordes coherentes, foco visible, reducción de movimiento Web y controles táctiles. Sin dependencias nuevas.
+- Estadísticas separadas en Actividad, Goals, Together e Historial: barras diarias/semanales/mensuales, heatmap de 365 días, barras por Goal, balance individual/grupal, hora de finalización y comparación con el periodo anterior. Datos reales del contrato existente, ceros sin barras artificiales, Goals eliminados sin enlace e historial paginado con reintento. Los filtros se limitan a 7/30 días porque son los periodos soportados por el backend; las semanas/meses de borde se explican como parciales.
+- Mobile usa ScrollView horizontal y controles nativos; heatmap con celdas táctiles de 44 puntos, métricas flexibles y etiquetas accesibles. La hora mostrada corresponde al cierre de la sesión, no a una reconstrucción inventada de asistencia.
+- Salas: prioridad al reloj, código copiable en Web, sincronización/acción pendiente/reconexión, pausa y espera de confirmación final diferenciadas. Un snapshot obsoleto se etiqueta como tal. Participantes distinguen rol, presencia y estudio; el recuento de estudiantes excluye offline. Se mantienen permisos/versiones y la selección privada del Goal.
+- Focus: reloj y controles antes de los detalles del Goal; estadísticas desplegables; acceso a salas; menos superficies anidadas y fondo musical neutral en Web. Se preservan los 12 sonidos, preferencias, implementación de audio, outbox y lógica de sesión.
+- RecordedSummary se reutiliza en Focus, detalles del Goal y selección de sala. Los pendientes del Goal seleccionado se cuentan separadamente en Focus. Un error al refrescar conserva las últimas cifras confirmadas y añade aviso; no convierte ausencia/error en cero ni suma pendientes al total. Las cifras proceden de los endpoints existentes, con revalidación y botón Refresh.
+- Goals: acceso directo a Focus desde tarjetas, acceso a salas desde detalles y contadores compartidos. Daily Records: fecha como información sin control editable, texto de asignación por zona horaria al crear y fecha original al editar; notas/evidencias y estado de guardado conservados.
+
+### Verificación de esta fase
+
+- Web: `npm run lint`, `npm run build` correctos; `test:web`: **49 casos, 0 fallos, 0 omitidos**.
+- Mobile: `npm run lint -- --max-warnings 0`, `npx --no-install tsc --noEmit` correctos; auth **8**, pagination **5**, review **6**, focus **26**, sin fallos ni omitidos.
+- `test:ui`: **5 casos** sobre renderizado TSX real mediante Vite/React: snapshot confirmado conservado ante error, desconocido frente a cero, presencia frente a estudio, barras vacías/cero, fechas informativas al crear/editar. Incluido en `test:web`, ejecutado por Frontend CI sin modificar workflows.
+- Los comandos de test normales devolvían resultados por archivo junto al aviso `Failed to create stream fd`. Se ejecutaron de nuevo con `NODE_OPTIONS=--test-isolation=none` para obtener resultados individuales reales. Vite encontró EPERM en su socket local dentro del sandbox; la prueba de renderizado se repitió fuera y pasó sin ese error.
+- No se modificaron servicios, entidades, contratos, SQL ni lógica de backend. La integración PostgreSQL de CI permanece habilitada; los 154 casos de Fase 2 son evidencia previa, no una nueva ejecución local de Maven en esta fase.
+- `git diff --check` sin errores. Los logs de esta ejecución se conservaron en `/tmp/phase3-*` (temporales del entorno).
+
+### Limitación de revisión visual
+
+La herramienta de Chrome falló primero al cargar la política de cabeceras de la extensión y luego con `Cannot read properties of undefined (reading 'timeoutMs')`. No se pudo realizar inspección visual interactiva de escritorio/responsive, salas con varios usuarios o reconexión. Las pruebas SSR anteriores verifican salida y semántica, **no sustituyen una revisión visual ni interacción en navegador**. No se afirma prueba física de Android/iOS, lectores de pantalla, audio o ciclo de vida nativo. La implementación y las pruebas automáticas se entregan; la aceptación visual en navegador/dispositivos queda pendiente por esta limitación. No se implementó LiveKit ni compartir pantalla.
+
+Publicación: `gh pr edit` falló por Projects Classic; se actualizó el PR con REST. El push HTTPS reveló que la credencial no tiene scope `workflow`. Se conservó el workflow original y se incorporó la suite de renderizado a `test:web`, ya ejecutado por CI, sin ampliar permisos.
