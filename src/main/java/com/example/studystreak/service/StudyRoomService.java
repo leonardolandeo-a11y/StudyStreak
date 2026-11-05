@@ -46,12 +46,14 @@ public class StudyRoomService {
                     org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Too many invitations; retry in a minute");
     }
 
+    private final StudyLedgerService ledger;
     private final CurrentUserService currentUser;
     private final StudyRoomRepository rooms;
     private final StudyRoomMemberRepository members;
 
     public StudyRoomService(CurrentUserService currentUser, StudyRoomRepository rooms,
-                            StudyRoomMemberRepository members) {
+                            StudyRoomMemberRepository members, StudyLedgerService ledger) {
+        this.ledger = ledger;
         this.currentUser = currentUser;
         this.rooms = rooms;
         this.members = members;
@@ -150,6 +152,7 @@ public class StudyRoomService {
         StudyRoomMember member = members.findByRoomIdAndUserId(roomId, userId).orElseThrow();
         if (request.studying() != null) member.setStudying(request.studying());
         member.setLastSeenAt(Instant.now());
+        ledger.heartbeat(room, userId, member.isStudying());
         return snapshot(room, userId, Instant.now());
     }
 
@@ -169,6 +172,7 @@ public class StudyRoomService {
         int remaining = "RUNNING".equals(room.getTimerStatus()) && room.getEndsAt() != null
                 ? (int) Math.max(0, (Duration.between(now, room.getEndsAt()).toMillis() + 999) / 1000)
                 : room.getRemainingSeconds();
+        if (request.action() == StudyRoomTimerRequest.Action.RESET || request.action() == StudyRoomTimerRequest.Action.FOCUS || request.action() == StudyRoomTimerRequest.Action.BREAK) ledger.cancelRuns(roomId);
         switch (request.action()) {
             case START -> {
                 if ("RUNNING".equals(room.getTimerStatus()) && remaining > 0) break;
@@ -196,6 +200,7 @@ public class StudyRoomService {
             }
         }
         rooms.saveAndFlush(room);
+        ledger.roomTransition(room);
         return snapshot(room, userId, now);
     }
 
@@ -239,7 +244,9 @@ public class StudyRoomService {
     public void leave(UUID roomId) {
         long userId = currentUser.getCurrentUserId();
         StudyRoom room = lockedMemberRoom(roomId, userId);
+        ledger.leave(roomId, userId);
         if (room.getOwner().getId().equals(userId)) {
+            ledger.cancelRuns(roomId);
             members.deleteByRoomId(roomId);
             rooms.delete(room);
         } else {

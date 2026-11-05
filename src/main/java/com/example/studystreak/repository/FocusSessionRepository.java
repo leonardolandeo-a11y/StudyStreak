@@ -23,6 +23,10 @@ public interface FocusSessionRepository extends JpaRepository<FocusSession, UUID
 
     long countByGoalId(Long goalId);
 
+    @Query(value = "select (completed_at at time zone :zone)::date::text, sum(duration_minutes),count(*) " +
+            "from focus_session f join goal g on g.id=f.goal_id where g.user_id=:userId and completed_at>=:since group by 1",nativeQuery=true)
+    List<Object[]> aggregateDaily(@Param("userId") Long userId,@Param("since") Instant since,@Param("zone") String zone);
+
     @Query("select f from FocusSession f where f.goal.user.id = :userId and f.completedAt >= :since order by f.completedAt desc")
     List<FocusSession> findRecentForUser(@Param("userId") Long userId, @Param("since") Instant since);
 

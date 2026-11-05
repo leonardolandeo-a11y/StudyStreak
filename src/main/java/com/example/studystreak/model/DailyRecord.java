@@ -20,7 +20,7 @@ public class DailyRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDate date;
 
     private String note;

@@ -81,4 +81,15 @@ class DailyRecordDatePolicyTest {
         assertThrows(ConflictException.class, () -> service().updateDailyRecord(7L, 55L, request));
         verify(records, never()).save(any(DailyRecord.class));
     }
+    @Test
+    void editingNotesAndEvidenceNeverChangesOriginalDate() {
+        Goal goal=ownedGoal();when(goal.getId()).thenReturn(7L);
+        DailyRecord record=mock(DailyRecord.class);when(record.getGoal()).thenReturn(goal);
+        when(record.getDate()).thenReturn(LocalDate.of(2020,1,1));
+        when(records.findById(55L)).thenReturn(Optional.of(record));when(records.save(record)).thenReturn(record);
+        when(mapper.map(record,DailyRecordResponseDTO.class)).thenReturn(mock(DailyRecordResponseDTO.class));
+        DailyRecordRequestDTO request=new DailyRecordRequestDTO();request.setNote("Edited");request.setEvidence("Updated");
+        service().updateDailyRecord(7L,55L,request);
+        verify(record).setNote("Edited");verify(record).setEvidence("Updated");verify(record,never()).setDate(any());
+    }
 }

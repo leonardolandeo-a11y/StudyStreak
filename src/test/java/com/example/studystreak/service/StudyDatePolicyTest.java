@@ -34,4 +34,10 @@ class StudyDatePolicyTest {
         when(user.getTimeZone()).thenReturn(null);
         assertEquals(LocalDate.of(2026, 11, 1), StudyDatePolicy.today(user, clock));
     }
+    @Test
+    void limaMidnightBoundaryIsServerDetermined() {
+        User user=mock(User.class); when(user.getTimeZone()).thenReturn("America/Lima");
+        assertEquals(LocalDate.of(2026,11,1), StudyDatePolicy.today(user,Clock.fixed(Instant.parse("2026-11-02T04:59:59Z"),ZoneOffset.UTC)));
+        assertEquals(LocalDate.of(2026,11,2), StudyDatePolicy.today(user,Clock.fixed(Instant.parse("2026-11-02T05:00:00Z"),ZoneOffset.UTC)));
+    }
 }

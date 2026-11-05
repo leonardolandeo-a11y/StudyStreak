@@ -10,9 +10,10 @@ import java.time.Instant;
 @Service
 public class StudyRoomExpiry {
     private final StudyRoomRepository rooms;
-    public StudyRoomExpiry(StudyRoomRepository rooms) { this.rooms = rooms; }
+    private final StudyLedgerService ledger;
+    public StudyRoomExpiry(StudyRoomRepository rooms, StudyLedgerService ledger) { this.rooms = rooms; this.ledger=ledger; }
 
     @Scheduled(fixedDelayString = "${study-rooms.expiry-delay-ms:5000}")
     @Transactional
-    public void completeExpired() { rooms.completeExpired(Instant.now()); }
+    public void completeExpired() { ledger.expire(); rooms.completeExpired(Instant.now()); }
 }

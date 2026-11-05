@@ -39,8 +39,8 @@ class FocusStatisticsServiceTest {
         FocusSession yesterday = new FocusSession(java.util.UUID.randomUUID(), goal, 50,
                 today.minusDays(1).atTime(23, 30).atZone(zone).toInstant());
 
-        when(repository.findRecentForUser(eq(8L), any(Instant.class)))
-                .thenReturn(List.of(todayOne, todayTwo, yesterday));
+        when(repository.aggregateDaily(eq(8L), any(Instant.class), eq(zone.getId())))
+                .thenReturn(List.of(new Object[]{today.toString(),40L,2L},new Object[]{today.minusDays(1).toString(),50L,1L}));
         when(repository.sumMinutesForUser(8L)).thenReturn(350L);
         when(repository.countForUser(8L)).thenReturn(12L);
         when(repository.totalsByGoalForUser(8L))
@@ -59,7 +59,7 @@ class FocusStatisticsServiceTest {
         assertEquals(350L, report.totalMinutes());
         assertEquals(12L, report.completedSessions());
         assertEquals("Calculus", report.byGoal().get(0).topic());
-        verify(repository).findRecentForUser(eq(8L), eq(today.minusDays(6).atStartOfDay(zone).toInstant()));
+        verify(repository).aggregateDaily(eq(8L), eq(today.minusDays(6).atStartOfDay(zone).toInstant()),eq(zone.getId()));
     }
 
     @Test
@@ -67,7 +67,7 @@ class FocusStatisticsServiceTest {
         User user = mock(User.class);
         when(user.getId()).thenReturn(2L);
         when(currentUser.getCurrentUser()).thenReturn(user);
-        when(repository.findRecentForUser(eq(2L), any())).thenReturn(List.of());
+        when(repository.aggregateDaily(eq(2L), any(), any())).thenReturn(List.of());
         when(repository.sumMinutesForUser(2L)).thenReturn(0L);
         when(repository.totalsByGoalForUser(2L)).thenReturn(List.of());
 

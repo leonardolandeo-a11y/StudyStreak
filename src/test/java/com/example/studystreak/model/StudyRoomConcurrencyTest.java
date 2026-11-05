@@ -22,6 +22,7 @@ class StudyRoomConcurrencyTest {
     @Autowired FocusSessionRepository sessions;
     @Autowired StudyRoomService service;
     @Autowired FocusSessionService focus;
+    @Autowired StudyLedgerService ledger;
     @Autowired JdbcTemplate jdbc;
 
     private User user() {
@@ -89,6 +90,9 @@ class StudyRoomConcurrencyTest {
         goal = goals.saveAndFlush(goal);
         final Long goalId = goal.getId();
         UUID id = UUID.randomUUID();
+        authenticate(owner);
+        ledger.start(id, goalId, 25);
+        jdbc.update("update study_ledger set observed_ms=1499000,last_seen_at=clock_timestamp()-interval '2 seconds',ends_at=clock_timestamp()-interval '1 second' where id=?",id);
         try (var pool = Executors.newFixedThreadPool(2)) {
             CountDownLatch start = new CountDownLatch(1);
             Callable<com.example.studystreak.dto.Focus.FocusSessionResponseDTO> record = () -> {
@@ -101,10 +105,11 @@ class StudyRoomConcurrencyTest {
             var a = pool.submit(record); var b = pool.submit(record);
             start.countDown();
             assertEquals(a.get(20, TimeUnit.SECONDS), b.get(20, TimeUnit.SECONDS));
-            assertEquals(1, sessions.countByGoalId(goalId));
-            assertEquals(25L, sessions.sumMinutesByGoalId(goalId));
+            assertEquals(1L, ledger.summary(goalId).get("completedSessions"));
+            assertEquals(25L, ledger.summary(goalId).get("totalMinutes"));
         } finally {
-            sessions.deleteById(id);
+            jdbc.update("delete from study_ledger where id=?", id);
+            SecurityContextHolder.clearContext();
             goals.deleteById(goalId);
             users.deleteById(owner.getId());
         }
