@@ -1,3 +1,4 @@
+import { RecordedSummary } from "../study/RecordedSummary";
 import { useEffect, useState } from 'react';
 import apiClient from '../../services/apiClient';
 import { getAllActiveGoals } from '../../services/activeGoalsService';
@@ -8,7 +9,7 @@ export default function StudyRoomGoal({roomId}:{roomId:string}) {
  const {currentUser}=useAuth();
  const [goals,setGoals]=useState<Goal[]>([]);
  const [goal,setGoal]=useState<number|null>(null);
- const [recorded,setRecorded]=useState<string|null>(null);
+ const [recorded,setRecorded]=useState<{totalMinutes:number;completedSessions:number}|null>(null);
  const [status,setStatus]=useState('Loading private selection…');
  const [error,setError]=useState<string|null>(null);
  const [revision,setRevision]=useState(0);
@@ -26,7 +27,7 @@ export default function StudyRoomGoal({roomId}:{roomId:string}) {
     const {data}=await apiClient.get(`/api/study/rooms/${roomId}/selection`);
     const summary=data.goalId ? await getFocusSummary(data.goalId) : null;
     if(!active)return;
-    setGoal(data.goalId);setRecorded(summary?`${summary.totalMinutes} min / ${summary.completedSessions} sessions`:null);
+    setGoal(data.goalId);setRecorded(summary);
     const session=data.sessions[0];
     setStatus(session?`${session.state}: ${session.confirmed_seconds/60} recorded / ${session.planned_seconds/60} planned min`:'No participation recorded in this room yet');setError(null);
    }catch{if(active)setError('Private recording data unavailable. Retrying…');}finally{loading=false;}
@@ -39,12 +40,12 @@ export default function StudyRoomGoal({roomId}:{roomId:string}) {
   try{await apiClient.put(`/api/study/rooms/${roomId}/selection`,{goalId:value?Number(value):null});setRevision(n=>n+1);}
   catch{setError('Selection unavailable: use an owned active Goal before participating in this round.');}
  }
- return <section className="rounded-2xl border border-emerald-500/30 bg-slate-900 p-5 text-sm text-slate-300">
-  <label htmlFor="private-room-goal" className="font-bold">Your private Goal (optional)</label>
+ return <section className="study-panel space-y-3 text-sm text-slate-300">
+  <label htmlFor="private-room-goal" className="font-bold">Your private progress · optional Goal</label>
   <select id="private-room-goal" value={goal??''} onChange={event=>void select(event.target.value)} className="my-3 block w-full rounded-lg bg-slate-950 p-3"><option value="">Study without recording a Goal</option>{goals.map(item=><option key={item.id} value={item.id}>{item.topic}</option>)}</select>
   <p>Select a Goal and mark yourself studying. Only server-observed intervals count; pauses and disconnected gaps do not. Leaving or resetting cancels this round.</p>
   <p className="mt-2" role="status">{status}</p>
-  {recorded&&!error&&<p>Recorded for this Goal: {recorded}</p>}
+  {goal!==null&&<RecordedSummary minutes={recorded?.totalMinutes} sessions={recorded?.completedSessions} error={!!error} onRefresh={()=>setRevision(n=>n+1)}/>}
   {error&&<p role="alert" className="text-rose-300">{error}</p>}
  </section>;
 }
