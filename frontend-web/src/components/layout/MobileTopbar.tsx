@@ -226,7 +226,7 @@ function MobileTopbar() {
                                                         rounded-full
                                                         bg-sky-500
                                                         px-1.5 py-0.5
-                                                        text-[11px]
+                                                        text-xs
                                                         font-bold
                                                         leading-none
                                                         text-slate-950

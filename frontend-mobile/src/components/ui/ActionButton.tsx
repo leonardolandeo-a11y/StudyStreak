@@ -10,6 +10,7 @@ export function ActionButton({ title, onPress, busy = false, disabled = false, s
 }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || busy, busy }}
       disabled={disabled || busy} onPress={onPress}
       style={({ pressed }) => [styles.button, secondary && styles.secondary, (pressed || disabled || busy) && styles.dim]}>
       {busy ? <ActivityIndicator color={secondary ? palette.text : palette.primaryText} /> :
@@ -19,7 +20,7 @@ export function ActionButton({ title, onPress, busy = false, disabled = false, s
 }
 
 const styles = StyleSheet.create({
-  button: { backgroundColor: palette.primary, borderRadius: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  button: { backgroundColor: palette.primary, borderRadius: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, paddingVertical: 12 },
   secondary: { backgroundColor: palette.surfaceRaised, borderWidth: 1, borderColor: palette.border },
   text: { color: palette.primaryText, fontSize: 15, fontWeight: '700' },
   secondaryText: { color: palette.text },

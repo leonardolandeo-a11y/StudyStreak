@@ -101,7 +101,7 @@ function AppSidebar() {
                     bg-sky-500
                     font-bold
                     text-slate-950
-                    shadow-lg shadow-sky-950/30
+                    
                 "
             >
                 S
@@ -113,7 +113,7 @@ function AppSidebar() {
                 </p>
 
                 <p className="text-xs text-slate-500">
-                    Study workspace
+                    Make time for progress
                 </p>
             </div>
 
@@ -127,9 +127,9 @@ function AppSidebar() {
             <p
                 className="
                     mb-2 px-3
-                    text-[11px] font-semibold
+                    text-xs font-semibold
                     uppercase tracking-wider
-                    text-slate-600
+                    text-slate-400
                 "
             >
                 Workspace
@@ -191,7 +191,7 @@ function AppSidebar() {
                                                     rounded-full
                                                     bg-sky-500
                                                     px-1.5 py-0.5
-                                                    text-[11px]
+                                                    text-xs
                                                     font-bold
                                                     leading-none
                                                     text-slate-950
