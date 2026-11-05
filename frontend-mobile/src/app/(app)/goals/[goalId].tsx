@@ -1,3 +1,4 @@
+import { RecordedSummary } from "../../../components/study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, AppState, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -32,6 +33,7 @@ export default function GoalDetails() {
   const [goalLoading, setGoalLoading] = useState(true);
   const [goalError, setGoalError] = useState<string | null>(null);
   const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
+  const [summaryRevision, setSummaryRevision] = useState(0);
   const [focusSummaryError, setFocusSummaryError] = useState(false);
   const [goalRevision, setGoalRevision] = useState(0);
   const latestGoalRevision = useRef(goalRevision);
@@ -69,6 +71,7 @@ export default function GoalDetails() {
 
   useFocusEffect(useCallback(() => {
     if (!valid) return;
+    void summaryRevision;
     const controller = new AbortController();
     let sending = false;
     const refresh = async () => {
@@ -84,7 +87,7 @@ export default function GoalDetails() {
     const interval = setInterval(() => { void refresh(); }, 30000);
     const subscription = AppState.addEventListener('change', state => { if (state === 'active') void refresh(); });
     return () => { controller.abort(); clearInterval(interval); subscription.remove(); };
-  }, [valid, goalId]));
+  }, [valid, goalId, summaryRevision]));
 
   const loadRecords = useCallback((page: number, signal: AbortSignal): Promise<PageResponse<DailyRecord>> => {
     if (!valid) throw new Error('Invalid goal');
@@ -208,25 +211,11 @@ export default function GoalDetails() {
             ) : null}
           </View>
           <View style={styles.focusCard}>
-            <Text style={styles.focusHeading}>Focus Studio progress</Text>
-            <View style={styles.focusTotals}>
-              <View style={styles.focusMetric}>
-                <Text style={styles.focusValue}>
-                  {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : '—'}
-                </Text>
-                <Text style={styles.focusUnit}>minutes saved</Text>
-              </View>
-              <View style={styles.focusMetric}>
-                <Text style={styles.focusValue}>
-                  {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.completedSessions : '—'}
-                </Text>
-                <Text style={styles.focusUnit}>sessions saved</Text>
-              </View>
-            </View>
-            {focusSummaryError && <Text style={styles.warning}>Recorded totals unavailable. Retrying automatically.</Text>}
-            <Text style={styles.focusNote}>
-              Only completed linked Pomodoros count. Daily records and streaks remain separate.
-            </Text>
+            <RecordedSummary minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
+              sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined}
+              error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
+            <Text style={styles.focusNote}>Saved individual and group sessions. Daily Records and their streaks are tracked separately.</Text>
+            <ActionButton secondary title="Study Rooms" onPress={() => router.push('/(app)/study-rooms')} />
             {!goal.completed && (
               <ActionButton title="Study this Goal" onPress={() => router.push({
                 pathname: '/(app)/focus-studio', params: { goalId: String(goal.id) },
@@ -314,12 +303,6 @@ const styles = StyleSheet.create({
   completed: { color: palette.success, fontWeight: '700' },
   confirm: { borderRadius: 12, padding: 13, backgroundColor: palette.surfaceRaised, gap: 10 },
   warning: { color: palette.error, fontSize: 14, lineHeight: 20 },
-  focusCard: { backgroundColor: '#143326', borderColor: '#275e41', borderWidth: 1,
-    borderRadius: 16, padding: 17, gap: 12 },
-  focusHeading: { color: '#a7f3d0', fontWeight: '900', fontSize: 17 },
-  focusNote: { color: '#9db9ac', fontSize: 12, lineHeight: 18 },
-  focusTotals: { flexDirection: 'row', gap: 10 },
-  focusMetric: { flex: 1, backgroundColor: '#091f17', padding: 13, borderRadius: 12 },
-  focusValue: { color: '#fff', fontSize: 31, fontWeight: '900' },
-  focusUnit: { color: '#86efac', fontSize: 11, fontWeight: '700', marginTop: 3 },
+  focusCard: { gap: 12 },
+  focusNote: { color: palette.muted, fontSize: 14, lineHeight: 21 },
 });

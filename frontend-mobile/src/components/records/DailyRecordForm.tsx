@@ -28,12 +28,12 @@ export function DailyRecordForm({ initialValues, busy, onSubmit, onCancel }: Pro
   return (
     <View style={styles.form}>
       <Text style={styles.heading}>{initialValues ? 'Edit daily record' : 'Add daily record'}</Text>
-      <View>
+      <View style={styles.datePanel}>
         <Text style={styles.dateLabel}>
           {date ? `Original date: ${date}` : 'Date: automatically assigned on save'}
         </Text>
         <Text style={styles.dateHint}>
-          Uses your account time zone, not your phone clock. Existing dates cannot be changed.
+          {date ? 'La fecha original es de solo lectura y no se puede modificar.' : 'La fecha se asignará automáticamente al guardar según la zona horaria de tu cuenta'}
         </Text>
       </View>
       <FormField label="Notes" hint={`${note.length}/1000 characters`} value={note}
@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
   form: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 18, gap: 14 },
   heading: { color: palette.text, fontSize: 20, fontWeight: '700' },
   dateLabel: { color: palette.text, fontSize: 16, fontWeight: '600' },
-  dateHint: { color: palette.muted, fontSize: 12 },
+  datePanel: {backgroundColor:palette.background,borderLeftWidth:2,borderLeftColor:palette.primary,padding:14,gap:8,borderRadius:10},
+  dateHint: { color: palette.muted, fontSize: 14, lineHeight:21 },
   note: { minHeight: 92, textAlignVertical: 'top', paddingVertical: 12 },
 });

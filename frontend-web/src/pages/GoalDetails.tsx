@@ -1,3 +1,4 @@
+import { RecordedSummary } from "../components/study/RecordedSummary";
 import { useState,useEffect } from "react";
 import { Link,useParams, useNavigate } from "react-router-dom";
 
@@ -59,6 +60,7 @@ function GoalDetails(){
     const [streakLoading, setStreakLoading] =useState(true);
 
     const [streakError, setStreakError] = useState<string | null>(null);
+    const [summaryRevision, setSummaryRevision] = useState(0);
     const [focusSummaryError, setFocusSummaryError] = useState(false);
     const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
     const userId = currentUser?.id;
@@ -226,7 +228,7 @@ useEffect(() => {
         window.addEventListener("focus", refresh);
         document.addEventListener("visibilitychange", refresh);
         return () => { controller.abort(); window.clearInterval(interval); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
-    }, [parsedGoalId, invalidGoalId, userId]);
+    }, [parsedGoalId, invalidGoalId, userId, summaryRevision]);
 
     if (!currentUser) {
         return <p>Please log in to view this goal.</p>;
@@ -364,29 +366,14 @@ useEffect(() => {
             </div>
 
 
-            <div className="mt-6 rounded-xl border border-emerald-900/60 bg-emerald-950/20 px-4 py-3">
-                <p className="text-sm font-semibold text-emerald-300">Focus Studio progress</p>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-slate-950/70 p-3">
-                        <p className="text-3xl font-black tabular-nums text-white">
-                            {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : "—"}
-                            <span className="block text-xs text-slate-400">{focusSummaryError ? "Recorded totals unavailable; retrying" : focusSummary?.goalId !== goal.id ? "Loading recorded totals…" : "Confirmed by server"}</span>
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
-                    </div>
-                    <div className="rounded-xl bg-slate-950/70 p-3">
-                        <p className="text-3xl font-black tabular-nums text-white">
-                            {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.completedSessions : "—"}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
-                    </div>
-                </div>
-                <p className="mt-1 text-xs text-slate-500">
-                    Only full linked Pomodoro sessions count. Daily records and streaks are tracked separately.
-                </p>
+            <div className="mt-6 space-y-3">
+                <RecordedSummary minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
+                    sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined}
+                    error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
+                <p className="text-sm text-slate-400">Saved individual and group sessions. Daily Records and their streaks are tracked separately.</p>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3"><Link to={ROUTES.studyRooms} className="study-button">Study Rooms</Link>
 
                 {!goal.completed && (
                     <Link to={`${ROUTES.focusStudio}?goalId=${goal.id}`}

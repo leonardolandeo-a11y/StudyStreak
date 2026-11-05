@@ -101,7 +101,7 @@ function AppSidebar() {
                     bg-sky-500
                     font-bold
                     text-slate-950
-                    
+
                 "
             >
                 S

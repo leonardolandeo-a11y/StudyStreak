@@ -63,32 +63,10 @@ function DailyRecordForm({
         <div className="space-y-5">
 
             <div>
-                <label
-                    htmlFor="date"
-                    className="mb-2 block text-sm font-medium text-slate-300"
-                >
-                    Date
-                </label>
-
-                <input
-                    id="date"
-                    type="text"
-                    value={date ?? "Assigned by server (account time zone)"}
-                    readOnly
-                    aria-readonly="true"
-                    className="
-                        w-full
-                        rounded-lg
-                        border border-slate-700
-                        bg-slate-950
-                        px-3 py-2.5
-                        text-slate-100
-                        hover:border-slate-600
-                    "
-                />
-                <p className="mt-2 text-xs text-slate-400">
-                    The server assigns today's date in your account time zone. Existing record dates cannot be changed.
-                </p>
+                <div className="rounded-xl border-l-2 border-emerald-400 bg-slate-950 p-4">
+                    <p className="text-sm font-semibold text-slate-200">{date ? `Original date: ${date}` : 'Automatic date'}</p>
+                    <p className="mt-2 text-sm text-slate-400">{date ? 'La fecha original es de solo lectura y no se puede modificar.' : 'La fecha se asignará automáticamente al guardar según la zona horaria de tu cuenta'}</p>
+                </div>
             </div>
 
 
@@ -108,6 +86,7 @@ function DailyRecordForm({
 
                 <textarea
                     id="note"
+                    disabled={loading}
                     value={note}
                     maxLength={1000}
                     rows={5}
@@ -135,11 +114,12 @@ function DailyRecordForm({
                     htmlFor="evidence"
                     className="mb-2 block text-sm font-medium text-slate-300"
                 >
-                    Evidence
+                    Evidence · optional
                 </label>
 
                 <input
                     id="evidence"
+                    disabled={loading}
                     type="text"
                     value={evidence}
                     onChange={(event) =>

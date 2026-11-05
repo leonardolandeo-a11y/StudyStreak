@@ -1,3 +1,4 @@
+import { RecordedSummary } from "../study/RecordedSummary";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
@@ -480,7 +481,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <Headphones size={15} aria-hidden="true" /> Your personal listening room
                     </p>
                     <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Focus Studio<span className="text-emerald-400">.</span></h1>
-                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Explore instrumental music, color noise and soothing spaces alongside your Pomodoro timer.</p>
+                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Explore instrumental music, color noise and soothing spaces alongside your Pomodoro timer.</p><Link to={ROUTES.studyRooms} className="study-button mt-4">Study together →</Link>
                 </div>
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300">
                     <Sparkles size={15} className="text-emerald-400" aria-hidden="true" />
@@ -488,8 +489,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 </div>
             </header>
 
-            <section aria-label="Featured focus mix" className={`relative isolate overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br ${style.background} p-5 sm:p-8`}>
-                <div aria-hidden="true" className={`pointer-events-none absolute -right-20 -top-32 h-96 w-96 rounded-full blur-[80px] ${style.tint}`} />
+            <section aria-label="Featured focus mix" className="study-panel">
+
                 <div className="relative grid items-center gap-6 sm:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
                     <TrackArtwork track={timer.preferences.soundscape} />
                     <div className="min-w-0">
@@ -523,107 +524,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
                             {running ? "● In progress" : "Ready to begin"}
                         </span>
-                    </div>
-
-                    <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-950/20 p-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <p className="flex items-center gap-2 text-sm font-bold text-white">
-                                    <BookOpen size={16} className="text-emerald-300" aria-hidden="true" />
-                                    Study toward a Goal
-                                </p>
-                                <p className="mt-1 text-xs text-slate-400">
-                                    A completed focus interval adds its full minutes to your selected Goal.
-                                </p>
-                            </div>
-                            <Link to={ROUTES.goals} className="shrink-0 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
-                                My Goals
-                            </Link>
-                        </div>
-                        <label htmlFor="focus-goal-select" className="mt-4 block text-xs font-semibold text-slate-300">
-                            Link this focus session
-                        </label>
-                        <select id="focus-goal-select"
-                            value={selectedGoalId ?? ""}
-                            disabled={goalsLoading || goalLocked}
-                            onChange={event => {
-                                setSelectedGoalId(event.target.value ? Number(event.target.value) : null);
-                                setGoalSummary(null);
-                                setSummaryError(false);
-                            }}
-                            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
-                            <option value="">No Goal — timer only</option>
-                            {goals.map(goal => (
-                                <option key={goal.id} value={goal.id}>{goal.topic}</option>
-                            ))}
-                        </select>
-                        {goalsLoading && <p className="mt-2 text-xs text-slate-400">Loading Goals…</p>}
-                        {goalsError && <p role="alert" className="mt-2 text-xs text-rose-300">{goalsError}</p>}
-                        {!goalsLoading && !goalsError && goals.length === 0 && (
-                            <p className="mt-2 text-xs text-slate-400">No active Goals yet. Create one to track focus time.</p>
-                        )}
-                        {goalLocked && (
-                            <p className="mt-2 text-xs text-emerald-300">
-                                This session is linked to its original Goal until you complete or reset it.
-                            </p>
-                        )}
-                        {chosenGoal && (
-                            <div className="mt-4 rounded-xl border border-emerald-400/30 bg-slate-950/80 p-4">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">
-                                        Recorded for this Goal
-                                    </p>
-                                    <button type="button" onClick={() => setSummaryRevision(value => value + 1)}
-                                        className="text-xs font-semibold text-slate-300 hover:text-white">
-                                        Refresh
-                                    </button>
-                                </div>
-                                <div className="mt-3 grid grid-cols-2 gap-3" aria-live="polite">
-                                    <div className="rounded-lg bg-emerald-950/30 p-3">
-                                        <p className="text-3xl font-black tabular-nums text-white">
-                                            {!summaryError && goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : "—"}
-                                        </p>
-                                        <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
-                                    </div>
-                                    <div className="rounded-lg bg-emerald-950/30 p-3">
-                                        <p className="text-3xl font-black tabular-nums text-white">
-                                            {!summaryError && goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : "—"}
-                                        </p>
-                                        <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
-                                    </div>
-                                </div>
-                                {selectedGoalId !== null && goalSummary?.goalId !== selectedGoalId && !summaryError && <p className="text-xs text-slate-400">Loading recorded totals…</p>}
-                                {summaryError && (
-                                    <p role="alert" className="mt-2 text-xs text-rose-300">Totals could not be updated. Tap Refresh.</p>
-                                )}
-                                <Link to={goalDetailsPath(chosenGoal.id)}
-                                    className="mt-3 inline-block text-xs font-semibold text-emerald-300 hover:underline">
-                                    View Goal details
-                                </Link>
-                                <p className="mt-2 text-[11px] text-slate-500">
-                                    Confirmed by the server, shared with Mobile. Pending sessions appear separately.
-                                </p>
-                            </div>
-                        )}
-                        {!chosenGoal && !goalsLoading && (
-                            <p className="mt-2 text-xs text-amber-200/80">
-                                Pomodoro still works, but unlinked focus time is not recorded.
-                            </p>
-                        )}
-                        {pendingSync > 0 && (
-                            <p className="mt-3 text-xs font-semibold text-amber-200">
-                                {pendingSync} completed {pendingSync === 1 ? "session" : "sessions"} waiting to sync.
-                            </p>
-                        )}
-                        {saveError && (
-                            <div role="alert" className="mt-3 flex flex-wrap items-center gap-3">
-                                <span className="text-xs text-rose-300">{saveError}</span>
-                                <button type="button" onClick={retryPending}
-                                    className="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-950/40">
-                                    Retry sync
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     <div className="mt-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1" aria-label="Session type">
@@ -682,6 +582,76 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         ))}
                         <span className="ml-2 text-xs text-slate-500">Long break every 4 focus sessions</span>
                     </div>
+                    <div className="mt-6 border-t border-slate-800 pt-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                    <BookOpen size={16} className="text-emerald-300" aria-hidden="true" />
+                                    Study toward a Goal
+                                </p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Only time confirmed by the server is added to your selected Goal.
+                                </p>
+                            </div>
+                            <Link to={ROUTES.goals} className="shrink-0 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
+                                My Goals
+                            </Link>
+                        </div>
+                        <label htmlFor="focus-goal-select" className="mt-4 block text-xs font-semibold text-slate-300">
+                            Link this focus session
+                        </label>
+                        <select id="focus-goal-select"
+                            value={selectedGoalId ?? ""}
+                            disabled={goalsLoading || goalLocked}
+                            onChange={event => {
+                                setSelectedGoalId(event.target.value ? Number(event.target.value) : null);
+                                setGoalSummary(null);
+                                setSummaryError(false);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                            <option value="">No Goal — timer only</option>
+                            {goals.map(goal => (
+                                <option key={goal.id} value={goal.id}>{goal.topic}</option>
+                            ))}
+                        </select>
+                        {goalsLoading && <p className="mt-2 text-xs text-slate-400">Loading Goals…</p>}
+                        {goalsError && <p role="alert" className="mt-2 text-xs text-rose-300">{goalsError}</p>}
+                        {!goalsLoading && !goalsError && goals.length === 0 && (
+                            <p className="mt-2 text-xs text-slate-400">No active Goals yet. Create one to track focus time.</p>
+                        )}
+                        {goalLocked && (
+                            <p className="mt-2 text-xs text-emerald-300">
+                                This session is linked to its original Goal until you complete or reset it.
+                            </p>
+                        )}
+                        {chosenGoal && <div className="mt-4 space-y-3">
+                            <RecordedSummary minutes={goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : undefined}
+                                sessions={goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : undefined}
+                                pending={timer.pendingFocusSessions.filter(item => item.goalId === selectedGoalId).length}
+                                error={summaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
+                            <Link className="study-button" to={goalDetailsPath(chosenGoal.id)}>View Goal details</Link>
+                        </div>}
+                        {!chosenGoal && !goalsLoading && (
+                            <p className="mt-2 text-xs text-amber-200/80">
+                                Pomodoro still works, but unlinked focus time is not recorded.
+                            </p>
+                        )}
+                        {pendingSync > 0 && (
+                            <p className="mt-3 text-xs font-semibold text-amber-200">
+                                {pendingSync} completed {pendingSync === 1 ? "session" : "sessions"} waiting to sync.
+                            </p>
+                        )}
+                        {saveError && (
+                            <div role="alert" className="mt-3 flex flex-wrap items-center gap-3">
+                                <span className="text-xs text-rose-300">{saveError}</span>
+                                <button type="button" onClick={retryPending}
+                                    className="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-950/40">
+                                    Retry sync
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                 </section>
 
                 <div className="space-y-5">
@@ -771,7 +741,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 </div>
             </div>
 
-            <FocusInsights refreshKey={statisticsRevision} />
+            <details className="study-panel"><summary className="cursor-pointer py-2 text-lg font-semibold">Explore your study statistics</summary><div className="mt-5"><FocusInsights refreshKey={statisticsRevision} /></div></details>
 
             <section aria-label="Ambient soundscape library" className="space-y-4">
                 <div className="flex flex-wrap items-end justify-between gap-3">
