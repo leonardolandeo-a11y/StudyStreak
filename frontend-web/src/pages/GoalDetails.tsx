@@ -59,6 +59,7 @@ function GoalDetails(){
     const [streakLoading, setStreakLoading] =useState(true);
 
     const [streakError, setStreakError] = useState<string | null>(null);
+    const [focusSummaryError, setFocusSummaryError] = useState(false);
     const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
     const userId = currentUser?.id;
     const parsedGoalId = goalId ? Number(goalId): null;
@@ -210,10 +211,21 @@ useEffect(() => {
     useEffect(() => {
         if (parsedGoalId === null || invalidGoalId || userId === null || userId === undefined) return;
         const controller = new AbortController();
-        void getFocusSummary(parsedGoalId, controller.signal)
-            .then(result => { if (!controller.signal.aborted) setFocusSummary(result); })
-            .catch(() => { /* Keep the rest of Goal details available if focus history fails. */ });
-        return () => controller.abort();
+        let sending = false;
+        const refresh = async () => {
+            if (sending || document.visibilityState !== "visible") return;
+            sending = true;
+            try {
+                const result = await getFocusSummary(parsedGoalId, controller.signal);
+                if (!controller.signal.aborted) { setFocusSummary(result); setFocusSummaryError(false); }
+            } catch { if (!controller.signal.aborted) setFocusSummaryError(true); }
+            finally { sending = false; }
+        };
+        void refresh();
+        const interval = window.setInterval(() => { void refresh(); }, 30000);
+        window.addEventListener("focus", refresh);
+        document.addEventListener("visibilitychange", refresh);
+        return () => { controller.abort(); window.clearInterval(interval); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
     }, [parsedGoalId, invalidGoalId, userId]);
 
     if (!currentUser) {
@@ -357,13 +369,14 @@ useEffect(() => {
                 <div className="mt-3 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-slate-950/70 p-3">
                         <p className="text-3xl font-black tabular-nums text-white">
-                            {focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : "—"}
+                            {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : "—"}
+                            <span className="block text-xs text-slate-400">{focusSummaryError ? "Recorded totals unavailable; retrying" : focusSummary?.goalId !== goal.id ? "Loading recorded totals…" : "Confirmed by server"}</span>
                         </p>
                         <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
                     </div>
                     <div className="rounded-xl bg-slate-950/70 p-3">
                         <p className="text-3xl font-black tabular-nums text-white">
-                            {focusSummary?.goalId === goal.id ? focusSummary.completedSessions : "—"}
+                            {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.completedSessions : "—"}
                         </p>
                         <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
                     </div>

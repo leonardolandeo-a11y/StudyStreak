@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../components/ui/Screen';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
@@ -70,15 +70,20 @@ export default function GoalDetails() {
   useFocusEffect(useCallback(() => {
     if (!valid) return;
     const controller = new AbortController();
-    void getMobileFocusSummary(goalId, controller.signal).then(data => {
-      if (!controller.signal.aborted) {
-        setFocusSummary(data);
-        setFocusSummaryError(false);
-      }
-    }).catch(() => {
-      if (!controller.signal.aborted) setFocusSummaryError(true);
-    });
-    return () => controller.abort();
+    let sending = false;
+    const refresh = async () => {
+      if (sending || AppState.currentState !== 'active') return;
+      sending = true;
+      try {
+        const data = await getMobileFocusSummary(goalId, controller.signal);
+        if (!controller.signal.aborted) { setFocusSummary(data); setFocusSummaryError(false); }
+      } catch { if (!controller.signal.aborted) setFocusSummaryError(true); }
+      finally { sending = false; }
+    };
+    void refresh();
+    const interval = setInterval(() => { void refresh(); }, 30000);
+    const subscription = AppState.addEventListener('change', state => { if (state === 'active') void refresh(); });
+    return () => { controller.abort(); clearInterval(interval); subscription.remove(); };
   }, [valid, goalId]));
 
   const loadRecords = useCallback((page: number, signal: AbortSignal): Promise<PageResponse<DailyRecord>> => {
@@ -207,18 +212,18 @@ export default function GoalDetails() {
             <View style={styles.focusTotals}>
               <View style={styles.focusMetric}>
                 <Text style={styles.focusValue}>
-                  {focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : '—'}
+                  {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : '—'}
                 </Text>
                 <Text style={styles.focusUnit}>minutes saved</Text>
               </View>
               <View style={styles.focusMetric}>
                 <Text style={styles.focusValue}>
-                  {focusSummary?.goalId === goal.id ? focusSummary.completedSessions : '—'}
+                  {!focusSummaryError && focusSummary?.goalId === goal.id ? focusSummary.completedSessions : '—'}
                 </Text>
                 <Text style={styles.focusUnit}>sessions saved</Text>
               </View>
             </View>
-            {focusSummaryError && <Text style={styles.warning}>Focus totals unavailable. Reopen the Goal to refresh.</Text>}
+            {focusSummaryError && <Text style={styles.warning}>Recorded totals unavailable. Retrying automatically.</Text>}
             <Text style={styles.focusNote}>
               Only completed linked Pomodoros count. Daily records and streaks remain separate.
             </Text>

@@ -1,3 +1,4 @@
+import StudyAnalyticsDetails from "./StudyAnalyticsDetails";
 import { useEffect, useState } from "react";
 import { Activity, CalendarDays, Clock3, RefreshCw, Target, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -17,18 +18,21 @@ export default function FocusInsights({ refreshKey = 0, compact = false }: {
 
     useEffect(() => {
         const controller = new AbortController();
+        let request = 0;
         const load = () => {
+            const sequence = ++request;
             setLoading(true);
             setError(null);
             void fetchFocusStatistics(days, controller.signal).then(stats => {
-                if (!controller.signal.aborted) setData(stats);
+                if (!controller.signal.aborted && sequence === request) setData(stats);
             }).catch(() => {
-                if (!controller.signal.aborted) setError("Could not load your focus statistics.");
+                if (!controller.signal.aborted && sequence === request) setError("Could not load your focus statistics.");
             }).finally(() => {
-                if (!controller.signal.aborted) setLoading(false);
+                if (!controller.signal.aborted && sequence === request) setLoading(false);
             });
         };
         load();
+        const interval = window.setInterval(() => { if (document.visibilityState === "visible") load(); }, 30000);
         const refreshVisible = () => {
             if (document.visibilityState === "visible") load();
         };
@@ -36,6 +40,7 @@ export default function FocusInsights({ refreshKey = 0, compact = false }: {
         window.addEventListener("focus", refreshVisible);
         return () => {
             controller.abort();
+            window.clearInterval(interval);
             document.removeEventListener("visibilitychange", refreshVisible);
             window.removeEventListener("focus", refreshVisible);
         };
@@ -136,11 +141,11 @@ export default function FocusInsights({ refreshKey = 0, compact = false }: {
                                 ) : (
                                     <div className="mt-5 space-y-4">
                                         {data.byGoal.slice(0, 5).map(goal => (
-                                            <div key={goal.goalId}>
+                                            <div key={`${goal.goalId}-${goal.topic}`}>
                                                 <div className="flex items-baseline justify-between gap-3 text-xs">
-                                                    <Link to={goalDetailsPath(goal.goalId)}
+                                                    <Link to={goal.goalId===null ? "#" : goalDetailsPath(goal.goalId)}
                                                         className="max-w-[70%] truncate font-semibold text-slate-200 hover:text-emerald-300">
-                                                        {goal.topic}
+                                                        {goal.topic}{goal.goalId===null ? " (deleted)" : ""}
                                                     </Link>
                                                     <span className="shrink-0 tabular-nums text-emerald-300">{focusDuration(goal.minutes)}</span>
                                                 </div>
@@ -156,8 +161,9 @@ export default function FocusInsights({ refreshKey = 0, compact = false }: {
                             </div>
                         </div>
                     )}
+                    {!compact && <StudyAnalyticsDetails key={days} data={data}/> }
                     <p className="mt-4 text-xs text-slate-500">
-                        Totals only include finished, server-confirmed Pomodoros. Unsynced sessions are not counted.
+                        Recorded totals include verified time and separately labelled historical estimates. Pending sessions are excluded.
                     </p>
                 </>
             )}

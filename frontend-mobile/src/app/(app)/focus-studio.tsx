@@ -1,3 +1,5 @@
+import { getApiErrorMessage } from "../../utils/apiError";
+import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -134,6 +136,61 @@ export default function FocusStudioMobile() {
     return audio.current;
   }
 
+      const previousTracked = useRef<string | null>(null);
+      useEffect(() => {
+        const retry = setInterval(() => {
+            failed.current.clear();
+            if (AppState.currentState === "active") setSyncRevision(value => value + 1);
+            setTimer(previous => previous.pendingFocusSessions.length ? { ...previous, pendingFocusSessions: [...previous.pendingFocusSessions] } : previous);
+        }, 30000);
+        return () => clearInterval(retry);
+    }, []);
+  useEffect(() => {
+        const before = previousTracked.current;
+        previousTracked.current = timer.activeFocusSession?.sessionId ?? null;
+        if (before && before !== previousTracked.current && !timer.pendingFocusSessions.some(item => item.sessionId === before))
+            void studyTracking.pulse(before, 'CANCEL').catch(() => setSaveError('Cancellation is pending. Reconnect before starting another recording.'));
+    }, [timer.activeFocusSession, timer.pendingFocusSessions]);
+  useEffect(() => {
+        if (userId == null || !ready) return;
+        let active = true;
+        let recovering = false;
+        const recover = async () => {
+            if (recovering) return;
+            recovering = true;
+            try {
+                const pending = await readPending(userId);
+                const response = await studyTracking.recover();
+                if (!active) return;
+                failed.current.clear();
+                if (response.session) setSelectedGoalId(response.session.goal_id);
+                setTimer(previous => recoverTrackedTimer({ ...previous, pendingFocusSessions:
+                    mergePending(previous.pendingFocusSessions, pending) }, response.session, response.serverNow));
+                setSyncRevision(value => value + 1);
+            } catch { if (active) setSaveError('Recording recovery unavailable. Pending sessions remain on this device.'); } finally { recovering = false; }
+        };
+        void recover();
+        const recoveryInterval = setInterval(() => { if (AppState.currentState === "active") void recover(); }, 30000);
+        const subscription = AppState.addEventListener('change', state => { if (state === 'active') void recover(); });
+        return () => { active = false; clearInterval(recoveryInterval); subscription.remove(); };
+    }, [userId, ready]);
+
+    useEffect(() => {
+        const session = timer.activeFocusSession;
+        if (!session || timer.endsAt === null) return;
+        let sending = false;
+        const pulse = async () => {
+            if (sending || AppState.currentState !== 'active') return;
+            sending = true;
+            try { await studyTracking.pulse(session.sessionId, 'PULSE'); }
+            catch { setSaveError('Recording connection interrupted. Unobserved time will not be credited.'); }
+            finally { sending = false; }
+        };
+        void pulse();
+        const interval = setInterval(() => { void pulse(); }, 12000);
+        return () => clearInterval(interval);
+    }, [timer.activeFocusSession, timer.endsAt]);
+
   useEffect(() => {
     let active = true;
     const restore = async () => {
@@ -228,21 +285,21 @@ export default function FocusStudioMobile() {
   }, [selectionReady, selectedGoalId, syncRevision]));
 
   useEffect(() => {
-    if (!ready || !focused.current) return;
+    if (!ready || !focused.current || userId == null) return;
     for (const pending of timer.pendingFocusSessions) {
       if (failed.current.has(pending.sessionId) || inFlight.current.has(pending.sessionId)) continue;
       inFlight.current.add(pending.sessionId);
-      void saving.current.then(() => recordMobileFocusCompletion(pending)).then(() => {
+      void savePending(userId, pending).then(() => recordMobileFocusCompletion(pending)).then(() => removePending(userId, pending.sessionId)).then(() => {
         failed.current.delete(pending.sessionId);
         setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
         setSaveError(null);
         setSyncRevision(previous => previous + 1);
-      }).catch(() => {
+      }).catch(cause => {
         failed.current.add(pending.sessionId);
-        setSaveError('A completed session is awaiting sync. Retry when online.');
+        setSaveError(getApiErrorMessage(cause, 'Awaiting server confirmation. Pending session retained for retry.'));
       }).finally(() => { inFlight.current.delete(pending.sessionId); });
     }
-  }, [timer.pendingFocusSessions, ready, syncRevision]);
+  }, [timer.pendingFocusSessions, ready, syncRevision, userId]);
 
   useFocusEffect(useCallback(() => {
     focused.current = true;
@@ -309,7 +366,7 @@ export default function FocusStudioMobile() {
     updatePreferences({ [field]: value });
   }
 
-  function toggleTimer() {
+  async function toggleTimer() {
     if (!ready) return;
     const current = Date.now();
     setNow(current);
@@ -318,9 +375,16 @@ export default function FocusStudioMobile() {
         ? { sessionId: createFocusSessionId(), goalId: selectedGoal.id,
             durationMinutes: timer.preferences.focusMinutes }
         : null;
-    setTimer(previous => running
-      ? pausePomodoro(previous, current)
-      : startPomodoro(previous, current, linked));
+        let recovered: Awaited<ReturnType<typeof studyTracking.recover>> | null = null;
+        try {
+            if (timer.activeFocusSession) await studyTracking.pulse(timer.activeFocusSession.sessionId, running ? 'PAUSE' : 'RESUME');
+            else if (linked) await studyTracking.start(linked);
+            if (timer.activeFocusSession || linked) recovered = await studyTracking.recover();
+        } catch { setSaveError('Could not start or change server recording. Reopen Focus Studio to recover an active session.'); return; }
+    setTimer(previous => {
+            const next = running ? pausePomodoro(previous, Date.now()) : startPomodoro(previous, Date.now(), linked);
+            return recovered ? recoverTrackedTimer(next, recovered.session, recovered.serverNow) : next;
+        });
     if (timer.preferences.soundEffects && focused.current) {
       void getAudio().cue(running ? 'pause' : 'start', timer.preferences.volume);
     }
@@ -473,13 +537,13 @@ export default function FocusStudioMobile() {
               <View style={styles.recordedTotals}>
                 <View style={styles.recordedMetric}>
                   <Text style={styles.recordedNumber}>
-                    {summary?.goalId === selectedGoal.id ? summary.totalMinutes : '—'}
+                    {!summaryError && summary?.goalId === selectedGoal.id ? summary.totalMinutes : '—'}
                   </Text>
                   <Text style={styles.recordedUnit}>minutes saved</Text>
                 </View>
                 <View style={styles.recordedMetric}>
                   <Text style={styles.recordedNumber}>
-                    {summary?.goalId === selectedGoal.id ? summary.completedSessions : '—'}
+                    {!summaryError && summary?.goalId === selectedGoal.id ? summary.completedSessions : '—'}
                   </Text>
                   <Text style={styles.recordedUnit}>sessions saved</Text>
                 </View>

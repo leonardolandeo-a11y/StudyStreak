@@ -1,3 +1,4 @@
+import StudyRoomGoal from "../components/dashboard/StudyRoomGoal";
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { Check, Clock3, Copy, DoorOpen, Headphones, Pause, Play, RefreshCw, RotateCcw, Shield, Users } from "lucide-react";
@@ -263,6 +264,7 @@ export default function StudyRoomsPage() {
                 </div>
             ) : (
                 <div className="space-y-5">
+                    <StudyRoomGoal key={room.id} roomId={room.id}/>
                     <button type="button" onClick={() => {setSnapshot(null);setRoomId(null);}} className="text-xs font-bold text-emerald-300 hover:underline">← All rooms</button>
                     <div className="rounded-[28px] border border-emerald-400/20 bg-gradient-to-br from-emerald-950/80 via-[#14231f] to-[#111923] p-6 sm:p-9">
                         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -328,7 +330,7 @@ export default function StudyRoomsPage() {
                             ))}
                         </div>
                     </section>
-                    <p className="flex items-center gap-2 text-xs text-slate-500"><Clock3 size={15}/> Room time is synchronized to the server and refreshed every 4 seconds. Your personal Pomodoro and saved Goal sessions remain separate.</p>
+                    <p className="flex items-center gap-2 text-xs text-slate-500"><Clock3 size={15}/> Room time is synchronized to the server and refreshed every 4 seconds. Choose your private Goal above to record eligible group participation.</p>
                     <p className="flex items-center gap-2 text-xs text-slate-500"><Headphones size={15}/> Open Focus Studio separately to listen to study sounds. The shared room does not play or stream music.</p>
                 </div>
             )}

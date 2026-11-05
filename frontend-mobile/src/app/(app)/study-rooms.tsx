@@ -1,3 +1,4 @@
+import { StudyRoomGoal } from "../../components/focus/StudyRoomGoal";
 import { useCallback, useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { router, useFocusEffect } from 'expo-router';
@@ -266,6 +267,7 @@ export default function StudyRooms() {
         </>
       ) : (
         <>
+          <StudyRoomGoal key={room.id} roomId={room.id}/>
           <View style={styles.feature}>
             <Text style={styles.eyebrow}>PRIVATE · INVITE ONLY</Text>
             <Text style={styles.roomTitle}>{room.name}</Text>
@@ -317,7 +319,7 @@ export default function StudyRooms() {
               </View>
             ))}
           </View>
-          <Text style={styles.footer}>Room state refreshes every 4 seconds using the server clock. Personal Focus Studio minutes and Goals are separate.</Text>
+          <Text style={styles.footer}>Room state refreshes every 4 seconds using the server clock. Your optional private Goal records eligible group participation.</Text>
           <ActionButton secondary title={room.host ? 'Close room for everyone' : 'Leave room'}
             disabled={busy || stale} onPress={askLeave} />
         </>

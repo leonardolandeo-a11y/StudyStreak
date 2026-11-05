@@ -1,3 +1,5 @@
+import { getApiErrorMessage } from "../../utils/apiError";
+import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
 import {
     AudioLines, BookOpen, Check, ChevronDown, Clock3, CloudRain, Coffee, Disc3,
@@ -210,6 +212,61 @@ export default function FocusStudio({ userId }: { userId: number }) {
         return audio.current;
     }
 
+    const previousTracked = useRef<string | null>(null);
+    useEffect(() => {
+        const retry = setInterval(() => {
+            failed.current.clear();
+            setTimer(previous => previous.pendingFocusSessions.length ? { ...previous, pendingFocusSessions: [...previous.pendingFocusSessions] } : previous);
+        }, 30000);
+        return () => clearInterval(retry);
+    }, []);
+    useEffect(() => {
+        const before = previousTracked.current;
+        previousTracked.current = timer.activeFocusSession?.sessionId ?? null;
+        if (before && before !== previousTracked.current && !timer.pendingFocusSessions.some(item => item.sessionId === before))
+            void studyTracking.pulse(before, 'CANCEL').catch(() => setSaveError('Cancellation is pending. Reconnect before starting another recording.'));
+    }, [timer.activeFocusSession, timer.pendingFocusSessions]);
+    useEffect(() => {
+        if (userId == null) return;
+        let active = true;
+        let recovering = false;
+        const recover = async () => {
+            if (recovering) return;
+            recovering = true;
+            try {
+                const pending = await readPending(userId);
+                const response = await studyTracking.recover();
+                if (!active) return;
+                failed.current.clear();
+                if (response.session) setSelectedGoalId(response.session.goal_id);
+                setTimer(previous => recoverTrackedTimer({ ...previous, pendingFocusSessions:
+                    mergePending(previous.pendingFocusSessions, pending) }, response.session, response.serverNow));
+                setSummaryRevision(value => value + 1); setStatisticsRevision(value => value + 1);
+            } catch { if (active) setSaveError('Recording recovery unavailable. Pending sessions remain on this device.'); } finally { recovering = false; }
+        };
+        void recover();
+        const recoveryInterval = setInterval(() => { if (document.visibilityState === "visible") void recover(); }, 30000);
+        const refresh = () => { if (document.visibilityState === "visible") void recover(); };
+        window.addEventListener("online", refresh); window.addEventListener("focus", refresh);
+        return () => { active = false; clearInterval(recoveryInterval); window.removeEventListener("online", refresh); window.removeEventListener("focus", refresh); };
+    }, [userId]);
+
+    useEffect(() => {
+        const session = timer.activeFocusSession;
+        if (!session || timer.endsAt === null) return;
+        let sending = false;
+        const pulse = async () => {
+            if (sending || document.visibilityState !== "visible") return;
+            sending = true;
+            try { await studyTracking.pulse(session.sessionId, 'PULSE'); }
+            catch { setSaveError('Recording connection interrupted. Unobserved time will not be credited.'); }
+            finally { sending = false; }
+        };
+        void pulse();
+        const interval = setInterval(() => { void pulse(); }, 12000);
+        return () => clearInterval(interval);
+    }, [timer.activeFocusSession, timer.endsAt]);
+
     useEffect(() => {
         const controller = new AbortController();
         void getAllActiveGoals(userId, controller.signal).then(result => {
@@ -250,10 +307,12 @@ export default function FocusStudio({ userId }: { userId: number }) {
         const reloadVisible = () => {
             if (document.visibilityState === "visible") setSummaryRevision(value => value + 1);
         };
+        const summaryInterval = window.setInterval(reloadVisible, 30000);
         window.addEventListener("focus", reloadVisible);
         document.addEventListener("visibilitychange", reloadVisible);
         return () => {
             controller.abort();
+            window.clearInterval(summaryInterval);
             window.removeEventListener("focus", reloadVisible);
             document.removeEventListener("visibilitychange", reloadVisible);
         };
@@ -265,20 +324,20 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 continue;
             }
             inFlight.current.add(pending.sessionId);
-            void recordFocusCompletion(pending).then(() => {
+            void savePending(userId, pending).then(() => recordFocusCompletion(pending)).then(() => removePending(userId, pending.sessionId)).then(() => {
                 failed.current.delete(pending.sessionId);
                 setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
                 setSaveError(null);
                 setSummaryRevision(value => value + 1);
                 setStatisticsRevision(value => value + 1);
-            }).catch(() => {
+            }).catch(cause => {
                 failed.current.add(pending.sessionId);
-                setSaveError("A completed session is pending sync. Retry when the server is available.");
+                setSaveError(getApiErrorMessage(cause, "Awaiting server confirmation. Pending session retained for retry."));
             }).finally(() => {
                 inFlight.current.delete(pending.sessionId);
             });
         }
-    }, [timer.pendingFocusSessions, selectedGoalId]);
+    }, [timer.pendingFocusSessions, selectedGoalId, userId]);
 
     useEffect(() => {
         const tick = () => {
@@ -348,7 +407,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
         changePreferences({ [field]: value });
     }
 
-    function toggleTimer() {
+    async function toggleTimer() {
         const current = Date.now();
         setNow(current);
         // Snapshot goal + duration at session start; switching tabs or pausing never reassigns minutes.
@@ -360,8 +419,16 @@ export default function FocusStudio({ userId }: { userId: number }) {
                     durationMinutes: timer.preferences.focusMinutes
                 }
                 : null;
-        setTimer(previous => running ? pausePomodoro(previous, current)
-            : startPomodoro(previous, current, completion));
+        let recovered: Awaited<ReturnType<typeof studyTracking.recover>> | null = null;
+        try {
+            if (timer.activeFocusSession) await studyTracking.pulse(timer.activeFocusSession.sessionId, running ? 'PAUSE' : 'RESUME');
+            else if (completion) await studyTracking.start(completion);
+            if (timer.activeFocusSession || completion) recovered = await studyTracking.recover();
+        } catch { setSaveError('Could not start or change server recording. Reopen Focus Studio to recover an active session.'); return; }
+        setTimer(previous => {
+            const next = running ? pausePomodoro(previous, Date.now()) : startPomodoro(previous, Date.now(), completion);
+            return recovered ? recoverTrackedTimer(next, recovered.session, recovered.serverNow) : next;
+        });
         if (timer.preferences.soundEffects) {
             void getAudio().cue(running ? "pause" : "start", timer.preferences.volume);
         }
@@ -514,17 +581,18 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 <div className="mt-3 grid grid-cols-2 gap-3" aria-live="polite">
                                     <div className="rounded-lg bg-emerald-950/30 p-3">
                                         <p className="text-3xl font-black tabular-nums text-white">
-                                            {goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : "—"}
+                                            {!summaryError && goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : "—"}
                                         </p>
                                         <p className="mt-1 text-xs font-semibold text-emerald-300">minutes saved</p>
                                     </div>
                                     <div className="rounded-lg bg-emerald-950/30 p-3">
                                         <p className="text-3xl font-black tabular-nums text-white">
-                                            {goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : "—"}
+                                            {!summaryError && goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : "—"}
                                         </p>
                                         <p className="mt-1 text-xs font-semibold text-emerald-300">sessions saved</p>
                                     </div>
                                 </div>
+                                {selectedGoalId !== null && goalSummary?.goalId !== selectedGoalId && !summaryError && <p className="text-xs text-slate-400">Loading recorded totals…</p>}
                                 {summaryError && (
                                     <p role="alert" className="mt-2 text-xs text-rose-300">Totals could not be updated. Tap Refresh.</p>
                                 )}

@@ -6,12 +6,23 @@ export interface DailyFocus {
   sessions: number;
 }
 export interface GoalFocus {
-  goalId: number;
+  goalId: number | null;
   topic: string;
   minutes: number;
   sessions: number;
 }
 export interface FocusStatistics {
+    timeZone: string;
+    verifiedMinutes: number; estimatedMinutes: number;
+    groupMinutes: number; individualMinutes: number; groupSessions: number;
+    previousMinutes: number; changePercent: number | null; completionPercent: number | null;
+    averageMinutes: number; activeDays: number; studyStreak: number; bestStudyStreak: number;
+    weekMinutes: number;
+    activity: DailyFocus[];
+    hourly: { hour: number; hours: number }[];
+    weekly: { date: string; hours: number }[];
+    monthly: { date: string; hours: number }[];
+
   days: number;
   totalMinutes: number;
   completedSessions: number;

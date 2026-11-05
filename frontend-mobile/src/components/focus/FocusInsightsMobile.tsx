@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { StudyAnalyticsDetails } from "./StudyAnalyticsDetails";
+import { useCallback, useEffect, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
@@ -43,6 +44,10 @@ export function FocusInsightsMobile({ refreshKey = 0 }: { refreshKey?: number })
     return () => controller.abort();
   }, [days, refreshKey, revision]));
 
+  useEffect(() => {
+    const interval = setInterval(() => setRevision(value => value + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
   const maxDaily = Math.max(1, ...(data?.daily.map(day => day.minutes) ?? []));
   const maxGoal = Math.max(1, ...(data?.byGoal.map(goal => goal.minutes) ?? []));
 
@@ -100,6 +105,7 @@ export function FocusInsightsMobile({ refreshKey = 0 }: { refreshKey?: number })
                 ))}
               </View>
             </ScrollView>
+            <StudyAnalyticsDetails key={days} data={data}/>
             <Text style={styles.subtitle}>A bar represents minutes saved on that date in your account time zone.</Text>
           </View>
 
@@ -108,8 +114,8 @@ export function FocusInsightsMobile({ refreshKey = 0 }: { refreshKey?: number })
             {data.byGoal.length === 0
               ? <Text style={styles.subtitle}>Finish a linked Pomodoro to start tracking your Goals.</Text>
               : data.byGoal.slice(0, 6).map(goal => (
-                <Pressable key={goal.goalId} accessibilityRole="button"
-                  onPress={() => router.push({ pathname: '/(app)/goals/[goalId]',
+                <Pressable key={`${goal.goalId}-${goal.topic}`} accessibilityRole="button"
+                  onPress={() => goal.goalId !== null && router.push({ pathname: '/(app)/goals/[goalId]',
                     params: { goalId: String(goal.goalId) } })} style={styles.goalItem}>
                   <View style={styles.goalHeader}>
                     <Text numberOfLines={1} style={styles.goalTitle}>{goal.topic}</Text>
@@ -122,7 +128,7 @@ export function FocusInsightsMobile({ refreshKey = 0 }: { refreshKey?: number })
                 </Pressable>
               ))}
           </View>
-          <Text style={styles.subtitle}>Only server-confirmed completed sessions count. Pending syncs appear in the Pomodoro panel.</Text>
+          <Text style={styles.subtitle}>Verified time and historical estimates are labelled separately. Pending syncs are excluded.</Text>
         </>
       )}
     </View>
