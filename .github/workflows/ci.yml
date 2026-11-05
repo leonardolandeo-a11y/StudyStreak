@@ -26,7 +26,8 @@ jobs:
           --health-retries 5
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/studystreak
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/studystreak?currentSchema=ss_audit_ci
+      STUDYSTREAK_POSTGRES_INTEGRATION: "true"
       SPRING_DATASOURCE_USERNAME: studystreak
       SPRING_DATASOURCE_PASSWORD: ""
       JWT_EXPIRATION: 86400000
@@ -51,5 +52,8 @@ jobs:
         shell: bash
         run: echo "JWT_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
-      - name: Run backend tests
-        run: ./mvnw clean test
+      - name: Create isolated integration schema
+        run: psql -h localhost -U studystreak -d studystreak -c 'CREATE SCHEMA ss_audit_ci'
+
+      - name: Run backend verification including PostgreSQL integration
+        run: ./mvnw -B -Dspring.jpa.properties.hibernate.default_schema=ss_audit_ci verify
