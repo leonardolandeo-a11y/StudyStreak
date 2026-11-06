@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.*;
 import java.sql.Timestamp;
 import java.time.*;
 import java.util.*;
+import java.math.BigDecimal;
+import java.math.MathContext;
 
 @Service
 @DependsOn("studyLedgerSchemaReady")
@@ -35,6 +37,7 @@ public class StudyAnalyticsService {
         result.put("completionPercent",number(cohort,"attempts")==0 ? null : number(cohort,"done")*100/number(cohort,"attempts"));
         result.put("averageMinutes",number(period,"sessions")==0 ? 0 : number(period,"minutes")/number(period,"sessions"));
         var daily=daily(id,zone,first,end);result.put("daily",daily);
+        result.put("verifiedPeriod", verifiedPeriod(id, zone, first, end));
         result.put("bestDayMinutes",daily.stream().mapToDouble(row->number(row,"minutes")).max().orElse(0));
         result.put("activeDays",daily.stream().filter(row->number(row,"minutes")>0).count());
         result.put("activity",daily(id,zone,today.minusDays(364),end));
@@ -48,6 +51,37 @@ public class StudyAnalyticsService {
         result.put("studyStreak",streak.get("current"));result.put("bestStudyStreak",streak.get("best"));
         return result;
     }
+    private Map<String, Object> verifiedPeriod(long user, ZoneId zone, LocalDate first, LocalDate end) {
+        var rows = db.queryForList("""
+            select (?::date + d)::text as date,
+                   coalesce(sum(l.confirmed_seconds), 0) as seconds,
+                   count(l.id) as sessions
+            from generate_series(0, ?::int - 1) d
+            left join study_ledger l on l.user_id = ?
+                and l.state = 'COMPLETE' and l.verified = true
+                and l.source in ('INDIVIDUAL', 'GROUP')
+                and l.completed_at >= ? and l.completed_at < ?
+                and (l.completed_at at time zone ?)::date = (?::date + d)
+            group by d order by d
+            """, first.toString(), java.time.temporal.ChronoUnit.DAYS.between(first, end), user,
+                boundary(first, zone), boundary(end, zone), zone.getId(), first.toString());
+        long seconds = 0;
+        long sessions = 0;
+        List<Map<String, Object>> daily = new ArrayList<>(rows.size());
+        for (var row : rows) {
+            long daySeconds = ((Number) row.get("seconds")).longValue();
+            long daySessions = ((Number) row.get("sessions")).longValue();
+            seconds = Math.addExact(seconds, daySeconds);
+            sessions = Math.addExact(sessions, daySessions);
+            daily.add(Map.of("date", row.get("date"), "minutes", minutes(daySeconds), "sessions", daySessions));
+        }
+        return Map.of("minutes", minutes(seconds), "sessions", sessions, "daily", daily);
+    }
+
+    private BigDecimal minutes(long seconds) {
+        return BigDecimal.valueOf(seconds).divide(BigDecimal.valueOf(60), MathContext.DECIMAL128);
+    }
+
     private List<Map<String,Object>> daily(long user,ZoneId zone,LocalDate first,LocalDate end) {
         return db.queryForList("select d::date::text as date,coalesce(sum(l.confirmed_seconds)/60.0,0) as minutes,count(l.id) as sessions from generate_series(?::date,?::date-1,interval '1 day') d left join study_ledger l on l.user_id=? and l.state='COMPLETE' and l.completed_at>=? and l.completed_at<? and (l.completed_at at time zone ?)::date=d::date group by d order by d",first.toString(),end.toString(),user,boundary(first,zone),boundary(end,zone),zone.getId());
     }
