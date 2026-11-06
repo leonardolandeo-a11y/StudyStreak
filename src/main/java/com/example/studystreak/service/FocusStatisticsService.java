@@ -1,7 +1,6 @@
 package com.example.studystreak.service;
 
 import com.example.studystreak.dto.Focus.FocusStatisticsDTO;
-import com.example.studystreak.model.FocusSession;
 import com.example.studystreak.model.User;
 import com.example.studystreak.repository.FocusSessionRepository;
 import org.springframework.http.HttpStatus;
@@ -42,13 +41,10 @@ public class FocusStatisticsService {
         Instant since = first.atStartOfDay(zone).toInstant();
 
         Map<LocalDate, long[]> series = new HashMap<>();
-        for (FocusSession session : repository.findRecentForUser(userId, since)) {
-            LocalDate date = session.getCompletedAt().atZone(zone).toLocalDate();
-            // Guard against a future-dated database clock or data anomaly.
+        for (Object[] row : repository.aggregateDaily(userId, since, zone.getId())) {
+            LocalDate date = LocalDate.parse(row[0].toString());
             if (date.isBefore(first) || date.isAfter(today)) continue;
-            long[] totals = series.computeIfAbsent(date, ignored -> new long[2]);
-            totals[0] += session.getDurationMinutes();
-            totals[1]++;
+            series.put(date, new long[]{((Number)row[1]).longValue(), ((Number)row[2]).longValue()});
         }
 
         List<FocusStatisticsDTO.DailyFocus> daily = new ArrayList<>(days);

@@ -118,7 +118,7 @@ class PostgresRepositoryIntegrationTest {
 
         assertNull(notificationRepository.findById(goalNoticeId).orElseThrow().getRelatedGoalId());
         assertNull(notificationRepository.findById(recordNoticeId).orElseThrow().getRelatedDailyRecordId());
-        assertEquals(2, notificationRepository.count());
+        assertEquals(2, jdbcTemplate.queryForObject("select count(*) from notification where user_id = ?", Integer.class, owner.getId()));
     }
 
     @Test

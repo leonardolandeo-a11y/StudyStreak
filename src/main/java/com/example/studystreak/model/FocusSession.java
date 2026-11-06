@@ -17,7 +17,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "focus_session")
+@Table(name = "focus_session", indexes = @jakarta.persistence.Index(name = "idx_focus_goal_completed", columnList = "goal_id,completedAt"))
 public class FocusSession {
     @Id
     @Column(nullable = false, updatable = false)

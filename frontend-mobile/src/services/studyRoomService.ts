@@ -19,6 +19,7 @@ export interface StudyRoom {
   remainingSeconds: number;
   endsAt: string | null;
   serverNow: string;
+  version?: number;
   members: StudyRoomMember[];
 }
 export const studyRoomService = {
@@ -34,11 +35,17 @@ export const studyRoomService = {
   async get(id: string, signal?: AbortSignal): Promise<StudyRoom> {
     return (await apiClient.get<StudyRoom>(`/api/study-rooms/${id}`, { signal })).data;
   },
-  async heartbeat(id: string, studying: boolean): Promise<StudyRoom> {
+  async heartbeat(id: string, studying: boolean | null): Promise<StudyRoom> {
     return (await apiClient.post<StudyRoom>(`/api/study-rooms/${id}/heartbeat`, { studying })).data;
   },
-  async timer(id: string, action: StudyRoomAction): Promise<StudyRoom> {
-    return (await apiClient.post<StudyRoom>(`/api/study-rooms/${id}/timer`, { action })).data;
+  async timer(id: string, action: StudyRoomAction, expectedVersion?: number): Promise<StudyRoom> {
+    return (await apiClient.post<StudyRoom>(`/api/study-rooms/${id}/timer`, { action, expectedVersion })).data;
+  },
+  async regenerateCode(id: string): Promise<StudyRoom> {
+    return (await apiClient.post<StudyRoom>(`/api/study-rooms/${id}/invitation`)).data;
+  },
+  async transferHost(id: string, userId: number): Promise<StudyRoom> {
+    return (await apiClient.post<StudyRoom>(`/api/study-rooms/${id}/host`, { userId })).data;
   },
   async leave(id: string): Promise<void> {
     await apiClient.delete(`/api/study-rooms/${id}`);

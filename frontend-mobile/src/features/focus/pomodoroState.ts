@@ -205,7 +205,7 @@ export function restorePomodoro(value: unknown, now: number): PomodoroState {
         pendingFocusSessions: Array.isArray(raw.pendingFocusSessions)
             ? raw.pendingFocusSessions.map(validSession)
                 .filter((item): item is CompletedFocusSession => item !== null)
-                .slice(-100)
+
             : []
     };
     return advancePomodoro(saved, now);

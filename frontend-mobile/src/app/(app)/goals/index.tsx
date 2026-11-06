@@ -71,7 +71,7 @@ export default function Goals() {
         <>
           <Text style={styles.count}>{data.totalElements} goals</Text>
           {data.content.map((goal) => (
-            <Pressable key={goal.id} style={styles.card} accessibilityRole="button"
+            <View key={goal.id} style={styles.card}><Pressable accessibilityRole="button"
               accessibilityLabel={`Open ${goal.topic}`}
               onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })}>
               <View style={styles.row}>
@@ -79,8 +79,10 @@ export default function Goals() {
                 <Text style={[styles.flag, goal.completed && styles.done]}>{goal.completed ? 'Completed' : 'Active'}</Text>
               </View>
               <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
-              <Text style={styles.link}>View records ›</Text>
+              <Text style={styles.link}>View progress and records ›</Text>
             </Pressable>
+            {!goal.completed && <ActionButton secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/(app)/focus-studio',params:{goalId:String(goal.id)}})} />}
+            </View>
           ))}
           <PageControls page={page} totalPages={data.totalPages} onChange={setPage} />
         </>
@@ -94,7 +96,7 @@ const styles = StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
   title: { color: palette.text, fontSize: 30, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  row: { flexDirection: 'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   section: { color: palette.text, fontSize: 20, fontWeight: '700' },
   link: { color: palette.primary, fontWeight: '700', fontSize: 14 },
   count: { color: palette.muted, fontSize: 12 },

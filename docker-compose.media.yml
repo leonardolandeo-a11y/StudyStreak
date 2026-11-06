@@ -1,0 +1,20 @@
+# Optional local-desktop overlay. Do not expose this plaintext configuration publicly.
+services:
+  app:
+    environment:
+      LIVEKIT_ENABLED: ${LIVEKIT_ENABLED:-false}
+      LIVEKIT_URL: ${LIVEKIT_URL:-}
+      LIVEKIT_INTERNAL_URL: ${LIVEKIT_INTERNAL_URL:-http://livekit:7880}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
+  livekit:
+    image: livekit/livekit-server:v1.13.11
+    profiles: [media]
+    command: ["--config", "/etc/livekit.yaml"]
+    volumes:
+      - ./.local/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "127.0.0.1:7880:7880/tcp"
+      - "127.0.0.1:7881:7881/tcp"
+      - "127.0.0.1:7882:7882/udp"
+    restart: unless-stopped

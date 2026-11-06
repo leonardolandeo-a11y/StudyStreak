@@ -10,6 +10,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "study_room_member",
+        indexes = @Index(name = "idx_room_member_user", columnList = "user_id"),
         uniqueConstraints = @UniqueConstraint(name = "uk_room_member_user", columnNames = {"room_id", "user_id"}))
 public class StudyRoomMember {
     @Id
@@ -29,6 +30,16 @@ public class StudyRoomMember {
 
     @Column(nullable = false)
     private Instant lastSeenAt;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean mediaPublisher;
+
+    private Instant lastMediaTokenAt;
+    private Instant lastChatAt;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean handRaised;
+    @Column(length = 8) private String reaction;
+    private Instant reactionAt;
 
     protected StudyRoomMember() {}
 

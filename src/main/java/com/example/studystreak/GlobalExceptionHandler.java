@@ -73,6 +73,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponseDTO> statusHandler(org.springframework.web.server.ResponseStatusException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason(), request);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponseDTO> genericHandler(RuntimeException ex, HttpServletRequest request) {
         log.error("Unhandled backend error on {} {}", request.getMethod(), request.getRequestURI(), ex);

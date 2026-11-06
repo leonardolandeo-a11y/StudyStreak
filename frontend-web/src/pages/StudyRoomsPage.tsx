@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RoomCollaboration } from "../components/study/RoomCollaboration";
+import { RoomMedia } from "../components/study/RoomMedia";
+import { ParticipantCard } from "../components/study/ParticipantCard";
+import StudyRoomGoal from "../components/dashboard/StudyRoomGoal";
+import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { Check, Clock3, Copy, DoorOpen, Headphones, Pause, Play, RefreshCw, RotateCcw, Shield, Users } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -6,9 +10,11 @@ import { getApiErrorMessage } from "../utils/apiError";
 import {
     controlStudyRoom, createStudyRoom, displayRoomTime,
     getStudyRoom, heartbeatStudyRoom, joinStudyRoom, leaveStudyRoom,
-    listStudyRooms, sharedTimeRemaining
+    listStudyRooms, sharedTimeRemaining, regenerateStudyRoomCode, transferStudyRoomHost
 } from "../services/studyRoomService";
 import type { StudyRoom, StudyRoomAction } from "../services/studyRoomService";
+
+import { isNewerRoom } from "../services/studyRoomClock";
 
 type Snapshot = { room: StudyRoom; receivedAt: number };
 
@@ -19,23 +25,35 @@ export default function StudyRoomsPage() {
     const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
     const [roomName, setRoomName] = useState("");
     const [invite, setInvite] = useState("");
-    const [studying, setStudying] = useState(false);
-    const studyingRef = useRef(false);
+    const studying = snapshot?.room.members.find(member => member.userId === currentUser?.id)?.studying ?? false;
+
+    const [confirmed, setConfirmed] = useState(false);
+    const [refreshingView, setRefreshingView] = useState(false);
+    const [offline, setOffline] = useState(() => !navigator.onLine);
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        const update = () => setOffline(!navigator.onLine);
+        window.addEventListener('online', update); window.addEventListener('offline', update);
+        return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update); };
+    }, []);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [now, setNow] = useState(() => Date.now());
-    const refreshing = useRef(false);
+    const [now, setNow] = useState(() => performance.now());
+
 
     const showRoom = useCallback((room: StudyRoom) => {
-        setSnapshot({ room, receivedAt: Date.now() });
+        setConfirmed(false); setCopied(false);
+        setSnapshot({ room, receivedAt: performance.now() });
         setRoomId(room.id);
-        const me = room.members.find(member => member.userId === currentUser?.id);
-        const isStudying = me?.studying ?? false;
-        studyingRef.current = isStudying;
-        setStudying(isStudying);
         setError(null);
-    }, [currentUser?.id]);
+    }, []);
+
+  const acceptRoom = useCallback((room: StudyRoom) => {
+    setConfirmed(true);
+    setSnapshot(previous => previous && isNewerRoom(previous.room, room)
+      ? { room, receivedAt: performance.now() } : previous);
+  }, []);
 
     const refreshLobby = useCallback(async () => {
         const response = await listStudyRooms();
@@ -59,20 +77,22 @@ export default function StudyRoomsPage() {
     }, []);
 
     useEffect(() => {
-        const timer = window.setInterval(() => setNow(Date.now()), 500);
+        const timer = window.setInterval(() => setNow(performance.now()), 500);
         return () => window.clearInterval(timer);
     }, []);
 
     useEffect(() => {
         if (!roomId) return;
         let active = true;
+        let refreshing = false;
+        let pulsing = false;
         const refresh = async () => {
-            if (!active || refreshing.current || document.visibilityState === "hidden") return;
-            refreshing.current = true;
+            if (!active || refreshing || document.visibilityState === "hidden") return;
+            refreshing = true; setRefreshingView(true);
             try {
                 const room = await getStudyRoom(roomId);
                 if (active) {
-                    setSnapshot({ room, receivedAt: Date.now() });
+                    acceptRoom(room);
                     setError(null);
                 }
             } catch (cause) {
@@ -83,22 +103,24 @@ export default function StudyRoomsPage() {
                         setError("The room was closed or your access changed.");
                         void refreshLobby().catch(() => {});
                     } else {
-                        setError(getApiErrorMessage(cause, "Unable to sync this room."));
+                        setError(getApiErrorMessage(cause, "Connection interrupted. Retrying automatically…"));
                     }
                 }
             } finally {
-                refreshing.current = false;
+                refreshing = false; if (active) setRefreshingView(false);
             }
         };
         const heartbeat = async () => {
-            if (!active || document.visibilityState === "hidden") return;
+            if (!active || pulsing || document.visibilityState === "hidden") return;
+            pulsing = true;
             try {
-                await heartbeatStudyRoom(roomId, studyingRef.current);
+                const room = await heartbeatStudyRoom(roomId, null);
+                if (active) acceptRoom(room);
             } catch (cause) {
                 if (active && !(isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0))) {
                     setError(getApiErrorMessage(cause, "Could not update your presence."));
                 }
-            }
+            } finally { pulsing = false; }
         };
         void heartbeat();
         void refresh();
@@ -106,13 +128,15 @@ export default function StudyRoomsPage() {
         const pulse = window.setInterval(() => void heartbeat(), 12000);
         const visible = () => { if (document.visibilityState === "visible") { void heartbeat(); void refresh(); } };
         document.addEventListener("visibilitychange", visible);
+        window.addEventListener("online", visible);
         return () => {
             active = false;
             window.clearInterval(poll);
             window.clearInterval(pulse);
             document.removeEventListener("visibilitychange", visible);
+            window.removeEventListener("online", visible);
         };
-    }, [roomId, refreshLobby]);
+    }, [roomId, refreshLobby, acceptRoom]);
 
     async function create() {
         if (roomName.trim().length < 3 || roomName.trim().length > 60) {
@@ -143,50 +167,62 @@ export default function StudyRoomsPage() {
     }
 
     async function control(action: StudyRoomAction) {
-        if (!snapshot || !snapshot.room.host || busy) return;
+        if (!snapshot || !snapshot.room.host || busy || stale) return;
+        if (["RESET", "BREAK", "FOCUS"].includes(action) && !window.confirm("Change the shared timer? Open participation in this round will be cancelled.")) return;
         setBusy(true); setError(null);
         try {
-            const room = await controlStudyRoom(snapshot.room.id, action);
-            setSnapshot({ room, receivedAt: Date.now() });
+            const room = await controlStudyRoom(snapshot.room.id, action, snapshot.room.version);
+            acceptRoom(room);
         } catch (cause) {
             setError(getApiErrorMessage(cause, "Could not control the timer."));
         } finally { setBusy(false); }
     }
 
     async function changeStudying() {
-        if (!snapshot || busy) return;
+        if (!snapshot || busy || stale) return;
         setBusy(true); setError(null);
         try {
-            const next = !studyingRef.current;
+            const next = !studying;
             const room = await heartbeatStudyRoom(snapshot.room.id, next);
-            studyingRef.current = next;
-            setStudying(next);
-            setSnapshot({ room, receivedAt: Date.now() });
+            acceptRoom(room);
         } catch (cause) {
             setError(getApiErrorMessage(cause, "Could not update study status."));
         } finally { setBusy(false); }
     }
 
+  async function manageRoom(userId?: number) {
+    if (!snapshot?.room.host || busy || stale) return;
+    setBusy(true);
+    try {
+      const updated = userId === undefined
+        ? await regenerateStudyRoomCode(snapshot.room.id)
+        : await transferStudyRoomHost(snapshot.room.id, userId);
+      acceptRoom(updated);
+      setError(null);
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, 'Room changed or connection interrupted. Please retry.'));
+    } finally { setBusy(false); }
+  }
+
     async function leave() {
-        if (!snapshot || busy) return;
+        if (!snapshot || busy || stale) return;
         if (snapshot.room.host && !window.confirm("Close this room for everyone?")) return;
         setBusy(true); setError(null);
         try {
             await leaveStudyRoom(snapshot.room.id);
             setSnapshot(null);
             setRoomId(null);
-            studyingRef.current = false;
-            setStudying(false);
             await refreshLobby();
         } catch (cause) {
             setError(getApiErrorMessage(cause, "Unable to leave the room."));
         } finally { setBusy(false); }
     }
 
-    const room = snapshot?.room;
+  const stale = snapshot !== null && (!confirmed || offline || now - snapshot.receivedAt > 15_000);
+  const room = snapshot?.room;
     const seconds = room && snapshot ? sharedTimeRemaining(room, snapshot.receivedAt, now) : 0;
     const online = room?.members.filter(member => member.online).length ?? 0;
-    const studyingCount = room?.members.filter(member => member.studying).length ?? 0;
+    const studyingCount = room?.members.filter(member => member.online && member.studying).length ?? 0;
 
     return (
         <div className="space-y-7 pb-12">
@@ -195,23 +231,24 @@ export default function StudyRoomsPage() {
                     <Users size={16} /> STUDY TOGETHER
                 </p>
                 <h1 className="mt-3 text-4xl font-black tracking-tight text-white">Study Rooms<span className="text-emerald-400">.</span></h1>
-                <p className="mt-2 text-sm text-slate-400">Private rooms, a shared focus timer and real-time-ish study presence. Works across Web and Mobile.</p>
+                <p className="mt-2 text-sm text-slate-400">A shared clock. A little accountability. A private place to make progress together.</p>
             </header>
 
+            {room && <p role="status" className="inline-flex rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">{offline ? "Offline · controls unavailable" : busy ? "Action pending · waiting for server" : error ? "Connection or action needs attention · see details below" : stale ? "Reconnecting · waiting for a fresh room state" : refreshingView ? "Updating room…" : "Synced · server confirmed"}</p>}
             {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/20 px-4 py-3 text-sm text-rose-300">{error}</div>}
 
             {!room ? (
                 <div className="grid gap-5 lg:grid-cols-2">
-                    <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+                    <section className="study-panel">
                         <h2 className="text-xl font-extrabold text-white">Create a private room</h2>
                         <p className="mt-2 text-sm text-slate-400">Invite up to 11 friends with a private code.</p>
                         <label htmlFor="room-name" className="mt-5 block text-xs font-semibold text-slate-300">Room name</label>
                         <input id="room-name" maxLength={60} value={roomName} onChange={event => setRoomName(event.target.value)}
                             placeholder="Late-night calculus" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"/>
-                        <button type="button" disabled={busy} onClick={() => void create()}
+                        <button type="button" disabled={busy || stale} onClick={() => void create()}
                             className="mt-4 w-full rounded-full bg-emerald-400 px-5 py-3 font-bold text-slate-950 hover:bg-emerald-300 disabled:opacity-40">Create room</button>
                     </section>
-                    <section className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+                    <section className="study-panel">
                         <h2 className="text-xl font-extrabold text-white">Join your friends</h2>
                         <p className="mt-2 text-sm text-slate-400">Enter the 10-character code shared by the host.</p>
                         <label htmlFor="invite-code" className="mt-5 block text-xs font-semibold text-slate-300">Invitation code</label>
@@ -221,10 +258,10 @@ export default function StudyRoomsPage() {
                         <button type="button" disabled={busy || invite.length !== 10} onClick={() => void join()}
                             className="mt-4 w-full rounded-full border border-emerald-400/60 px-5 py-3 font-bold text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-40">Join room</button>
                     </section>
-                    <section className="lg:col-span-2 rounded-3xl border border-white/10 bg-slate-900/70 p-6">
+                    <section className="study-panel lg:col-span-2">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h2 className="text-xl font-extrabold text-white">Your rooms</h2>
-                            <button type="button" onClick={() => void refreshLobby()} className="flex items-center gap-2 text-xs text-emerald-300"><RefreshCw size={15}/> Refresh</button>
+                            <h2 className="text-xl font-extrabold text-white">Your rooms <span className="text-sm font-normal text-slate-400">{rooms.length}</span></h2>
+                            <button type="button" onClick={() => void refreshLobby().catch(() => setError("Unable to load rooms."))} className="flex items-center gap-2 text-xs text-emerald-300"><RefreshCw size={15}/> Refresh</button>
                         </div>
                         {loading ? <p className="mt-4 text-slate-400">Loading rooms…</p> : rooms.length === 0 ?
                             <p className="mt-4 text-sm text-slate-400">No rooms yet. Create one or join with a code.</p> :
@@ -232,9 +269,9 @@ export default function StudyRoomsPage() {
                                 {rooms.map(item => (
                                     <button type="button" key={item.id} onClick={() => showRoom(item)}
                                         className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/50 p-4 text-left hover:border-emerald-400/40">
-                                        <div><p className="font-semibold text-white">{item.name}</p>
-                                            <p className="mt-1 text-xs text-slate-400">{item.members.filter(m=>m.online).length} online · {item.host ? "Your room" : "Friend's room"}</p></div>
-                                        <span className="text-emerald-400">Open →</span>
+                                        <div className="min-w-0"><p className="break-words text-lg font-semibold text-white">{item.name}</p>
+                                            <p className="mt-1 text-xs text-slate-400">{item.members.length}/12 members · {item.members.filter(m=>m.online).length} online</p><p className="mt-2 text-xs text-slate-400">Host: {item.members.find(m=>m.host)?.username ?? "—"} · {item.phase} / {item.timerStatus}</p></div>
+                                        <span className="shrink-0 text-sm text-emerald-200">Open →</span>
                                     </button>
                                 ))}
                             </div>}
@@ -243,35 +280,35 @@ export default function StudyRoomsPage() {
             ) : (
                 <div className="space-y-5">
                     <button type="button" onClick={() => {setSnapshot(null);setRoomId(null);}} className="text-xs font-bold text-emerald-300 hover:underline">← All rooms</button>
-                    <div className="rounded-[28px] border border-emerald-400/20 bg-gradient-to-br from-emerald-950/80 via-[#14231f] to-[#111923] p-6 sm:p-9">
+                    <div className="study-panel border-t-2 border-t-emerald-400">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <p className="flex items-center gap-2 text-xs font-bold text-emerald-300"><Shield size={15}/> INVITE-ONLY ROOM</p>
-                                <h2 className="mt-3 text-3xl font-black text-white">{room.name}</h2>
+                                <h2 className="mt-3 break-words text-3xl font-semibold text-white">{room.name}</h2>
                                 <p className="mt-2 text-sm text-slate-300">{online} online · {studyingCount} studying · {room.members.length}/12 members</p>
                             </div>
                             <div className="rounded-xl border border-emerald-400/30 bg-slate-950/70 p-3">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Private invite code</p>
-                                <button type="button" onClick={() => void navigator.clipboard.writeText(room.inviteCode).catch(() => setError("Copy unavailable. Select the code manually."))}
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Private invite code</p>
+                                <button type="button" onClick={() => void navigator.clipboard.writeText(room.inviteCode).then(() => setCopied(true)).catch(() => setError("Copy unavailable. Select the code manually."))}
                                     className="mt-1 flex items-center gap-2 font-mono text-lg font-bold tracking-wider text-emerald-300" title="Copy invitation code">
-                                    {room.inviteCode} <Copy size={16}/>
+                                    {room.inviteCode} <Copy size={16}/> <span className="text-xs font-sans tracking-normal" role="status">{copied ? "Copied" : "Copy"}</span>
                                 </button>
                             </div>
                         </div>
-                        <div className="mt-8 mx-auto max-w-md rounded-3xl border border-white/10 bg-slate-950/60 px-5 py-8 text-center">
+                        <div className="mt-8 mx-auto max-w-2xl rounded-2xl bg-slate-950 px-4 py-10 text-center">
                             <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">{room.phase === "FOCUS" ? "SHARED FOCUS" : "GROUP BREAK"}</p>
-                            <p role="timer" className="mt-3 font-mono text-6xl font-black tabular-nums text-white sm:text-7xl">{displayRoomTime(seconds)}</p>
-                            <p className="mt-2 text-xs font-semibold text-slate-400">{room.timerStatus === "COMPLETE" || (room.timerStatus === "RUNNING" && seconds === 0) ? "Session finished" : room.timerStatus === "RUNNING" ? "Timer running" : "Waiting for host"}</p>
+                            <p role="timer" className="mt-4 font-mono text-[clamp(3.5rem,12vw,7rem)] font-semibold leading-none tracking-tight tabular-nums text-white">{displayRoomTime(seconds)}</p>
+                            <p className="mt-2 text-xs font-semibold text-slate-400">{stale ? "Last known timer · reconnecting" : room.timerStatus === "PAUSED" ? "Timer paused" : room.timerStatus === "COMPLETE" ? "Session finished · server confirmed" : (room.timerStatus === "RUNNING" && seconds === 0) ? "Awaiting server confirmation" : room.timerStatus === "RUNNING" ? "Timer running" : "Waiting for host"}</p>
                             {room.host ? (
-                                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                    <button type="button" disabled={busy} onClick={() => void control(room.timerStatus === "RUNNING" && seconds > 0 ? "PAUSE" : "START")}
+                                <div className="mt-6 flex flex-wrap justify-center gap-2"><p className="w-full text-xs uppercase tracking-widest text-slate-400">Host controls</p>
+                                    <button type="button" disabled={busy || stale} onClick={() => void control(room.timerStatus === "RUNNING" && seconds > 0 ? "PAUSE" : "START")}
                                         className="flex items-center gap-2 rounded-full bg-emerald-400 px-5 py-3 font-bold text-slate-950 disabled:opacity-40">
                                         {room.timerStatus === "RUNNING" && seconds > 0 ? <Pause size={18}/> : <Play size={18}/>}
                                         {room.timerStatus === "RUNNING" && seconds > 0 ? "Pause" : "Start"}
                                     </button>
-                                    <button type="button" disabled={busy} onClick={() => void control("RESET")}
+                                    <button type="button" disabled={busy || stale} onClick={() => void control("RESET")}
                                         className="rounded-full border border-white/20 p-3 text-slate-200 disabled:opacity-40" aria-label="Reset timer"><RotateCcw size={19}/></button>
-                                    <button type="button" disabled={busy} onClick={() => void control(room.phase === "FOCUS" ? "BREAK" : "FOCUS")}
+                                    <button type="button" disabled={busy || stale} onClick={() => void control(room.phase === "FOCUS" ? "BREAK" : "FOCUS")}
                                         className="rounded-full border border-white/20 px-4 py-3 text-xs font-semibold text-slate-200 disabled:opacity-40">
                                         {room.phase === "FOCUS" ? "5-min break" : "25-min focus"}
                                     </button>
@@ -279,33 +316,33 @@ export default function StudyRoomsPage() {
                             ) : <p className="mt-5 text-sm text-slate-400">Only the host controls the shared clock.</p>}
                         </div>
                         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                            <button type="button" disabled={busy} onClick={() => void changeStudying()}
+                            <button type="button" disabled={busy || stale} onClick={() => void changeStudying()}
                                 className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold disabled:opacity-40 ${studying ? "bg-emerald-400 text-slate-950" : "border border-emerald-400/50 text-emerald-200"}`}>
                                 {studying && <Check size={17}/>} {studying ? "I'm studying" : "Mark me as studying"}
                             </button>
-                            <button type="button" disabled={busy} onClick={() => void leave()}
+                            <button type="button" disabled={busy || stale} onClick={() => void leave()}
                                 className="flex items-center gap-2 rounded-full border border-rose-400/30 px-4 py-3 text-sm text-rose-300 disabled:opacity-40">
                                 <DoorOpen size={16}/> {room.host ? "Close room for everyone" : "Leave room"}
                             </button>
                         </div>
                     </div>
-                    <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-6">
+                    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+                    <RoomMedia key={`media-${room.id}`} room={room}/>
+                    <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}/>
+                    </div>
+                    <StudyRoomGoal key={room.id} roomId={room.id}/>
+                    <section className="study-panel">
+                        {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-emerald-300">Regenerate invitation code</button>}
                         <h3 className="flex items-center gap-2 text-xl font-extrabold text-white"><Users className="text-emerald-400" size={20}/> Studying together</h3>
                         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {room.members.map(member => (
-                                <div key={member.userId} className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-950 font-black text-emerald-200">{member.username.charAt(0).toUpperCase()}</span>
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-bold text-white">{member.username}{member.host ? " · Host" : ""}</p>
-                                        <p className={`mt-0.5 text-xs ${member.studying ? "text-emerald-300" : "text-slate-400"}`}>
-                                            {member.studying ? "● Studying now" : member.online ? "● Online" : "○ Offline"}
-                                        </p>
-                                    </div>
-                                </div>
+                                <ParticipantCard key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
+                                    {room.host && !member.host && <button type="button" disabled={busy || stale} className="study-button mt-3" onClick={() => { if (window.confirm(`Transfer host controls to ${member.username}?`)) void manageRoom(member.userId); }}>Make host</button>}
+                                </ParticipantCard>
                             ))}
                         </div>
                     </section>
-                    <p className="flex items-center gap-2 text-xs text-slate-500"><Clock3 size={15}/> Room time is synchronized to the server and refreshed every 4 seconds. Your personal Pomodoro and saved Goal sessions remain separate.</p>
+                    <p className="flex items-center gap-2 text-xs text-slate-500"><Clock3 size={15}/> Room time is synchronized to the server and refreshed every 4 seconds. Choose your private Goal above to record eligible group participation.</p>
                     <p className="flex items-center gap-2 text-xs text-slate-500"><Headphones size={15}/> Open Focus Studio separately to listen to study sounds. The shared room does not play or stream music.</p>
                 </div>
             )}

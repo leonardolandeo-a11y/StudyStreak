@@ -5,9 +5,7 @@ import com.example.studystreak.dto.Focus.FocusSessionResponseDTO;
 import com.example.studystreak.dto.Focus.FocusSummaryDTO;
 import com.example.studystreak.exceptions.ForbiddenException;
 import com.example.studystreak.exceptions.ResourceNotFoundException;
-import com.example.studystreak.model.FocusSession;
 import com.example.studystreak.model.Goal;
-import com.example.studystreak.repository.FocusSessionRepository;
 import com.example.studystreak.repository.GoalRepository;
 
 import org.springframework.http.HttpStatus;
@@ -15,22 +13,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 
 @Service
 public class FocusSessionService {
     private final CurrentUserService currentUserService;
     private final GoalRepository goalRepository;
-    private final FocusSessionRepository focusSessionRepository;
+    private final StudyLedgerService ledger;
 
     public FocusSessionService(
             CurrentUserService currentUserService,
             GoalRepository goalRepository,
-            FocusSessionRepository focusSessionRepository
+            StudyLedgerService ledger
     ) {
         this.currentUserService = currentUserService;
         this.goalRepository = goalRepository;
-        this.focusSessionRepository = focusSessionRepository;
+        this.ledger = ledger;
     }
 
     private Goal ownedGoal(Long goalId) {
@@ -42,46 +39,29 @@ public class FocusSessionService {
         return goal;
     }
 
-    private FocusSessionResponseDTO toResponse(FocusSession session) {
-        return new FocusSessionResponseDTO(
-                session.getId(), session.getGoal().getId(),
-                session.getDurationMinutes(), session.getCompletedAt()
-        );
-    }
-
     /**
      * Client-generated UUID makes a completed session idempotent across retries
      * and page reloads. Only its owner may add minutes.
      */
     @Transactional
     public FocusSessionResponseDTO recordCompletion(Long goalId, FocusSessionRequestDTO request) {
-        Goal goal = ownedGoal(goalId);
+        ownedGoal(goalId);
         if (request.sessionId() == null || request.durationMinutes() == null
                 || request.durationMinutes() < 5 || request.durationMinutes() > 120) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid focus session duration or id");
         }
 
-        var previous = focusSessionRepository.findById(request.sessionId());
-        if (previous.isPresent()) {
-            FocusSession existing = previous.get();
-            if (!existing.getGoal().getId().equals(goalId)
-                    || !existing.getDurationMinutes().equals(request.durationMinutes())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "This session id already belongs to another completion");
-            }
-            return toResponse(existing);
-        }
-
-        FocusSession session = focusSessionRepository.saveAndFlush(new FocusSession(
-                request.sessionId(), goal, request.durationMinutes(), Instant.now()
-        ));
-        return toResponse(session);
+        var saved = ledger.complete(goalId, request.sessionId(), request.durationMinutes());
+        return new FocusSessionResponseDTO(request.sessionId(), goalId,
+                ((Number)saved.get("confirmed_seconds")).intValue() / 60,
+                ((java.sql.Timestamp)saved.get("completed_at")).toInstant());
     }
 
     @Transactional(readOnly = true)
     public FocusSummaryDTO summary(Long goalId) {
         ownedGoal(goalId);
-        return new FocusSummaryDTO(goalId, focusSessionRepository.sumMinutesByGoalId(goalId),
-                focusSessionRepository.countByGoalId(goalId));
+        var totals = ledger.summary(goalId);
+        return new FocusSummaryDTO(goalId, ((Number)totals.get("totalMinutes")).longValue(),
+                ((Number)totals.get("completedSessions")).longValue());
     }
 }

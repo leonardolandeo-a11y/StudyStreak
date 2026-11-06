@@ -1,7 +1,7 @@
 import type { Goal } from "../../types/goal";
 import { Link } from "react-router-dom";
 import {
-    goalDetailsPath
+    ROUTES, goalDetailsPath
 } from "../../routes/paths";
 interface GoalCardProps{
     goal:Goal;
@@ -16,7 +16,7 @@ function GoalCard({goal}: GoalCardProps){
             p-5
             shadow-lg shadow-black/10
             transition
-            hover:-translate-y-0.5
+
             hover:border-slate-700
             hover:bg-slate-900
         "
@@ -60,10 +60,7 @@ function GoalCard({goal}: GoalCardProps){
         >
             <div
                 className="
-                    rounded-lg
-                    border border-slate-800
-                    bg-slate-950/50
-                    px-4 py-3
+                    border-l-2 border-emerald-400/40 pl-4 py-2
                 "
             >
                 <p className="text-xs uppercase tracking-wide text-slate-500">
@@ -71,16 +68,13 @@ function GoalCard({goal}: GoalCardProps){
                 </p>
 
                 <p className="mt-1 font-medium text-slate-200">
-                    {goal.frequency}
+                    {goal.frequency} / week
                 </p>
             </div>
 
             <div
                 className="
-                    rounded-lg
-                    border border-slate-800
-                    bg-slate-950/50
-                    px-4 py-3
+                    border-l-2 border-emerald-400/40 pl-4 py-2
                 "
             >
                 <p className="text-xs uppercase tracking-wide text-slate-500">
@@ -88,13 +82,14 @@ function GoalCard({goal}: GoalCardProps){
                 </p>
 
                 <p className="mt-1 font-medium text-slate-200">
-                    {goal.duration}
+                    {goal.duration} min
                 </p>
             </div>
         </div>
 
 
-        <div className="mt-5">
+        <div className="mt-5 flex flex-wrap gap-3">
+            {!goal.completed && <Link className="study-button" to={`${ROUTES.focusStudio}?goalId=${goal.id}`}>Focus →</Link>}
             <Link
                 to={goalDetailsPath(goal.id)}
                 className="

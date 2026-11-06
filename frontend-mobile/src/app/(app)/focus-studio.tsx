@@ -1,3 +1,6 @@
+import { RecordedSummary } from "../../components/study/RecordedSummary";
+import { getApiErrorMessage } from "../../utils/apiError";
+import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -134,6 +137,61 @@ export default function FocusStudioMobile() {
     return audio.current;
   }
 
+      const previousTracked = useRef<string | null>(null);
+      useEffect(() => {
+        const retry = setInterval(() => {
+            failed.current.clear();
+            if (AppState.currentState === "active") setSyncRevision(value => value + 1);
+            setTimer(previous => previous.pendingFocusSessions.length ? { ...previous, pendingFocusSessions: [...previous.pendingFocusSessions] } : previous);
+        }, 30000);
+        return () => clearInterval(retry);
+    }, []);
+  useEffect(() => {
+        const before = previousTracked.current;
+        previousTracked.current = timer.activeFocusSession?.sessionId ?? null;
+        if (before && before !== previousTracked.current && !timer.pendingFocusSessions.some(item => item.sessionId === before))
+            void studyTracking.pulse(before, 'CANCEL').catch(() => setSaveError('Cancellation is pending. Reconnect before starting another recording.'));
+    }, [timer.activeFocusSession, timer.pendingFocusSessions]);
+  useEffect(() => {
+        if (userId == null || !ready) return;
+        let active = true;
+        let recovering = false;
+        const recover = async () => {
+            if (recovering) return;
+            recovering = true;
+            try {
+                const pending = await readPending(userId);
+                const response = await studyTracking.recover();
+                if (!active) return;
+                failed.current.clear();
+                if (response.session) setSelectedGoalId(response.session.goal_id);
+                setTimer(previous => recoverTrackedTimer({ ...previous, pendingFocusSessions:
+                    mergePending(previous.pendingFocusSessions, pending) }, response.session, response.serverNow));
+                setSyncRevision(value => value + 1);
+            } catch { if (active) setSaveError('Recording recovery unavailable. Pending sessions remain on this device.'); } finally { recovering = false; }
+        };
+        void recover();
+        const recoveryInterval = setInterval(() => { if (AppState.currentState === "active") void recover(); }, 30000);
+        const subscription = AppState.addEventListener('change', state => { if (state === 'active') void recover(); });
+        return () => { active = false; clearInterval(recoveryInterval); subscription.remove(); };
+    }, [userId, ready]);
+
+    useEffect(() => {
+        const session = timer.activeFocusSession;
+        if (!session || timer.endsAt === null) return;
+        let sending = false;
+        const pulse = async () => {
+            if (sending || AppState.currentState !== 'active') return;
+            sending = true;
+            try { await studyTracking.pulse(session.sessionId, 'PULSE'); }
+            catch { setSaveError('Recording connection interrupted. Unobserved time will not be credited.'); }
+            finally { sending = false; }
+        };
+        void pulse();
+        const interval = setInterval(() => { void pulse(); }, 12000);
+        return () => clearInterval(interval);
+    }, [timer.activeFocusSession, timer.endsAt]);
+
   useEffect(() => {
     let active = true;
     const restore = async () => {
@@ -228,21 +286,21 @@ export default function FocusStudioMobile() {
   }, [selectionReady, selectedGoalId, syncRevision]));
 
   useEffect(() => {
-    if (!ready || !focused.current) return;
+    if (!ready || !focused.current || userId == null) return;
     for (const pending of timer.pendingFocusSessions) {
       if (failed.current.has(pending.sessionId) || inFlight.current.has(pending.sessionId)) continue;
       inFlight.current.add(pending.sessionId);
-      void saving.current.then(() => recordMobileFocusCompletion(pending)).then(() => {
+      void savePending(userId, pending).then(() => recordMobileFocusCompletion(pending)).then(() => removePending(userId, pending.sessionId)).then(() => {
         failed.current.delete(pending.sessionId);
         setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
         setSaveError(null);
         setSyncRevision(previous => previous + 1);
-      }).catch(() => {
+      }).catch(cause => {
         failed.current.add(pending.sessionId);
-        setSaveError('A completed session is awaiting sync. Retry when online.');
+        setSaveError(getApiErrorMessage(cause, 'Awaiting server confirmation. Pending session retained for retry.'));
       }).finally(() => { inFlight.current.delete(pending.sessionId); });
     }
-  }, [timer.pendingFocusSessions, ready, syncRevision]);
+  }, [timer.pendingFocusSessions, ready, syncRevision, userId]);
 
   useFocusEffect(useCallback(() => {
     focused.current = true;
@@ -298,6 +356,7 @@ export default function FocusStudioMobile() {
   const selectedGoal = goals.find(goal => goal.id === selectedGoalId);
   const linkedSession = timer.activeFocusSession;
   const goalLocked = linkedSession !== null;
+  const [insightsOpen, setInsightsOpen] = useState(false);
   const pendingSync = timer.pendingFocusSessions.length;
 
   function updatePreferences(changes: Partial<PomodoroPreferences>) {
@@ -309,7 +368,7 @@ export default function FocusStudioMobile() {
     updatePreferences({ [field]: value });
   }
 
-  function toggleTimer() {
+  async function toggleTimer() {
     if (!ready) return;
     const current = Date.now();
     setNow(current);
@@ -318,9 +377,16 @@ export default function FocusStudioMobile() {
         ? { sessionId: createFocusSessionId(), goalId: selectedGoal.id,
             durationMinutes: timer.preferences.focusMinutes }
         : null;
-    setTimer(previous => running
-      ? pausePomodoro(previous, current)
-      : startPomodoro(previous, current, linked));
+        let recovered: Awaited<ReturnType<typeof studyTracking.recover>> | null = null;
+        try {
+            if (timer.activeFocusSession) await studyTracking.pulse(timer.activeFocusSession.sessionId, running ? 'PAUSE' : 'RESUME');
+            else if (linked) await studyTracking.start(linked);
+            if (timer.activeFocusSession || linked) recovered = await studyTracking.recover();
+        } catch { setSaveError('Could not start or change server recording. Reopen Focus Studio to recover an active session.'); return; }
+    setTimer(previous => {
+            const next = running ? pausePomodoro(previous, Date.now()) : startPomodoro(previous, Date.now(), linked);
+            return recovered ? recoverTrackedTimer(next, recovered.session, recovered.serverNow) : next;
+        });
     if (timer.preferences.soundEffects && focused.current) {
       void getAudio().cue(running ? 'pause' : 'start', timer.preferences.volume);
     }
@@ -408,7 +474,48 @@ export default function FocusStudioMobile() {
           <Text style={styles.sectionTitle}>Your session</Text>
           <Text style={styles.runningBadge}>{running ? '● Focusing' : 'Ready to begin'}</Text>
         </View>
-        <View style={styles.goalCard}>
+        <View style={styles.modeRow}>
+          {MODES.map(mode => (
+            <Pressable key={mode.id} accessibilityRole="button"
+              accessibilityState={{ selected: timer.mode === mode.id, disabled: running || !ready }}
+              disabled={running || !ready}
+              onPress={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
+              style={[styles.modeButton, timer.mode === mode.id && styles.modeSelected]}>
+              <Text style={[styles.modeText, timer.mode === mode.id && styles.modeTextSelected]}>{mode.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <View style={styles.timerBox}>
+          <Text style={styles.timerCaption}>{timer.mode === 'focus' ? 'DEEP WORK' : 'TAKE A BREATH'}</Text>
+          <Text style={styles.timerValue}>{formatPomodoroTime(remaining)}</Text>
+          <Text style={styles.timerUnder}>{running ? 'STAY IN THE FLOW' : 'READY WHEN YOU ARE'}</Text>
+        </View>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as `${number}%` }]} />
+        </View>
+        <View style={styles.controls}>
+          <Pressable accessibilityRole="button" disabled={!ready} onPress={toggleTimer}
+            style={[styles.mainButton, !ready && styles.disabled]}>
+            <Text style={styles.mainButtonText}>
+              {running ? '❚❚  Pause timer' : remaining < total
+                ? '▶  Resume' : timer.mode === 'focus' ? '▶  Start focus' : '▶  Start break'}
+            </Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Reset current session" disabled={!ready}
+            onPress={() => setTimer(previous => resetPomodoro(previous))}
+            style={styles.resetButton}><Text style={styles.resetText}>↺</Text></Pressable>
+        </View>
+        <View style={styles.sessionFooter}>
+          <View style={styles.dots}>
+            {[0, 1, 2, 3].map(i => (
+              <View key={i} style={[styles.dot, i < cycle && styles.dotCompleted]} />
+            ))}
+          </View>
+          <Text style={styles.miniMuted}>{timer.focusSessions} completed · Long break every 4 sessions</Text>
+        </View>
+      </View>
+
+      <View style={styles.panel}>
           <View style={styles.goalHeading}>
             <Text style={styles.goalTitle}>◎  Study toward a Goal</Text>
             <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/goals')}>
@@ -416,7 +523,7 @@ export default function FocusStudioMobile() {
             </Pressable>
           </View>
           <Text style={styles.goalDescription}>
-            A completed focus interval records its full minutes toward your selected Goal.
+            Only time confirmed by the server is added to your selected Goal.
           </Text>
           <Pressable accessibilityRole="button" accessibilityLabel="Choose study Goal"
             accessibilityState={{ disabled: goalLocked || goalsLoading || !selectionReady }}
@@ -461,40 +568,13 @@ export default function FocusStudioMobile() {
               This timer remains linked to its original Goal until completed or reset.
             </Text>
           )}
-          {selectedGoal && (
-            <View style={styles.recordedCard}>
-              <View style={styles.recordedHeading}>
-                <Text style={styles.recordedLabel}>RECORDED FOR THIS GOAL</Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="Refresh recorded minutes"
-                  onPress={() => setSyncRevision(value => value + 1)}>
-                  <Text style={styles.goalLink}>↻ Refresh</Text>
-                </Pressable>
-              </View>
-              <View style={styles.recordedTotals}>
-                <View style={styles.recordedMetric}>
-                  <Text style={styles.recordedNumber}>
-                    {summary?.goalId === selectedGoal.id ? summary.totalMinutes : '—'}
-                  </Text>
-                  <Text style={styles.recordedUnit}>minutes saved</Text>
-                </View>
-                <View style={styles.recordedMetric}>
-                  <Text style={styles.recordedNumber}>
-                    {summary?.goalId === selectedGoal.id ? summary.completedSessions : '—'}
-                  </Text>
-                  <Text style={styles.recordedUnit}>sessions saved</Text>
-                </View>
-              </View>
-              {summaryError && (
-                <Text style={styles.goalError}>Totals unavailable. Tap Refresh.</Text>
-              )}
-              <Text style={styles.goalInfo}>Confirmed by Spring Boot; shared with Web.</Text>
-              <Pressable accessibilityRole="button"
-                onPress={() => router.push({ pathname: '/(app)/goals/[goalId]',
-                  params: { goalId: String(selectedGoal.id) } })}>
-                <Text style={styles.goalLink}>Goal details ›</Text>
-              </Pressable>
-            </View>
-          )}
+          {selectedGoal && <View style={{gap:12}}>
+            <RecordedSummary minutes={summary?.goalId === selectedGoal.id ? summary.totalMinutes : undefined}
+              sessions={summary?.goalId === selectedGoal.id ? summary.completedSessions : undefined}
+              pending={timer.pendingFocusSessions.filter(item => item.goalId === selectedGoal.id).length}
+              error={summaryError} onRefresh={() => setSyncRevision(value => value + 1)} />
+            <Pressable accessibilityRole="button" style={{minHeight:48,justifyContent:'center'}} onPress={() => router.push({pathname:'/(app)/goals/[goalId]',params:{goalId:String(selectedGoal.id)}})}><Text style={styles.goalLink}>Goal details ›</Text></Pressable>
+          </View>}
           {!selectedGoal && !goalsLoading && (
             <Text style={styles.goalInfo}>
               Unlinked Pomodoros work normally but do not add time to Goals.
@@ -513,46 +593,6 @@ export default function FocusStudioMobile() {
             </View>
           )}
         </View>
-        <View style={styles.modeRow}>
-          {MODES.map(mode => (
-            <Pressable key={mode.id} accessibilityRole="button"
-              accessibilityState={{ selected: timer.mode === mode.id, disabled: running || !ready }}
-              disabled={running || !ready}
-              onPress={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
-              style={[styles.modeButton, timer.mode === mode.id && styles.modeSelected]}>
-              <Text style={[styles.modeText, timer.mode === mode.id && styles.modeTextSelected]}>{mode.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-        <View style={styles.timerBox}>
-          <Text style={styles.timerCaption}>{timer.mode === 'focus' ? 'DEEP WORK' : 'TAKE A BREATH'}</Text>
-          <Text style={styles.timerValue}>{formatPomodoroTime(remaining)}</Text>
-          <Text style={styles.timerUnder}>{running ? 'STAY IN THE FLOW' : 'READY WHEN YOU ARE'}</Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` as `${number}%` }]} />
-        </View>
-        <View style={styles.controls}>
-          <Pressable accessibilityRole="button" disabled={!ready} onPress={toggleTimer}
-            style={[styles.mainButton, !ready && styles.disabled]}>
-            <Text style={styles.mainButtonText}>
-              {running ? '❚❚  Pause timer' : remaining < total
-                ? '▶  Resume' : timer.mode === 'focus' ? '▶  Start focus' : '▶  Start break'}
-            </Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Reset current session" disabled={!ready}
-            onPress={() => setTimer(previous => resetPomodoro(previous))}
-            style={styles.resetButton}><Text style={styles.resetText}>↺</Text></Pressable>
-        </View>
-        <View style={styles.sessionFooter}>
-          <View style={styles.dots}>
-            {[0, 1, 2, 3].map(i => (
-              <View key={i} style={[styles.dot, i < cycle && styles.dotCompleted]} />
-            ))}
-          </View>
-          <Text style={styles.miniMuted}>{timer.focusSessions} completed · Long break every 4 sessions</Text>
-        </View>
-      </View>
 
       <View style={styles.panel}>
         <View style={styles.sectionHeading}>
@@ -594,9 +634,12 @@ export default function FocusStudioMobile() {
             <Text style={styles.miniMuted}>Pause the timer before changing an interval.</Text>
           </View>
         ) : null}
+
       </View>
 
-      <FocusInsightsMobile refreshKey={syncRevision} />
+      <Pressable accessibilityRole="button" accessibilityState={{expanded:insightsOpen}} style={{minHeight:48,justifyContent:'center'}} onPress={()=>setInsightsOpen(value=>!value)}><Text style={styles.goalLink}>{insightsOpen?'Hide statistics':'Explore your study statistics'} ›</Text></Pressable>
+      {insightsOpen && <FocusInsightsMobile refreshKey={syncRevision} />}
+      <Pressable accessibilityRole="button" style={{minHeight:48,justifyContent:'center'}} onPress={()=>router.push('/(app)/study-rooms')}><Text style={styles.goalLink}>Study together · Open Study Rooms ›</Text></Pressable>
 
       <View style={styles.library}>
         <Text style={styles.libraryTitle}>Made for your focus</Text>
@@ -644,7 +687,7 @@ export default function FocusStudioMobile() {
   );
 }
 
-const GREEN = '#4ade80';
+const GREEN = '#75dab0';
 const styles = StyleSheet.create({
   back: { color: palette.muted, fontWeight: '700', fontSize: 14 },
   heading: { gap: 8 },
@@ -654,7 +697,7 @@ const styles = StyleSheet.create({
   subtitle: { color: '#a7b5c7', fontSize: 14, lineHeight: 21 },
   feature: { backgroundColor: '#123327', borderRadius: 24, padding: 18, gap: 18,
     borderWidth: 1, borderColor: '#23573f' },
-  featureArtwork: { flexDirection: 'row', gap: 16, alignItems: 'center' },
+  featureArtwork: { flexDirection: 'row', flexWrap:'wrap', gap: 16, alignItems: 'center' },
   albumArt: { justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   albumRing: { position: 'absolute', borderWidth: 1, borderColor: '#ffffff44' },
   albumSymbol: { color: '#fff', fontWeight: '600' },
@@ -672,7 +715,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: '#f8fafc', fontSize: 17, fontWeight: '900' },
   runningBadge: { color: '#86efac', fontSize: 11, fontWeight: '700' },
   modeRow: { flexDirection: 'row', gap: 5, backgroundColor: '#070e17', borderRadius: 12, padding: 4 },
-  modeButton: { flex: 1, paddingVertical: 11, paddingHorizontal: 2, borderRadius: 9, alignItems: 'center' },
+  modeButton: { minHeight:48, justifyContent:'center', flex: 1, paddingVertical: 11, paddingHorizontal: 2, borderRadius: 9, alignItems: 'center' },
   modeSelected: { backgroundColor: '#244b3b' },
   modeText: { color: '#92a3b5', fontSize: 12, fontWeight: '700' },
   modeTextSelected: { color: '#86efac' },
@@ -693,7 +736,7 @@ const styles = StyleSheet.create({
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#3d4a56' },
   dotCompleted: { backgroundColor: GREEN },
   fieldLabel: { color: '#c3d0db', fontSize: 13, fontWeight: '700' },
-  volumeRow: { flexDirection: 'row', gap: 5 },
+  volumeRow: { flexDirection: 'row', flexWrap:'wrap', gap: 5 },
   volumeButton: { flex: 1, alignItems: 'center', borderWidth: 1, borderColor: '#324153',
     paddingVertical: 11, borderRadius: 11 },
   volumeSelected: { borderColor: GREEN, backgroundColor: '#1a4232' },
@@ -717,7 +760,7 @@ const styles = StyleSheet.create({
   library: { gap: 15, paddingTop: 5 },
   libraryTitle: { color: palette.text, fontWeight: '900', fontSize: 23 },
   categories: { gap: 8, paddingVertical: 3 },
-  categoryButton: { borderRadius: 25, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#334155' },
+  categoryButton: { minHeight:48, justifyContent:'center', borderRadius: 25, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#334155' },
   categorySelected: { backgroundColor: '#244c38', borderColor: '#4ade80' },
   categoryText: { color: '#94a3b8', fontWeight: '700', fontSize: 12 },
   categoryTextSelected: { color: '#bbf7d0' },
@@ -734,9 +777,7 @@ const styles = StyleSheet.create({
   activeSymbol: { color: '#4ade80' },
   soundIndex: { position: 'absolute', top: 6, right: 8, color: '#64748b', fontSize: 9 },
   footnote: { color: '#64748b', fontSize: 12, lineHeight: 20, paddingBottom: 16 },
-  goalCard: { borderWidth: 1, borderColor: '#265f44', borderRadius: 16,
-    backgroundColor: '#163428', padding: 14, gap: 10 },
-  goalHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  goalHeading: { flexDirection: 'row', flexWrap:'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   goalTitle: { color: '#e8fff0', fontSize: 14, fontWeight: '800' },
   goalLink: { color: '#86efac', fontSize: 12, fontWeight: '700' },
   goalDescription: { color: '#b5cebd', fontSize: 12, lineHeight: 18 },
@@ -746,7 +787,7 @@ const styles = StyleSheet.create({
   goalSelectorText: { color: '#f0fff5', fontSize: 14, fontWeight: '700', flex: 1 },
   goalSelectorChevron: { color: '#86efac', fontSize: 17, fontWeight: '700' },
   goalChoices: { maxHeight: 205, backgroundColor: '#081d16', borderRadius: 12 },
-  goalChoice: { paddingVertical: 13, paddingHorizontal: 12, borderBottomWidth: 1, borderColor: '#2a4b3a' },
+  goalChoice: { minHeight:48, justifyContent:'center', paddingVertical: 13, paddingHorizontal: 12, borderBottomWidth: 1, borderColor: '#2a4b3a' },
   goalChoiceText: { color: '#d5ebdd', fontSize: 13 },
   goalSelectedText: { color: '#86efac', fontWeight: '800' },
   goalInfo: { color: '#aac7b8', fontSize: 11, lineHeight: 17, flexShrink: 1 },
@@ -756,13 +797,4 @@ const styles = StyleSheet.create({
   retryButton: { borderWidth: 1, borderColor: '#a16207', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 8 },
   retryButtonText: { color: '#fde68a', fontSize: 12, fontWeight: '800' },
-  goalStats: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  recordedCard: { backgroundColor: '#071d16', borderWidth: 1, borderColor: '#386b4c',
-    borderRadius: 14, padding: 14, gap: 12, marginTop: 5 },
-  recordedHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  recordedLabel: { color: '#86efac', fontSize: 10, fontWeight: '900', letterSpacing: 1.3 },
-  recordedTotals: { flexDirection: 'row', gap: 9 },
-  recordedMetric: { backgroundColor: '#153c2a', borderRadius: 11, flex: 1, padding: 12 },
-  recordedNumber: { color: '#fff', fontSize: 35, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  recordedUnit: { color: '#bbf7d0', fontSize: 11, fontWeight: '700', marginTop: 2 },
 });

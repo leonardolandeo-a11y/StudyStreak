@@ -12,10 +12,20 @@ import java.util.List;
 
 public interface FocusSessionRepository extends JpaRepository<FocusSession, UUID> {
 
+    @Modifying
+    @Query(value = "insert into focus_session (id, goal_id, duration_minutes, completed_at) " +
+            "values (:id, :goalId, :minutes, :completedAt) on conflict (id) do nothing", nativeQuery = true)
+    int insertIfAbsent(@Param("id") UUID id, @Param("goalId") Long goalId,
+                       @Param("minutes") int minutes, @Param("completedAt") Instant completedAt);
+
     @Query("select coalesce(sum(f.durationMinutes), 0) from FocusSession f where f.goal.id = :goalId")
     Long sumMinutesByGoalId(@Param("goalId") Long goalId);
 
     long countByGoalId(Long goalId);
+
+    @Query(value = "select (completed_at at time zone :zone)::date::text, sum(duration_minutes),count(*) " +
+            "from focus_session f join goal g on g.id=f.goal_id where g.user_id=:userId and completed_at>=:since group by 1",nativeQuery=true)
+    List<Object[]> aggregateDaily(@Param("userId") Long userId,@Param("since") Instant since,@Param("zone") String zone);
 
     @Query("select f from FocusSession f where f.goal.user.id = :userId and f.completedAt >= :since order by f.completedAt desc")
     List<FocusSession> findRecentForUser(@Param("userId") Long userId, @Param("since") Instant since);
