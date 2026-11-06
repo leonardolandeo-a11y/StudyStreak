@@ -34,6 +34,7 @@ build/
 
 ### Variables  ##
 .env
+.env.docker.local
 # Generated local media signing credentials
 .env.livekit
 .local/

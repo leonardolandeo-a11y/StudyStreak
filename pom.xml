@@ -111,6 +111,19 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>db/migrations</directory>
+                <targetPath>db/migrations</targetPath>
+                <includes>
+                    <include>2026-10-30_create_refresh_sessions.sql</include>
+                    <include>2026-11-06_reconcile_jpa_sequences.sql</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

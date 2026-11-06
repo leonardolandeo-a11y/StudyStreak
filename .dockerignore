@@ -3,3 +3,6 @@
 target
 *.iml
 .env
+.env.*
+frontend-web/
+frontend-mobile/

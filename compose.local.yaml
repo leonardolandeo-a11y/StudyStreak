@@ -1,0 +1,73 @@
+name: studystreak-local
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${LOCAL_DB_NAME:-studystreak_local}
+      POSTGRES_USER: ${LOCAL_DB_USER:-studystreak_local}
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD in .env.docker.local}
+    ports:
+      - "127.0.0.1:${LOCAL_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LOCAL_DB_USER:-studystreak_local} -d ${LOCAL_DB_NAME:-studystreak_local}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: studystreak-local-backend:dev
+    restart: unless-stopped
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_PROFILES_ACTIVE: local
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${LOCAL_DB_NAME:-studystreak_local}
+      SPRING_DATASOURCE_USERNAME: ${LOCAL_DB_USER:-studystreak_local}
+      SPRING_DATASOURCE_PASSWORD: ${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD in .env.docker.local}
+      APP_DB_SCHEMA: public
+      # Existing databases should validate only after explicit SQL migrations.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${LOCAL_DB_DDL_AUTO:-update}
+      APP_AUTH_SCHEMA_INIT: ${LOCAL_AUTH_SCHEMA_INIT:-always}
+      STUDY_LEDGER_MIGRATE_ON_START: ${LOCAL_LEDGER_SCHEMA_INIT:-true}
+      JWT_SECRET: ${LOCAL_JWT_SECRET:?Configure LOCAL_JWT_SECRET in .env.docker.local}
+      JWT_EXPIRATION: 3600000
+      JWT_REFRESH_EXPIRATION: 604800000
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://${LOCAL_LAN_IP:?Configure the Wi-Fi IPv4 LOCAL_LAN_IP}:5173,http://localhost:8081,http://127.0.0.1:8081,http://${LOCAL_LAN_IP}:8081
+      SPRING_JPA_SHOW_SQL: "false"
+      # Deliberately disconnected: local tests must not send email externally.
+      MAIL_HOST: 127.0.0.1
+      MAIL_PORT: 9
+      MAIL_USERNAME: local@example.invalid
+      MAIL_PASSWORD: local-only
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT: 500
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT: 500
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT: 500
+      GOOGLE_BOOKS_API_KEY: ${LOCAL_GOOGLE_BOOKS_API_KEY:-}
+    ports:
+      - "127.0.0.1:${LOCAL_API_PORT:-8080}:8080"
+      - "${LOCAL_LAN_IP}:${LOCAL_API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080;
+          printf "GET /api/dashboard/goals HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3;
+          head -n 1 <&3 | grep -q " 401 "'
+      interval: 10s
+      timeout: 5s
+      start_period: 45s
+      retries: 12
+
+volumes:
+  postgres_data:
+    name: ${LOCAL_DB_VOLUME:-studystreak_local_postgres_data_v1}
