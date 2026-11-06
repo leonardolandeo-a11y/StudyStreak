@@ -1,3 +1,5 @@
+import { RoomModeration } from "../../components/media/RoomModeration";
+import { RoomCollaboration } from "../../components/media/RoomCollaboration";
 import { RoomMedia } from "../../components/media/RoomMedia";
 import { ParticipantCard } from "../../components/study/ParticipantCard";
 import { StudyRoomGoal } from "../../components/focus/StudyRoomGoal";
@@ -308,6 +310,8 @@ export default function StudyRooms() {
             </Pressable>
           </View>
           <RoomMedia key={`media-${room.id}`} roomId={room.id}/>
+                    <RoomModeration key={`moderation-${room.id}`} room={room}/>
+                    <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}/>
           <StudyRoomGoal key={room.id} roomId={room.id}/>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Participants · {room.members.length}/12</Text>

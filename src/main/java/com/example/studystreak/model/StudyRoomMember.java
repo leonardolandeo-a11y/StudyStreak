@@ -35,6 +35,11 @@ public class StudyRoomMember {
     private boolean mediaPublisher;
 
     private Instant lastMediaTokenAt;
+    private Instant lastChatAt;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean handRaised;
+    @Column(length = 8) private String reaction;
+    private Instant reactionAt;
 
     protected StudyRoomMember() {}
 

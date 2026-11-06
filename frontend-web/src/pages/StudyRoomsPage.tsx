@@ -1,3 +1,4 @@
+import { RoomCollaboration } from "../components/study/RoomCollaboration";
 import { RoomMedia } from "../components/study/RoomMedia";
 import { ParticipantCard } from "../components/study/ParticipantCard";
 import StudyRoomGoal from "../components/dashboard/StudyRoomGoal";
@@ -325,7 +326,10 @@ export default function StudyRoomsPage() {
                             </button>
                         </div>
                     </div>
+                    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
                     <RoomMedia key={`media-${room.id}`} room={room}/>
+                    <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}/>
+                    </div>
                     <StudyRoomGoal key={room.id} roomId={room.id}/>
                     <section className="study-panel">
                         {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-emerald-300">Regenerate invitation code</button>}

@@ -14,6 +14,12 @@ public interface StudyRoomMemberRepository extends JpaRepository<StudyRoomMember
     Optional<StudyRoomMember> findByRoomIdAndUserId(UUID roomId, Long userId);
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "user")
     List<StudyRoomMember> findByRoomId(UUID roomId);
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update StudyRoomMember m set m.reaction=null, m.reactionAt=null where m.reactionAt < :cutoff")
+    void clearExpiredReactions(@Param("cutoff") java.time.Instant cutoff);
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update StudyRoomMember m set m.handRaised=false where m.handRaised=true and m.lastSeenAt < :cutoff")
+    void clearInactiveHands(@Param("cutoff") java.time.Instant cutoff);
     long countByRoomId(UUID roomId);
     boolean existsByUserId(Long userId);
     void deleteByRoomId(UUID roomId);
