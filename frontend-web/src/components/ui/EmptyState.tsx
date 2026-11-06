@@ -8,12 +8,13 @@ function EmptyState({
     return (
         <div
             className="
-                rounded-xl
-                border border-dashed border-slate-700
-                bg-slate-900/40
+                rounded-control
+                border border-dashed border-outline-strong
+                bg-surface
                 px-6 py-10
                 text-center
-                text-sm text-slate-400
+                text-sm text-content-muted
+                break-words
             "
         >
             {message}

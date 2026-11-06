@@ -7,26 +7,22 @@ function LoadingState({
 }: LoadingStateProps) {
     return (
         <div
-            className="
-                flex items-center gap-3
-                rounded-xl
-                border border-slate-800
-                bg-slate-900/60
-                px-4 py-3
-                text-sm text-slate-400
-            "
+            role="status"
+            className="study-status"
         >
             <div
+                aria-hidden="true"
                 className="
                     h-4 w-4
                     animate-spin
                     rounded-full
-                    border-2 border-slate-700
-                    border-t-sky-400
+                    shrink-0
+                    border-2 border-outline-strong
+                    border-t-accent
                 "
             />
 
-            <span>{message}</span>
+            <span className="min-w-0 break-words">{message}</span>
         </div>
     );
 }

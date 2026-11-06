@@ -1,0 +1,123 @@
+/* Semantic foundation. Dark/mint remains the default until Settings exposes preferences. */
+:root {
+    color-scheme: dark;
+
+    /* Private shared values; components consume semantic tokens below. */
+    --ss-palette-ink: #0b1014;
+    --ss-palette-paper: #ffffff;
+    --ss-palette-surface-dark: #141c22;
+    --ss-palette-raised-dark: #26323b;
+    --ss-palette-border-legacy: #3c4b56;
+    --ss-palette-muted-legacy: #91a2ae;
+    --ss-palette-slate-200: #e2e8f0;
+    --ss-palette-slate-300: #cbd5e1;
+    --ss-palette-mint: #94e8c3;
+    --ss-palette-mint-hover: #75dab0;
+
+    --ss-background: light-dark(#f8fafc, var(--ss-palette-ink));
+    --ss-surface: light-dark(var(--ss-palette-paper), var(--ss-palette-surface-dark));
+    --ss-surface-hover: light-dark(var(--ss-palette-slate-200), var(--ss-palette-raised-dark));
+    --ss-border: light-dark(var(--ss-palette-slate-300), var(--ss-palette-raised-dark));
+    --ss-border-strong: light-dark(#64748b, #657783);
+    --ss-text: light-dark(#0f172a, #f1f5f9);
+    --ss-text-secondary: light-dark(#334155, var(--ss-palette-slate-300));
+    --ss-text-muted: light-dark(#475569, #94a3b8);
+    --ss-accent: light-dark(#126449, var(--ss-palette-mint));
+    --ss-accent-hover: light-dark(#0e503b, var(--ss-palette-mint-hover));
+    --ss-accent-soft: light-dark(#e0f5eb, #183b31);
+    --ss-on-accent: light-dark(var(--ss-palette-paper), var(--ss-palette-ink));
+    --ss-focus: var(--ss-accent);
+    --ss-danger: light-dark(#991b1b, #fca5a5);
+    --ss-danger-surface: light-dark(#fff1f2, #2c171b);
+    --ss-danger-border: light-dark(#fda4af, #7f1d1d);
+    --ss-success: light-dark(#166534, #86efac);
+    --ss-success-surface: light-dark(#f0fdf4, #142b21);
+    --ss-warning: light-dark(#854d0e, #fcd34d);
+    --ss-warning-surface: light-dark(#fefce8, #302611);
+    --ss-info: light-dark(#075985, #7dd3fc);
+    --ss-info-surface: light-dark(#f0f9ff, #142732);
+
+    --ss-font-body: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --ss-font-display: var(--ss-font-body);
+    --ss-type-caption: 0.75rem;
+    --ss-type-label: 0.875rem;
+    --ss-type-body: 1rem;
+    --ss-type-heading: clamp(1.5rem, 1.1rem + 1.5vw, 2.25rem);
+    --ss-leading-body: 1.5;
+    --ss-leading-reading: 1.625;
+    --ss-weight-medium: 500;
+    --ss-weight-semibold: 600;
+    --ss-weight-bold: 700;
+
+    --ss-space-1: 0.25rem;
+    --ss-space-2: 0.5rem;
+    --ss-space-3: 0.75rem;
+    --ss-space-4: 1rem;
+    --ss-space-5: 1.25rem;
+    --ss-space-6: 1.5rem;
+    --ss-space-8: 2rem;
+    --ss-space-10: 2.5rem;
+    --ss-space-12: 3rem;
+    --ss-radius-control: 0.75rem;
+    --ss-radius-panel: 1rem;
+    --ss-radius-pill: 9999px;
+    --ss-border-width: 1px;
+    --ss-control-height: 2.75rem;
+    --ss-focus-width: 2px;
+    --ss-focus-offset: 3px;
+    --ss-motion-fast: 150ms;
+}
+
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="system"] { color-scheme: light dark; }
+
+/* Frozen compatibility colors for screens migrated in later stages. */
+@theme {
+    --color-slate-950: var(--ss-palette-ink);
+    --color-slate-900: var(--ss-palette-surface-dark);
+    --color-slate-800: var(--ss-palette-raised-dark);
+    --color-slate-700: var(--ss-palette-border-legacy);
+    --color-slate-500: var(--ss-palette-muted-legacy);
+    --color-sky-400: var(--ss-palette-mint);
+    --color-sky-500: var(--ss-palette-mint-hover);
+    --color-emerald-400: var(--ss-palette-mint-hover);
+}
+
+/* Tailwind 4 utilities: bg-surface, text-content, border-outline, etc. */
+@theme inline {
+    --spacing: var(--ss-space-1);
+    --font-sans: var(--ss-font-body);
+    --font-display: var(--ss-font-display);
+    --text-xs: var(--ss-type-caption);
+    --text-sm: var(--ss-type-label);
+    --text-base: var(--ss-type-body);
+    --text-heading: var(--ss-type-heading);
+    --font-weight-medium: var(--ss-weight-medium);
+    --font-weight-semibold: var(--ss-weight-semibold);
+    --font-weight-bold: var(--ss-weight-bold);
+    --color-canvas: var(--ss-background);
+    --color-surface: var(--ss-surface);
+    --color-surface-hover: var(--ss-surface-hover);
+    --color-outline: var(--ss-border);
+    --color-outline-strong: var(--ss-border-strong);
+    --color-content: var(--ss-text);
+    --color-content-secondary: var(--ss-text-secondary);
+    --color-content-muted: var(--ss-text-muted);
+    --color-accent: var(--ss-accent);
+    --color-accent-hover: var(--ss-accent-hover);
+    --color-accent-soft: var(--ss-accent-soft);
+    --color-on-accent: var(--ss-on-accent);
+    --color-focus: var(--ss-focus);
+    --color-danger: var(--ss-danger);
+    --color-danger-surface: var(--ss-danger-surface);
+    --color-danger-outline: var(--ss-danger-border);
+    --color-success: var(--ss-success);
+    --color-success-surface: var(--ss-success-surface);
+    --color-warning: var(--ss-warning);
+    --color-warning-surface: var(--ss-warning-surface);
+    --color-info: var(--ss-info);
+    --color-info-surface: var(--ss-info-surface);
+    --radius-control: var(--ss-radius-control);
+    --radius-panel: var(--ss-radius-panel);
+}

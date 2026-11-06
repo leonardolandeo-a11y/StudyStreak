@@ -9,11 +9,12 @@ function ErrorMessage({
         <div
             role="alert"
             className="
-                rounded-xl
-                border border-red-900/60
-                bg-red-950/40
+                rounded-control
+                border border-danger-outline
+                bg-danger-surface
                 px-4 py-3
-                text-sm text-red-300
+                text-sm text-danger
+                break-words
             "
         >
             {message}

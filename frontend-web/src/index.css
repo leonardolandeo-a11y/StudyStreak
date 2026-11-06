@@ -1,12 +1,13 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
 @layer base {
     html {
-        @apply bg-slate-950 text-slate-100;
+        @apply bg-canvas text-content;
     }
 
     body {
-        @apply min-h-screen bg-slate-950 text-slate-100 antialiased;
+        @apply min-h-screen bg-canvas text-content antialiased;
         margin: 0;
         min-width: 320px;
     }
@@ -16,52 +17,54 @@
     input,
     textarea,
     select {
-        @apply transition-colors duration-150;
-    }
-
-    button:focus-visible,
-    a:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    select:focus-visible {
-        @apply outline-none ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-950;
+        transition: color var(--ss-motion-fast), background-color var(--ss-motion-fast), border-color var(--ss-motion-fast);
     }
 
     input,
     textarea,
     select {
-        @apply border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500;
+        @apply border-outline-strong bg-surface text-content placeholder:text-content-muted;
     }
 
     button:disabled {
         @apply cursor-not-allowed opacity-50;
     }
 }
-/* Study workspace: neutral surfaces, mint actions, amber pending states. */
-@theme {
-    --color-slate-950: #0b1014;
-    --color-slate-900: #141c22;
-    --color-slate-800: #26323b;
-    --color-slate-700: #3c4b56;
-    --color-slate-500: #91a2ae;
-    --color-sky-400: #94e8c3;
-    --color-sky-500: #75dab0;
-    --color-emerald-400: #75dab0;
+/* Deliberately unlayered: legacy outline-none utilities must not hide keyboard
+   focus. Only interactive/focusable elements are selected; no !important or
+   box-shadow override, so component shadows and pointer styles are preserved. */
+:is(
+    button,
+    a[href],
+    input:not([type="hidden"]),
+    textarea,
+    select,
+    summary,
+    audio[controls],
+    video[controls],
+    [contenteditable="true"],
+    [tabindex]:not([tabindex^="-"])
+):not(:disabled):focus-visible {
+    outline: var(--ss-focus-width) solid var(--ss-focus);
+    outline-offset: var(--ss-focus-offset);
 }
+
 @layer components {
-    .study-panel { @apply rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6; }
-    .study-kicker { @apply text-xs font-bold uppercase tracking-[0.16em] text-emerald-300; }
-    .study-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800; }
-    .study-tabs { @apply flex flex-wrap gap-2 border-b border-slate-800 pb-4; }
-    .study-tab { @apply min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800; }
-    .study-tab[aria-pressed="true"] { @apply bg-emerald-400 text-slate-950; }
-    .study-empty { @apply rounded-xl border border-dashed border-slate-700 p-6 text-sm leading-relaxed text-slate-400; }
+    .study-panel { @apply rounded-panel border border-outline bg-surface p-5 sm:p-6; }
+    .study-kicker { @apply text-xs font-bold uppercase tracking-[0.16em] text-accent; }
+    .study-button { @apply inline-flex items-center justify-center gap-2 rounded-control border border-outline-strong px-4 py-2 text-sm font-semibold text-content-secondary hover:bg-surface-hover; min-height: var(--ss-control-height); }
+    .study-button[aria-current="page"] { @apply border-accent bg-accent-soft text-accent; }
+    .study-tabs { @apply flex flex-wrap gap-2 border-b border-outline pb-4; }
+    .study-tab { @apply rounded-control px-4 py-2 text-sm font-semibold text-content-secondary hover:bg-surface-hover; min-height: var(--ss-control-height); }
+    .study-tab[aria-pressed="true"] { @apply bg-accent text-on-accent; }
+    .study-empty { @apply rounded-control border border-dashed border-outline-strong p-6 text-sm leading-relaxed text-content-muted; }
+    .study-status { @apply flex items-center gap-3 rounded-control border border-outline bg-surface px-4 py-3 text-sm text-content-muted; }
 }
 @layer base {
     button, a, input, select { touch-action: manipulation; }
     button { cursor: pointer; }
     input, select, textarea { font-size: max(1rem, 16px); }
-    ::selection { background: #75dab0; color: #0b1014; }
+    ::selection { background: var(--ss-accent); color: var(--ss-on-accent); }
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
