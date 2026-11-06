@@ -54,7 +54,8 @@
     .study-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800; }
     .study-tabs { @apply flex flex-wrap gap-2 border-b border-slate-800 pb-4; }
     .study-tab { @apply min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800; }
-    .study-tab[aria-pressed="true"] { @apply bg-emerald-400 text-slate-950; }
+    .study-tab[aria-pressed="true"],
+    .study-tab[aria-selected="true"] { @apply bg-emerald-400 text-slate-950; }
     .study-empty { @apply rounded-xl border border-dashed border-slate-700 p-6 text-sm leading-relaxed text-slate-400; }
 }
 @layer base {
