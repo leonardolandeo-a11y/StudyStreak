@@ -1,3 +1,4 @@
+import { RoomMedia } from "../components/study/RoomMedia";
 import { ParticipantCard } from "../components/study/ParticipantCard";
 import StudyRoomGoal from "../components/dashboard/StudyRoomGoal";
 import { useCallback, useEffect, useState } from "react";
@@ -324,6 +325,7 @@ export default function StudyRoomsPage() {
                             </button>
                         </div>
                     </div>
+                    <RoomMedia key={`media-${room.id}`} room={room}/>
                     <StudyRoomGoal key={room.id} roomId={room.id}/>
                     <section className="study-panel">
                         {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-emerald-300">Regenerate invitation code</button>}
