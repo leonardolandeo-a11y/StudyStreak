@@ -71,5 +71,6 @@ export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics 
    </li>)}</ol>}
    <div className="flex flex-wrap items-center justify-between gap-3"><button type="button" className="study-button" disabled={page===0} onClick={()=>{setHistory(null);setPage(n=>n-1);}}>← Previous</button><span className="text-sm text-slate-400">Page {page+1}{history?` / ${Math.max(1,history.totalPages)}`:''}</span><button type="button" className="study-button" disabled={!history||page+1>=history.totalPages} onClick={()=>{setHistory(null);setPage(n=>n+1);}}>Next →</button></div>
   </section>}
+  </StudyTabs>
  </div>;
 }
