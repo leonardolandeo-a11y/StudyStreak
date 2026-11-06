@@ -40,6 +40,9 @@ public class StudyRoom {
 
     private Instant endsAt;
 
+    @Column(length = 36)
+    private String mediaEpoch;
+
     @Version
     private Long version;
 

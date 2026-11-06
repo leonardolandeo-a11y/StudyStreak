@@ -34,3 +34,6 @@ build/
 
 ### Variables  ##
 .env
+# Generated local media signing credentials
+.env.livekit
+.local/

@@ -23,7 +23,7 @@ class StudyRoomServiceTest {
     private final CurrentUserService current = mock(CurrentUserService.class);
     private final StudyRoomRepository rooms = mock(StudyRoomRepository.class);
     private final StudyRoomMemberRepository members = mock(StudyRoomMemberRepository.class);
-    private final StudyRoomService service = new StudyRoomService(current, rooms, members, mock(StudyLedgerService.class));
+    private final StudyRoomService service = new StudyRoomService(current, rooms, members, mock(StudyLedgerService.class), mock(com.example.studystreak.media.StudyMediaService.class));
     private final UUID roomId = UUID.randomUUID();
     private final User owner = mock(User.class);
     private final User visitor = mock(User.class);

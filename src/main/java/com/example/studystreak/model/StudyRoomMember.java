@@ -31,6 +31,11 @@ public class StudyRoomMember {
     @Column(nullable = false)
     private Instant lastSeenAt;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean mediaPublisher;
+
+    private Instant lastMediaTokenAt;
+
     protected StudyRoomMember() {}
 
     public StudyRoomMember(StudyRoom room, User user, Instant now) {

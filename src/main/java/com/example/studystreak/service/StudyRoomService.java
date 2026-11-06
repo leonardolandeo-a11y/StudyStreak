@@ -46,13 +46,15 @@ public class StudyRoomService {
                     org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "Too many invitations; retry in a minute");
     }
 
+    private final com.example.studystreak.media.StudyMediaService media;
     private final StudyLedgerService ledger;
     private final CurrentUserService currentUser;
     private final StudyRoomRepository rooms;
     private final StudyRoomMemberRepository members;
 
     public StudyRoomService(CurrentUserService currentUser, StudyRoomRepository rooms,
-                            StudyRoomMemberRepository members, StudyLedgerService ledger) {
+                            StudyRoomMemberRepository members, StudyLedgerService ledger, com.example.studystreak.media.StudyMediaService media) {
+        this.media = media;
         this.ledger = ledger;
         this.currentUser = currentUser;
         this.rooms = rooms;
@@ -121,6 +123,7 @@ public class StudyRoomService {
         }
         StudyRoom room = rooms.findByCodeForUpdate(code)
                 .orElseThrow(() -> new ResourceNotFoundException("No room found for that invitation code"));
+        media.assertNotBanned(room.getId(), userId);
         // Lookup and capacity checks share one lock, including code rotation and closure.
         if (members.findByRoomIdAndUserId(room.getId(), userId).isEmpty()) {
             if (members.countByRoomId(room.getId()) >= MAX_MEMBERS) {
@@ -235,6 +238,7 @@ public class StudyRoomService {
         StudyRoom room = lockedHostRoom(id, userId);
         StudyRoomMember next = members.findByRoomIdAndUserId(id, nextHostId)
                 .orElseThrow(() -> new ConflictException("New host must still be a member"));
+        media.rotate(room);
         room.setOwner(next.getUser());
         rooms.saveAndFlush(room);
         return snapshot(room, userId, Instant.now());
@@ -244,6 +248,7 @@ public class StudyRoomService {
     public void leave(UUID roomId) {
         long userId = currentUser.getCurrentUserId();
         StudyRoom room = lockedMemberRoom(roomId, userId);
+        media.rotate(room);
         ledger.leave(roomId, userId);
         if (room.getOwner().getId().equals(userId)) {
             ledger.cancelRuns(roomId);
