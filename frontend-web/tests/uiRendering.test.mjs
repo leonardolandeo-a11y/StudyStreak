@@ -10,6 +10,7 @@ const { renderToStaticMarkup: render } = await import('react-dom/server');
 const { RecordedSummary } = await server.ssrLoadModule('/src/components/study/RecordedSummary.tsx');
 const { ParticipantCard } = await server.ssrLoadModule('/src/components/study/ParticipantCard.tsx');
 const { BarChart } = await server.ssrLoadModule('/src/components/study/BarChart.tsx');
+const { StudyTabs } = await server.ssrLoadModule('/src/components/study/StudyTabs.tsx');
 const { default: DailyRecordForm } = await server.ssrLoadModule('/src/components/dailyRecords/DailyRecordForm.tsx');
 
 test('failed refresh keeps the last confirmed totals, with a stale warning and separate pending count', () => {
@@ -52,4 +53,20 @@ test('daily record date remains informational on create and edit', () => {
   const edit = render(h(DailyRecordForm, { ...props, initialValues: { date: '2026-11-04', note: '', evidence: '' } }));
   assert.match(edit, /Original date: 2026-11-04/);
   assert.doesNotMatch(create + edit, /type="date"|name="date"|id="date"/);
+});
+
+test('statistics tabs expose active selection and keyboard-ready panel semantics', () => {
+  const html = render(h(StudyTabs, {
+    options: [{ value: 'Activity', label: 'Activity' }, { value: 'Goals', label: 'Goals' }],
+    value: 'Goals',
+    onValueChange: () => {},
+    label: 'Statistics sections',
+  }, h('p', null, 'Goal history')));
+  assert.match(html, /role="tablist"/);
+  assert.match(html, /aria-label="Statistics sections"/);
+  assert.match(html, /role="tab"/);
+  assert.match(html, /aria-selected="true"/);
+  assert.match(html, /role="tabpanel"/);
+  assert.match(html, /Goal history/);
+  assert.match(html, /hidden=""/);
 });

@@ -5,9 +5,11 @@ import type { FocusStatistics } from '../../services/focusStatisticsService';
 import { goalDetailsPath } from '../../routes/paths';
 import { BarChart } from '../study/BarChart';
 import { MetricCard } from '../study/MetricCard';
+import { StudyTabs } from '../study/StudyTabs';
 import { activityColor, barPercent, calendarPadding, sessionDate } from '../study/chartPresentation';
 interface Entry { id: string; goal_name: string; source: string; state: string; confirmed_seconds: number; planned_seconds: number; verified: boolean; started_at: string; completed_at: string | null; }
 const sections = ['Activity', 'Goals', 'Together', 'History'] as const;
+const sectionTabs = sections.map(value => ({ value, label: value }));
 export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics }) {
  const [section,setSection]=useState<typeof sections[number]>('Activity');
  const [scale,setScale]=useState<'Daily'|'Weekly'|'Monthly'>('Daily');
@@ -27,7 +29,7 @@ export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics 
  const maxGoal=Math.max(0,...data.byGoal.map(item=>item.minutes));
  const selected=day===null?null:data.activity[day];
  return <div className="mt-6 space-y-6">
-  <nav aria-label="Statistics sections" className="study-tabs">{sections.map(item=><button type="button" key={item} className="study-tab" aria-pressed={section===item} onClick={()=>setSection(item)}>{item}</button>)}</nav>
+  <StudyTabs options={sectionTabs} value={section} onValueChange={setSection} label="Statistics sections">
   {section==='Activity'&&<div className="space-y-6">
    <div className="grid gap-3 sm:grid-cols-3">
     <MetricCard label="Active days" value={data.activeDays} detail={`In the last ${data.days} days`}/>
