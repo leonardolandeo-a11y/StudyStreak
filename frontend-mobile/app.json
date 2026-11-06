@@ -3,7 +3,7 @@
     "name": "StudyStreak",
     "slug": "studystreak",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "frontendmobile",
     "userInterfaceStyle": "automatic",
@@ -55,7 +55,20 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "media",
+            "enableScreenShareService": false
+          },
+          "ios": {
+            "enableMultitaskingCameraAccess": false
+          }
+        }
+      ],
+      "@config-plugins/react-native-webrtc"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,3 +1,4 @@
+import { RoomMedia } from "../../components/media/RoomMedia";
 import { ParticipantCard } from "../../components/study/ParticipantCard";
 import { StudyRoomGoal } from "../../components/focus/StudyRoomGoal";
 import { useCallback, useEffect, useState } from 'react';
@@ -306,6 +307,7 @@ export default function StudyRooms() {
               </Text>
             </Pressable>
           </View>
+          <RoomMedia key={`media-${room.id}`} roomId={room.id}/>
           <StudyRoomGoal key={room.id} roomId={room.id}/>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Participants · {room.members.length}/12</Text>

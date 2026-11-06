@@ -54,7 +54,9 @@ public class StudyMediaService {
                 list.stream().map(m->new Permission(m.getUser().getId(),publisher(room,m))).toList());
     }
     @Transactional
-    public Credentials token(UUID id) {
+    public Credentials token(UUID id) { return token(id,true); }
+    @Transactional
+    public Credentials token(UUID id, boolean requestPublication) {
         long user=current.getCurrentUserId(); StudyRoom room=member(id,user);
         if (!config.ready()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"LiveKit is not configured");
         StudyRoomMember membership=members.findByRoomIdAndUserId(id,user).orElseThrow();
@@ -62,7 +64,7 @@ public class StudyMediaService {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Retry media connection shortly");
         membership.setLastMediaTokenAt(Instant.now());
         String identity=UUID.randomUUID().toString(); // per connection, never a user-supplied identity
-        boolean publish=publisher(room,membership); String name=epoch(room);
+        boolean publish=requestPublication && publisher(room,membership); String name=epoch(room);
         return new Credentials(config.getUrl(),gateway.token(name,identity,membership.getUser().getUsername(),publish),name,identity,publish,60);
     }
     private void host(StudyRoom room,long user) {
