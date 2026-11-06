@@ -8,15 +8,16 @@ export function useRoomCollaboration(roomId:string) {
     const [feed,setFeed]=useState<Feed|null>(null),[page,setPage]=useState(0);
     const [revision,setRevision]=useState(0);
     const [text,setText]=useState(''),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false);
+    const [loadError,setLoadError]=useState<string|null>(null);
     const pending=useRef<{id:string;text:string}|null>(null);
     const endpoint=`/api/study-rooms/${roomId}/collaboration`;
     const reload=useCallback(async(signal?:AbortSignal)=>{
         const {data}=await apiClient.get<Feed>(endpoint,{params:{page,revision},signal});
-        if(!signal?.aborted){setFeed(data);}
+        if(!signal?.aborted){setFeed(data);setLoadError(null);}
     },[endpoint,page,revision]);
     useEffect(()=>{
         const controller=new AbortController();let loading=false;
-        const poll=async()=>{if(loading)return;loading=true;try{await reload(controller.signal);}catch{if(!controller.signal.aborted){setFeed(null);setError('Chat unavailable. Check connection and room membership.');}}finally{loading=false;}};
+        const poll=async()=>{if(loading)return;loading=true;try{await reload(controller.signal);}catch{if(!controller.signal.aborted){setFeed(null);setLoadError('Chat unavailable. Check connection and room membership.');}}finally{loading=false;}};
         void poll();const timer=setInterval(()=>void poll(),2500);
         return ()=>{controller.abort();clearInterval(timer);};
     },[reload]);
@@ -34,5 +35,5 @@ export function useRoomCollaboration(roomId:string) {
         catch{setError('Message not confirmed. Retry keeps the same message ID to avoid duplicates.');}
         finally{setBusy(false);}
     }
-    return {feed,page,setPage,text,setText,error,busy,send,action};
+    return {feed,page,setPage,text,setText,error:error??loadError,busy,send,action};
 }

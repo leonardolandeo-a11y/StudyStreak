@@ -71,17 +71,20 @@ export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
             if(attempt!==generation.current)return;
             media=new Room({adaptiveStream:true,dynacast:true});
             const current=media;connection.current=current;setHasConnection(true);epoch.current=data.epoch;
-            const refresh=()=>{
+            // LiveKit emits unsubscribe before clearing publication.track. Read after the mutation.
+            const refresh=()=>queueMicrotask(()=>{
                 if(connection.current!==current)return;
                 const participants:Participant[]=[current.localParticipant,...current.remoteParticipants.values()];
                 setScreens(participants.flatMap(participant=>[...participant.videoTrackPublications.values()]
-                    .filter(publication=>publication.source===Track.Source.ScreenShare && publication.track)
+                    .filter(publication=>publication.source===Track.Source.ScreenShare && publication.track && !publication.isMuted)
                     .map(publication=>({id:publication.trackSid,name:participant.name||'Participant',publication}))));
                 setSharing(current.localParticipant.isScreenShareEnabled);
-            };
+            });
             current.on(RoomEvent.TrackSubscribed,refresh).on(RoomEvent.TrackUnsubscribed,refresh)
+                .on(RoomEvent.TrackUnpublished,refresh).on(RoomEvent.TrackMuted,refresh).on(RoomEvent.TrackUnmuted,refresh)
                 .on(RoomEvent.LocalTrackPublished,refresh).on(RoomEvent.LocalTrackUnpublished,refresh)
                 .on(RoomEvent.ParticipantDisconnected,refresh)
+                .on(RoomEvent.TrackSubscriptionFailed,()=>{if(connection.current===current)setError("Could not receive a shared screen. Reconnect to retry.");})
                 .on(RoomEvent.ConnectionStateChanged,value=>{
                     if(connection.current!==current)return;
                     setConnected(value===ConnectionState.Connected);
@@ -131,7 +134,7 @@ export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
             {sharing&&<p role="status" className="font-semibold text-emerald-200">● Your screen is visible to this room</p>}
             {!captureSupported&&state?.canPublish&&<p className="text-sm text-amber-200">Screen capture requires a supported desktop browser on HTTPS or localhost.</p>}
         </div>}
-        {studyRoom.host&&state?.enabled&&<details><summary className="cursor-pointer py-3 font-semibold">Host · screen permissions</summary><div className="space-y-3">{studyRoom.members.filter(member=>!member.host).map(member=>{
+        {studyRoom.host&&state&&<details><summary className="cursor-pointer py-3 font-semibold">Host · screen permissions</summary><div className="space-y-3">{studyRoom.members.filter(member=>!member.host).map(member=>{
             const allowed=state.permissions.find(permission=>permission.userId===member.userId)?.canPublish??false;
             return <div key={member.userId} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 py-3"><span>{member.username}</span><div className="flex flex-wrap gap-2"><button className="study-button" onClick={()=>void moderate(member.userId,!allowed)}>{allowed?'Revoke screen permission':'Allow screen sharing'}</button><button className="study-button" onClick={()=>{if(window.confirm(`Remove ${member.username} from this room?`))void moderate(member.userId);}}>Remove</button></div></div>;
         })}</div><p className="text-xs text-slate-400">Permission changes disconnect media for everyone. Reconnect to enter the updated room.</p></details>}

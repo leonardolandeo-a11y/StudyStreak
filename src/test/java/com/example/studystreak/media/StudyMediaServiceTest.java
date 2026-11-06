@@ -44,6 +44,11 @@ class StudyMediaServiceTest {
         assertTrue(claims.getExpiration().toInstant().isBefore(Instant.now().plusSeconds(61)));
         assertNotEquals(host.getId().toString(),claims.getSubject());
     }
+    @Test void mobileCanRequestViewerOnlyCredentialsEvenForTheHost() {
+        var credentials=service.token(room.getId(),false);
+        assertFalse(credentials.canPublish());
+        assertEquals(false,((Map<?,?>)claims(credentials.token()).get("video")).get("canPublish"));
+    }
     @Test void viewersOnlySubscribeAndDevicesReceiveDistinctIdentities() {
         when(current.getCurrentUserId()).thenReturn(2L);var first=service.token(room.getId());
         assertEquals(false,((Map<?,?>)claims(first.token()).get("video")).get("canPublish"));
