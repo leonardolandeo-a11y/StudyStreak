@@ -48,7 +48,7 @@ function TagCard({tag,onUpdate,onDelete,updatingId,deletingId}: TagCardProps) {
             border border-slate-800
             bg-slate-900/70
             p-5
-            shadow-lg shadow-black/10
+            shadow-lg shadow-appearance-shadow/10
         "
     >
         {!editing && (
@@ -93,12 +93,12 @@ function TagCard({tag,onUpdate,onDelete,updatingId,deletingId}: TagCardProps) {
                         }
                         className="
                             rounded-lg
-                            border border-slate-700
+                            border border-outline-strong
                             bg-slate-950
                             px-4 py-2
                             text-sm font-medium
                             text-slate-200
-                            hover:border-slate-600
+                            hover:border-outline-strong
                             hover:bg-slate-800
                         "
                     >
@@ -164,7 +164,7 @@ function TagCard({tag,onUpdate,onDelete,updatingId,deletingId}: TagCardProps) {
                     }
                     className="
                         rounded-lg
-                        border border-slate-700
+                        border border-outline-strong
                         bg-slate-950
                         px-4 py-2
                         text-sm font-medium

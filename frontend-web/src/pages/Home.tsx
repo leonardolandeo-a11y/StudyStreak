@@ -61,7 +61,7 @@ function Home(){
                                     bg-sky-500
                                     px-5 py-3
                                     text-sm font-semibold
-                                    text-slate-950
+                                    text-on-accent
                                     hover:bg-sky-400
                                 "
                             >
@@ -72,12 +72,12 @@ function Home(){
                                 to={ROUTES.login}
                                 className="
                                     rounded-lg
-                                    border border-slate-700
+                                    border border-outline-strong
                                     bg-slate-900
                                     px-5 py-3
                                     text-sm font-medium
                                     text-slate-200
-                                    hover:border-slate-600
+                                    hover:border-outline-strong
                                     hover:bg-slate-800
                                 "
                             >
@@ -94,7 +94,7 @@ function Home(){
                             border border-slate-800
                             bg-slate-900/70
                             p-6
-                            shadow-2xl shadow-black/20
+                            shadow-2xl shadow-appearance-shadow/20
                         "
                     >
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">

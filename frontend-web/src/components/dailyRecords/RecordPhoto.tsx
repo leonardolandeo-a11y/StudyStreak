@@ -288,7 +288,7 @@ function RecordPhoto({
                         className={`
                             inline-flex cursor-pointer items-center
                             rounded-lg bg-sky-500 px-4 py-2
-                            text-sm font-semibold text-slate-950
+                            text-sm font-semibold text-on-accent
                             hover:bg-sky-400
                             ${busy ? "pointer-events-none opacity-50" : ""}
                         `}
@@ -327,7 +327,7 @@ function RecordPhoto({
                             type="button"
                             disabled={busy || loading}
                             onClick={() => setReloadKey(value => value + 1)}
-                            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                            className="rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
                         >
                             Refresh preview
                         </button>

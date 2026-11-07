@@ -24,12 +24,12 @@ function BackButton(){
             className="
                 w-fit
                 rounded-lg
-                border border-slate-700
+                border border-outline-strong
                 bg-slate-900
                 px-3 py-2
                 text-sm font-medium
                 text-slate-200
-                hover:border-slate-600
+                hover:border-outline-strong
                 hover:bg-slate-800
             "
         >

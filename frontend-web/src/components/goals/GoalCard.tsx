@@ -14,10 +14,10 @@ function GoalCard({goal}: GoalCardProps){
             border border-slate-800
             bg-slate-900/70
             p-5
-            shadow-lg shadow-black/10
+            shadow-lg shadow-appearance-shadow/10
             transition
 
-            hover:border-slate-700
+            hover:border-outline-strong
             hover:bg-slate-900
         "
     >
@@ -99,8 +99,8 @@ function GoalCard({goal}: GoalCardProps){
                     px-4 py-2
                     text-sm font-medium
                     text-slate-200
-                    hover:bg-slate-700
-                    hover:text-white
+                    hover:bg-surface-hover
+                    hover:text-content
                 "
             >
                 View details

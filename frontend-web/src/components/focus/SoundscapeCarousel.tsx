@@ -4,6 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { SOUND_CATEGORIES, SOUNDSCAPES } from "../dashboard/soundscapes";
 import type { SoundCategory, SoundscapeInfo } from "../dashboard/soundscapes";
 import type { Soundscape } from "../dashboard/pomodoroState";
+import { useReducedMotion } from "../../theme/appearance";
 import { TrackArtwork } from "./TrackArtwork";
 
 interface SoundscapeCarouselProps {
@@ -49,12 +50,13 @@ function SoundCard({ track, selected, playing, onChooseTrack }: {
 }
 
 export function SoundscapeCarousel({ tracks, category, onCategoryChange, selected, playing, onChooseTrack }: SoundscapeCarouselProps) {
+    const reducedMotion = useReducedMotion();
     return <section aria-labelledby="sound-library-heading" className="min-w-0 space-y-3">
         <div><h2 id="sound-library-heading" className="text-xl font-semibold text-content">Find your focus sound</h2><p className="mt-1 text-sm text-content-muted">{SOUNDSCAPES.length} original soundscapes. Instrumentals, color noise and calming spaces.</p></div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter study sounds by category">
             {SOUND_CATEGORIES.map(item => <button type="button" key={item.id} className="study-tab border border-outline px-3" aria-pressed={category === item.id} onClick={() => onCategoryChange(item.id)}>{item.label}</button>)}
         </div>
-        <Carousel key={category} aria-label="Study soundscapes" opts={{ align: "start", loop: true, breakpoints: { "(prefers-reduced-motion: reduce)": { duration: 0 } } }}>
+        <Carousel key={category} aria-label="Study soundscapes" opts={{ duration: reducedMotion ? 0 : 25, align: "start", loop: true, breakpoints: { "(prefers-reduced-motion: reduce)": { duration: 0 } } }}>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-content-muted" role="status">{tracks.length} {tracks.length === 1 ? "sound" : "sounds"} · Swipe, use arrows or Tab to explore</p><div className="flex gap-2"><CarouselPrevious/><CarouselNext/></div></div>
             <CarouselContent>
                 {tracks.map((track, index) => <CarouselItem key={track.id} aria-label={`${index + 1} of ${tracks.length}`} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">

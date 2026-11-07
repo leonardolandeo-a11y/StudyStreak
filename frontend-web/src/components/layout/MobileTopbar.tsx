@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     Link2,
     LogOut,
+    Settings,
     Menu,
     Target,
     Users,
@@ -118,7 +119,7 @@ function MobileTopbar() {
                             rounded-lg
                             bg-sky-500
                             font-bold
-                            text-slate-950
+                            text-on-accent
                         "
                     >
                         S
@@ -140,7 +141,7 @@ function MobileTopbar() {
                     aria-expanded={open}
                     className="
                         rounded-lg
-                        border border-slate-700
+                        border border-outline-strong
                         bg-slate-900
                         p-2
                         text-slate-300
@@ -205,8 +206,8 @@ function MobileTopbar() {
                                             ${
                                                 isActive
                                                     ? to === ROUTES.focusStudio
-                                                        ? "bg-emerald-950/60 text-emerald-100"
-                                                        : "bg-slate-800 text-white"
+                                                        ? "bg-accent-soft text-accent"
+                                                        : "bg-slate-800 text-content"
                                                     : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                                             }
                                         `}
@@ -229,7 +230,7 @@ function MobileTopbar() {
                                                         text-xs
                                                         font-bold
                                                         leading-none
-                                                        text-slate-950
+                                                        text-on-accent
                                                     "
                                                 >
                                                     {unreadCount > 99
@@ -280,6 +281,7 @@ function MobileTopbar() {
                             )}
 
 
+            <NavLink to={ROUTES.settings} onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-medium ${isActive ? "bg-accent-soft text-accent" : "text-content-secondary hover:bg-surface-hover"}`}><Settings size={18} aria-hidden="true"/>Settings</NavLink>
                             <button
                                 type="button"
                                 onClick={handleLogout}

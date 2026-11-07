@@ -66,7 +66,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-black/10">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-appearance-shadow/10">
             <p className="text-sm font-medium text-sky-400">Tracking</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-100">Send Tracking Request</h2>
             <p className="mt-1 text-sm text-slate-400">Find a study partner by username or their exact email address.</p>
@@ -82,7 +82,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                     value={query}
                     onChange={(event) => handleQueryChange(event.target.value)}
                     placeholder="Enter a username or email"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                    className="w-full rounded-lg border border-outline-strong bg-slate-950 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
                     required
                     minLength={2}
                     maxLength={100}
@@ -90,7 +90,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                 {selected ? (
                     <p className="mt-2 text-sm text-emerald-300" role="status">Selected: @{selected.username}</p>
                 ) : query.trim().length >= 2 ? (
-                    <div className="mt-2 rounded-lg border border-slate-700 bg-slate-950 p-2">
+                    <div className="mt-2 rounded-lg border border-outline-strong bg-slate-950 p-2">
                         {searching && <p className="px-2 py-1 text-sm text-slate-400" role="status">Searching...</p>}
                         {!searching && error && <p className="px-2 py-1 text-sm text-red-300" role="alert">{error}</p>}
                         {!searching && !error && results.length === 0 && (
@@ -119,7 +119,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
             <button
                 type="submit"
                 disabled={loading || !selected}
-                className="mt-5 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-5 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {loading ? "Sending..." : "Send Request"}
             </button>

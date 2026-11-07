@@ -1,184 +1,117 @@
-# Sistema visual — Etapa 1
+# Sistema visual de StudyStreak Web
 
-Estado: implementado, corregido tras auditoría y verificado; pendiente de
-autorización de commit. No se instala ninguna biblioteca en esta etapa.
-Base de Git revisada: `84f2e0f` (`fix: stabilize local backend and authentication`).
-Los cambios previos de infraestructura, Google Books y configuración permanecen
-fuera de esta etapa. No se modifican pantallas, rutas, servicios, temporizador,
-audio, estadísticas ni backend.
+La Etapa 1 estableció los tokens y el foco accesible. La Etapa 4 activa su uso
+para toda la aplicación: Settings en `/settings`, desde la zona de usuario del
+sidebar y del menú móvil web. Dark/Mint sigue siendo el valor predeterminado.
+No se implementa Profile, estética retro ni un tema nativo en esta etapa.
 
-## Tokens y uso
+## Arquitectura y primer pintado
 
-La fuente de los tokens es `frontend-web/src/styles/tokens.css`, importada desde
-`src/index.css`. Se conservan Tailwind 4 y los componentes existentes. No se
-añadieron bibliotecas, fuentes remotas ni dependencias; el lockfile no cambia.
-La paleta histórica de compatibilidad también vive en `tokens.css`. Los valores
-compartidos `--ss-palette-*` se declaran una sola vez y alimentan tanto los
-semánticos como los alias históricos; `index.css` no declara colores literales.
-Los componentes no deben utilizar directamente esos valores privados.
+- `src/styles/tokens.css` centraliza colores, tipografía, espaciado, radios y foco.
+  `light-dark()` y `color-scheme` resuelven Dark/Light/System. System responde a
+  cambios del sistema sin recargar.
+- `public/appearance.js` valida y aplica preferencias antes de React. Es un script
+  clásico bloqueante, cargado antes del CSS bloqueante en `index.html`; la misma
+  validación se utiliza desde React. No hay colores ni CSS duplicados en el HTML.
+- `ThemeProvider` conserva las preferencias de presentación y expone contexto
+  tipado mediante `useAppearance`. `useResolvedTheme` y `useReducedMotion` usan
+  `useSyncExternalStore`; retiran sus listeners al desmontarse.
+- `<html>` recibe `data-theme="dark|light|system"`,
+  `data-accent="mint|blue|purple|orange"` y `data-motion="system|reduce"`.
+- La clave `studystreak:appearance:v1` de localStorage solo guarda
+  `{mode, accent, reduceMotion}`. No contiene información de cuenta ni tokens.
+  Los valores inválidos o antiguos usan valores seguros; si el almacenamiento
+  falla, el tema funciona en memoria y Settings indica que no pudo persistirse.
+  Los cambios de esa clave desde otra pestaña también se aplican.
+- Restore default appearance vuelve a Dark/Mint y deja el movimiento reducido
+  explícito desactivado. La preferencia de movimiento del SO siempre se respeta.
 
-| Propósito | Token CSS | Utilidad Tailwind |
+La personalización es **local al navegador**, compartida por sus sesiones de uso;
+no se sincroniza con la cuenta ni entre dispositivos. No requiere endpoints.
+Cerrar sesión utiliza el mecanismo existente. Actualmente no existe una ruta
+funcional de Profile y Settings no inventa un enlace o editor de perfil.
+
+## Tokens y compatibilidad
+
+| Función | Token CSS | Utilidad |
 |---|---|---|
-| Fondo de aplicación | `--ss-background` | `bg-canvas` |
-| Tarjetas y superficies | `--ss-surface`, `--ss-surface-hover` | `bg-surface`, `hover:bg-surface-hover` |
-| Bordes decorativos / controles | `--ss-border`, `--ss-border-strong` | `border-outline`, `border-outline-strong` |
-| Texto principal / secundario / auxiliar | `--ss-text`, `--ss-text-secondary`, `--ss-text-muted` | `text-content`, `text-content-secondary`, `text-content-muted` |
-| Acción y selección | `--ss-accent`, `--ss-accent-hover`, `--ss-accent-soft`, `--ss-on-accent` | `bg-accent`, `hover:bg-accent-hover`, `bg-accent-soft`, `text-on-accent` |
-| Foco | `--ss-focus`, `--ss-focus-width`, `--ss-focus-offset` | Foco global `:focus-visible` |
-| Estados | `--ss-danger`, `--ss-success`, `--ss-warning`, `--ss-info` y sus superficies | `text-danger`, `bg-danger-surface`, etc. |
-| Tipografía activa | `--ss-font-body`, tamaños caption/label/body, `--ss-weight-*` | `font-sans`, `text-xs`, `text-sm`, `text-base`, pesos existentes |
-| Espaciado activo | `--ss-space-1` | Unidad base Tailwind `--spacing` (4 px con raíz de 16 px) |
-| Bordes y radios | `--ss-border-width`, `--ss-radius-control`, `--ss-radius-panel`, `--ss-radius-pill` | `rounded-control`, `rounded-panel`; ancho y radio pill disponibles para futuros componentes |
-| Tamaño y movimiento | `--ss-control-height`, `--ss-motion-fast` | Botones compartidos de 44 px mínimos y transiciones; movimiento reducido respetado |
+| Fondo | `--ss-background` | `bg-canvas` |
+| Superficies | `--ss-surface`, `--ss-surface-hover` | `bg-surface`, `bg-surface-hover` |
+| Bordes | `--ss-border`, `--ss-border-strong` | `border-outline`, `border-outline-strong` |
+| Texto | `--ss-text`, `--ss-text-secondary`, `--ss-text-muted` | `text-content`, `text-content-secondary`, `text-content-muted` |
+| Acción | `--ss-accent`, `--ss-accent-hover`, `--ss-on-accent` | `bg-accent`, `text-on-accent` |
+| Selección | `--ss-accent-soft` | `bg-accent-soft` |
+| Foco | `--ss-focus`, `--ss-focus-width`, `--ss-focus-offset` | regla global `:focus-visible` |
+| Estados | `--ss-danger`, `--ss-success`, `--ss-warning`, `--ss-info` y superficies | utilidades semánticas de estado |
+| Calendario | `--ss-chart-empty`, `--ss-chart-low`, `--ss-chart-medium`, `--ss-accent` | colores de presentación de actividad |
 
-Los colores se eligen por función, no por nombre de pigmento. Por ejemplo, el
-texto sobre una acción utiliza `text-on-accent`; no debe utilizar `text-slate-950`
-suponiendo que el fondo seguirá siendo menta. Los nuevos componentes pueden usar
-las utilidades semánticas o las clases compartidas existentes:
+Las utilidades históricas slate/sky y los colores de estados se adaptan desde
+el mismo archivo de tokens; no forman un segundo sistema de temas. Se migran
+los textos sobre acciones a `text-on-accent` y los controles a bordes semánticos.
+Las utilidades slate se conservan por compatibilidad, pero los componentes nuevos
+deben utilizar nombres semánticos. Éxito, advertencia y error no cambian con el
+acento. Las ilustraciones de sonidos conservan su propia paleta decorativa.
 
-```tsx
-<section className="study-panel">
-    <p className="study-kicker">Study activity</p>
-    <button className="study-button" type="button">View details</button>
-</section>
-```
+Recharts ya utiliza variables semánticas; las barras y el calendario secundarios
+también consumen tokens. Solo cambian colores, no datos, umbrales ni cálculos.
+Carousel de shadcn/ui/Embla conserva su navegación circular y adopta la preferencia
+reducida tanto en CSS como en sus desplazamientos JavaScript. No se añade otro
+componente de shadcn ni otra dependencia: Settings usa controles HTML nativos.
 
-`study-panel`, `study-kicker`, `study-button`, `study-tabs`, `study-tab` y
-`study-empty` ahora utilizan tokens; `study-status` centraliza el estado de carga.
-LoadingState, EmptyState, ErrorMessage y PaginationControls consumen esta base y
-conservan sus interfaces, contenido, callbacks y cálculo de páginas.
+Se conservan las familias `--ss-font-*`, los tamaños/pesos, `--ss-space-1` como
+unidad de Tailwind, los radios y controles compartidos de 44 px. Los demás pasos
+de espacio y tamaños de lectura/display siguen disponibles para nuevas pantallas.
+No se modifican duraciones, reproducción, sonidos o preferencias del Pomodoro:
+esas opciones permanecen exclusivamente en el engranaje de Focus Studio.
 
-### Activos y reservados
+## Valores reutilizables en React Native
 
-- Activos: superficies, bordes y textos semánticos; acento y foco; estado de error;
-  valores privados y alias de compatibilidad; familia de texto y tamaños/pesos
-  existentes; `--ss-space-1`; radios control/panel; altura mínima de controles;
-  ancho/separación de foco y duración de transición.
-- Reservados: `--ss-font-display`, `--ss-type-heading`, `--ss-leading-body`,
-  `--ss-leading-reading`, `--ss-border-width`, `--ss-radius-pill` y los estados
-  semánticos success/warning/info. Tienen valores o utilidades disponibles, pero
-  no se aplican todavía a los componentes de producto migrados en esta etapa.
-- `--ss-space-2` … `--ss-space-12` son referencias reservadas. Las utilidades de
-  Tailwind como `p-6` calculan su valor desde `--spacing`, que utiliza
-  `--ss-space-1`; cambiar solo `--ss-space-6` no cambia `p-6`.
-- La paleta histórica permanece fija: no se sustituye un alias oscuro por un
-  semántico que cambie con el tema. Así se conservan también diferencias
-  intencionales como `slate-700` y `border-outline-strong`.
+En una futura implementación nativa, declarar un objeto de tema con los mismos
+roles y valores. **No importar variables CSS en React Native.** Los cuatro IDs
+`mint`, `blue`, `purple`, `orange` y los modos `dark`, `light`, `system` son el
+contrato visual; Appearance del SO nativo resolverá `system`.
 
-La selección aprobada para etapas posteriores es Recharts para Dashboard web y
-shadcn/ui selectivo para Carousel, Dialog, Avatar, Dropdown Menu y Switch,
-adaptados a nuestros tokens. React Native conserva sus componentes actuales. No
-se instalan ni incorporan esas bibliotecas en la Etapa 1, ni se añaden otros kits.
+| Rol | Light | Dark |
+|---|---|---|
+| background | `#f8fafc` | `#0b1014` |
+| surface | `#ffffff` | `#141c22` |
+| content | `#0f172a` | `#f1f5f9` |
+| muted | `#475569` | `#94a3b8` |
+| onAccent | `#ffffff` | `#0b1014` |
+| mint / hover / soft | `#126449` / `#0e503b` / `#e0f5eb` | `#94e8c3` / `#75dab0` / `#183b31` |
+| blue / hover / soft | `#1d4ed8` / `#1e40af` / `#eff6ff` | `#93c5fd` / `#60a5fa` / `#172d49` |
+| purple / hover / soft | `#6d28d9` / `#5b21b6` / `#f5f3ff` | `#d8b4fe` / `#c084fc` / `#342445` |
+| orange / hover / soft | `#9a3412` / `#7c2d12` / `#fff7ed` | `#fdba74` / `#fb923c` / `#332317` |
 
-## Preparación de temas
+## Accesibilidad y verificación
 
-El valor predeterminado continúa siendo **oscuro con acento menta**, incluso si
-el sistema operativo usa modo claro. Se preparan estos atributos en `<html>`:
+El foco de 2 px y separación de 3 px sigue deliberadamente fuera de las capas
+CSS: `outline-none` no puede ocultarlo. Solo afecta a controles y elementos
+interactivos, no al contenido normal. Los estados seleccionados incluyen el
+control nativo marcado y una señal adicional; no dependen solo del color.
 
-| Atributo | Resolución de tokens semánticos |
-|---|---|
-| Sin atributo o `data-theme="dark"` | Oscuro |
-| `data-theme="light"` | Claro |
-| `data-theme="system"` | Preferencia del sistema operativo |
-
-Las parejas de colores se resuelven con `light-dark()` y `color-scheme`, sin
-JavaScript de temas. [Referencia de la función CSS](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark).
-
-La selección de tema, su persistencia, las otras paletas y la página Settings
-pertenecen a la Etapa 4. **Los temas claro y automático no se ofrecen todavía al
-usuario.** Las clases históricas `slate`, `sky` y `emerald` se conservan para no
-reescribir pantallas en esta etapa. Las pantallas que aún usan esas clases deben
-migrarse antes de presentar el tema claro como una opción completa de la app.
-La verificación de temas de esta etapa cubre los componentes y tokens migrados.
-
-## Accesibilidad y alcance de la revisión
-
-- LoadingState anuncia el texto con `role="status"`; el indicador visual es
-  decorativo (`aria-hidden`) y se detiene cuando se solicita movimiento reducido.
-- ErrorMessage conserva `role="alert"`. Los mensajes siguen escapándose como
-  texto de React, sin HTML inyectado.
-- Paginación conserva `nav`, nombre accesible, `aria-current`, controles nativos
-  deshabilitados y etiqueta del selector; no cambia la lógica de navegación.
-- El foco de teclado utiliza un contorno visible de 2 px, con separación de 3 px.
-  La regla está deliberadamente fuera de las capas CSS para que las utilidades
-  heredadas `outline-none` y `focus:outline-none` no puedan ocultarlo. Se limita
-  a controles nativos, enlaces con href, summary, medios con controles,
-  contenteditable y elementos con tabindex no negativo. No selecciona contenido
-  normal ni destinos no interactivos con tabindex negativo; omite deshabilitados.
-  No utiliza `!important`, no reemplaza sombras y solo se activa con
-  `:focus-visible`, conservando el comportamiento de puntero y hover.
-- Los botones compartidos y el selector de paginación alcanzan 44 px de altura.
-- Los campos mantienen un tamaño mínimo de letra de 16 px.
-- Se mantienen las reglas de movimiento reducido para animaciones, transiciones
-  y scroll. No se añade almacenamiento ni detección JS de preferencias.
-
-## Verificación realizada
+Las pruebas de apariencia verifican las ocho combinaciones tema/acento mediante
+colores computados, contraste de texto >=4,5:1 y bordes de control >=3:1. También
+cubren System dinámico, primer pintado con React bloqueado, persistencia, valores
+inválidos, almacenamiento denegado, navegación, diálogos, Recharts/Pomodoro,
+movimiento reducido y responsive 320–1440 px. Son comprobaciones representativas,
+no una certificación WCAG de todo el producto. No generan capturas ni acceden a
+bases persistentes: las respuestas de estudio de la prueba son fixtures de UI.
+En Chrome se midieron mínimos de **6,62:1** para los pares de texto comprobados
+y **3,71:1** para bordes de controles. Pasaron las once rutas principales en claro,
+con recorridos representativos adicionales en oscuro, y el cierre de sesión local.
 
 Desde `frontend-web`:
 
 ```bash
+node --test tests/appearance.test.mjs
 npm run lint
-npm run build
+npm run build       # incluye TypeScript (tsc -b)
 npm run test:web
+npm run dev
 ```
 
-- ESLint: aprobado.
-- TypeScript: aprobado mediante `tsc -b`, incluido en build.
-- Build Vite: aprobado. Aviso de chunk de Study Rooms superior a 500 kB; no se
-  modifican ese módulo ni su distribución de código en esta etapa.
-- Suite web: **53 pruebas de lógica y 10 de UI aprobadas**, 0 fallos y 0 omitidas.
-  `test:ui` incluye cinco casos de `tests/designSystem.test.mjs`. Las pruebas de
-  UI se ejecutan en serie para que sus servidores Vite no compitan por el puerto.
-- Regresión persistente en Chrome: compila el CSS real con Vite y renderiza el
-  componente real TrackingLinkForm mediante SSR, sin ejecutar sus efectos ni
-  peticiones al backend. Chrome navega mediante Tab real: campo de Tracking,
-  botón con clases heredadas, campo con `outline-none`, enlace, select, textarea,
-  summary y control con tabindex. Se comprueban color menta, estilo sólido,
-  ancho 2 px y separación 3 px computados en los ocho controles.
-- La misma prueba confirma que se salta el submit deshabilitado, que el foco no
-  se fuerza en contenido no interactivo y que un clic con ratón no impone el
-  indicador de teclado. Verifica también los ocho colores históricos resueltos
-  en Chrome, sin cambios respecto a la paleta anterior.
-- El navegador de regresión utiliza un perfil temporal aislado y se cierra al
-  terminar. No requiere una dependencia npm nueva. Si Chrome/Chromium no está
-  instalado, esa prueba se marca omitida con un motivo explícito; puede indicarse
-  la ruta con `STUDYSTREAK_CHROME_BIN`. En esta verificación se ejecutó y aprobó.
-- Chrome 153 real, con perfil de prueba aislado: componentes reales renderizados
-  en una vista temporal, sin añadir rutas al producto ni simular datos de estudio.
-- Viewports: **320, 390, 768 y 1440 px**. No se detectó desbordamiento horizontal.
-- **20 escenarios**: predeterminado, oscuro y claro explícitos, y automático con
-  preferencias de sistema clara y oscura, en los cuatro tamaños.
-- Contraste mínimo medido en los textos comprobados: **6,26:1**; bordes de
-  controles comprobados: **3,71:1**. Son mediciones de los componentes migrados,
-  no una auditoría completa WCAG de todas las pantallas.
-- Foco por Tab visible; el botón Previous deshabilitado queda fuera del recorrido.
-- La emulación de movimiento reducido elimina la animación del indicador.
-- Navegación real de la app en Chrome: **login → register → login**, aprobada,
-  sin enviar formularios ni crear datos.
-
-Las capturas de componentes y `browser-results.json` se conservan en
-`.local/ui-stage1/`, ignorado por Git. La vista temporal y el navegador no forman
-parte del producto. No se realizaron llamadas de escritura al backend: esta
-etapa no modifica su integración.
-
-## Checkpoint de Git
-
-Lista cerrada de archivos de esta etapa:
-
-1. `frontend-web/src/styles/tokens.css`.
-2. `frontend-web/src/index.css`.
-3. `frontend-web/src/components/ui/LoadingState.tsx`.
-4. `frontend-web/src/components/ui/EmptyState.tsx`.
-5. `frontend-web/src/components/ui/ErrorMessage.tsx`.
-6. `frontend-web/src/components/ui/PaginationControls.tsx`.
-7. `frontend-web/tests/designSystem.test.mjs`.
-8. `frontend-web/package.json` (incorpora el test y serializa las pruebas de UI).
-9. `docs/sistema-visual.md`.
-
-Se revisó el diff y se compararon hashes de los **17 archivos preexistentes**
-modificados o sin seguimiento: permanecen intactos. No se preparó staging ni se
-creó un commit. Tras autorización expresa, el commit local debe incluir solamente
-estos nueve archivos. Mensaje propuesto:
-`feat(web): add semantic design tokens and accessible shared UI`.
-
-La Etapa 2 requiere otra indicación del usuario después del checkpoint.
+Las pruebas Chrome requieren Chrome/Chromium; puede indicarse su ejecutable con
+`STUDYSTREAK_CHROME_BIN`. Los logs locales de revisión están en `.local/ui-stage4/`
+(ignorado por Git). No se cambian backend, contratos REST, autenticación, audio,
+reglas de estudio ni archivos de React Native.

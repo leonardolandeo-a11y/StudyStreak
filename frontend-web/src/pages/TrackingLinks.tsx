@@ -197,7 +197,7 @@ function TrackingLinks() {
                 <button
                     type="button"
                     onClick={() => setRevision((value) => value + 1)}
-                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
+                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400"
                 >
                     Retry
                 </button>
@@ -221,7 +221,7 @@ function TrackingLinks() {
                                             type="button"
                                             disabled={busyId !== null}
                                             onClick={() => handleStatus(link.id, "ACCEPTED")}
-                                            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                                            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent hover:bg-accent disabled:opacity-50"
                                         >Accept</button>
                                         <button
                                             type="button"

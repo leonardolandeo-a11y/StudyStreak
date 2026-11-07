@@ -10,7 +10,7 @@ function TrackingLinkCard({ trackingLink, currentUserId }: TrackingLinkCardProps
     const partnerName = isRequester ? trackingLink.receiverUsername : trackingLink.requesterUsername;
 
     return (
-        <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/10 transition hover:border-slate-700">
+        <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-appearance-shadow/10 transition hover:border-outline-strong">
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <p className="text-xs uppercase tracking-wide text-slate-500">Tracking connection</p>

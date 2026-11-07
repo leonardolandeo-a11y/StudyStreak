@@ -69,3 +69,12 @@
         *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
 }
+
+/* An explicit preference can reduce motion further; it never overrides the OS. */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+}

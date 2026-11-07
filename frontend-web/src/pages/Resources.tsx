@@ -151,13 +151,13 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                         onChange={event => setQuery(event.target.value)}
                         maxLength={80}
                         placeholder="Example: differential equations"
-                        className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-slate-100 outline-none placeholder:text-slate-600 focus:border-sky-500"
+                        className="min-w-0 flex-1 rounded-lg border border-outline-strong bg-slate-950 px-4 py-2.5 text-slate-100 outline-none placeholder:text-slate-600 focus:border-sky-500"
                     />
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-500 px-5 py-2.5 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:opacity-50"
                     >
                         <Search size={17} />
                         {loading ? "Searching..." : "Search books"}
@@ -204,7 +204,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 key={book.id}
                                 type="button"
                                 onClick={() => setSelectedBook(book)}
-                                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-left transition hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900"
+                                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-left transition hover:-translate-y-0.5 hover:border-outline-strong hover:bg-slate-900"
                             >
                                 <div className="flex gap-4">
                                     {book.thumbnailUrl ? (
@@ -250,7 +250,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="book-details-title"
-                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-2xl"
+                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-strong bg-slate-950 p-6 shadow-2xl"
                         onClick={event => event.stopPropagation()}
                     >
                         <div className="flex items-start justify-between gap-4">
@@ -270,7 +270,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 type="button"
                                 aria-label="Close book details"
                                 onClick={() => setSelectedBook(null)}
-                                className="rounded-lg border border-slate-700 p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                                className="rounded-lg border border-outline-strong p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
                             >
                                 <X size={18} />
                             </button>
@@ -338,7 +338,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                     href={selectedBook.previewLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400"
                                 >
                                     Preview book
                                     <ExternalLink size={16} />
@@ -350,7 +350,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                     href={selectedBook.infoLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
                                 >
                                     Open on Google Books
                                     <ExternalLink size={16} />

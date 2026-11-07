@@ -17,7 +17,7 @@ function StreakCard({streak}: StreakCardProps) {
             border border-slate-800
             bg-slate-900/70
             p-5
-            shadow-lg shadow-black/10
+            shadow-lg shadow-appearance-shadow/10
         "
     >
         <div className="flex items-center justify-between gap-4">

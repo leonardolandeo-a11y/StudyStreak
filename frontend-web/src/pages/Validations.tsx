@@ -51,7 +51,7 @@ function RetryButton({ onClick }: { onClick: () => void }) {
         <button
             type="button"
             onClick={onClick}
-            className="mt-3 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+            className="mt-3 rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
         >
             Try again
         </button>
@@ -323,7 +323,7 @@ function Validations() {
                                         type="button"
                                         aria-pressed={selected}
                                         onClick={() => selectPartner(partner)}
-                                        className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700"
+                                        className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-surface-hover"
                                     >
                                         {selected ? "Refresh goals" : "View goals"}
                                     </button>
@@ -354,7 +354,7 @@ function Validations() {
                                     </div>
                                     <p className="mt-2 text-sm text-slate-400">{goal.frequency} sessions/week · {goal.duration} min/session</p>
                                     <button type="button" aria-pressed={goal.id === goalId} onClick={() => selectGoal(goal)}
-                                        className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700">
+                                        className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-surface-hover">
                                         {goal.id === goalId ? "Refresh records" : "View daily records"}
                                     </button>
                                 </article>
@@ -384,7 +384,7 @@ function Validations() {
                                     <p className="mt-3 text-xs font-medium text-slate-500">Evidence</p>
                                     <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm text-slate-300">{record.evidence || "No evidence"}</p>
                                     <button type="button" aria-pressed={record.id === recordId} onClick={() => selectRecord(record)}
-                                        className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400">
+                                        className="mt-4 rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400">
                                         {record.id === recordId ? "Refresh validation" : "Review validation"}
                                     </button>
                                 </article>
@@ -424,7 +424,7 @@ function Validations() {
                             )}
 
                             {validation && (
-                                <p className="mb-4 rounded-lg border border-slate-700 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
+                                <p className="mb-4 rounded-lg border border-outline-strong bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
                                     Current decision: <span className="font-semibold text-slate-100">{validation.approved ? "Approved" : "Rejected"}</span>
                                     {validation.comment && <span className="mt-1 block whitespace-pre-wrap">{validation.comment}</span>}
                                 </p>

@@ -6,6 +6,7 @@ import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
+import { useReducedMotion } from "../../theme/appearance"
 
 const cn = (...classes: (string | undefined)[]) => classes.filter(Boolean).join(" ")
 
@@ -58,14 +59,7 @@ function Carousel({
     },
     plugins
   )
-  const reducedMotion = React.useRef(false)
-  React.useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)")
-    const update = () => { reducedMotion.current = query.matches }
-    update()
-    query.addEventListener("change", update)
-    return () => query.removeEventListener("change", update)
-  }, [])
+  const reducedMotion = useReducedMotion()
   const subscribe = React.useCallback((notify: () => void) => {
     if (!api) return () => {}
     api.on("select", notify)
@@ -79,12 +73,12 @@ function Carousel({
   const canScrollNext = Boolean(availability & 2)
 
   const scrollPrev = React.useCallback(() => {
-    api?.scrollPrev(reducedMotion.current)
-  }, [api])
+    api?.scrollPrev(reducedMotion)
+  }, [api, reducedMotion])
 
   const scrollNext = React.useCallback(() => {
-    api?.scrollNext(reducedMotion.current)
-  }, [api])
+    api?.scrollNext(reducedMotion)
+  }, [api, reducedMotion])
 
   const handleKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {

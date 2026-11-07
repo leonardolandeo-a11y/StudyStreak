@@ -16,7 +16,7 @@ export function RoomCollaboration({room,userId}:{room:StudyRoom;userId?:number})
         </li>)}</ol>
         {chat.feed?.messages.length===0&&<p className="text-slate-400">No messages yet.</p>}
         <div className="flex gap-2"><button className="study-button" disabled={chat.page===0} onClick={()=>chat.setPage(chat.page-1)}>Newer</button><button className="study-button" disabled={!chat.feed||chat.page+1>=chat.feed.totalPages} onClick={()=>chat.setPage(chat.page+1)}>Older</button></div>
-        <form onSubmit={event=>{event.preventDefault();void chat.send();}} className="space-y-2"><label htmlFor="room-message">Message · {chat.text.length}/1000</label><textarea disabled={chat.busy} id="room-message" maxLength={1000} value={chat.text} onChange={event=>chat.setText(event.target.value)} className="w-full rounded-xl border border-slate-600 bg-slate-900 p-3"/><button className="study-button" disabled={chat.busy||!chat.text.trim()}>Send message</button></form>
+        <form onSubmit={event=>{event.preventDefault();void chat.send();}} className="space-y-2"><label htmlFor="room-message">Message · {chat.text.length}/1000</label><textarea disabled={chat.busy} id="room-message" maxLength={1000} value={chat.text} onChange={event=>chat.setText(event.target.value)} className="w-full rounded-xl border border-outline-strong bg-slate-900 p-3"/><button className="study-button" disabled={chat.busy||!chat.text.trim()}>Send message</button></form>
         <p className="text-xs text-slate-400">Recent history retained for 30 days. Reactions last 10 seconds. Chat does not credit study time.</p>
     </section>;
 }

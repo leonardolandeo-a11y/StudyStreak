@@ -364,7 +364,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 aria-pressed={timer.mode === mode.id}
                                 onClick={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
                                 className={`min-h-11 min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm ${
-                                    timer.mode === mode.id ? style.selected : "border-transparent text-content-muted hover:bg-white/5 hover:text-content"
+                                    timer.mode === mode.id ? style.selected : "border-transparent text-content-muted hover:bg-surface-hover hover:text-content"
                                 }`}>
                                 {mode.label}
                             </button>

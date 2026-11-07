@@ -267,7 +267,7 @@ function DailyRecordDetails(){
                 border border-slate-800
                 bg-slate-900/70
                 p-6
-                shadow-lg shadow-black/10
+                shadow-lg shadow-appearance-shadow/10
             "
         >
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -395,7 +395,7 @@ function DailyRecordDetails(){
         {canReview ? (
             validationError ? (
                 <button type="button" onClick={() => setReviewRevision(value => value + 1)}
-                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                    className="rounded-lg border border-outline-strong px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
                     Retry loading review
                 </button>
             ) : (

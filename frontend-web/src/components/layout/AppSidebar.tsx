@@ -6,6 +6,7 @@ import {
     LayoutDashboard,
     Link2,
     LogOut,
+    Settings,
     Target,
     Users
 } from "lucide-react";
@@ -100,7 +101,7 @@ function AppSidebar() {
                     rounded-xl
                     bg-sky-500
                     font-bold
-                    text-slate-950
+                    text-on-accent
 
                 "
             >
@@ -159,8 +160,8 @@ function AppSidebar() {
                                 ${
                                     isActive
                                         ? to === ROUTES.focusStudio
-                                            ? "bg-emerald-950/60 text-emerald-100"
-                                            : "bg-slate-800 text-slate-100"
+                                            ? "bg-accent-soft text-accent"
+                                            : "bg-accent-soft text-accent"
                                         : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                                 }
                             `}
@@ -172,7 +173,7 @@ function AppSidebar() {
                                         strokeWidth={1.8}
                                         className={
                                             isActive
-                                                ? to === ROUTES.focusStudio ? "text-emerald-400" : "text-sky-400"
+                                                ? to === ROUTES.focusStudio ? "text-accent" : "text-accent"
                                                 : "text-slate-500 group-hover:text-slate-300"
                                         }
                                     />
@@ -194,7 +195,7 @@ function AppSidebar() {
                                                     text-xs
                                                     font-bold
                                                     leading-none
-                                                    text-slate-950
+                                                    text-on-accent
                                                 "
                                             >
                                                 {unreadCount > 99
@@ -273,6 +274,7 @@ function AppSidebar() {
             )}
 
 
+            <NavLink to={ROUTES.settings} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-medium ${isActive ? "bg-accent-soft text-accent" : "text-content-secondary hover:bg-surface-hover"}`}><Settings size={18} aria-hidden="true"/>Settings</NavLink>
             <button
                 type="button"
                 onClick={handleLogout}

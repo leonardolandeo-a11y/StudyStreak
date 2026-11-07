@@ -339,8 +339,8 @@ function Notifications(){
                                 ${
                                     filter === "all" &&
                                     !selectedType
-                                        ? "bg-sky-500 text-slate-950"
-                                        : "border border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                        ? "bg-sky-500 text-on-accent"
+                                        : "border border-outline-strong bg-slate-950 text-slate-300 hover:bg-slate-800"
                                 }
                             `}
                         >
@@ -359,8 +359,8 @@ function Notifications(){
                                 ${
                                     filter === "unread" &&
                                     !selectedType
-                                        ? "bg-sky-500 text-slate-950"
-                                        : "border border-slate-700 bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                        ? "bg-sky-500 text-on-accent"
+                                        : "border border-outline-strong bg-slate-950 text-slate-300 hover:bg-slate-800"
                                 }
                             `}
                         >
@@ -391,11 +391,11 @@ function Notifications(){
                         className="
                             w-full
                             rounded-lg
-                            border border-slate-700
+                            border border-outline-strong
                             bg-slate-950
                             px-3 py-2.5
                             text-slate-100
-                            hover:border-slate-600
+                            hover:border-outline-strong
                         "
                     >
                         <option value="">

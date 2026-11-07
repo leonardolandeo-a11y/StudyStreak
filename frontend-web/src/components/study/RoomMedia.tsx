@@ -126,7 +126,7 @@ export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
         </div>
         {error&&<p role="alert" className="text-sm text-amber-200">{error}</p>}
         <div ref={panel} className="overflow-hidden rounded-xl bg-black">
-            {active?<><ScreenVideo screen={active}/><p className="p-3 text-sm text-white">{active.name} is sharing</p></>:<p className="flex aspect-video items-center justify-center p-6 text-center text-slate-400">{connected?'No screens shared yet.':'Connect to view shared screens.'}</p>}
+            {active?<><ScreenVideo screen={active}/><p className="p-3 text-sm text-content">{active.name} is sharing</p></>:<p className="flex aspect-video items-center justify-center p-6 text-center text-slate-400">{connected?'No screens shared yet.':'Connect to view shared screens.'}</p>}
         </div>
         {screens.length>0&&<div className="flex flex-wrap gap-2">{screens.map(screen=><button key={screen.id} className="study-tab" aria-pressed={active?.id===screen.id} onClick={()=>setSelected(screen.id)}>{screen.name}</button>)}<button className="study-button" onClick={()=>void panel.current?.requestFullscreen().catch(()=>setError('Fullscreen is unavailable in this browser.'))}>Fullscreen</button></div>}
         {connected&&<div className="flex flex-wrap items-center gap-3">

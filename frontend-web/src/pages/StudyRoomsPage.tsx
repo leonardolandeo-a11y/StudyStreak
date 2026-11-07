@@ -230,37 +230,37 @@ export default function StudyRoomsPage() {
                 <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-emerald-400">
                     <Users size={16} /> STUDY TOGETHER
                 </p>
-                <h1 className="mt-3 text-4xl font-black tracking-tight text-white">Study Rooms<span className="text-emerald-400">.</span></h1>
+                <h1 className="mt-3 text-4xl font-black tracking-tight text-content">Study Rooms<span className="text-emerald-400">.</span></h1>
                 <p className="mt-2 text-sm text-slate-400">A shared clock. A little accountability. A private place to make progress together.</p>
             </header>
 
-            {room && <p role="status" className="inline-flex rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300">{offline ? "Offline · controls unavailable" : busy ? "Action pending · waiting for server" : error ? "Connection or action needs attention · see details below" : stale ? "Reconnecting · waiting for a fresh room state" : refreshingView ? "Updating room…" : "Synced · server confirmed"}</p>}
+            {room && <p role="status" className="inline-flex rounded-lg border border-outline-strong bg-slate-900 px-3 py-2 text-sm text-slate-300">{offline ? "Offline · controls unavailable" : busy ? "Action pending · waiting for server" : error ? "Connection or action needs attention · see details below" : stale ? "Reconnecting · waiting for a fresh room state" : refreshingView ? "Updating room…" : "Synced · server confirmed"}</p>}
             {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/20 px-4 py-3 text-sm text-rose-300">{error}</div>}
 
             {!room ? (
                 <div className="grid gap-5 lg:grid-cols-2">
                     <section className="study-panel">
-                        <h2 className="text-xl font-extrabold text-white">Create a private room</h2>
+                        <h2 className="text-xl font-extrabold text-content">Create a private room</h2>
                         <p className="mt-2 text-sm text-slate-400">Invite up to 11 friends with a private code.</p>
                         <label htmlFor="room-name" className="mt-5 block text-xs font-semibold text-slate-300">Room name</label>
                         <input id="room-name" maxLength={60} value={roomName} onChange={event => setRoomName(event.target.value)}
-                            placeholder="Late-night calculus" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"/>
+                            placeholder="Late-night calculus" className="mt-2 w-full rounded-xl border border-outline-strong bg-slate-950 px-4 py-3 text-content"/>
                         <button type="button" disabled={busy || stale} onClick={() => void create()}
-                            className="mt-4 w-full rounded-full bg-emerald-400 px-5 py-3 font-bold text-slate-950 hover:bg-emerald-300 disabled:opacity-40">Create room</button>
+                            className="mt-4 w-full rounded-full bg-accent px-5 py-3 font-bold text-on-accent hover:bg-accent-hover disabled:opacity-40">Create room</button>
                     </section>
                     <section className="study-panel">
-                        <h2 className="text-xl font-extrabold text-white">Join your friends</h2>
+                        <h2 className="text-xl font-extrabold text-content">Join your friends</h2>
                         <p className="mt-2 text-sm text-slate-400">Enter the 10-character code shared by the host.</p>
                         <label htmlFor="invite-code" className="mt-5 block text-xs font-semibold text-slate-300">Invitation code</label>
                         <input id="invite-code" maxLength={10} value={invite}
                             onChange={event => setInvite(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""))}
-                            placeholder="ABCDEFGHIJ" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 font-mono tracking-widest text-white"/>
+                            placeholder="ABCDEFGHIJ" className="mt-2 w-full rounded-xl border border-outline-strong bg-slate-950 px-4 py-3 font-mono tracking-widest text-content"/>
                         <button type="button" disabled={busy || invite.length !== 10} onClick={() => void join()}
                             className="mt-4 w-full rounded-full border border-emerald-400/60 px-5 py-3 font-bold text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-40">Join room</button>
                     </section>
                     <section className="study-panel lg:col-span-2">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h2 className="text-xl font-extrabold text-white">Your rooms <span className="text-sm font-normal text-slate-400">{rooms.length}</span></h2>
+                            <h2 className="text-xl font-extrabold text-content">Your rooms <span className="text-sm font-normal text-slate-400">{rooms.length}</span></h2>
                             <button type="button" onClick={() => void refreshLobby().catch(() => setError("Unable to load rooms."))} className="flex items-center gap-2 text-xs text-emerald-300"><RefreshCw size={15}/> Refresh</button>
                         </div>
                         {loading ? <p className="mt-4 text-slate-400">Loading rooms…</p> : rooms.length === 0 ?
@@ -269,7 +269,7 @@ export default function StudyRoomsPage() {
                                 {rooms.map(item => (
                                     <button type="button" key={item.id} onClick={() => showRoom(item)}
                                         className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/50 p-4 text-left hover:border-emerald-400/40">
-                                        <div className="min-w-0"><p className="break-words text-lg font-semibold text-white">{item.name}</p>
+                                        <div className="min-w-0"><p className="break-words text-lg font-semibold text-content">{item.name}</p>
                                             <p className="mt-1 text-xs text-slate-400">{item.members.length}/12 members · {item.members.filter(m=>m.online).length} online</p><p className="mt-2 text-xs text-slate-400">Host: {item.members.find(m=>m.host)?.username ?? "—"} · {item.phase} / {item.timerStatus}</p></div>
                                         <span className="shrink-0 text-sm text-emerald-200">Open →</span>
                                     </button>
@@ -284,7 +284,7 @@ export default function StudyRoomsPage() {
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <p className="flex items-center gap-2 text-xs font-bold text-emerald-300"><Shield size={15}/> INVITE-ONLY ROOM</p>
-                                <h2 className="mt-3 break-words text-3xl font-semibold text-white">{room.name}</h2>
+                                <h2 className="mt-3 break-words text-3xl font-semibold text-content">{room.name}</h2>
                                 <p className="mt-2 text-sm text-slate-300">{online} online · {studyingCount} studying · {room.members.length}/12 members</p>
                             </div>
                             <div className="rounded-xl border border-emerald-400/30 bg-slate-950/70 p-3">
@@ -297,12 +297,12 @@ export default function StudyRoomsPage() {
                         </div>
                         <div className="mt-8 mx-auto max-w-2xl rounded-2xl bg-slate-950 px-4 py-10 text-center">
                             <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">{room.phase === "FOCUS" ? "SHARED FOCUS" : "GROUP BREAK"}</p>
-                            <p role="timer" className="mt-4 font-mono text-[clamp(3.5rem,12vw,7rem)] font-semibold leading-none tracking-tight tabular-nums text-white">{displayRoomTime(seconds)}</p>
+                            <p role="timer" className="mt-4 font-mono text-[clamp(3.5rem,12vw,7rem)] font-semibold leading-none tracking-tight tabular-nums text-content">{displayRoomTime(seconds)}</p>
                             <p className="mt-2 text-xs font-semibold text-slate-400">{stale ? "Last known timer · reconnecting" : room.timerStatus === "PAUSED" ? "Timer paused" : room.timerStatus === "COMPLETE" ? "Session finished · server confirmed" : (room.timerStatus === "RUNNING" && seconds === 0) ? "Awaiting server confirmation" : room.timerStatus === "RUNNING" ? "Timer running" : "Waiting for host"}</p>
                             {room.host ? (
                                 <div className="mt-6 flex flex-wrap justify-center gap-2"><p className="w-full text-xs uppercase tracking-widest text-slate-400">Host controls</p>
                                     <button type="button" disabled={busy || stale} onClick={() => void control(room.timerStatus === "RUNNING" && seconds > 0 ? "PAUSE" : "START")}
-                                        className="flex items-center gap-2 rounded-full bg-emerald-400 px-5 py-3 font-bold text-slate-950 disabled:opacity-40">
+                                        className="flex items-center gap-2 rounded-full bg-accent px-5 py-3 font-bold text-on-accent disabled:opacity-40">
                                         {room.timerStatus === "RUNNING" && seconds > 0 ? <Pause size={18}/> : <Play size={18}/>}
                                         {room.timerStatus === "RUNNING" && seconds > 0 ? "Pause" : "Start"}
                                     </button>
@@ -317,7 +317,7 @@ export default function StudyRoomsPage() {
                         </div>
                         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                             <button type="button" disabled={busy || stale} onClick={() => void changeStudying()}
-                                className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold disabled:opacity-40 ${studying ? "bg-emerald-400 text-slate-950" : "border border-emerald-400/50 text-emerald-200"}`}>
+                                className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold disabled:opacity-40 ${studying ? "bg-accent text-on-accent" : "border border-emerald-400/50 text-emerald-200"}`}>
                                 {studying && <Check size={17}/>} {studying ? "I'm studying" : "Mark me as studying"}
                             </button>
                             <button type="button" disabled={busy || stale} onClick={() => void leave()}
@@ -333,7 +333,7 @@ export default function StudyRoomsPage() {
                     <StudyRoomGoal key={room.id} roomId={room.id}/>
                     <section className="study-panel">
                         {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-emerald-300">Regenerate invitation code</button>}
-                        <h3 className="flex items-center gap-2 text-xl font-extrabold text-white"><Users className="text-emerald-400" size={20}/> Studying together</h3>
+                        <h3 className="flex items-center gap-2 text-xl font-extrabold text-content"><Users className="text-emerald-400" size={20}/> Studying together</h3>
                         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {room.members.map(member => (
                                 <ParticipantCard key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>

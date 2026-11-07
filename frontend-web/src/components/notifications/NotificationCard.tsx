@@ -19,7 +19,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
             rounded-2xl
             border
             p-5
-            shadow-lg shadow-black/10
+            shadow-lg shadow-appearance-shadow/10
             transition
             ${
                 notification.read
@@ -73,7 +73,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                     <span
                         className="
                             rounded-full
-                            border border-slate-700
+                            border border-outline-strong
                             bg-slate-950
                             px-3 py-1
                             text-xs font-medium
@@ -113,7 +113,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                 type="button"
                 disabled={loading}
                 onClick={() => void onOpen(notification)}
-                className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+                className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:opacity-50"
             >
                 {notificationActionLabel(notification)}
             </button>
@@ -132,7 +132,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                         bg-sky-500
                         px-4 py-2
                         text-sm font-semibold
-                        text-slate-950
+                        text-on-accent
                         hover:bg-sky-400
                         disabled:opacity-50
                     "

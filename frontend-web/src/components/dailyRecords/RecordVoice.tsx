@@ -431,7 +431,7 @@ function RecordVoice({
                     <button
                         type="button"
                         onClick={stopRecording}
-                        className="mt-3 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-400"
+                        className="mt-3 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-on-danger hover:bg-red-400"
                     >
                         Finish recording
                     </button>
@@ -455,7 +455,7 @@ function RecordVoice({
                             type="button"
                             disabled={busy}
                             onClick={() => void upload(recordedFile)}
-                            className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:opacity-50"
+                            className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:opacity-50"
                         >
                             Save recording
                         </button>
@@ -464,7 +464,7 @@ function RecordVoice({
                             type="button"
                             disabled={busy}
                             onClick={() => { setRecordedFile(null); setRecordedUrl(null); }}
-                            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                            className="rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
                         >
                             Discard
                         </button>
@@ -485,7 +485,7 @@ function RecordVoice({
                             type="button"
                             disabled={busy}
                             onClick={() => void startRecording()}
-                            className="rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400 disabled:opacity-50"
+                            className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-50"
                         >
                             Record voice note
                         </button>
@@ -494,7 +494,7 @@ function RecordVoice({
                     <label
                         className={`
                             inline-flex cursor-pointer items-center
-                            rounded-lg border border-slate-700
+                            rounded-lg border border-outline-strong
                             px-4 py-2 text-sm font-medium
                             text-slate-300 hover:bg-slate-800
                             ${busy || recording ? "pointer-events-none opacity-50" : ""}
@@ -533,7 +533,7 @@ function RecordVoice({
                             type="button"
                             disabled={busy || loading || recording}
                             onClick={() => setReloadKey(value => value + 1)}
-                            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                            className="rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-50"
                         >
                             Refresh audio
                         </button>

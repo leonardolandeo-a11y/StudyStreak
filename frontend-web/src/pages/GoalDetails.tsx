@@ -274,7 +274,7 @@ useEffect(() => {
                 border border-slate-800
                 bg-slate-900/70
                 p-6
-                shadow-lg shadow-black/10
+                shadow-lg shadow-appearance-shadow/10
             "
         >
             <div
@@ -377,7 +377,7 @@ useEffect(() => {
 
                 {!goal.completed && (
                     <Link to={`${ROUTES.focusStudio}?goalId=${goal.id}`}
-                        className="rounded-lg bg-emerald-400 px-4 py-2.5 text-sm font-bold text-slate-950 hover:bg-emerald-300">
+                        className="rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-on-accent hover:bg-accent-hover">
                         Study this Goal
                     </Link>
                 )}
@@ -388,7 +388,7 @@ useEffect(() => {
                         bg-sky-500
                         px-4 py-2.5
                         text-sm font-semibold
-                        text-slate-950
+                        text-on-accent
                         hover:bg-sky-400
                     "
                 >
@@ -399,12 +399,12 @@ useEffect(() => {
                     to={tagsPath(goal.id)}
                     className="
                         rounded-lg
-                        border border-slate-700
+                        border border-outline-strong
                         bg-slate-950
                         px-4 py-2.5
                         text-sm font-medium
                         text-slate-200
-                        hover:border-slate-600
+                        hover:border-outline-strong
                         hover:bg-slate-800
                     "
                 >

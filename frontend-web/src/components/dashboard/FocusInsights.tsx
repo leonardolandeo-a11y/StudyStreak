@@ -47,7 +47,7 @@ export default function FocusInsights({ refreshKey = 0, compact = false }: {
 
     return <section aria-label="Focus study statistics" className="study-panel">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><p className="study-kicker">Your progress</p><h2 className="mt-2 text-2xl font-semibold text-white">Time well spent.</h2><p className="mt-2 text-sm text-slate-400">Saved sessions across Web and Mobile. Pending time is excluded.</p></div>
+        <div><p className="study-kicker">Your progress</p><h2 className="mt-2 text-2xl font-semibold text-content">Time well spent.</h2><p className="mt-2 text-sm text-slate-400">Saved sessions across Web and Mobile. Pending time is excluded.</p></div>
         <div className="flex flex-wrap items-center gap-2">
           {([7,30] as const).map(option=><button type="button" className="study-tab" key={option} aria-pressed={days===option} onClick={()=>{setDays(option);setData(null);}}>{option} days</button>)}
           <button type="button" className="study-button" aria-label="Refresh focus statistics" onClick={()=>setRevision(n=>n+1)}><RefreshCw size={16}/>{loading?'Updating…':'Refresh'}</button>

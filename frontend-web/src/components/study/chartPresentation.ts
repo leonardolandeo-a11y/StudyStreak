@@ -3,7 +3,7 @@ export function barPercent(value: number, maximum: number): number {
   return !Number.isFinite(value) || !Number.isFinite(maximum) || maximum <= 0 ? 0 : Math.min(100, Math.max(0, value / maximum * 100));
 }
 export function activityColor(minutes: number): string {
-  return minutes <= 0 ? '#26323b' : minutes < 30 ? '#285943' : minutes < 60 ? '#459c73' : '#94e8c3';
+  return minutes <= 0 ? 'var(--ss-chart-empty)' : minutes < 30 ? 'var(--ss-chart-low)' : minutes < 60 ? 'var(--ss-chart-medium)' : 'var(--ss-accent)';
 }
 export function calendarPadding(firstDate?: string): number {
   return firstDate ? (new Date(`${firstDate}T12:00:00Z`).getUTCDay() + 6) % 7 : 0;

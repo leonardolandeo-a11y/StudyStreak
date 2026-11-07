@@ -20,6 +20,8 @@ function Breadcrumbs(){
             return `Record ${segment}`;
         }
         switch(segment){
+            case "settings":
+                return "Settings";
             case "dashboard":
                 return "Dashboard";
             case "focus-studio":
