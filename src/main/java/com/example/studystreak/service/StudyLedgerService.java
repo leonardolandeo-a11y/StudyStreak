@@ -23,6 +23,12 @@ public class StudyLedgerService {
         Object value=row.get(key); return value==null ? null : ((Timestamp)value).toInstant();
     }
     private long number(Map<String,Object> row,String key) { return ((Number)row.get(key)).longValue(); }
+    // Persistence-only precision metadata must not extend the existing REST payloads.
+    private Map<String,Object> exposed(Map<String,Object> row) {
+        var result=new LinkedHashMap<>(row);
+        result.remove("observed_remainder_us");
+        return result;
+    }
     private String goal(long user,Long goal) {
         var found=rows("select topic from goal where id=? and user_id=? and completed=false",goal,user);
         if(found.isEmpty()) throw new ForbiddenException("Choose one of your active Goals");
@@ -48,24 +54,28 @@ public class StudyLedgerService {
             var row=existing.getFirst();
             if(number(row,"user_id")!=user || !Objects.equals(row.get("original_goal_id"),goalId) || number(row,"planned_seconds")!=minutes*60L || !"INDIVIDUAL".equals(row.get("source")))
                 throw new ConflictException("Session UUID already belongs to another attempt");
-            return row;
+            return exposed(row);
         }
         String title=goal(user,goalId); Instant time=now(); freeSlot(user,time);
         int inserted=db.update("insert into study_ledger(id,user_id,goal_id,original_goal_id,goal_name,source,state,planned_seconds,started_at,last_seen_at,ends_at) values (?,?,?,?,?,'INDIVIDUAL','RUNNING',?,?,?,?) on conflict(id) do nothing",
             id,user,goalId,goalId,title,minutes*60,Timestamp.from(time),Timestamp.from(time),Timestamp.from(time.plusSeconds(minutes*60L)));
         if(inserted==0) throw new ConflictException("Session UUID already belongs to another attempt");
-        return owned(id,user);
+        return exposed(owned(id,user));
     }
     // Credit consecutive observations only. A disconnected gap >35s adds nothing.
     private long observe(Map<String,Object> row,Instant time) {
-        long observed=number(row,"observed_ms");
+        long observedUs=number(row,"observed_ms")*1000+number(row,"observed_remainder_us");
         Instant last=instant(row,"last_seen_at"), deadline=instant(row,"ends_at");
         Instant until=deadline!=null && deadline.isBefore(time) ? deadline : time;
         long gap=Duration.between(last,time).toMillis();
         if("RUNNING".equals(row.get("state")) && gap>=0 && gap<=35000)
-            observed+=Math.max(0,Duration.between(last,until).toMillis());
-        observed=Math.min(number(row,"planned_seconds")*1000,observed);
-        db.update("update study_ledger set observed_ms=?,last_seen_at=? where id=?",observed,Timestamp.from(time),row.get("id"));
+            observedUs+=Math.max(0,Duration.between(last,until).toNanos()/1000);
+        // PostgreSQL timestamps have microsecond precision. Carry the remainder
+        // through every observation instead of discarding it at each pulse.
+        observedUs=Math.min(number(row,"planned_seconds")*1_000_000,observedUs);
+        long observed=observedUs/1000, remainder=observedUs%1000;
+        db.update("update study_ledger set observed_ms=?,observed_remainder_us=?,last_seen_at=? where id=?",
+                observed,remainder,Timestamp.from(time),row.get("id"));
         return observed;
     }
     @Transactional
@@ -73,7 +83,7 @@ public class StudyLedgerService {
         if(!Set.of("PULSE","PAUSE","RESUME","COMPLETE","CANCEL").contains(action)) throw new IllegalArgumentException("Invalid study action");
         long user=current.getCurrentUserId(); lockUser(user); var row=owned(id,user);
         if(!"INDIVIDUAL".equals(row.get("source"))) throw new ConflictException("Group sessions are controlled by the server");
-        if(Set.of("COMPLETE","CANCELLED").contains(row.get("state"))) return row;
+        if(Set.of("COMPLETE","CANCELLED").contains(row.get("state"))) return exposed(row);
         Instant time=now();
         if("COMPLETE".equals(action) && (instant(row,"ends_at")==null || time.isBefore(instant(row,"ends_at")) || !"RUNNING".equals(row.get("state"))))
             throw new ConflictException("The server timer has not completed");
@@ -84,13 +94,14 @@ public class StudyLedgerService {
             }
             case "RESUME" -> {
                 if("PAUSED".equals(row.get("state"))) db.update("update study_ledger set state='RUNNING',ends_at=? where id=?",
-                    Timestamp.from(time.plusMillis(number(row,"planned_seconds")*1000-observed)),id);
+                    Timestamp.from(time.plusNanos((number(row,"planned_seconds")*1_000_000
+                            - observed*1000 - number(row,"observed_remainder_us"))*1000)),id);
             }
             case "COMPLETE" -> finish(row,time,observed);
             case "CANCEL" -> db.update("update study_ledger set state='CANCELLED',completed_at=? where id=?",Timestamp.from(time),id);
             default -> { }
         }
-        return owned(id,user);
+        return exposed(owned(id,user));
     }
     private void finish(Map<String,Object> row,Instant time,long observed) {
         int seconds=(int)(observed/60000)*60;
@@ -194,7 +205,7 @@ public class StudyLedgerService {
         Map<String,Object> result=new HashMap<>();
         result.put("serverNow",now());
         var sessions=rows("select * from study_ledger where user_id=? and source='INDIVIDUAL' and state in ('RUNNING','PAUSED')",current.getCurrentUserId());
-        result.put("session",sessions.isEmpty()?null:sessions.getFirst()); return result;
+        result.put("session",sessions.isEmpty()?null:exposed(sessions.getFirst())); return result;
     }
     @Transactional
     public Map<String,Object> complete(Long goalId,UUID id,int minutes) {
