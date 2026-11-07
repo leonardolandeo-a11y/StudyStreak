@@ -141,19 +141,31 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       await wait('!!document.querySelector("h1")');
     };
     const choose = async (name, value) => {
+      if (name === 'display-mode') {
+        const system = await evaluate(`document.querySelector('[role="switch"]').getAttribute('aria-checked') === 'true'`);
+        if (value === 'system') {
+          if (!system) await evaluate(`document.querySelector('[role="switch"]').click()`);
+          await wait(`document.querySelector('[role="switch"]').getAttribute('aria-checked') === 'true'`);
+          return;
+        }
+        if (system) {
+          await evaluate(`document.querySelector('[role="switch"]').click()`);
+          await wait(`document.querySelector('[role="switch"]').getAttribute('aria-checked') === 'false'`);
+        }
+      }
       await evaluate(`document.querySelector('input[name="${name}"][value="${value}"]').click()`);
       await wait(`document.querySelector('input[name="${name}"][value="${value}"]').checked`);
     };
     const key = async (key, code = key) => {
-      const windowsVirtualKeyCode = { Tab: 9, Escape: 27 }[key];
-      await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode });
+      const windowsVirtualKeyCode = { Tab: 9, Escape: 27, Enter: 13, ArrowRight: 39, ' ': 32 }[key];
+      await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) });
       await command('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode });
     };
     await command('Page.enable'); await command('Runtime.enable');
     await command('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
     await command('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
     await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }, { name: 'prefers-reduced-motion', value: 'no-preference' }] });
-    const payload = { type: 'access', exp: Math.floor(Date.now() / 1000) + 3600, userId: 999999, sub: 'appearance_fixture', email: 'appearance@example.invalid', role: 'USER' };
+    const payload = { type: 'access', exp: Math.floor(Date.now() / 1000) + 3600, userId: 999999, sub: 'appearance_fixture_with_a_very_long_username_for_layout_checks', email: 'appearance_fixture_with_a_very_long_email_address@example.invalid', role: 'USER' };
     const fixtureToken = `fixture.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.fixture`;
     await command('Page.addScriptToEvaluateOnNewDocument', { source: `sessionStorage.setItem('accessToken', ${JSON.stringify(fixtureToken)}); if (!localStorage.getItem('${KEY}')) localStorage.setItem('${KEY}', JSON.stringify({mode:'light',accent:'blue',reduceMotion:false}));` });
     const firstLoaded = pageLoaded();
@@ -167,6 +179,21 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await wait('!!document.querySelector("input[name=display-mode]")');
     await command('Page.bringToFront');
 
+    assert.equal(await evaluate('document.querySelectorAll("input[name=display-mode]").length'), 2);
+    assert.equal(await evaluate(`document.querySelector('[role="switch"]').getAttribute('aria-checked')`), 'false');
+    const samples = await evaluate(`([...document.querySelectorAll('input[name="display-mode"]')].map(input => {
+      const frame = input.nextElementSibling, sample = frame.firstElementChild;
+      const r = frame.getBoundingClientRect();
+      return { mode: input.value, width: r.width, height: r.height, background: getComputedStyle(sample).backgroundColor };
+    }))`);
+    assert.deepEqual(samples.map(s => [s.width, s.height]), [[80,80],[80,80]]);
+    assert.deepEqual(samples.map(s => s.background), ['rgb(11, 16, 20)','rgb(248, 250, 252)'], 'Both previews represent their own mode');
+    const swatches = await evaluate(`([...document.querySelectorAll('input[name="accent-palette"]')].map(input => {
+      const frame = input.nextElementSibling, r = frame.getBoundingClientRect();
+      return { color: getComputedStyle(frame.firstElementChild).backgroundColor, width:r.width, height:r.height };
+    }))`);
+    assert.equal(new Set(swatches.map(s => s.color)).size, 4, 'Each palette has a different visible swatch');
+    assert.ok(swatches.every(s => s.width === 48 && s.height === 48));
     const tokenAudit = `(() => {
       const probe = document.createElement('span'); document.body.append(probe);
       const rgb = variable => { probe.style.color = 'var(' + variable + ')'; const canvas=document.createElement('canvas'); const c=canvas.getContext('2d'); c.fillStyle=getComputedStyle(probe).color; c.fillRect(0,0,1,1); return [...c.getImageData(0,0,1,1).data].slice(0,3); };
@@ -186,12 +213,27 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     assert.equal(new Set(reports.filter(r=>r.mode==='light').map(r=>JSON.stringify(r.success))).size, 1, 'Success color is independent of accent');
     assert.equal(new Set(reports.filter(r=>r.mode==='light').map(r=>JSON.stringify(r.accentRgb))).size, 4);
     await choose('display-mode', 'system');
+    await navigate('/settings');
+    assert.equal(await evaluate(`document.querySelector('[role="switch"]').getAttribute('aria-checked')`), 'true', 'Device theme survives reload');
+    assert.equal(await evaluate('document.querySelectorAll("input[name=display-mode]:disabled").length'), 2);
     for (const scheme of ['light','dark']) {
       await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
       await wait(`document.body.textContent.includes('Currently using ${scheme} appearance from your system')`);
       const actual = await evaluate(tokenAudit);
       assert.deepEqual(actual.background, reports.find(r=>r.mode===scheme && r.accent==='orange').background);
+      assert.equal(await evaluate(`document.querySelector('input[name="display-mode"]:checked').value`), scheme, 'Square shows the effective device mode');
     }
+    await evaluate(`document.querySelector('[role="switch"]').focus()`);
+    await key('Enter');
+    await wait(`document.querySelector('[role="switch"]').getAttribute('aria-checked') === 'false'`);
+    assert.equal(await evaluate('document.documentElement.dataset.theme'), 'dark', 'Disabling device mode retains its effective theme');
+    assert.equal(await evaluate('document.querySelectorAll("input[name=display-mode]:disabled").length'), 0);
+    await evaluate(`document.querySelector('input[name="display-mode"][value="dark"]').focus()`);
+    await key('ArrowRight');
+    await wait('document.documentElement.dataset.theme === "light"');
+    await evaluate(`document.querySelector('input[name="accent-palette"][value="mint"]').focus()`);
+    await key('ArrowRight');
+    await wait('document.documentElement.dataset.accent === "blue"');
     await choose('display-mode', 'light'); await choose('accent-palette', 'blue');
     await evaluate('document.querySelector("input[type=checkbox]").click()');
     await wait('document.documentElement.dataset.motion === "reduce"');
@@ -212,7 +254,34 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await key('Tab');
     assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineWidth'), '2px');
     assert.equal(await evaluate('document.activeElement.matches(":focus-visible")'), true);
+    assert.equal(await evaluate('getComputedStyle(document.activeElement.nextElementSibling).outlineWidth'), '2px');
 
+    const checkUserPanel = async () => {
+      const panel = await evaluate(`(() => {
+        const panel=[...document.querySelectorAll('[aria-label="User panel"]')].find(e=>e.checkVisibility());
+        const gear=panel.querySelector('a'), p=panel.getBoundingClientRect(), g=gear.getBoundingClientRect();
+        return { name:gear.getAttribute('aria-label'), tooltip:gear.title, href:gear.getAttribute('href'), width:g.width, height:g.height, inside:g.x>=p.x && g.right<=p.right, overflow:panel.scrollWidth>panel.clientWidth, user:panel.querySelector('[title]').textContent, email:panel.querySelectorAll('p')[1].textContent };
+      })()`);
+      assert.equal(panel.name,'Open settings'); assert.equal(panel.tooltip,'Settings'); assert.equal(panel.href,'/settings');
+      assert.equal(panel.width,44); assert.equal(panel.height,44); assert.ok(panel.inside && !panel.overflow);
+      assert.equal(panel.user,payload.sub); assert.equal(panel.email,payload.email);
+    };
+    await checkUserPanel();
+    await navigate('/dashboard');
+    await evaluate(`document.querySelector('a[aria-label="Open settings"]').focus()`);
+    await key('Tab');
+    await evaluate(`document.querySelector('a[aria-label="Open settings"]').focus()`);
+    assert.equal(await evaluate(`getComputedStyle(document.activeElement).outlineWidth`),'2px');
+    await key('Enter');
+    await wait('location.pathname === "/settings" && !!document.querySelector("input[name=display-mode]")');
+    await command('Emulation.setDeviceMetricsOverride',{width:320,height:1000,deviceScaleFactor:1,mobile:false});
+    await evaluate(`document.querySelector('[aria-label="Toggle navigation"]').click()`);
+    await wait(`!![...document.querySelectorAll('[aria-label="User panel"]')].find(e=>e.checkVisibility())`);
+    await checkUserPanel();
+    await evaluate(`[...document.querySelectorAll('a[aria-label="Open settings"]')].find(e=>e.checkVisibility()).click()`);
+    await wait(`document.querySelector('[aria-label="Toggle navigation"]').getAttribute('aria-expanded') === 'false'`);
+    assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'));
+    await command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
     const routes = ['/', '/login', '/register', '/dashboard', '/focus-studio', '/goals', '/resources', '/tracking-links', '/validations', '/notifications', '/study-rooms'];
     for (const route of routes) {
       console.log(`Appearance route: ${route}`);
@@ -250,9 +319,9 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await choose('accent-palette', 'purple');
     await wait('document.body.textContent.includes("Browser storage is unavailable")');
     assert.equal(await evaluate('document.documentElement.dataset.accent'), 'purple');
-    await evaluate(`document.querySelector('[aria-labelledby="account-heading"] button').click()`);
+    await evaluate(`document.querySelector('aside button').click()`);
     await wait('location.pathname === "/login" && !!document.querySelector("form")');
-    assert.equal(await evaluate('sessionStorage.getItem("accessToken")'), null, 'Account uses the existing sign-out mechanism');
+    assert.equal(await evaluate('sessionStorage.getItem("accessToken")'), null, 'Sidebar uses the existing sign-out mechanism');
     assert.deepEqual(runtimeErrors, []);
     assert.deepEqual(writes, []);
     console.log(`Appearance: ${reports.length} theme/accent pairs; minimum text contrast ${Math.min(...reports.flatMap(r=>r.text.map(t=>t.ratio))).toFixed(2)}:1; minimum control border ${Math.min(...reports.map(r=>r.border)).toFixed(2)}:1; ${routes.length} real routes; responsive 320–1440 px.`);

@@ -1,3 +1,4 @@
+import { UserPanel } from "./UserPanel";
 import {
     Bell,
     BadgeCheck,
@@ -6,7 +7,6 @@ import {
     LayoutDashboard,
     Link2,
     LogOut,
-    Settings,
     Target,
     Users
 } from "lucide-react";
@@ -221,60 +221,8 @@ function AppSidebar() {
 
         <div className="border-t border-slate-800/80 p-3">
 
-            {currentUser && (
-                <div
-                    className="
-                        flex items-center
-                        gap-3
-                        rounded-xl
-                        px-3 py-3
-                    "
-                >
-                    <div
-                        className="
-                            flex h-9 w-9
-                            shrink-0
-                            items-center justify-center
-                            rounded-full
-                            bg-slate-800
-                            text-sm font-semibold
-                            text-slate-200
-                        "
-                    >
-                        {currentUser.username
-                            .charAt(0)
-                            .toUpperCase()}
-                    </div>
+            {currentUser && <UserPanel user={currentUser} />}
 
-
-                    <div className="min-w-0 flex-1">
-
-                        <p
-                            className="
-                                truncate
-                                text-sm font-medium
-                                text-slate-200
-                            "
-                        >
-                            {currentUser.username}
-                        </p>
-
-                        <p
-                            className="
-                                truncate
-                                text-xs
-                                text-slate-500
-                            "
-                        >
-                            {currentUser.email}
-                        </p>
-
-                    </div>
-                </div>
-            )}
-
-
-            <NavLink to={ROUTES.settings} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-control px-3 text-sm font-medium ${isActive ? "bg-accent-soft text-accent" : "text-content-secondary hover:bg-surface-hover"}`}><Settings size={18} aria-hidden="true"/>Settings</NavLink>
             <button
                 type="button"
                 onClick={handleLogout}

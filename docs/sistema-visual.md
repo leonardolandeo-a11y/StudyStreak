@@ -5,6 +5,13 @@ para toda la aplicación: Settings en `/settings`, desde la zona de usuario del
 sidebar y del menú móvil web. Dark/Mint sigue siendo el valor predeterminado.
 No se implementa Profile, estética retro ni un tema nativo en esta etapa.
 
+Settings presenta Dark/Light como muestras visuales y las cuatro paletas como
+cuadrados de color, con radios nativos y check de selección. Use device theme es
+un switch independiente: activa System y bloquea la selección manual; al apagarlo
+conserva el tema efectivo como modo manual, sin añadir campos de persistencia.
+UserPanel comparte la fila avatar/nombre/correo/engranaje entre sidebar y menú
+móvil. El engranaje navega a Settings; Sign out conserva su mecanismo anterior.
+
 ## Arquitectura y primer pintado
 
 - `src/styles/tokens.css` centraliza colores, tipografía, espaciado, radios y foco.

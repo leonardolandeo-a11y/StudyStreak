@@ -1,35 +1,20 @@
-import { Check, LogOut, Monitor, Moon, RotateCcw, Sun } from "lucide-react";
+import { LogOut, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "../routes/paths";
-import { useAppearance, useReducedMotion, useResolvedTheme } from "../theme/appearance";
-import type { AccentPalette, ThemeMode } from "../theme/appearance";
-
-const MODES = [{ id: "dark", label: "Dark", icon: Moon }, { id: "light", label: "Light", icon: Sun }, { id: "system", label: "System", icon: Monitor }] as const;
-const ACCENTS: AccentPalette[] = ["mint", "blue", "purple", "orange"];
+import { useAppearance, useReducedMotion } from "../theme/appearance";
+import { AppearanceSelectors } from "../components/settings/AppearanceSelectors";
 
 export default function Settings() {
     const { preferences, setPreferences, resetAppearance, storageAvailable } = useAppearance();
     const reducedMotion = useReducedMotion();
-    const resolvedTheme = useResolvedTheme();
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
     return <div className="mx-auto max-w-4xl space-y-6">
         <header><p className="study-kicker">Make space for your study style</p><h1 className="mt-2 text-3xl font-semibold text-content">Settings</h1><p className="mt-2 text-sm text-content-muted">Appearance preferences apply throughout StudyStreak Web.</p></header>
         <section aria-labelledby="appearance-heading" className="study-panel space-y-6">
             <h2 id="appearance-heading" className="text-xl font-semibold">Appearance</h2>
-            <fieldset><legend className="mb-3 text-sm font-semibold">Display mode</legend><div className="grid gap-2 sm:grid-cols-3">
-                {MODES.map(({ id, label, icon: Icon }) => <label key={id} className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-control border p-3 ${preferences.mode === id ? "border-accent bg-accent-soft" : "border-outline-strong"}`}>
-                    <input type="radio" name="display-mode" value={id} checked={preferences.mode === id} onChange={() => setPreferences({ mode: id as ThemeMode })} className="size-4 accent-accent"/>
-                    <Icon size={18} aria-hidden="true"/><span>{label}</span>{preferences.mode === id && <Check size={16} className="ml-auto text-accent" aria-hidden="true"/>}
-                </label>)}
-            </div><p className="mt-2 text-xs text-content-muted" role="status">Currently using {resolvedTheme} appearance{preferences.mode === "system" ? " from your system" : ""}.</p></fieldset>
-            <fieldset><legend className="mb-3 text-sm font-semibold">Accent palette</legend><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {ACCENTS.map(accent => <label key={accent} className={`flex min-h-14 cursor-pointer items-center gap-2 rounded-control border p-3 ${preferences.accent === accent ? "border-accent bg-accent-soft" : "border-outline-strong"}`}>
-                    <input type="radio" name="accent-palette" value={accent} checked={preferences.accent === accent} onChange={() => setPreferences({ accent })} className="size-4 accent-accent"/>
-                    <span className="capitalize">{accent}</span>{preferences.accent === accent && <Check size={16} className="ml-auto shrink-0 text-accent" aria-hidden="true"/>}
-                </label>)}
-            </div></fieldset>
+            <AppearanceSelectors />
             <figure aria-labelledby="appearance-preview" className="rounded-panel border border-outline bg-canvas p-4">
                 <figcaption id="appearance-preview" className="text-sm font-semibold">Appearance preview</figcaption>
                 <div className="mt-3 flex flex-wrap items-center gap-3"><span className="rounded-control bg-accent px-4 py-2 font-semibold text-on-accent">Primary action</span><span className="rounded-control border border-accent bg-accent-soft px-3 py-2 text-accent">Selected</span><span className="text-content-muted">Secondary text</span></div>

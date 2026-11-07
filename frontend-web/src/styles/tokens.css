@@ -22,7 +22,11 @@
     --ss-text: light-dark(#0f172a, #f1f5f9);
     --ss-text-secondary: light-dark(#334155, var(--ss-palette-slate-300));
     --ss-text-muted: light-dark(#475569, #94a3b8);
-    --ss-accent: light-dark(#126449, var(--ss-palette-mint));
+    --ss-accent-mint: light-dark(#126449, var(--ss-palette-mint));
+    --ss-accent-blue: light-dark(#1d4ed8, #93c5fd);
+    --ss-accent-purple: light-dark(#6d28d9, #d8b4fe);
+    --ss-accent-orange: light-dark(#9a3412, #fdba74);
+    --ss-accent: var(--ss-accent-mint);
     --ss-accent-hover: light-dark(#0e503b, var(--ss-palette-mint-hover));
     --ss-accent-soft: light-dark(#e0f5eb, #183b31);
     --ss-on-accent: light-dark(var(--ss-palette-paper), var(--ss-palette-ink));
@@ -142,17 +146,17 @@
 
 /* Each accent defines a readable foreground and soft selected surface in both modes. */
 :root[data-accent="blue"] {
-    --ss-accent: light-dark(#1d4ed8, #93c5fd);
+    --ss-accent: var(--ss-accent-blue);
     --ss-accent-hover: light-dark(#1e40af, #60a5fa);
     --ss-accent-soft: light-dark(#eff6ff, #172d49);
 }
 :root[data-accent="purple"] {
-    --ss-accent: light-dark(#6d28d9, #d8b4fe);
+    --ss-accent: var(--ss-accent-purple);
     --ss-accent-hover: light-dark(#5b21b6, #c084fc);
     --ss-accent-soft: light-dark(#f5f3ff, #342445);
 }
 :root[data-accent="orange"] {
-    --ss-accent: light-dark(#9a3412, #fdba74);
+    --ss-accent: var(--ss-accent-orange);
     --ss-accent-hover: light-dark(#7c2d12, #fb923c);
     --ss-accent-soft: light-dark(#fff7ed, #332317);
 }
