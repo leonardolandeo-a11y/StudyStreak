@@ -67,3 +67,108 @@ El test de migración crea su propio esquema de prueba, aplica el SQL dos veces 
 comprueba filas anteriores, históricos y una secuencia ajena sin alterarlos.
 Las pruebas HTTP usan puerto aleatorio y cuentas sintéticas; no generan datos en
 studystreak_local ni acceden al servicio habitual en 8080.
+
+## Parte B — avatar y banner privados
+
+| Ruta | GET | PUT | DELETE |
+| --- | --- | --- | --- |
+| /api/profile/avatar | Imagen propia, 200; ausente, 404 | Crear o reemplazar, 204 | Eliminar, 204 (idempotente) |
+| /api/profile/banner | Imagen propia, 200; ausente, 404 | Crear o reemplazar, 204 | Eliminar, 204 (idempotente) |
+
+Las seis operaciones requieren JWT y usan exclusivamente el propietario autenticado.
+No hay rutas públicas ni parámetros para elegir otra cuenta. Los clientes deben
+obtener las imágenes mediante fetch con Authorization y crear una URL de objeto
+local, revocándola al dejar de usarla; una etiqueta img por sí sola no añade JWT.
+No colocar tokens en URLs.
+
+PUT recibe **bytes directamente**, no multipart ni JSON/base64. Content-Type debe
+ser image/png, image/jpeg o image/webp; no se recibe un nombre de archivo.
+Ejemplo posterior contra un backend de pruebas ya migrado, con un token propio:
+
+```bash
+curl --fail-with-body -X PUT "$API_URL/api/profile/avatar" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: image/png' \
+  --data-binary @avatar.png
+```
+
+No activar curl --verbose/--trace ni registrar Authorization. El límite es de
+2 MiB (2 097 152 bytes) para avatar y 5 MiB (5 242 880 bytes) para banner. Los bytes
+se leen con límite antes de decodificar; el límite multipart anterior de evidencias
+no cambia. Se verifica formato real, integridad del contenedor y decodificación de
+píxeles. Se rechazan errores/advertencias del decodificador, MIME discordante,
+archivos truncados, SVG/HTML y dimensiones superiores a 8192 por lado o 16 millones
+de píxeles. Máximo dos decodificaciones simultáneas; una saturación devuelve 503
+para reintentar. No se promete conservar ni interpretar animaciones.
+
+Java no incluye decodificador WebP: se incorpora exclusivamente TwelveMonkeys
+imageio-webp 3.15.3, sin programas nativos ni servicios externos. Las imágenes de
+prueba son pequeños fixtures sintéticos PNG/JPEG/WebP, sin fotografías personales.
+Se sigue el patrón de evidencias de resolver propietario en servidor y limitar
+bytes/formato; no se modifica DailyRecordPhotoService ni su almacenamiento.
+
+Errores: 400 contenido inválido/corrupto o MIME discordante; 401 sin autenticación;
+404 imagen ausente; 413 exceso de bytes; 415 Content-Type no admitido; 503
+almacenamiento no disponible o decodificador ocupado. Las respuestas de lectura
+incluyen el tipo real, Cache-Control: no-store, nosniff y CSP restrictiva.
+
+### Almacenamiento y persistencia posterior
+
+La propiedad `profile.images.directory` se configura con `PROFILE_IMAGE_DIRECTORY`.
+Valor predeterminado: `./.local/profile-images`, excluido de Git. Allí se guardan
+`<id-numérico>/avatar.blob` y `<id-numérico>/banner.blob`, separados de User y de
+cualquier carpeta pública del frontend. No se necesita otra tabla ni migración.
+El nombre del cliente y parámetros de URL no participan en las rutas. Se rechazan
+symlinks. Directorios creados: 0700; archivos: 0600 cuando POSIX está disponible.
+No se cambia el permiso de carpetas padre ya existentes. El directorio debe estar
+bajo control exclusivo del usuario del backend, sin escritura de otros procesos.
+
+Se escribe un temporal privado en el mismo directorio y se reemplaza mediante
+movimiento atómico. Si el filesystem no lo permite, falla con 503 y conserva la
+imagen anterior; no se usa una sustitución parcial. GET/DELETE de imágenes ausentes
+no crean archivos. La imagen sobrevive al recrear el servicio Java mientras se
+conserve ese directorio; esto **no** la hace sobrevivir por sí solo a recrear Docker.
+
+Para un despliegue posterior autorizado:
+
+1. Aplicar primero la migración de la Parte A al destino autorizado con respaldo.
+2. Preparar un directorio privado persistente, propiedad del UID del backend.
+3. Configurar PROFILE_IMAGE_DIRECTORY=/var/lib/studystreak/profile-images y montar
+   un volumen dedicado o bind mount en esa ruta; mantenerlo al recrear el contenedor.
+4. No servir esa ruta con Vite/nginx ni habilitar acceso público.
+5. Respaldar/restaurar **base de datos y directorio de imágenes conjuntamente**:
+   los nombres utilizan los IDs reales de usuarios. No intercambiar carpetas entre
+   bases con IDs diferentes. Verificar lectura autenticada después de restaurar.
+
+No se ha montado ese volumen ni modificado Compose/.env en el entorno habitual.
+Tampoco se ha arrancado allí el nuevo jar ni aplicado su migración. El directorio
+predeterminado dentro de un contenedor efímero se pierde al recrearlo; el montaje
+persistente sigue pendiente de autorización. El borrado administrativo de cuentas
+existente no se modifica: archivos huérfanos requieren mantenimiento posterior,
+verificando que su usuario ya no exista y respetando la política de retención.
+
+### Verificación de imágenes
+
+```bash
+scripts/test-profile-backend.sh -Dtest=ProfileImageStorageTest,ProfileImageIntegrationTest test
+scripts/test-profile-backend.sh test
+```
+
+Pruebas con almacenamiento temporal privado y PostgreSQL desechable: tres formatos,
+reemplazo/lectura/eliminación, reinicialización del servicio sobre los mismos archivos,
+cuentas aisladas, acceso anónimo, filename malicioso, symlinks, corrupción, MIME falso,
+límites exactos de 2/5 MiB, exceso de un byte y banner PNG real >3 MiB mediante HTTP.
+Los errores de subida conservan la imagen anterior. GET de perfil y estadísticas
+existentes siguen funcionando junto con las nuevas rutas.
+
+## Resultado de esta implementación
+
+Parte A: 10 pruebas específicas y suite completa de 212 pruebas sin fallos.
+Parte B: 11 pruebas específicas y `verify` completo con 223 pruebas, sin fallos ni
+omisiones, incluido empaquetado del backend. Las primeras ejecuciones detectaron
+que las integraciones anteriores exigían el nombre studystreak_schema_check; se
+creó esa base únicamente dentro del contenedor desechable y se ajustó el wrapper,
+sin relajar las protecciones ni modificar los tests anteriores.
+
+El backend habitual continúa con su imagen anterior. Migración y montaje de
+almacenamiento persistente siguen pendientes de revisión/autorización; no iniciar
+el backend nuevo contra la base habitual hasta completar esos pasos.
