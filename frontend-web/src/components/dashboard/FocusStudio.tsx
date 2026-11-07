@@ -3,20 +3,20 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
 import {
-    AudioLines, BookOpen, Check, ChevronDown, Clock3, CloudRain, Coffee, Disc3,
-    Flame, Headphones, MoonStar, Music2, Pause, Piano, Play,
-    Radio, RotateCcw, Settings2, Sparkles, Trees, Volume2,
-    VolumeX, Waves
+    BookOpen, Check, ChevronDown, Clock3, Headphones, Music2, Pause, Play,
+    RotateCcw, Settings2, Sparkles, Volume2, VolumeX
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
 import FocusInsights from "./FocusInsights";
+import { TrackArtwork } from "../focus/TrackArtwork";
+import { SoundscapeCarousel } from "../focus/SoundscapeCarousel";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllActiveGoals } from "../../services/activeGoalsService";
 import { getFocusSummary, recordFocusCompletion } from "../../services/focusSessionService";
 import type { FocusSummary } from "../../services/focusSessionService";
 import { ROUTES, goalDetailsPath } from "../../routes/paths";
 import type { Goal } from "../../types/goal";
-import { SOUNDSCAPES, SOUND_CATEGORIES, soundscapeById } from "./soundscapes";
+import { SOUNDSCAPES, soundscapeById } from "./soundscapes";
 import type { SoundCategory } from "./soundscapes";
 import {
     advancePomodoro,
@@ -59,11 +59,11 @@ const THEMES: Record<FocusTheme, {
         label: "Aurora",
         background: "from-emerald-950 via-[#13241f] to-[#111a1a]",
         tint: "bg-emerald-400/15",
-        accent: "text-emerald-300",
-        strong: "bg-emerald-400 text-slate-950 hover:bg-emerald-300",
-        selected: "border-emerald-400/50 bg-emerald-400/10 text-emerald-200",
-        outline: "#34d399",
-        swatch: "bg-emerald-400"
+        accent: "text-accent",
+        strong: "bg-accent text-on-accent hover:bg-accent-hover",
+        selected: "border-accent bg-accent-soft text-accent",
+        outline: "var(--ss-accent)",
+        swatch: "bg-accent"
     },
     sunset: {
         label: "Sunset",
@@ -87,21 +87,6 @@ const THEMES: Record<FocusTheme, {
     }
 };
 
-const TRACK_ICONS: Record<Soundscape, typeof MoonStar> = {
-    dream: MoonStar,
-    keys: Piano,
-    classical: Music2,
-    lofi: Disc3,
-    white: Radio,
-    pink: AudioLines,
-    brown: Waves,
-    rain: CloudRain,
-    forest: Trees,
-    ocean: Waves,
-    cafe: Coffee,
-    fireplace: Flame
-};
-
 type DurationField = "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
 
 function readSelectedGoal(key: string): number | null {
@@ -123,27 +108,6 @@ function readSavedTimer(key: string): PomodoroState {
     }
 }
 
-function TrackArtwork({ track, compact = false }: {
-    track: Soundscape;
-    compact?: boolean;
-}) {
-    const color = soundscapeById(track).gradient;
-    const Icon = TRACK_ICONS[track];
-
-    return (
-        <div className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : "aspect-square w-full rounded-2xl"}`}>
-            <div aria-hidden="true" className="absolute -right-1/4 -top-1/4 h-3/4 w-3/4 rounded-full bg-white/10 blur-2xl" />
-            <div aria-hidden="true" className={`absolute rounded-full border border-white/20 bg-slate-950/25 shadow-2xl shadow-black/30 ${compact ? "h-11 w-11" : "h-[70%] w-[70%]"}`}>
-                <div className="absolute inset-[13%] rounded-full border border-white/15" />
-                <div className="absolute inset-[27%] rounded-full border border-white/10" />
-                <div className="absolute inset-[42%] rounded-full border border-white/20 bg-white/15" />
-            </div>
-            <Icon aria-hidden="true" className={`relative drop-shadow-lg ${compact ? "h-5 w-5" : "h-16 w-16 sm:h-20 sm:w-20"}`} strokeWidth={1.25} />
-            {!compact && <span className="absolute bottom-4 left-5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/60">STUDYSTREAK ORIGINALS</span>}
-        </div>
-    );
-}
-
 function DurationInput({ label, value, min, max, disabled, onChange }: {
     label: string;
     value: number;
@@ -153,8 +117,8 @@ function DurationInput({ label, value, min, max, disabled, onChange }: {
     onChange: (value: number) => void;
 }) {
     return (
-        <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3">
-            <span className="text-xs font-medium text-slate-300">{label}</span>
+        <label className="flex items-center justify-between gap-3 rounded-control border border-outline bg-canvas px-3 py-2">
+            <span className="text-xs font-medium text-content-secondary">{label}</span>
             <span className="flex items-center gap-1.5">
                 <input
                     type="number"
@@ -168,7 +132,7 @@ function DurationInput({ label, value, min, max, disabled, onChange }: {
                     onChange={event => {
                         if (event.target.value !== "") onChange(Number(event.target.value));
                     }}
-                    className="w-16 rounded-md border border-white/15 bg-slate-950 px-2 py-1 text-center text-sm font-semibold text-white"
+                    className="min-h-11 w-16 rounded-control border border-outline-strong bg-surface px-2 py-1 text-center text-sm font-semibold text-content"
                 />
                 <span className="text-xs text-slate-500">min</span>
             </span>
@@ -474,74 +438,42 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }
 
     return (
-        <div className="space-y-7 pb-6">
-            <header className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-emerald-400">
-                        <Headphones size={15} aria-hidden="true" /> Your personal listening room
-                    </p>
-                    <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Focus Studio<span className="text-emerald-400">.</span></h1>
-                    <p className="mt-3 max-w-2xl text-sm text-slate-400 sm:text-base">Your pace, your sound. Explore instrumental music, color noise and soothing spaces alongside your Pomodoro timer.</p><Link to={ROUTES.studyRooms} className="study-button mt-4">Study together →</Link>
-                </div>
-                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300">
-                    <Sparkles size={15} className="text-emerald-400" aria-hidden="true" />
-                    {timer.focusSessions} completed {timer.focusSessions === 1 ? "session" : "sessions"}
-                </div>
+        <div className="min-w-0 space-y-5 pb-4">
+            <header className="flex flex-wrap items-center justify-between gap-4">
+                <div><p className="study-kicker flex items-center gap-2"><Headphones size={15} aria-hidden="true"/>Your focus space</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-content">Focus Studio<span className="text-accent">.</span></h1><p className="mt-2 text-sm text-content-muted">One task. Your pace. Your sound.</p></div>
+                <Link to={ROUTES.studyRooms} className="study-button">Study together →</Link>
             </header>
-
-            <section aria-label="Featured focus mix" className="study-panel">
-
-                <div className="relative grid items-center gap-6 sm:grid-cols-[190px_minmax(0,1fr)] lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10">
-                    <TrackArtwork track={timer.preferences.soundscape} />
-                    <div className="min-w-0">
-                        <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] ${style.accent}`}>
-                            <Disc3 size={16} aria-hidden="true" /> YOUR FOCUS MIX
-                        </p>
-                        <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">Get in the zone.</h2>
-                        <p className="mt-3 max-w-xl text-sm leading-6 text-slate-200/80">Less noise. More momentum. Put on a soundscape, choose a session, and make some space for the work that matters.</p>
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                            <button type="button" onClick={() => void toggleAudio()}
-                                aria-label={playing ? "Pause ambient audio" : "Play ambient audio"}
-                                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-lg shadow-black/20 ${style.strong}`}>
-                                {playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
-                                {playing ? "Pause mix" : "Play mix"}
-                            </button>
-                            <span className="text-sm text-slate-300">{track.title} <span className="mx-1 text-slate-500">·</span> {track.kind}</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(350px,0.9fr)]">
-                <section aria-label="Pomodoro session timer" className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
+            <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+                <div className="min-w-0 space-y-4">
+                <section aria-label="Pomodoro session timer" className="study-panel min-w-0 p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
                         <div>
-                            <p className="flex items-center gap-2 text-sm font-bold text-white">
+                            <p className="flex items-center gap-2 text-sm font-bold text-content">
                                 <Clock3 size={19} className={style.accent} aria-hidden="true" /> Your session
                             </p>
-                            <p className="mt-1 text-xs text-slate-400">One task. One session. No distractions.</p>
+                            <p className="mt-1 text-xs text-content-muted">One task. One session. No distractions.</p>
                         </div>
                         <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
-                            {running ? "● In progress" : "Ready to begin"}
+                            {running ? "In progress" : linkedSession ? "Paused" : "Ready to begin"}
                         </span>
                     </div>
 
-                    <div className="mt-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1" aria-label="Session type">
+                    <div className="mt-4 flex flex-wrap gap-1 rounded-xl border border-outline bg-canvas p-1" aria-label="Session type">
                         {MODES.map(mode => (
                             <button type="button" key={mode.id} disabled={running}
                                 aria-pressed={timer.mode === mode.id}
                                 onClick={() => setTimer(previous => selectPomodoroMode(previous, mode.id))}
-                                className={`min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm ${
-                                    timer.mode === mode.id ? style.selected : "border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
+                                className={`min-h-11 min-w-0 flex-1 rounded-lg border px-2 py-2.5 text-xs font-semibold transition sm:text-sm ${
+                                    timer.mode === mode.id ? style.selected : "border-transparent text-content-muted hover:bg-white/5 hover:text-content"
                                 }`}>
                                 {mode.label}
                             </button>
                         ))}
                     </div>
 
-                    <div className="relative mx-auto mt-5 aspect-square w-full max-w-[285px]">
+                    <div className="relative mx-auto mt-5 aspect-square w-full max-w-[320px]">
                         <svg viewBox="0 0 250 250" aria-hidden="true" className="h-full w-full -rotate-90">
-                            <circle cx="125" cy="125" r="110" fill="none" stroke="#334155" strokeOpacity="0.42" strokeWidth="8" />
+                            <circle cx="125" cy="125" r="110" fill="none" stroke="var(--ss-border-strong)" strokeWidth="8" />
                             <circle cx="125" cy="125" r="110" fill="none" stroke={style.outline} strokeWidth="8" strokeLinecap="round"
                                 strokeDasharray={CIRCUMFERENCE} strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
                                 className="transition-[stroke-dashoffset] duration-500" />
@@ -551,8 +483,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 {timer.mode === "focus" ? "DEEP WORK" : "TAKE A BREATH"}
                             </p>
                             <span role="timer" aria-live="off" aria-label={remainingLabel + " remaining"}
-                                className="mt-3 font-mono text-5xl font-bold tracking-tight tabular-nums text-white sm:text-6xl">{remainingLabel}</span>
-                            <p className="mt-2 text-xs font-medium text-slate-400">{running ? "STAY IN THE FLOW" : "ON YOUR TERMS"}</p>
+                                className="mt-3 font-mono text-5xl font-bold tracking-tight tabular-nums text-content sm:text-6xl">{remainingLabel}</span>
+                            <p className="mt-2 text-xs font-medium text-content-muted">{running ? "STAY IN THE FLOW" : "ON YOUR TERMS"}</p>
                         </div>
                     </div>
 
@@ -564,40 +496,60 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         </button>
                         <button type="button" onClick={() => setTimer(previous => resetPomodoro(previous))}
                             title="Reset current session" aria-label="Reset current session"
-                            className="rounded-full border border-white/15 bg-white/5 p-3.5 text-slate-200 hover:bg-white/10">
+                            className="rounded-full border border-outline-strong bg-canvas p-3.5 text-content-secondary hover:bg-surface-hover">
                             <RotateCcw size={19} aria-hidden="true" />
                         </button>
                     </div>
 
-                    <p aria-live="polite" className="mt-5 text-center text-sm text-slate-400">
+                    <p aria-live="polite" className="mt-5 text-center text-sm text-content-muted">
                         {timer.mode === "focus" ? "Stay curious. Small steps add up." : "Recharge now. Come back refreshed."}
                     </p>
                     <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>
                         {[0, 1, 2, 3].map(index => (
                             <span key={index} className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
-                                index < cycle ? style.selected : "border-white/10 bg-white/5 text-slate-500"
+                                index < cycle ? style.selected : "border-outline bg-canvas text-content-muted"
                             }`}>
                                 {index < cycle ? <Check size={13} aria-hidden="true" /> : index + 1}
                             </span>
                         ))}
-                        <span className="ml-2 text-xs text-slate-500">Long break every 4 focus sessions</span>
+                        <span className="ml-2 text-xs text-content-muted">Long break every 4 focus sessions</span>
                     </div>
-                    <div className="mt-6 border-t border-slate-800 pt-6">
+                </section>
+<section aria-label="Now playing" className="study-panel min-w-0 p-4 sm:p-5">
+                        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-semibold text-content"><Music2 size={18} className={style.accent} aria-hidden="true"/>Now playing</h2><span className="text-xs text-content-muted">{playing ? "Playing" : "Paused"}</span></div>
+                        <div className="flex items-center gap-3">
+                            <TrackArtwork track={timer.preferences.soundscape} compact/>
+                            <div className="min-w-0 flex-1"><h3 className="truncate font-semibold text-content">{track.title}</h3><p className="mt-1 truncate text-xs text-content-muted">{track.kind} · StudyStreak Originals</p></div>
+                            <button type="button" onClick={() => void toggleAudio()} aria-label={playing ? "Pause soundscape" : "Play soundscape"} className={`flex size-11 shrink-0 items-center justify-center rounded-full ${style.strong}`}>
+                                {playing ? <Pause size={20} fill="currentColor" aria-hidden="true"/> : <Play size={20} fill="currentColor" aria-hidden="true"/>}
+                            </button>
+                        </div>
+                        <div className="mt-2 flex items-center gap-3">
+                            {timer.preferences.volume === 0 ? <VolumeX size={18} className="shrink-0 text-content-muted" aria-hidden="true"/> : <Volume2 size={18} className="shrink-0 text-content-muted" aria-hidden="true"/>}
+                            <input aria-label="Soundscape volume" type="range" min={0} max={100} step={5} value={Math.round(timer.preferences.volume * 100)} onChange={event => changeVolume(Number(event.target.value) / 100)} className="min-h-11 w-full cursor-pointer accent-accent"/>
+                            <span className="w-10 text-right text-xs text-content-muted tabular-nums">{Math.round(timer.preferences.volume * 100)}%</span>
+                        </div>
+                        {audioError && <p role="alert" className="mt-2 text-xs text-danger">{audioError}</p>}
+                    </section>
+                    <p className="flex items-center justify-center gap-2 text-xs text-content-muted"><Sparkles size={14} aria-hidden="true"/>{timer.focusSessions} focus cycles on this device · confirmed totals are shown for your Goal</p>
+                </div>
+                <aside aria-label="Session setup" className="min-w-0 space-y-4">
+                    <section aria-label="Study goal" className="study-panel min-w-0 p-4 sm:p-5">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="flex items-center gap-2 text-sm font-bold text-white">
-                                    <BookOpen size={16} className="text-emerald-300" aria-hidden="true" />
+                                <p className="flex items-center gap-2 text-sm font-bold text-content">
+                                    <BookOpen size={16} className="text-accent" aria-hidden="true" />
                                     Study toward a Goal
                                 </p>
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-content-muted">
                                     Only time confirmed by the server is added to your selected Goal.
                                 </p>
                             </div>
-                            <Link to={ROUTES.goals} className="shrink-0 text-xs font-semibold text-emerald-300 hover:text-emerald-200">
+                            <Link to={ROUTES.goals} className="inline-flex min-h-11 shrink-0 items-center text-xs font-semibold text-accent hover:text-accent-hover">
                                 My Goals
                             </Link>
                         </div>
-                        <label htmlFor="focus-goal-select" className="mt-4 block text-xs font-semibold text-slate-300">
+                        <label htmlFor="focus-goal-select" className="mt-3 block text-xs font-semibold text-content-secondary">
                             Link this focus session
                         </label>
                         <select id="focus-goal-select"
@@ -608,118 +560,70 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 setGoalSummary(null);
                                 setSummaryError(false);
                             }}
-                            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                            className="mt-2 w-full rounded-xl border border-outline-strong bg-canvas px-3 py-3 text-sm text-content">
                             <option value="">No Goal — timer only</option>
                             {goals.map(goal => (
                                 <option key={goal.id} value={goal.id}>{goal.topic}</option>
                             ))}
                         </select>
-                        {goalsLoading && <p className="mt-2 text-xs text-slate-400">Loading Goals…</p>}
-                        {goalsError && <p role="alert" className="mt-2 text-xs text-rose-300">{goalsError}</p>}
+                        {goalsLoading && <p className="mt-2 text-xs text-content-muted">Loading Goals…</p>}
+                        {goalsError && <p role="alert" className="mt-2 text-xs text-danger">{goalsError}</p>}
                         {!goalsLoading && !goalsError && goals.length === 0 && (
-                            <p className="mt-2 text-xs text-slate-400">No active Goals yet. Create one to track focus time.</p>
+                            <p className="mt-2 text-xs text-content-muted">No active Goals yet. Create one to track focus time.</p>
                         )}
                         {goalLocked && (
-                            <p className="mt-2 text-xs text-emerald-300">
+                            <p className="mt-2 text-xs text-accent">
                                 This session is linked to its original Goal until you complete or reset it.
                             </p>
                         )}
-                        {chosenGoal && <div className="mt-4 space-y-3">
-                            <RecordedSummary minutes={goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : undefined}
+                        {chosenGoal && <div className="mt-3 space-y-3">
+                            <RecordedSummary compact minutes={goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : undefined}
                                 sessions={goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : undefined}
                                 pending={timer.pendingFocusSessions.filter(item => item.goalId === selectedGoalId).length}
                                 error={summaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
                             <Link className="study-button" to={goalDetailsPath(chosenGoal.id)}>View Goal details</Link>
                         </div>}
                         {!chosenGoal && !goalsLoading && (
-                            <p className="mt-2 text-xs text-amber-200/80">
+                            <p className="mt-2 text-xs text-warning">
                                 Pomodoro still works, but unlinked focus time is not recorded.
                             </p>
                         )}
                         {pendingSync > 0 && (
-                            <p className="mt-3 text-xs font-semibold text-amber-200">
+                            <p className="mt-3 text-xs font-semibold text-warning">
                                 {pendingSync} completed {pendingSync === 1 ? "session" : "sessions"} waiting to sync.
                             </p>
                         )}
                         {saveError && (
                             <div role="alert" className="mt-3 flex flex-wrap items-center gap-3">
-                                <span className="text-xs text-rose-300">{saveError}</span>
+                                <span className="text-xs text-danger">{saveError}</span>
                                 <button type="button" onClick={retryPending}
                                     className="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-950/40">
                                     Retry sync
                                 </button>
                             </div>
                         )}
-                    </div>
-
-                </section>
-
-                <div className="space-y-5">
-                    <section aria-label="Now playing" className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="flex items-center gap-2 text-sm font-bold text-white">
-                                <Music2 size={18} className={style.accent} aria-hidden="true" /> Now playing
-                            </p>
-                            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-                                <span className={`h-2 w-2 rounded-full ${playing ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`} />
-                                {playing ? "Live" : "Paused"}
-                            </span>
-                        </div>
-                        <div className="mt-6 flex items-center gap-4">
-                            <TrackArtwork track={timer.preferences.soundscape} compact />
-                            <div className="min-w-0">
-                                <h3 className="truncate text-lg font-bold text-white">{track.title}</h3>
-                                <p className="mt-1 truncate text-xs text-slate-400">{track.kind} · StudyStreak Originals</p>
-                            </div>
-                        </div>
-                        <div className="mt-5 flex items-center justify-center gap-5 border-b border-white/10 pb-5">
-                            <button type="button" onClick={() => void toggleAudio()}
-                                aria-label={playing ? "Pause soundscape" : "Play soundscape"}
-                                className={`flex h-12 w-12 items-center justify-center rounded-full transition hover:scale-105 ${style.strong}`}>
-                                {playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" />}
-                            </button>
-                            <span className="text-xs text-slate-400">Original audio · No ads · No streaming</span>
-                        </div>
-                        <div className="mt-5 flex items-center gap-3">
-                            {timer.preferences.volume === 0 ? <VolumeX size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
-                                : <Volume2 size={18} className="shrink-0 text-slate-400" aria-hidden="true" />}
-                            <input aria-label="Soundscape volume" type="range" min={0} max={100} step={5}
-                                value={Math.round(timer.preferences.volume * 100)}
-                                onChange={event => changeVolume(Number(event.target.value) / 100)}
-                                className="w-full cursor-pointer accent-emerald-400" />
-                            <span className="w-10 text-right text-xs tabular-nums text-slate-400">{Math.round(timer.preferences.volume * 100)}%</span>
-                        </div>
-                        <label className="mt-5 flex cursor-pointer items-center justify-between gap-3 text-xs font-medium text-slate-300">
-                            Session start, pause and finish sounds
-                            <input type="checkbox" checked={timer.preferences.soundEffects}
-                                onChange={event => changePreferences({ soundEffects: event.target.checked })}
-                                className="h-4 w-4 accent-emerald-400" />
-                        </label>
-                        {audioError && <p role="alert" className="mt-4 text-xs text-rose-300">{audioError}</p>}
-                    </section>
-
-                    <section className="rounded-[26px] border border-white/10 bg-[#111820] p-5 sm:p-7">
+                    </section>                    <section aria-label="Focus settings" className="study-panel min-w-0 p-4 sm:p-5">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                                <p className="flex items-center gap-2 text-sm font-bold text-content">
                                     <Settings2 size={18} className={style.accent} aria-hidden="true" /> Make it yours
                                 </p>
-                                <p className="mt-1 text-xs text-slate-400">Your preferred look and study rhythm.</p>
+                                <p className="mt-1 text-xs text-content-muted">Your look and study rhythm.</p>
                             </div>
                             <button type="button" onClick={() => setSettingsOpen(open => !open)}
                                 aria-expanded={settingsOpen} aria-controls="focus-studio-settings"
-                                className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10">
+                                className="study-button gap-1 px-3">
                                 {settingsOpen ? "Hide settings" : "Customize"} <ChevronDown size={15} className={settingsOpen ? "rotate-180" : ""} />
                             </button>
                         </div>
-                        <div className="mt-5 flex flex-wrap gap-2" aria-label="Focus Studio color theme">
+                        <div className="mt-3 flex flex-wrap gap-2" aria-label="Focus Studio color theme">
                             {(["aurora", "sunset", "ocean"] as const).map(theme => (
                                 <button key={theme} type="button" aria-pressed={timer.preferences.theme === theme}
                                     onClick={() => changePreferences({ theme })}
-                                    className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${
+                                    className={`inline-flex min-h-11 items-center gap-2 rounded-control border px-3 py-2 text-xs font-semibold ${
                                         timer.preferences.theme === theme
                                             ? style.selected
-                                            : "border-white/10 bg-white/5 text-slate-400 hover:text-white"
+                                            : "border-outline bg-canvas text-content-muted hover:text-content"
                                     }`}>
                                     <span className={`h-2.5 w-2.5 rounded-full ${THEMES[theme].swatch}`} />
                                     {THEMES[theme].label}
@@ -727,77 +631,28 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             ))}
                         </div>
                         {settingsOpen && (
-                            <div id="focus-studio-settings" className="mt-5 grid gap-2 border-t border-white/10 pt-5 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+                            <div id="focus-studio-settings" className="mt-3 grid gap-2 border-t border-outline pt-3">
                                 <DurationInput label="Focus" value={timer.preferences.focusMinutes} min={5} max={120}
                                     disabled={running} onChange={value => changeDuration("focusMinutes", value)} />
                                 <DurationInput label="Short break" value={timer.preferences.shortBreakMinutes} min={1} max={30}
                                     disabled={running} onChange={value => changeDuration("shortBreakMinutes", value)} />
                                 <DurationInput label="Long break" value={timer.preferences.longBreakMinutes} min={5} max={60}
                                     disabled={running} onChange={value => changeDuration("longBreakMinutes", value)} />
-                                <p className="col-span-full mt-1 text-xs leading-5 text-slate-500">Pause the timer to adjust durations. Changing the current interval resets it.</p>
+                                <p className="col-span-full mt-1 text-xs leading-5 text-content-muted">Pause the timer to adjust durations. Changing the current interval resets it.</p>
                             </div>
                         )}
+<label className="mt-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 text-xs font-medium text-content-secondary">
+                            Session start, pause and finish sounds
+                            <input type="checkbox" checked={timer.preferences.soundEffects}
+                                onChange={event => changePreferences({ soundEffects: event.target.checked })}
+                                className="h-5 w-5 shrink-0 accent-accent" />
+                        </label>
                     </section>
-                </div>
+                </aside>
             </div>
-
-            <details className="study-panel"><summary className="cursor-pointer py-2 text-lg font-semibold">Explore your study statistics</summary><div className="mt-5"><FocusInsights refreshKey={statisticsRevision} /></div></details>
-
-            <section aria-label="Ambient soundscape library" className="space-y-4">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                    <div>
-                        <h2 className="text-2xl font-extrabold tracking-tight text-white">Made for your focus</h2>
-                        <p className="mt-1 text-sm text-slate-400">Original instrumentals, noise colors and nature atmospheres. No streaming needed.</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500"><Waves size={16} aria-hidden="true" /> {SOUNDSCAPES.length} original soundscapes</div>
-                </div>
-                <div className="flex flex-wrap gap-2" aria-label="Filter study sounds by category">
-                    {SOUND_CATEGORIES.map(category => (
-                        <button key={category.id} type="button"
-                            onClick={() => setSoundCategory(category.id)}
-                            aria-pressed={soundCategory === category.id}
-                            className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                                soundCategory === category.id
-                                    ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200"
-                                    : "border-white/10 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white"
-                            }`}>
-                            {category.label}
-                        </button>
-                    ))}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {visibleTracks.map((item) => {
-                        const selected = timer.preferences.soundscape === item.id;
-                        return (
-                            <button type="button" key={item.id} onClick={() => void chooseTrack(item.id)}
-                                aria-pressed={selected}
-                                aria-label={`Play ${item.title}, ${item.kind}`}
-                                className={`group min-w-0 rounded-2xl border p-4 text-left transition hover:-translate-y-1 hover:bg-white/[0.075] ${
-                                    selected ? "border-emerald-400/50 bg-emerald-400/[0.06]" : "border-white/10 bg-[#151c25]"
-                                }`}>
-                                <div className="relative">
-                                    <TrackArtwork track={item.id} />
-                                    <span className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-400 text-slate-950 shadow-lg shadow-black/30 transition group-hover:scale-110">
-                                        {selected && playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
-                                    </span>
-                                </div>
-                                <div className="mt-4 flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-slate-500">{String(SOUNDSCAPES.findIndex(sound => sound.id === item.id) + 1).padStart(2, "0")}</span>
-                                    <h3 className="truncate text-base font-bold text-white">{item.title}</h3>
-                                    {selected && <Check size={15} className="ml-auto shrink-0 text-emerald-400" aria-label="Selected" />}
-                                </div>
-                                <p className="mt-1 text-xs font-semibold text-emerald-300">{item.kind}</p>
-                                <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{item.description}</p>
-                            </button>
-                        );
-                    })}
-                </div>
-            </section>
-
-            <p className="flex items-center gap-2 border-t border-white/10 pt-5 text-xs text-slate-500">
-                <Headphones size={15} aria-hidden="true" />
-                Audio is generated locally and plays without ads. Choose a low volume; some tasks are easier in silence. Timer and preferences remain saved in this browser.
-            </p>
+            <SoundscapeCarousel tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
+            <details className="study-panel"><summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold text-content">Explore your study statistics</summary><div className="mt-4"><FocusInsights refreshKey={statisticsRevision}/></div></details>
+            <p className="border-t border-outline pt-4 text-xs leading-relaxed text-content-muted">Original audio generated locally. Timer and preferences stay saved in this browser. Only server-confirmed study time appears in your recorded totals.</p>
         </div>
     );
 }
