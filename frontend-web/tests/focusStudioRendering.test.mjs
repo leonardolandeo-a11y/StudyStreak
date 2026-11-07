@@ -17,22 +17,23 @@ const library = props => render(h(SoundscapeCarousel, {
   tracks: SOUNDSCAPES, category: 'all', onCategoryChange() {}, selected: 'dream', playing: false, async onChooseTrack() {}, ...props
 }));
 
-test('Focus Studio puts Now playing below the central timer, with side setup and final statistics', () => {
+test('Focus Studio gives the timer a full-width row, followed by player and goal, sounds and statistics', () => {
   const html = render(h(MemoryRouter, {}, h(FocusStudio, { userId: 1 })));
   const timer = html.indexOf('aria-label="Pomodoro session timer"');
   const playing = html.indexOf('aria-label="Now playing"');
-  const setup = html.indexOf('aria-label="Session setup"');
+  const tools = html.indexOf('aria-label="Session tools"');
+  const goal = html.indexOf('aria-label="Study goal"');
   const sounds = html.indexOf('id="sound-library-heading"');
   const stats = html.indexOf('Explore your study statistics');
-  assert.ok(timer >= 0 && timer < playing && playing < setup && setup < sounds && sounds < stats);
+  assert.ok(timer >= 0 && timer < tools && tools < playing && playing < goal && goal < sounds && sounds < stats);
   assert.match(html, /aria-label="Study goal"/);
-  assert.match(html, /aria-label="Focus settings"/);
+  assert.doesNotMatch(html, /Recorded for this Goal|Session audio|xl:grid-cols-/);
   assert.match(html, /role="timer" aria-live="off" aria-label="25:00 remaining"/);
   assert.match(html, /focus cycles on this device/);
   assert.doesNotMatch(html, /Featured focus mix|Get in the zone/);
-  assert.match(html, /aria-label="Pomodoro durations" title="Pomodoro durations" aria-haspopup="dialog"/);
+  assert.match(html, /aria-label="Pomodoro settings" title="Pomodoro settings" aria-haspopup="dialog"/);
   assert.doesNotMatch(html, /Make it yours|>Aurora<|>Sunset<|>Ocean<|>Customize</);
-  assert.ok(html.indexOf('Reset current session') < html.indexOf('Pomodoro durations'));
+  assert.ok(html.indexOf('Reset current session') < html.indexOf('Pomodoro settings'));
 });
 
 test('duration dialog preserves interval limits and disables editing while running', () => {
@@ -44,9 +45,11 @@ test('duration dialog preserves interval limits and disables editing while runni
   assert.match(html, /aria-label="Short break minutes" min="1" max="30"/);
   assert.match(html, /aria-label="Long break minutes" min="5" max="60"/);
   assert.match(html, /Changing the current interval resets it/);
-  assert.equal((render(h(FocusDurationDialog, { ...props, locked: true })).match(/disabled=""/g) || []).length, 5);
+  assert.equal((render(h(FocusDurationDialog, { ...props, locked: true })).match(/disabled=""/g) || []).length, 4);
   assert.match(html, />Save</);
   assert.match(html, />Cancel</);
+  assert.match(html, /Session start, pause and finish sounds/);
+  assert.match(render(h(FocusDurationDialog, { ...props, locked: true })), /type="checkbox"[^>]*checked=""/);
   assert.match(html, /Long break every 4 focus sessions \(fixed\)/);
 });
 
@@ -59,9 +62,10 @@ test('all original sounds have native selectable controls and labelled carousel 
   assert.match(html, /Previous slide/);
   assert.match(html, /Next slide/);
   assert.match(html, /aria-label="12 of 12"/);
-  assert.equal((html.match(/Information about /g) || []).length, 12);
+  assert.equal((html.match(/Description for /g) || []).length, 12);
   assert.match(html, /aria-describedby=/);
   assert.match(html, /motion-reduce:transition-none/);
+  assert.doesNotMatch(html, /Information about|lucide-info/);
   assert.doesNotMatch(html, /line-clamp-2/);
 
 });
@@ -99,8 +103,8 @@ const { join } = await import('node:path');
 const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium', 'chromium-browser']
   .filter(Boolean).find(binary => spawnSync(binary, ['--version'], { timeout: 2000 }).status === 0);
 
-// The real UI runs in an ephemeral Vite server. Every external request is
-// blocked, so this regression cannot access authentication or persistent data.
+// The real UI runs in an ephemeral Vite server. Goal responses below are UI
+// fixtures; all other external requests are blocked. No backend data is accessed.
 test('Chrome: duration modal, keyboard focus, responsive timer and circular sounds', {
   timeout: 60000, skip: chrome ? false : 'Chrome unavailable; set STUDYSTREAK_CHROME_BIN',
 }, async () => {
@@ -145,9 +149,18 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
       const message = JSON.parse(buffer.slice(0, end)); buffer = buffer.slice(end + 1);
       if (message.method === 'Fetch.requestPaused') {
         const local = message.params.request.url.startsWith(origin + '/');
-        void send(local ? 'Fetch.continueRequest' : 'Fetch.failRequest', {
-          requestId: message.params.requestId, ...(local ? {} : { errorReason: 'BlockedByClient' }),
-        }, message.sessionId).catch(() => {});
+        const goalFixture = !local && new URL(message.params.request.url).pathname.endsWith('/users/999999/goals');
+        if (goalFixture) {
+          const body = { content: [{ id: 1, topic: 'UI fixture goal', frequency: 1, duration: 30, completed: false }], last: true, totalPages: 1 };
+          void send('Fetch.fulfillRequest', { requestId: message.params.requestId, responseCode: 200,
+            responseHeaders: [{ name: 'Content-Type', value: 'application/json' }, { name: 'Access-Control-Allow-Origin', value: origin }],
+            body: Buffer.from(JSON.stringify(body)).toString('base64'),
+          }, message.sessionId).catch(() => {});
+        } else {
+          void send(local ? 'Fetch.continueRequest' : 'Fetch.failRequest', {
+            requestId: message.params.requestId, ...(local ? {} : { errorReason: 'BlockedByClient' }),
+          }, message.sessionId).catch(() => {});
+        }
       }
       const request = pending.get(message.id);
       if (request) { pending.delete(message.id); clearTimeout(request.timer); message.error ? request.reject(new Error(JSON.stringify(message.error))) : request.resolve(message.result); }
@@ -171,7 +184,7 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
       await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, modifiers, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) });
       await command('Input.dispatchKeyEvent', { type: 'keyUp', key, code, modifiers, windowsVirtualKeyCode });
     };
-    const gear = '[aria-label="Pomodoro durations"]';
+    const gear = '[aria-label="Pomodoro settings"]';
     const open = async () => {
       await evaluate(`document.querySelector('${gear}').focus(); document.querySelector('${gear}').click()`);
       await wait('document.querySelector("dialog").open');
@@ -194,6 +207,7 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
       assert.equal(await evaluate('document.querySelector("dialog").contains(document.activeElement)'), true);
       assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineWidth'), '2px');
     }
+    await evaluate('document.querySelector("dialog input[type=checkbox]").click()');
     await changeFocus(10);
     assert.equal(await evaluate('document.querySelector("[role=timer]").textContent'), '25:00', 'Draft must not change timer');
     await dialogButton('Cancel');
@@ -205,7 +219,9 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     await dialogButton('Save');
     assert.equal(await evaluate('document.querySelector("dialog").open'), true, 'Invalid duration must not save');
     await dialogButton('Restore defaults');
-    assert.deepEqual(await evaluate('[...document.querySelectorAll("dialog input")].map(e => e.value)'), ['25', '5', '15']);
+    assert.deepEqual(await evaluate('[...document.querySelectorAll("dialog input[type=number]")].map(e => e.value)'), ['25', '5', '15']);
+    assert.equal(await evaluate('document.querySelector("dialog input[type=checkbox]").checked'), false, 'Cancel discards sound preference edits');
+    await evaluate('document.querySelector("dialog input[type=checkbox]").click()');
     await changeFocus(10);
     await dialogButton('Save');
     await wait('!document.querySelector("dialog") && document.querySelector("[role=timer]").textContent === "10:00"');
@@ -217,17 +233,35 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     assert.equal(await evaluate(`document.activeElement.matches('${gear}')`), true);
     await command('Page.navigate', { url: origin + '/probe' });
     await wait('document.querySelector("[role=timer]")?.textContent === "10:00" && !document.querySelector("#focus-goal-select").disabled');
+    await open();
+    assert.equal(await evaluate('document.querySelector("dialog input[type=checkbox]").checked'), true, 'Saved event sounds survive reload');
+    await dialogButton('Cancel');
+    await wait('!document.querySelector("dialog")');
     await evaluate(`[...document.querySelectorAll('button')].find(e => e.textContent.trim() === 'Start focusing').click()`);
     await wait(`[...document.querySelectorAll('button')].some(e => e.textContent.trim() === 'Pause timer')`);
     await open();
     assert.equal(await evaluate('document.querySelectorAll("dialog input:disabled").length'), 3);
-    await key('Escape');
+    const deadline = await evaluate(`JSON.parse(localStorage.getItem('studystreak:focus-studio:v1:999999')).endsAt`);
+    await evaluate('document.querySelector("dialog input[type=checkbox]").click()');
+    await dialogButton('Save');
     await wait('!document.querySelector("dialog")');
+    assert.equal(await evaluate(`JSON.parse(localStorage.getItem('studystreak:focus-studio:v1:999999')).endsAt`), deadline, 'Changing event sounds must not restart a running timer');
     await evaluate(`[...document.querySelectorAll('button')].find(e => e.textContent.trim() === 'Pause timer').click()`);
     for (const width of [1440, 768, 390, 320]) {
       await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
       await evaluate('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))');
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `Overflow at ${width}`);
+      const layout = await evaluate(`(() => {
+        const box = selector => { const r = document.querySelector(selector).getBoundingClientRect(); return { x:r.x, y:r.y, width:r.width, height:r.height, bottom:r.bottom }; };
+        return { timer:box('[aria-label="Pomodoro session timer"]'), tools:box('[aria-label="Session tools"]'), player:box('[aria-label="Now playing"]'), goal:box('[aria-label="Study goal"]'), ring:box('[aria-label="Pomodoro session timer"] svg[viewBox="0 0 250 250"]') };
+      })()`);
+      assert.ok(Math.abs(layout.timer.x - layout.tools.x) < 1 && Math.abs(layout.timer.width - layout.tools.width) < 1, 'Timer must span the full content width');
+      assert.ok(layout.tools.y >= layout.timer.bottom, 'Both tools belong below the timer');
+      assert.ok(Math.abs(layout.ring.x + layout.ring.width / 2 - layout.timer.x - layout.timer.width / 2) < 1, 'Ring stays centered');
+      if (width >= 768) {
+        assert.equal(layout.player.y, layout.goal.y);
+        assert.ok(Math.abs(layout.player.width - layout.goal.width) < 1 && Math.abs(layout.player.height - layout.goal.height) < 1, 'Balanced tool cards');
+      } else assert.ok(layout.goal.y >= layout.player.bottom, 'Tool cards stack on mobile');
       await open();
       assert.ok(await evaluate('(() => { const r = document.querySelector("dialog").getBoundingClientRect(); return r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight; })()'), `Dialog at ${width}`);
       await dialogButton('Cancel');
@@ -263,7 +297,8 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     assert.equal(await evaluate('document.querySelector("[data-slot=carousel-item]").getBoundingClientRect().height'), card.height);
     await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
     await evaluate('document.querySelector("[data-slot=carousel-item] [aria-controls]").focus()');
-    assert.match(await evaluate('document.activeElement.getAttribute("aria-label")'), /Information about/);
+    assert.match(await evaluate('document.activeElement.getAttribute("aria-label")'), /Description for/);
+    await wait('getComputedStyle(document.querySelector("[data-slot=carousel-item] [aria-controls]").previousElementSibling).opacity === "1"');
     await key('Enter');
     await wait('document.querySelector("[data-slot=carousel-item] [aria-controls]").getAttribute("aria-expanded") === "true"');
     assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineWidth'), '2px');
@@ -284,8 +319,8 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     }
     await command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await wait(`getComputedStyle(document.querySelector('[data-slot=carousel-content]').firstElementChild).transform !== ${JSON.stringify(swipe.transform)}`);
-    // After a swipe Embla suppresses synthetic clicks; use a real second tap
-    // on a currently visible information control, as a touch user would.
+    // Let Embla snap into place, then tap the visible artwork, not playback.
+    await wait(`!![...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => { const r = e.getBoundingClientRect(); return r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight; })`);
     const tap = await evaluate(`(() => {
       const button = [...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => { const r = e.getBoundingClientRect(); return r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight; });
       const r = button.getBoundingClientRect();
@@ -294,9 +329,17 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     await command('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tap.x, y: tap.y }] });
     await command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await wait(`[...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => e.getAttribute('aria-label') === ${JSON.stringify(tap.name)}).getAttribute('aria-expanded') === 'true'`);
+    await command('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tap.x, y: tap.y }] });
+    await command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await wait(`[...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => e.getAttribute('aria-label') === ${JSON.stringify(tap.name)}).getAttribute('aria-expanded') === 'false'`);
+    await wait(`getComputedStyle([...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => e.getAttribute('aria-label') === ${JSON.stringify(tap.name)}).previousElementSibling).opacity === '0'`);
     assert.equal(await evaluate(`document.querySelector('[aria-label="Now playing"]').textContent`), nowPlaying);
     await evaluate(`document.querySelector('[aria-label="Pause soundscape"]').click()`);
     await wait(`!!document.querySelector('[aria-label="Play soundscape"]')`);
+    await evaluate(`(() => { const select = document.querySelector('#focus-goal-select'); select.value = '1'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    await wait(`!!document.querySelector('[aria-label="Study goal"] a[href="/goals/1"]')`);
+    assert.equal(await evaluate(`document.querySelector('#focus-goal-select').selectedOptions[0].textContent`), 'UI fixture goal');
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Study goal"]').textContent.includes('Recorded for this Goal')`), false);
     // A paused linked session is also immutable; this fixture stays browser-only.
     await evaluate(`(() => {
       const key = 'studystreak:focus-studio:v1:999999';
@@ -307,10 +350,18 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
       localStorage.setItem(key, JSON.stringify(saved));
     })()`);
     await command('Page.navigate', { url: origin + '/probe' });
-    await wait('!!document.querySelector("[role=timer]")');
+    await wait('!!document.querySelector("[role=timer]") && document.querySelector("#focus-goal-select")?.value === "1"');
+    assert.equal(await evaluate('document.querySelector("#focus-goal-select").disabled'), true);
     await open();
     assert.equal(await evaluate('document.querySelectorAll("dialog input:disabled").length'), 3);
-    await key('Escape');
+    await evaluate('document.querySelector("dialog input[type=checkbox]").click()');
+    await dialogButton('Save');
+    await wait('!document.querySelector("dialog")');
+    const paused = await evaluate(`JSON.parse(localStorage.getItem('studystreak:focus-studio:v1:999999'))`);
+    assert.equal(paused.remainingMs, 590000);
+    assert.equal(paused.activeFocusSession.sessionId, '11111111-1111-4111-8111-111111111111');
+    assert.equal(paused.preferences.focusMinutes, 10);
+    assert.equal(paused.preferences.soundEffects, true);
   } finally {
     if (browser.exitCode === null && browser.signalCode === null) {
       const stopped = new Promise(resolve => browser.once('exit', resolve));

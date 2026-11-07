@@ -1,8 +1,8 @@
 # Focus Studio web — Etapa 3
 
-La composición se centra en el Pomodoro, con Now Playing debajo y un lateral de
-meta/configuración. En tablet y móvil los bloques se apilan en ese mismo orden.
-El catálogo horizontal aparece después del panel principal y las estadísticas
+El Pomodoro ocupa todo el ancho; debajo, Now Playing y Study toward a Goal forman
+dos columnas iguales que se apilan en móvil. El catálogo horizontal aparece
+después de esas tarjetas y las estadísticas
 existentes quedan en un details al final. Se retiró el antiguo bloque Featured
 focus mix. No se modifica Dashboard, Settings global, Profile ni React Native.
 
@@ -15,13 +15,12 @@ focus mix. No se modifica Dashboard, Settings global, Profile ni React Native.
   con una variante pequeña para las tarjetas del carrusel.
 - SoundscapeCarousel es presentacional: recibe las pistas filtradas y delega la
   selección al chooseTrack existente. Filtrar no cambia ni detiene la pista activa.
-- RecordedSummary añade `compact`, opcional y false por defecto. Conserva la
-  presentación anterior para los demás consumidores y las distinciones entre
-  confirmados, pendientes, desconocidos y errores. Focus Studio usa la variante
-  compacta con actualización accesible por icono.
+- Se retira Recorded for this Goal de Focus Studio y su consulta local exclusiva.
+  RecordedSummary y los servicios compartidos siguen intactos para sus demás
+  consumidores. Los pendientes/errores de sincronización siguen visibles.
 - El contador de ciclos se etiqueta como local al dispositivo. No se presenta
   como contador de sesiones verificadas: los valores confirmados siguen viniendo
-  del backend y se muestran en la meta y las estadísticas.
+  del backend y se muestran en Explore your study statistics.
 
 Las superficies y controles usan tokens semánticos de la Etapa 1. La apariencia
 sigue siendo oscura/menta. Se retiraron Make it yours y los selectores de color;
@@ -33,7 +32,10 @@ FocusDurationDialog usa un diálogo nativo modal, sin añadir dependencias: borr
 local, Save/Cancel, Escape, foco contenido/restaurado y valores predeterminados
 25/5/15 desde DEFAULT_PREFERENCES. Solo Save aplica duraciones mediante el helper
 existente; no se permite editar mientras corre el temporizador o existe una sesión
-vinculada, incluso pausada. La frecuencia de cuatro ciclos sigue siendo fija.
+vinculada, incluso pausada. El checkbox de sonidos de eventos está en el mismo
+diálogo y usa Save/Cancel y la persistencia existente; puede cambiarse durante
+una sesión sin alterar tiempo, UUID ni meta. La frecuencia de cuatro ciclos
+sigue siendo fija.
 
 ## Carousel de shadcn/ui
 
@@ -57,9 +59,10 @@ Adaptaciones:
 - Loop de Embla sin duplicar pistas ni autoplay. Si no caben suficientes pistas
   para el bucle, Embla mantiene navegación finita; si todas caben, deshabilita las
   flechas. Filtrar reinicia solo la posición, no el temporizador o el audio.
-- Artwork cuadrado protagonista, título y controles. Descripción en overlay al
-  pasar el cursor o pulsar Información (también con teclado/tacto), sin cambiar
-  dimensiones; el botón de reproducción sigue accesible.
+- Artwork cuadrado protagonista, título y reproducción, sin icono de información.
+  Descripción en overlay al pasar el cursor, con foco de teclado o al tocar el
+  artwork fuera de reproducción. Otro toque la oculta, sin cambiar dimensiones.
+  Ambos controles tienen descripción accesible para lectores de pantalla.
 - Movimiento reducido: controles con salto sin animación y duración cero en la
   opción correspondiente de Embla. Los estilos globales existentes desactivan
   animaciones decorativas. Hay espacio alrededor del viewport para el foco.
@@ -87,9 +90,11 @@ semántica de la variante compacta de confirmados/errores/pendientes.
 El refinamiento añade límites del diálogo y una regresión Chrome aislada que
 bloquea solicitudes externas: Save/Cancel/defaults, preferencias antiguas,
 persistencia, foco/Escape, 320–1440 px, bucle/fallback, overlay, tacto y reproducción.
+También comprueba el ancho completo, las tarjetas equilibradas, el selector/meta
+con fixtures de interfaz y la edición de sonidos en sesiones activas/pausadas.
 
 Chrome headless verificó 320, 390, 768, 1024 y 1440 px, sin overflow horizontal:
-Now Playing queda bajo el temporizador; las tarjetas laterales se apilan en
+Now Playing y la meta quedan bajo el temporizador; ambas se apilan en
 anchos menores; todos los controles nuevos visibles tienen al menos 44 px.
 Pasaron flechas, botones, Tab, gesto táctil, filtros de 12/3/4 pistas, selección,
 reproducción/pausa de Web Audio y cambio de volumen. Las preferencias se conservan

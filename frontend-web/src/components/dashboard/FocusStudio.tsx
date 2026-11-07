@@ -1,4 +1,3 @@
-import { RecordedSummary } from "../study/RecordedSummary";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
@@ -11,11 +10,10 @@ import FocusInsights from "./FocusInsights";
 import { TrackArtwork } from "../focus/TrackArtwork";
 import { SoundscapeCarousel } from "../focus/SoundscapeCarousel";
 import { FocusDurationDialog } from "../focus/FocusDurationDialog";
-import type { PomodoroDurations } from "../focus/FocusDurationDialog";
+import type { FocusSettings } from "../focus/FocusDurationDialog";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllActiveGoals } from "../../services/activeGoalsService";
-import { getFocusSummary, recordFocusCompletion } from "../../services/focusSessionService";
-import type { FocusSummary } from "../../services/focusSessionService";
+import { recordFocusCompletion } from "../../services/focusSessionService";
 import { ROUTES, goalDetailsPath } from "../../routes/paths";
 import type { Goal } from "../../types/goal";
 import { SOUNDSCAPES, soundscapeById } from "./soundscapes";
@@ -95,10 +93,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
         Number.isSafeInteger(requestedGoalId) && requestedGoalId > 0
             ? requestedGoalId : readSelectedGoal(goalKey)
     );
-    const [goalSummary, setGoalSummary] = useState<FocusSummary | null>(null);
-    const [summaryRevision, setSummaryRevision] = useState(0);
     const [statisticsRevision, setStatisticsRevision] = useState(0);
-    const [summaryError, setSummaryError] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const inFlight = useRef(new Set<string>());
     const failed = useRef(new Set<string>());
@@ -139,7 +134,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 if (response.session) setSelectedGoalId(response.session.goal_id);
                 setTimer(previous => recoverTrackedTimer({ ...previous, pendingFocusSessions:
                     mergePending(previous.pendingFocusSessions, pending) }, response.session, response.serverNow));
-                setSummaryRevision(value => value + 1); setStatisticsRevision(value => value + 1);
+                setStatisticsRevision(value => value + 1);
             } catch { if (active) setSaveError('Recording recovery unavailable. Pending sessions remain on this device.'); } finally { recovering = false; }
         };
         void recover();
@@ -192,31 +187,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }, [goalKey, selectedGoalId]);
 
     useEffect(() => {
-        if (selectedGoalId === null) return;
-        const controller = new AbortController();
-        void getFocusSummary(selectedGoalId, controller.signal).then(summary => {
-            if (!controller.signal.aborted) {
-                setGoalSummary(summary);
-                setSummaryError(false);
-            }
-        }).catch(() => {
-            if (!controller.signal.aborted) setSummaryError(true);
-        });
-        const reloadVisible = () => {
-            if (document.visibilityState === "visible") setSummaryRevision(value => value + 1);
-        };
-        const summaryInterval = window.setInterval(reloadVisible, 30000);
-        window.addEventListener("focus", reloadVisible);
-        document.addEventListener("visibilitychange", reloadVisible);
-        return () => {
-            controller.abort();
-            window.clearInterval(summaryInterval);
-            window.removeEventListener("focus", reloadVisible);
-            document.removeEventListener("visibilitychange", reloadVisible);
-        };
-    }, [selectedGoalId, summaryRevision]);
-
-    useEffect(() => {
         for (const pending of timer.pendingFocusSessions) {
             if (failed.current.has(pending.sessionId) || inFlight.current.has(pending.sessionId)) {
                 continue;
@@ -226,7 +196,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 failed.current.delete(pending.sessionId);
                 setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
                 setSaveError(null);
-                setSummaryRevision(value => value + 1);
                 setStatisticsRevision(value => value + 1);
             }).catch(cause => {
                 failed.current.add(pending.sessionId);
@@ -300,9 +269,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
         setTimer(previous => updatePomodoroPreferences(previous, changes));
     }
 
-    function saveDurations(durations: PomodoroDurations) {
-        setTimer(previous => previous.endsAt !== null || previous.activeFocusSession
-            ? previous : updatePomodoroPreferences(previous, durations));
+    function saveSettings(settings: FocusSettings) {
+        setTimer(previous => updatePomodoroPreferences(previous,
+            previous.endsAt !== null || previous.activeFocusSession
+                ? { soundEffects: settings.soundEffects } : settings));
     }
 
     async function toggleTimer() {
@@ -376,8 +346,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 <div><p className="study-kicker flex items-center gap-2"><Headphones size={15} aria-hidden="true"/>Your focus space</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-content">Focus Studio<span className="text-accent">.</span></h1><p className="mt-2 text-sm text-content-muted">One task. Your pace. Your sound.</p></div>
                 <Link to={ROUTES.studyRooms} className="study-button">Study together →</Link>
             </header>
-            <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-                <div className="min-w-0 space-y-4">
                 <section aria-label="Pomodoro session timer" className="study-panel min-w-0 p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
                         <div>
@@ -390,7 +358,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         </span>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-1 rounded-xl border border-outline bg-canvas p-1" aria-label="Session type">
+                    <div className="mx-auto mt-4 flex max-w-md flex-wrap gap-1 rounded-xl border border-outline bg-canvas p-1" aria-label="Session type">
                         {MODES.map(mode => (
                             <button type="button" key={mode.id} disabled={running}
                                 aria-pressed={timer.mode === mode.id}
@@ -432,7 +400,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             <RotateCcw size={19} aria-hidden="true" />
                         </button>
                         <button type="button" className="study-button size-11 shrink-0 rounded-full p-0" onClick={() => setSettingsOpen(true)}
-                            aria-label="Pomodoro durations" title="Pomodoro durations" aria-haspopup="dialog">
+                            aria-label="Pomodoro settings" title="Pomodoro settings" aria-haspopup="dialog">
                             <Settings size={18} aria-hidden="true" />
                         </button>
                     </div>
@@ -448,6 +416,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <span className="ml-2 text-xs text-content-muted">Long break every 4 focus sessions</span>
                     </div>
                 </section>
+            <div role="group" aria-label="Session tools" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2">
                     <section aria-label="Now playing" className="study-panel min-w-0 p-4 sm:p-5">
                         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-semibold text-content"><Music2 size={18} className={style.accent} aria-hidden="true"/>Now playing</h2><span className="text-xs text-content-muted">{playing ? "Playing" : "Paused"}</span></div>
                         <div className="flex items-center gap-3">
@@ -464,9 +433,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         </div>
                         {audioError && <p role="alert" className="mt-2 text-xs text-danger">{audioError}</p>}
                     </section>
-                    <p className="flex items-center justify-center gap-2 text-xs text-content-muted"><Sparkles size={14} aria-hidden="true"/>{timer.focusSessions} focus cycles on this device · confirmed totals are shown for your Goal</p>
-                </div>
-                <aside aria-label="Session setup" className="min-w-0 space-y-4">
                     <section aria-label="Study goal" className="study-panel min-w-0 p-4 sm:p-5">
                         <div className="flex items-center justify-between gap-3">
                             <div>
@@ -490,8 +456,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             disabled={goalsLoading || goalLocked}
                             onChange={event => {
                                 setSelectedGoalId(event.target.value ? Number(event.target.value) : null);
-                                setGoalSummary(null);
-                                setSummaryError(false);
                             }}
                             className="mt-2 w-full rounded-xl border border-outline-strong bg-canvas px-3 py-3 text-sm text-content">
                             <option value="">No Goal — timer only</option>
@@ -510,10 +474,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             </p>
                         )}
                         {chosenGoal && <div className="mt-3 space-y-3">
-                            <RecordedSummary compact minutes={goalSummary?.goalId === selectedGoalId ? goalSummary.totalMinutes : undefined}
-                                sessions={goalSummary?.goalId === selectedGoalId ? goalSummary.completedSessions : undefined}
-                                pending={timer.pendingFocusSessions.filter(item => item.goalId === selectedGoalId).length}
-                                error={summaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
                             <Link className="study-button" to={goalDetailsPath(chosenGoal.id)}>View Goal details</Link>
                         </div>}
                         {!chosenGoal && !goalsLoading && (
@@ -536,19 +496,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             </div>
                         )}
                     </section>
-                    <section aria-label="Focus settings" className="study-panel min-w-0 p-4 sm:p-5">
-                        <h2 className="text-sm font-semibold text-content">Session audio</h2>
-                        <label className="mt-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 text-xs font-medium text-content-secondary">
-                            Session start, pause and finish sounds
-                            <input type="checkbox" checked={timer.preferences.soundEffects}
-                                onChange={event => changePreferences({ soundEffects: event.target.checked })}
-                                className="h-5 w-5 shrink-0 accent-accent" />
-                        </label>
-                    </section>
-                </aside>
             </div>
+            <p className="flex items-center justify-center gap-2 text-xs text-content-muted"><Sparkles size={14} aria-hidden="true"/>{timer.focusSessions} focus cycles on this device · confirmed totals are in your study statistics</p>
             {settingsOpen && <FocusDurationDialog onClose={() => setSettingsOpen(false)} preferences={timer.preferences}
-                locked={running || goalLocked} onSave={saveDurations} />}
+                locked={running || goalLocked} onSave={saveSettings} />}
             <SoundscapeCarousel tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
             <details className="study-panel"><summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold text-content">Explore your study statistics</summary><div className="mt-4"><FocusInsights refreshKey={statisticsRevision}/></div></details>
             <p className="border-t border-outline pt-4 text-xs leading-relaxed text-content-muted">Original audio generated locally. Timer and preferences stay saved in this browser. Only server-confirmed study time appears in your recorded totals.</p>

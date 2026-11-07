@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Check, Info, Pause, Play } from "lucide-react";
+import { Check, Pause, Play } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../ui/carousel";
 import { SOUND_CATEGORIES, SOUNDSCAPES } from "../dashboard/soundscapes";
 import type { SoundCategory, SoundscapeInfo } from "../dashboard/soundscapes";
@@ -27,15 +27,13 @@ function SoundCard({ track, selected, playing, onChooseTrack }: {
         <article className={`group h-full rounded-panel border p-2 ${selected ? "border-accent bg-accent-soft" : "border-outline bg-surface"}`}>
             <div className="relative isolate overflow-hidden rounded-control">
                 <TrackArtwork track={track.id} thumbnail />
-                <div id={descriptionId} className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-2 bg-canvas/95 px-3 pb-14 pt-12 transition-opacity duration-150 motion-reduce:transition-none group-hover:opacity-100 ${showInfo ? "opacity-100" : "opacity-0"}`}>
+                <div id={descriptionId} className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-2 bg-canvas/95 px-3 pb-14 pt-4 transition-opacity duration-150 motion-reduce:transition-none group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 ${showInfo ? "opacity-100" : "opacity-0"}`}>
                     <p className="text-xs font-semibold text-accent">{track.kind}</p>
                     <p className="text-xs leading-relaxed text-content">{track.description}</p>
                 </div>
-                <button type="button" aria-label={`Information about ${track.title}`} aria-expanded={showInfo} aria-controls={descriptionId}
+                <button type="button" aria-label={`Description for ${track.title}`} aria-expanded={showInfo} aria-controls={descriptionId} aria-describedby={descriptionId}
                     onClick={() => setShowInfo(value => !value)}
-                    className="absolute right-2 top-2 flex size-11 items-center justify-center rounded-full border border-outline-strong bg-canvas text-content hover:bg-surface-hover">
-                    <Info size={18} aria-hidden="true" />
-                </button>
+                    className="absolute inset-1.5 rounded-control" />
                 <button type="button" onClick={() => void onChooseTrack(track.id)} aria-pressed={selected} aria-describedby={descriptionId}
                     aria-label={`${selected && playing ? "Pause" : "Play"} ${track.title}, ${track.kind}`}
                     className="absolute bottom-2 right-2 flex size-11 items-center justify-center rounded-full bg-accent text-on-accent hover:bg-accent-hover">

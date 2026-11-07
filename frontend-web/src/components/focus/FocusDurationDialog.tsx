@@ -3,8 +3,8 @@ import { X } from "lucide-react";
 import { DEFAULT_PREFERENCES } from "../dashboard/pomodoroState";
 import type { PomodoroPreferences } from "../dashboard/pomodoroState";
 
-export type PomodoroDurations = Pick<PomodoroPreferences, "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes">;
-type DurationField = keyof PomodoroDurations;
+export type FocusSettings = Pick<PomodoroPreferences, "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes" | "soundEffects">;
+type DurationField = Exclude<keyof FocusSettings, "soundEffects">;
 
 const FIELDS: { field: DurationField; label: string; min: number; max: number }[] = [
     { field: "focusMinutes", label: "Focus", min: 5, max: 120 },
@@ -12,7 +12,7 @@ const FIELDS: { field: DurationField; label: string; min: number; max: number }[
     { field: "longBreakMinutes", label: "Long break", min: 5, max: 60 }
 ];
 
-const draftOf = (preferences: PomodoroDurations) => ({
+const draftOf = (preferences: Pick<FocusSettings, DurationField>) => ({
     focusMinutes: String(preferences.focusMinutes),
     shortBreakMinutes: String(preferences.shortBreakMinutes),
     longBreakMinutes: String(preferences.longBreakMinutes)
@@ -22,7 +22,7 @@ interface FocusDurationDialogProps {
     onClose: () => void;
     preferences: PomodoroPreferences;
     locked: boolean;
-    onSave: (durations: PomodoroDurations) => void;
+    onSave: (settings: FocusSettings) => void;
 }
 
 // Mounted only while open: each opening starts from the saved preferences.
@@ -32,6 +32,7 @@ export function FocusDurationDialog({ onClose, preferences, locked, onSave }: Fo
     const titleId = useId();
     const descriptionId = useId();
     const [draft, setDraft] = useState(() => draftOf(preferences));
+    const [soundEffects, setSoundEffects] = useState(preferences.soundEffects);
 
     useEffect(() => { dialog.current?.showModal(); }, []);
 
@@ -46,13 +47,13 @@ export function FocusDurationDialog({ onClose, preferences, locked, onSave }: Fo
             className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-panel border border-outline-strong bg-surface p-5 text-content shadow-2xl backdrop:bg-black/60">
             <form onSubmit={event => {
                 event.preventDefault();
-                if (locked || !event.currentTarget.reportValidity()) return;
-                onSave({ focusMinutes: Number(draft.focusMinutes), shortBreakMinutes: Number(draft.shortBreakMinutes), longBreakMinutes: Number(draft.longBreakMinutes) });
+                if (!event.currentTarget.reportValidity()) return;
+                onSave({ focusMinutes: Number(draft.focusMinutes), shortBreakMinutes: Number(draft.shortBreakMinutes), longBreakMinutes: Number(draft.longBreakMinutes), soundEffects });
                 close();
             }}>
                 <div className="flex items-center justify-between gap-3">
-                    <h2 id={titleId} className="text-lg font-semibold">Pomodoro durations</h2>
-                    <button type="button" className="study-button size-11 shrink-0 p-0" aria-label="Close Pomodoro durations" onClick={close}>
+                    <h2 id={titleId} className="text-lg font-semibold">Pomodoro settings</h2>
+                    <button type="button" className="study-button size-11 shrink-0 p-0" aria-label="Close Pomodoro settings" onClick={close}>
                         <X size={18} aria-hidden="true" />
                     </button>
                 </div>
@@ -73,10 +74,15 @@ export function FocusDurationDialog({ onClose, preferences, locked, onSave }: Fo
                     ))}
                 </div>
                 <p className="mt-3 text-xs text-content-muted">Long break every 4 focus sessions (fixed).</p>
+                <label className="mt-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 text-sm text-content-secondary">
+                    Session start, pause and finish sounds
+                    <input type="checkbox" checked={soundEffects} onChange={event => setSoundEffects(event.target.checked)}
+                        className="size-5 shrink-0 accent-accent" />
+                </label>
                 <button type="button" className="study-button mt-3 text-xs" disabled={locked} onClick={() => setDraft(draftOf(DEFAULT_PREFERENCES))}>Restore defaults</button>
                 <div className="mt-4 flex justify-end gap-2">
                     <button type="button" className="study-button" onClick={close}>Cancel</button>
-                    <button type="submit" disabled={locked} className="study-button border-accent bg-accent text-on-accent hover:bg-accent-hover">Save</button>
+                    <button type="submit" className="study-button border-accent bg-accent text-on-accent hover:bg-accent-hover">Save</button>
                 </div>
             </form>
         </dialog>
