@@ -8,9 +8,8 @@ focus mix. No se modifica Dashboard, Settings global, Profile ni React Native.
 
 ## Componentes y conservación de comportamiento
 
-- FocusStudio conserva sus estados, efectos, servicios y handlers de temporizador,
-  grabación, recuperación, outbox y audio. Se comparó por texto todo el cuerpo
-  funcional anterior al return; es idéntico. pomodoroState, pomodoroAudio,
+- FocusStudio conserva sus efectos, servicios y handlers de temporizador,
+  grabación, recuperación, outbox y audio. pomodoroState, pomodoroAudio,
   soundscapes, studyTracking y focusSessionService permanecen sin cambios.
 - TrackArtwork reutiliza los iconos y gradientes de las doce pistas existentes,
   con una variante pequeña para las tarjetas del carrusel.
@@ -24,10 +23,17 @@ focus mix. No se modifica Dashboard, Settings global, Profile ni React Native.
   como contador de sesiones verificadas: los valores confirmados siguen viniendo
   del backend y se muestran en la meta y las estadísticas.
 
-Las superficies y controles nuevos usan tokens semánticos de la Etapa 1. La
-apariencia predeterminada sigue siendo oscura/menta. Se conservan las preferencias
-locales Aurora/Sunset/Ocean de Focus Studio, sin introducir temas globales,
-estética retro, imágenes de fondo ni cambios en Login/Register.
+Las superficies y controles usan tokens semánticos de la Etapa 1. La apariencia
+sigue siendo oscura/menta. Se retiraron Make it yours y los selectores de color;
+los valores antiguos se siguen leyendo sin aplicarlos a la presentación. No se
+introducen temas globales, estética retro ni cambios en Login/Register.
+
+El círculo crece hasta 360 px y mantiene Start/Pause, Reset y engranaje debajo.
+FocusDurationDialog usa un diálogo nativo modal, sin añadir dependencias: borrador
+local, Save/Cancel, Escape, foco contenido/restaurado y valores predeterminados
+25/5/15 desde DEFAULT_PREFERENCES. Solo Save aplica duraciones mediante el helper
+existente; no se permite editar mientras corre el temporizador o existe una sesión
+vinculada, incluso pausada. La frecuencia de cuatro ciclos sigue siendo fija.
 
 ## Carousel de shadcn/ui
 
@@ -48,8 +54,12 @@ Adaptaciones:
   del estado de reproducción. La etiqueta ofrece Play/Pause según corresponda.
 - Teclado por flechas y Tab; Embla desplaza las tarjetas al recibir foco.
 - Gesto táctil horizontal, manteniendo el desplazamiento vertical de la página.
-- Sin autoplay, loop o plugins adicionales. Filtrar reinicia solo la posición
-  del carrusel, no el temporizador o el audio.
+- Loop de Embla sin duplicar pistas ni autoplay. Si no caben suficientes pistas
+  para el bucle, Embla mantiene navegación finita; si todas caben, deshabilita las
+  flechas. Filtrar reinicia solo la posición, no el temporizador o el audio.
+- Artwork cuadrado protagonista, título y controles. Descripción en overlay al
+  pasar el cursor o pulsar Información (también con teclado/tacto), sin cambiar
+  dimensiones; el botón de reproducción sigue accesible.
 - Movimiento reducido: controles con salto sin animación y duración cero en la
   opción correspondiente de Embla. Los estilos globales existentes desactivan
   animaciones decorativas. Hay espacio alrededor del viewport para el foco.
@@ -70,10 +80,13 @@ npm run test:web
 npm run dev
 ```
 
-Resultado automatizado: **81 tests web correctos** (58 de lógica y 23 de
+Resultado automatizado: **83 tests web correctos** (58 de lógica y 25 de
 renderizado/sistema visual). Las cinco regresiones nuevas verifican orden de
 paneles, estados del temporizador, las doce pistas, filtros/selección y la
 semántica de la variante compacta de confirmados/errores/pendientes.
+El refinamiento añade límites del diálogo y una regresión Chrome aislada que
+bloquea solicitudes externas: Save/Cancel/defaults, preferencias antiguas,
+persistencia, foco/Escape, 320–1440 px, bucle/fallback, overlay, tacto y reproducción.
 
 Chrome headless verificó 320, 390, 768, 1024 y 1440 px, sin overflow horizontal:
 Now Playing queda bajo el temporizador; las tarjetas laterales se apilan en
@@ -92,7 +105,7 @@ Los artefactos de revisión están en `.local/ui-stage3/layout/`, ignorados por 
 `focus-{1440,1024,768,390,320}.png`, layout-results.json e integration-results.json.
 Los archivos de sesión tienen permisos 0600 y no deben publicarse.
 
-## Integración con Study Ledger y Dashboard
+## Integración con Study Ledger y Dashboard (verificación de la Etapa 3 original)
 
 Se utilizó exclusivamente PostgreSQL desechable en 55436, base
 studystreak_schema_check. Backend temporal 18083, Vite 5177 y cuentas sintéticas.

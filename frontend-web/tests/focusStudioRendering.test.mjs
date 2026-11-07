@@ -10,6 +10,8 @@ after(() => server.close());
 const { default: FocusStudio } = await server.ssrLoadModule('/src/components/dashboard/FocusStudio.tsx');
 const { SoundscapeCarousel } = await server.ssrLoadModule('/src/components/focus/SoundscapeCarousel.tsx');
 const { RecordedSummary } = await server.ssrLoadModule('/src/components/study/RecordedSummary.tsx');
+const { FocusDurationDialog } = await server.ssrLoadModule('/src/components/focus/FocusDurationDialog.tsx');
+const { newPomodoro } = await server.ssrLoadModule('/src/components/dashboard/pomodoroState.ts');
 const { SOUNDSCAPES } = await server.ssrLoadModule('/src/components/dashboard/soundscapes.ts');
 const library = props => render(h(SoundscapeCarousel, {
   tracks: SOUNDSCAPES, category: 'all', onCategoryChange() {}, selected: 'dream', playing: false, async onChooseTrack() {}, ...props
@@ -28,6 +30,24 @@ test('Focus Studio puts Now playing below the central timer, with side setup and
   assert.match(html, /role="timer" aria-live="off" aria-label="25:00 remaining"/);
   assert.match(html, /focus cycles on this device/);
   assert.doesNotMatch(html, /Featured focus mix|Get in the zone/);
+  assert.match(html, /aria-label="Pomodoro durations" title="Pomodoro durations" aria-haspopup="dialog"/);
+  assert.doesNotMatch(html, /Make it yours|>Aurora<|>Sunset<|>Ocean<|>Customize</);
+  assert.ok(html.indexOf('Reset current session') < html.indexOf('Pomodoro durations'));
+});
+
+test('duration dialog preserves interval limits and disables editing while running', () => {
+  const props = { onClose() {}, preferences: newPomodoro().preferences, locked: false, onSave() {} };
+  const html = render(h(FocusDurationDialog, props));
+  assert.match(html, /<dialog[^>]+aria-labelledby=/);
+  assert.match(html, /aria-describedby=/);
+  assert.match(html, /aria-label="Focus minutes" min="5" max="120"/);
+  assert.match(html, /aria-label="Short break minutes" min="1" max="30"/);
+  assert.match(html, /aria-label="Long break minutes" min="5" max="60"/);
+  assert.match(html, /Changing the current interval resets it/);
+  assert.equal((render(h(FocusDurationDialog, { ...props, locked: true })).match(/disabled=""/g) || []).length, 5);
+  assert.match(html, />Save</);
+  assert.match(html, />Cancel</);
+  assert.match(html, /Long break every 4 focus sessions \(fixed\)/);
 });
 
 test('all original sounds have native selectable controls and labelled carousel slides', () => {
@@ -39,6 +59,11 @@ test('all original sounds have native selectable controls and labelled carousel 
   assert.match(html, /Previous slide/);
   assert.match(html, /Next slide/);
   assert.match(html, /aria-label="12 of 12"/);
+  assert.equal((html.match(/Information about /g) || []).length, 12);
+  assert.match(html, /aria-describedby=/);
+  assert.match(html, /motion-reduce:transition-none/);
+  assert.doesNotMatch(html, /line-clamp-2/);
+
 });
 
 test('category subsets do not invent tracks or replace the current playback state', () => {
@@ -64,4 +89,236 @@ test('compact recorded totals retain confirmed/unknown/error/pending semantics',
   assert.match(unknown, /Totals unavailable/);
   assert.doesNotMatch(unknown, />0</);
   assert.match(render(h(RecordedSummary, { compact: true, minutes: 0, sessions: 0 })), />0</);
+});
+
+const { spawn, spawnSync } = await import('node:child_process');
+const { mkdtempSync } = await import('node:fs');
+const { rm } = await import('node:fs/promises');
+const { tmpdir } = await import('node:os');
+const { join } = await import('node:path');
+const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium', 'chromium-browser']
+  .filter(Boolean).find(binary => spawnSync(binary, ['--version'], { timeout: 2000 }).status === 0);
+
+// The real UI runs in an ephemeral Vite server. Every external request is
+// blocked, so this regression cannot access authentication or persistent data.
+test('Chrome: duration modal, keyboard focus, responsive timer and circular sounds', {
+  timeout: 60000, skip: chrome ? false : 'Chrome unavailable; set STUDYSTREAK_CHROME_BIN',
+}, async () => {
+  const virtualId = '\0virtual:focus-refinement';
+  const live = await createServer({
+    appType: 'custom', server: { host: '127.0.0.1', port: 0, hmr: false, watch: null },
+    plugins: [{ name: 'focus-refinement-test',
+      resolveId(id) { if (id === virtualId) return virtualId; },
+      load(id) { if (id === virtualId) return `
+        import React from 'react'; import { createRoot } from 'react-dom/client';
+        import { MemoryRouter } from 'react-router-dom';
+        import FocusStudio from '/src/components/dashboard/FocusStudio.tsx';
+        createRoot(document.getElementById('root')).render(React.createElement(MemoryRouter, {}, React.createElement(FocusStudio, { userId: 999999 })));
+      `; },
+    }],
+  });
+  live.middlewares.use(async (req, res, next) => {
+    if (req.url !== '/probe') return next();
+    res.setHeader('Content-Type', 'text/html');
+    res.end(await live.transformIndexHtml('/probe', '<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/src/index.css"></head><body><main id="root" class="mx-auto max-w-6xl p-4"></main><script type="module" src="/@id/__x00__virtual:focus-refinement"></script></body></html>'));
+  });
+  await live.listen();
+  const origin = `http://127.0.0.1:${live.httpServer.address().port}`;
+  const profile = mkdtempSync(join(tmpdir(), 'studystreak-focus-refinement-'));
+  const browser = spawn(chrome, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
+    '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
+    '--disable-background-networking', '--disable-sync', '--no-first-run', `--user-data-dir=${profile}`,
+    '--remote-debugging-pipe', 'about:blank'], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] });
+  let nextId = 0, buffer = '';
+  const pending = new Map();
+  const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {
+    const id = ++nextId;
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Chrome timeout: ${method}`)); }, 10000);
+    pending.set(id, { resolve, reject, timer });
+    browser.stdio[3].write(JSON.stringify({ id, method, params, sessionId }) + '\0');
+  });
+  browser.stdio[4].setEncoding('utf8');
+  browser.stdio[4].on('data', chunk => {
+    buffer += chunk;
+    let end;
+    while ((end = buffer.indexOf('\0')) !== -1) {
+      const message = JSON.parse(buffer.slice(0, end)); buffer = buffer.slice(end + 1);
+      if (message.method === 'Fetch.requestPaused') {
+        const local = message.params.request.url.startsWith(origin + '/');
+        void send(local ? 'Fetch.continueRequest' : 'Fetch.failRequest', {
+          requestId: message.params.requestId, ...(local ? {} : { errorReason: 'BlockedByClient' }),
+        }, message.sessionId).catch(() => {});
+      }
+      const request = pending.get(message.id);
+      if (request) { pending.delete(message.id); clearTimeout(request.timer); message.error ? request.reject(new Error(JSON.stringify(message.error))) : request.resolve(message.result); }
+    }
+  });
+  try {
+    const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+    const command = (method, params) => send(method, params, sessionId);
+    const evaluate = async expression => {
+      const result = await command('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true, userGesture: true });
+      assert.equal(result.exceptionDetails, undefined, JSON.stringify(result.exceptionDetails));
+      return result.result.value;
+    };
+    const wait = async expression => {
+      for (let i = 0; i < 80; i++) { if (await evaluate(expression)) return; await new Promise(r => setTimeout(r, 50)); }
+      throw new Error(`Condition timed out: ${expression}`);
+    };
+    const key = async (key, code = key, modifiers = 0) => {
+      const windowsVirtualKeyCode = { Tab: 9, Escape: 27, ArrowLeft: 37, ArrowRight: 39, Enter: 13 }[key];
+      await command('Input.dispatchKeyEvent', { type: 'keyDown', key, code, modifiers, windowsVirtualKeyCode, ...(key === 'Enter' ? { text: '\r' } : {}) });
+      await command('Input.dispatchKeyEvent', { type: 'keyUp', key, code, modifiers, windowsVirtualKeyCode });
+    };
+    const gear = '[aria-label="Pomodoro durations"]';
+    const open = async () => {
+      await evaluate(`document.querySelector('${gear}').focus(); document.querySelector('${gear}').click()`);
+      await wait('document.querySelector("dialog").open');
+      assert.equal(await evaluate('document.querySelector("dialog").contains(document.activeElement)'), true);
+    };
+    await command('Page.enable');
+    await command('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
+    await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    await command('Page.addScriptToEvaluateOnNewDocument', { source: `if (!localStorage.getItem('studystreak:focus-studio:v1:999999')) localStorage.setItem('studystreak:focus-studio:v1:999999', ${JSON.stringify(JSON.stringify({ ...newPomodoro(), preferences: { ...newPomodoro().preferences, theme: 'sunset', soundEffects: false } }))})` });
+    await command('Page.navigate', { url: origin + '/probe' });
+    await command('Page.bringToFront');
+    await wait('!!document.querySelector("[data-slot=carousel-next]") && !document.querySelector("#focus-goal-select").disabled');
+    const changeFocus = value => evaluate(`(() => { const input = document.querySelector('[aria-label="Focus minutes"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '${value}'); input.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+    const dialogButton = label => evaluate(`[...document.querySelectorAll('dialog button')].find(e => e.textContent === '${label}').click()`);
+    assert.equal(await evaluate(`document.body.textContent.includes('Make it yours')`), false);
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('[aria-label="Reset current session"]').previousElementSibling).backgroundColor`), 'rgb(148, 232, 195)');
+    await open();
+    for (let i = 0; i < 9; i++) {
+      await key('Tab', 'Tab', i % 2 ? 8 : 0);
+      assert.equal(await evaluate('document.querySelector("dialog").contains(document.activeElement)'), true);
+      assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineWidth'), '2px');
+    }
+    await changeFocus(10);
+    assert.equal(await evaluate('document.querySelector("[role=timer]").textContent'), '25:00', 'Draft must not change timer');
+    await dialogButton('Cancel');
+    await wait('!document.querySelector("dialog")');
+    assert.equal(await evaluate(`document.activeElement.matches('${gear}')`), true);
+    await open();
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Focus minutes"]').value`), '25');
+    await changeFocus(4);
+    await dialogButton('Save');
+    assert.equal(await evaluate('document.querySelector("dialog").open'), true, 'Invalid duration must not save');
+    await dialogButton('Restore defaults');
+    assert.deepEqual(await evaluate('[...document.querySelectorAll("dialog input")].map(e => e.value)'), ['25', '5', '15']);
+    await changeFocus(10);
+    await dialogButton('Save');
+    await wait('!document.querySelector("dialog") && document.querySelector("[role=timer]").textContent === "10:00"');
+    await open();
+    await changeFocus(15);
+    await key('Escape');
+    await wait('!document.querySelector("dialog")');
+    assert.equal(await evaluate('document.querySelector("[role=timer]").textContent'), '10:00');
+    assert.equal(await evaluate(`document.activeElement.matches('${gear}')`), true);
+    await command('Page.navigate', { url: origin + '/probe' });
+    await wait('document.querySelector("[role=timer]")?.textContent === "10:00" && !document.querySelector("#focus-goal-select").disabled');
+    await evaluate(`[...document.querySelectorAll('button')].find(e => e.textContent.trim() === 'Start focusing').click()`);
+    await wait(`[...document.querySelectorAll('button')].some(e => e.textContent.trim() === 'Pause timer')`);
+    await open();
+    assert.equal(await evaluate('document.querySelectorAll("dialog input:disabled").length'), 3);
+    await key('Escape');
+    await wait('!document.querySelector("dialog")');
+    await evaluate(`[...document.querySelectorAll('button')].find(e => e.textContent.trim() === 'Pause timer').click()`);
+    for (const width of [1440, 768, 390, 320]) {
+      await command('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
+      await evaluate('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))');
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `Overflow at ${width}`);
+      await open();
+      assert.ok(await evaluate('(() => { const r = document.querySelector("dialog").getBoundingClientRect(); return r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight; })()'), `Dialog at ${width}`);
+      await dialogButton('Cancel');
+      await wait('!document.querySelector("dialog")');
+    }
+    await wait('!document.querySelector("[data-slot=carousel-previous]").disabled');
+    const firstLeft = await evaluate('document.querySelector("[data-slot=carousel-item]").getBoundingClientRect().left');
+    await evaluate('document.querySelector("[data-slot=carousel-previous]").click()');
+    await wait(`Math.abs([...document.querySelectorAll('[data-slot=carousel-item]')].at(-1).getBoundingClientRect().left - ${firstLeft}) < 1`);
+    await evaluate('document.querySelector("[data-slot=carousel-next]").click()');
+    await wait(`Math.abs(document.querySelector('[data-slot=carousel-item]').getBoundingClientRect().left - ${firstLeft}) < 1`);
+    await evaluate('[...document.querySelectorAll("button")].find(e => e.textContent === "Nature").click()');
+    await wait('document.querySelectorAll("[data-slot=carousel-item]").length === 3 && !document.querySelector("[data-slot=carousel-previous]").disabled');
+    await evaluate('document.querySelector("[data-slot=carousel-previous]").focus()');
+    await key('ArrowLeft');
+    await wait('!document.querySelector("[data-slot=carousel-next]").disabled');
+    // All three nature cards fit at desktop: Embla falls back safely without clones.
+    await command('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await wait('document.querySelector("[data-slot=carousel-previous]").disabled && document.querySelector("[data-slot=carousel-next]").disabled');
+    assert.equal(await evaluate('document.querySelectorAll("[data-slot=carousel-item]").length'), 3);
+
+    await evaluate('[...document.querySelectorAll("button")].find(e => e.textContent === "All sounds").click()');
+    await wait('document.querySelectorAll("[data-slot=carousel-item]").length === 12');
+    await wait('!document.querySelector("[data-slot=carousel-next]").disabled');
+    await evaluate('new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))');
+    // Artwork remains the dominant surface; hover never changes card dimensions.
+    await evaluate('document.querySelector("[data-slot=carousel-item]").scrollIntoView({ block: "center" })');
+    const card = await evaluate(`(() => { const e = document.querySelector('[data-slot=carousel-item]'); const r = e.getBoundingClientRect(); const art = e.querySelector('article > div').getBoundingClientRect(); return { width: r.width, height: r.height, x: art.x + art.width / 2, y: art.y + art.height / 2, artworkHeight: art.height }; })()`);
+    assert.ok(card.artworkHeight > card.height * .65);
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: card.x, y: card.y, pointerType: 'mouse' });
+    assert.equal(await evaluate("matchMedia('(hover:hover)').matches"), true, 'Desktop profile must support hover');
+    await wait('getComputedStyle(document.querySelector("[data-slot=carousel-item] [aria-controls]").previousElementSibling).opacity === "1"');
+    assert.equal(await evaluate('document.querySelector("[data-slot=carousel-item]").getBoundingClientRect().height'), card.height);
+    await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 0, y: 0 });
+    await evaluate('document.querySelector("[data-slot=carousel-item] [aria-controls]").focus()');
+    assert.match(await evaluate('document.activeElement.getAttribute("aria-label")'), /Information about/);
+    await key('Enter');
+    await wait('document.querySelector("[data-slot=carousel-item] [aria-controls]").getAttribute("aria-expanded") === "true"');
+    assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineWidth'), '2px');
+    await evaluate(`document.querySelector('[aria-label="Play Midnight Drift, Ambient pads"]').click()`);
+    await wait(`!!document.querySelector('[aria-label="Pause soundscape"]')`);
+    const nowPlaying = await evaluate(`document.querySelector('[aria-label="Now playing"]').textContent`);
+    await evaluate('document.querySelector("[data-slot=carousel-next]").click()');
+    await evaluate('[...document.querySelectorAll("button")].find(e => e.textContent === "Nature").click()');
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Now playing"]').textContent`), nowPlaying, 'Scrolling and filters must preserve playback');
+    await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await command('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+    await evaluate('document.querySelector("[data-slot=carousel-content]").scrollIntoView({ block: "center" })');
+    const swipe = await evaluate('(() => { const e = document.querySelector("[data-slot=carousel-content]"); const r = e.getBoundingClientRect(); return { x: r.x + r.width * .8, y: r.y + 100, transform: getComputedStyle(e.firstElementChild).transform }; })()');
+    await command('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: swipe.x, y: swipe.y }] });
+    for (const offset of [40, 90, 140, 190]) {
+      await command('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: swipe.x - offset, y: swipe.y }] });
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+    await command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await wait(`getComputedStyle(document.querySelector('[data-slot=carousel-content]').firstElementChild).transform !== ${JSON.stringify(swipe.transform)}`);
+    // After a swipe Embla suppresses synthetic clicks; use a real second tap
+    // on a currently visible information control, as a touch user would.
+    const tap = await evaluate(`(() => {
+      const button = [...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => { const r = e.getBoundingClientRect(); return r.x >= 0 && r.right <= innerWidth && r.y >= 0 && r.bottom <= innerHeight; });
+      const r = button.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2, name: button.getAttribute('aria-label') };
+    })()`);
+    await command('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tap.x, y: tap.y }] });
+    await command('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await wait(`[...document.querySelectorAll('[data-slot=carousel-item] [aria-controls]')].find(e => e.getAttribute('aria-label') === ${JSON.stringify(tap.name)}).getAttribute('aria-expanded') === 'true'`);
+    assert.equal(await evaluate(`document.querySelector('[aria-label="Now playing"]').textContent`), nowPlaying);
+    await evaluate(`document.querySelector('[aria-label="Pause soundscape"]').click()`);
+    await wait(`!!document.querySelector('[aria-label="Play soundscape"]')`);
+    // A paused linked session is also immutable; this fixture stays browser-only.
+    await evaluate(`(() => {
+      const key = 'studystreak:focus-studio:v1:999999';
+      const saved = JSON.parse(localStorage.getItem(key));
+      saved.endsAt = null;
+      saved.remainingMs = 590000;
+      saved.activeFocusSession = { sessionId: '11111111-1111-4111-8111-111111111111', goalId: 1, durationMinutes: 10 };
+      localStorage.setItem(key, JSON.stringify(saved));
+    })()`);
+    await command('Page.navigate', { url: origin + '/probe' });
+    await wait('!!document.querySelector("[role=timer]")');
+    await open();
+    assert.equal(await evaluate('document.querySelectorAll("dialog input:disabled").length'), 3);
+    await key('Escape');
+  } finally {
+    if (browser.exitCode === null && browser.signalCode === null) {
+      const stopped = new Promise(resolve => browser.once('exit', resolve));
+      await send('Browser.close');
+      await stopped;
+    }
+    for (const request of pending.values()) clearTimeout(request.timer);
+    await live.close();
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
 });

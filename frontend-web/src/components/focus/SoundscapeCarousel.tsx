@@ -1,4 +1,5 @@
-import { Check, Pause, Play } from "lucide-react";
+import { useId, useState } from "react";
+import { Check, Info, Pause, Play } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../ui/carousel";
 import { SOUND_CATEGORIES, SOUNDSCAPES } from "../dashboard/soundscapes";
 import type { SoundCategory, SoundscapeInfo } from "../dashboard/soundscapes";
@@ -14,23 +15,52 @@ interface SoundscapeCarouselProps {
     onChooseTrack: (track: Soundscape) => Promise<void>;
 }
 
+function SoundCard({ track, selected, playing, onChooseTrack }: {
+    track: SoundscapeInfo;
+    selected: boolean;
+    playing: boolean;
+    onChooseTrack: (track: Soundscape) => Promise<void>;
+}) {
+    const [showInfo, setShowInfo] = useState(false);
+    const descriptionId = useId();
+    return (
+        <article className={`group h-full rounded-panel border p-2 ${selected ? "border-accent bg-accent-soft" : "border-outline bg-surface"}`}>
+            <div className="relative isolate overflow-hidden rounded-control">
+                <TrackArtwork track={track.id} thumbnail />
+                <div id={descriptionId} className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-2 bg-canvas/95 px-3 pb-14 pt-12 transition-opacity duration-150 motion-reduce:transition-none group-hover:opacity-100 ${showInfo ? "opacity-100" : "opacity-0"}`}>
+                    <p className="text-xs font-semibold text-accent">{track.kind}</p>
+                    <p className="text-xs leading-relaxed text-content">{track.description}</p>
+                </div>
+                <button type="button" aria-label={`Information about ${track.title}`} aria-expanded={showInfo} aria-controls={descriptionId}
+                    onClick={() => setShowInfo(value => !value)}
+                    className="absolute right-2 top-2 flex size-11 items-center justify-center rounded-full border border-outline-strong bg-canvas text-content hover:bg-surface-hover">
+                    <Info size={18} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => void onChooseTrack(track.id)} aria-pressed={selected} aria-describedby={descriptionId}
+                    aria-label={`${selected && playing ? "Pause" : "Play"} ${track.title}, ${track.kind}`}
+                    className="absolute bottom-2 right-2 flex size-11 items-center justify-center rounded-full bg-accent text-on-accent hover:bg-accent-hover">
+                    {selected && playing ? <Pause size={18} fill="currentColor" aria-hidden="true" /> : <Play size={18} fill="currentColor" aria-hidden="true" />}
+                </button>
+            </div>
+            <div className="flex items-center gap-2 px-1 pb-1 pt-3">
+                <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-content" title={track.title}>{track.title}</h3>
+                {selected && <span className="shrink-0 text-accent"><Check size={16} aria-hidden="true" /><span className="sr-only">{playing ? "Playing" : "Selected"}</span></span>}
+            </div>
+        </article>
+    );
+}
+
 export function SoundscapeCarousel({ tracks, category, onCategoryChange, selected, playing, onChooseTrack }: SoundscapeCarouselProps) {
     return <section aria-labelledby="sound-library-heading" className="min-w-0 space-y-3">
         <div><h2 id="sound-library-heading" className="text-xl font-semibold text-content">Find your focus sound</h2><p className="mt-1 text-sm text-content-muted">{SOUNDSCAPES.length} original soundscapes. Instrumentals, color noise and calming spaces.</p></div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter study sounds by category">
             {SOUND_CATEGORIES.map(item => <button type="button" key={item.id} className="study-tab border border-outline px-3" aria-pressed={category === item.id} onClick={() => onCategoryChange(item.id)}>{item.label}</button>)}
         </div>
-        <Carousel key={category} aria-label="Study soundscapes" opts={{ align: "start", loop: false, breakpoints: { "(prefers-reduced-motion: reduce)": { duration: 0 } } }}>
+        <Carousel key={category} aria-label="Study soundscapes" opts={{ align: "start", loop: true, breakpoints: { "(prefers-reduced-motion: reduce)": { duration: 0 } } }}>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-content-muted" role="status">{tracks.length} {tracks.length === 1 ? "sound" : "sounds"} · Swipe, use arrows or Tab to explore</p><div className="flex gap-2"><CarouselPrevious/><CarouselNext/></div></div>
             <CarouselContent>
-                {tracks.map((item, index) => <CarouselItem key={item.id} aria-label={`${index + 1} of ${tracks.length}`} className="basis-[85%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                    <button type="button" onClick={() => void onChooseTrack(item.id)} aria-pressed={selected === item.id} aria-label={`${selected === item.id && playing ? "Pause" : "Play"} ${item.title}, ${item.kind}`}
-                        className={`group h-full w-full rounded-panel border p-3 text-left hover:bg-surface-hover ${selected === item.id ? "border-accent bg-accent-soft" : "border-outline bg-surface"}`}>
-                        <div className="relative"><TrackArtwork track={item.id} thumbnail/><span className="absolute right-2 bottom-2 flex size-11 items-center justify-center rounded-full bg-accent text-on-accent" aria-hidden="true">{selected === item.id && playing ? <Pause size={18} fill="currentColor"/> : <Play size={18} fill="currentColor"/>}</span></div>
-                        <div className="mt-3 flex items-center gap-2"><h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-content">{item.title}</h3>{selected === item.id && <Check size={15} className="shrink-0 text-accent" aria-hidden="true"/>}</div>
-                        <p className="mt-1 text-xs font-medium text-accent">{item.kind}</p><p className="mt-2 line-clamp-2 text-xs leading-relaxed text-content-muted">{item.description}</p>
-                        <span className="sr-only">Track {SOUNDSCAPES.findIndex(sound => sound.id === item.id) + 1} of {SOUNDSCAPES.length}</span>
-                    </button>
+                {tracks.map((track, index) => <CarouselItem key={track.id} aria-label={`${index + 1} of ${tracks.length}`} className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <SoundCard track={track} selected={selected === track.id} playing={playing} onChooseTrack={onChooseTrack} />
                 </CarouselItem>)}
             </CarouselContent>
         </Carousel>

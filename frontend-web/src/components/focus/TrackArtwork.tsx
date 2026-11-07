@@ -26,7 +26,7 @@ export function TrackArtwork({ track, compact = false, thumbnail = false }: {
     const Icon = TRACK_ICONS[track];
 
     return (
-        <div aria-hidden="true" className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : thumbnail ? "h-32 w-full rounded-control" : "aspect-square w-full rounded-panel"}`}>
+        <div aria-hidden="true" className={`relative isolate flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br ${color} ${compact ? "h-14 w-14 rounded-lg" : thumbnail ? "aspect-square w-full rounded-control" : "aspect-square w-full rounded-panel"}`}>
             <div aria-hidden="true" className="absolute -right-1/4 -top-1/4 h-3/4 w-3/4 rounded-full bg-white/10 blur-2xl" />
             <div aria-hidden="true" className={`absolute rounded-full border border-white/20 bg-slate-950/25 shadow-2xl shadow-black/30 ${compact ? "h-11 w-11" : "h-[70%] w-[70%]"}`}>
                 <div className="absolute inset-[13%] rounded-full border border-white/15" />

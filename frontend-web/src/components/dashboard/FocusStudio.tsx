@@ -3,13 +3,15 @@ import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
 import {
-    BookOpen, Check, ChevronDown, Clock3, Headphones, Music2, Pause, Play,
-    RotateCcw, Settings2, Sparkles, Volume2, VolumeX
+    BookOpen, Check, Clock3, Headphones, Music2, Pause, Play,
+    RotateCcw, Settings, Sparkles, Volume2, VolumeX
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
 import FocusInsights from "./FocusInsights";
 import { TrackArtwork } from "../focus/TrackArtwork";
 import { SoundscapeCarousel } from "../focus/SoundscapeCarousel";
+import { FocusDurationDialog } from "../focus/FocusDurationDialog";
+import type { PomodoroDurations } from "../focus/FocusDurationDialog";
 import { Link, useSearchParams } from "react-router-dom";
 import { getAllActiveGoals } from "../../services/activeGoalsService";
 import { getFocusSummary, recordFocusCompletion } from "../../services/focusSessionService";
@@ -33,7 +35,7 @@ import {
     updatePomodoroPreferences
 } from "./pomodoroState";
 import type {
-    CompletedFocusSession, FocusTheme, PomodoroMode, PomodoroPreferences,
+    CompletedFocusSession, PomodoroMode, PomodoroPreferences,
     PomodoroState, Soundscape
 } from "./pomodoroState";
 
@@ -45,49 +47,12 @@ const MODES: { id: PomodoroMode; label: string }[] = [
     { id: "longBreak", label: "Long break" }
 ];
 
-const THEMES: Record<FocusTheme, {
-    label: string;
-    background: string;
-    tint: string;
-    accent: string;
-    strong: string;
-    selected: string;
-    outline: string;
-    swatch: string;
-}> = {
-    aurora: {
-        label: "Aurora",
-        background: "from-emerald-950 via-[#13241f] to-[#111a1a]",
-        tint: "bg-emerald-400/15",
-        accent: "text-accent",
-        strong: "bg-accent text-on-accent hover:bg-accent-hover",
-        selected: "border-accent bg-accent-soft text-accent",
-        outline: "var(--ss-accent)",
-        swatch: "bg-accent"
-    },
-    sunset: {
-        label: "Sunset",
-        background: "from-rose-950 via-[#2d1b28] to-[#15151e]",
-        tint: "bg-rose-400/15",
-        accent: "text-rose-300",
-        strong: "bg-rose-300 text-slate-950 hover:bg-rose-200",
-        selected: "border-rose-400/50 bg-rose-400/10 text-rose-200",
-        outline: "#fda4af",
-        swatch: "bg-rose-300"
-    },
-    ocean: {
-        label: "Ocean",
-        background: "from-blue-950 via-[#14243d] to-[#101923]",
-        tint: "bg-sky-400/15",
-        accent: "text-sky-300",
-        strong: "bg-sky-300 text-slate-950 hover:bg-sky-200",
-        selected: "border-sky-400/50 bg-sky-400/10 text-sky-200",
-        outline: "#7dd3fc",
-        swatch: "bg-sky-300"
-    }
+const FOCUS_STYLE = {
+    accent: "text-accent",
+    strong: "bg-accent text-on-accent hover:bg-accent-hover",
+    selected: "border-accent bg-accent-soft text-accent",
+    outline: "var(--ss-accent)"
 };
-
-type DurationField = "focusMinutes" | "shortBreakMinutes" | "longBreakMinutes";
 
 function readSelectedGoal(key: string): number | null {
     try {
@@ -106,38 +71,6 @@ function readSavedTimer(key: string): PomodoroState {
     } catch {
         return newPomodoro();
     }
-}
-
-function DurationInput({ label, value, min, max, disabled, onChange }: {
-    label: string;
-    value: number;
-    min: number;
-    max: number;
-    disabled: boolean;
-    onChange: (value: number) => void;
-}) {
-    return (
-        <label className="flex items-center justify-between gap-3 rounded-control border border-outline bg-canvas px-3 py-2">
-            <span className="text-xs font-medium text-content-secondary">{label}</span>
-            <span className="flex items-center gap-1.5">
-                <input
-                    type="number"
-                    inputMode="numeric"
-                    aria-label={label + " minutes"}
-                    min={min}
-                    max={max}
-                    step={1}
-                    disabled={disabled}
-                    value={value}
-                    onChange={event => {
-                        if (event.target.value !== "") onChange(Number(event.target.value));
-                    }}
-                    className="min-h-11 w-16 rounded-control border border-outline-strong bg-surface px-2 py-1 text-center text-sm font-semibold text-content"
-                />
-                <span className="text-xs text-slate-500">min</span>
-            </span>
-        </label>
-    );
 }
 
 /**
@@ -353,7 +286,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
     const total = durationMs(timer.mode, timer.preferences);
     const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remaining / total)) : 0;
     const running = timer.endsAt !== null;
-    const style = THEMES[timer.preferences.theme];
+    const style = FOCUS_STYLE;
     const track = soundscapeById(timer.preferences.soundscape);
     const visibleTracks = SOUNDSCAPES.filter(item => soundCategory === "all" || item.category === soundCategory);
     const cycle = timer.focusSessions % 4;
@@ -367,9 +300,9 @@ export default function FocusStudio({ userId }: { userId: number }) {
         setTimer(previous => updatePomodoroPreferences(previous, changes));
     }
 
-    function changeDuration(field: DurationField, value: number) {
-        if (running) return;
-        changePreferences({ [field]: value });
+    function saveDurations(durations: PomodoroDurations) {
+        setTimer(previous => previous.endsAt !== null || previous.activeFocusSession
+            ? previous : updatePomodoroPreferences(previous, durations));
     }
 
     async function toggleTimer() {
@@ -451,9 +384,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             <p className="flex items-center gap-2 text-sm font-bold text-content">
                                 <Clock3 size={19} className={style.accent} aria-hidden="true" /> Your session
                             </p>
-                            <p className="mt-1 text-xs text-content-muted">One task. One session. No distractions.</p>
                         </div>
-                        <span className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style.selected}`}>
+                        <span className={`sr-only rounded-full border px-3 py-1.5 text-[11px] font-semibold sm:not-sr-only ${style.selected}`}>
                             {running ? "In progress" : linkedSession ? "Paused" : "Ready to begin"}
                         </span>
                     </div>
@@ -471,7 +403,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         ))}
                     </div>
 
-                    <div className="relative mx-auto mt-5 aspect-square w-full max-w-[320px]">
+                    <div className="relative mx-auto mt-3 aspect-square w-full max-w-[360px]">
                         <svg viewBox="0 0 250 250" aria-hidden="true" className="h-full w-full -rotate-90">
                             <circle cx="125" cy="125" r="110" fill="none" stroke="var(--ss-border-strong)" strokeWidth="8" />
                             <circle cx="125" cy="125" r="110" fill="none" stroke={style.outline} strokeWidth="8" strokeLinecap="round"
@@ -483,28 +415,29 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 {timer.mode === "focus" ? "DEEP WORK" : "TAKE A BREATH"}
                             </p>
                             <span role="timer" aria-live="off" aria-label={remainingLabel + " remaining"}
-                                className="mt-3 font-mono text-5xl font-bold tracking-tight tabular-nums text-content sm:text-6xl">{remainingLabel}</span>
+                                className="mt-3 font-mono text-6xl font-bold tracking-tight tabular-nums text-content sm:text-7xl">{remainingLabel}</span>
                             <p className="mt-2 text-xs font-medium text-content-muted">{running ? "STAY IN THE FLOW" : "ON YOUR TERMS"}</p>
                         </div>
                     </div>
 
-                    <div className="mx-auto mt-2 flex max-w-sm items-center gap-3">
+                    <div className="mx-auto flex max-w-xs items-center justify-center gap-2">
                         <button type="button" onClick={toggleTimer}
-                            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold ${style.strong}`}>
+                            className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold ${style.strong}`}>
                             {running ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
                             {running ? "Pause timer" : remaining < total ? "Resume session" : timer.mode === "focus" ? "Start focusing" : "Start break"}
                         </button>
                         <button type="button" onClick={() => setTimer(previous => resetPomodoro(previous))}
                             title="Reset current session" aria-label="Reset current session"
-                            className="rounded-full border border-outline-strong bg-canvas p-3.5 text-content-secondary hover:bg-surface-hover">
+                            className="flex size-11 shrink-0 items-center justify-center rounded-full border border-outline-strong bg-canvas text-content-secondary hover:bg-surface-hover">
                             <RotateCcw size={19} aria-hidden="true" />
+                        </button>
+                        <button type="button" className="study-button size-11 shrink-0 rounded-full p-0" onClick={() => setSettingsOpen(true)}
+                            aria-label="Pomodoro durations" title="Pomodoro durations" aria-haspopup="dialog">
+                            <Settings size={18} aria-hidden="true" />
                         </button>
                     </div>
 
-                    <p aria-live="polite" className="mt-5 text-center text-sm text-content-muted">
-                        {timer.mode === "focus" ? "Stay curious. Small steps add up." : "Recharge now. Come back refreshed."}
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>
                         {[0, 1, 2, 3].map(index => (
                             <span key={index} className={`flex h-6 w-6 items-center justify-center rounded-full border text-[10px] ${
                                 index < cycle ? style.selected : "border-outline bg-canvas text-content-muted"
@@ -515,7 +448,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         <span className="ml-2 text-xs text-content-muted">Long break every 4 focus sessions</span>
                     </div>
                 </section>
-<section aria-label="Now playing" className="study-panel min-w-0 p-4 sm:p-5">
+                    <section aria-label="Now playing" className="study-panel min-w-0 p-4 sm:p-5">
                         <div className="mb-3 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-semibold text-content"><Music2 size={18} className={style.accent} aria-hidden="true"/>Now playing</h2><span className="text-xs text-content-muted">{playing ? "Playing" : "Paused"}</span></div>
                         <div className="flex items-center gap-3">
                             <TrackArtwork track={timer.preferences.soundscape} compact/>
@@ -602,46 +535,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 </button>
                             </div>
                         )}
-                    </section>                    <section aria-label="Focus settings" className="study-panel min-w-0 p-4 sm:p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <p className="flex items-center gap-2 text-sm font-bold text-content">
-                                    <Settings2 size={18} className={style.accent} aria-hidden="true" /> Make it yours
-                                </p>
-                                <p className="mt-1 text-xs text-content-muted">Your look and study rhythm.</p>
-                            </div>
-                            <button type="button" onClick={() => setSettingsOpen(open => !open)}
-                                aria-expanded={settingsOpen} aria-controls="focus-studio-settings"
-                                className="study-button gap-1 px-3">
-                                {settingsOpen ? "Hide settings" : "Customize"} <ChevronDown size={15} className={settingsOpen ? "rotate-180" : ""} />
-                            </button>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2" aria-label="Focus Studio color theme">
-                            {(["aurora", "sunset", "ocean"] as const).map(theme => (
-                                <button key={theme} type="button" aria-pressed={timer.preferences.theme === theme}
-                                    onClick={() => changePreferences({ theme })}
-                                    className={`inline-flex min-h-11 items-center gap-2 rounded-control border px-3 py-2 text-xs font-semibold ${
-                                        timer.preferences.theme === theme
-                                            ? style.selected
-                                            : "border-outline bg-canvas text-content-muted hover:text-content"
-                                    }`}>
-                                    <span className={`h-2.5 w-2.5 rounded-full ${THEMES[theme].swatch}`} />
-                                    {THEMES[theme].label}
-                                </button>
-                            ))}
-                        </div>
-                        {settingsOpen && (
-                            <div id="focus-studio-settings" className="mt-3 grid gap-2 border-t border-outline pt-3">
-                                <DurationInput label="Focus" value={timer.preferences.focusMinutes} min={5} max={120}
-                                    disabled={running} onChange={value => changeDuration("focusMinutes", value)} />
-                                <DurationInput label="Short break" value={timer.preferences.shortBreakMinutes} min={1} max={30}
-                                    disabled={running} onChange={value => changeDuration("shortBreakMinutes", value)} />
-                                <DurationInput label="Long break" value={timer.preferences.longBreakMinutes} min={5} max={60}
-                                    disabled={running} onChange={value => changeDuration("longBreakMinutes", value)} />
-                                <p className="col-span-full mt-1 text-xs leading-5 text-content-muted">Pause the timer to adjust durations. Changing the current interval resets it.</p>
-                            </div>
-                        )}
-<label className="mt-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 text-xs font-medium text-content-secondary">
+                    </section>
+                    <section aria-label="Focus settings" className="study-panel min-w-0 p-4 sm:p-5">
+                        <h2 className="text-sm font-semibold text-content">Session audio</h2>
+                        <label className="mt-3 flex min-h-11 cursor-pointer items-center justify-between gap-3 text-xs font-medium text-content-secondary">
                             Session start, pause and finish sounds
                             <input type="checkbox" checked={timer.preferences.soundEffects}
                                 onChange={event => changePreferences({ soundEffects: event.target.checked })}
@@ -650,6 +547,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
                     </section>
                 </aside>
             </div>
+            {settingsOpen && <FocusDurationDialog onClose={() => setSettingsOpen(false)} preferences={timer.preferences}
+                locked={running || goalLocked} onSave={saveDurations} />}
             <SoundscapeCarousel tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
             <details className="study-panel"><summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold text-content">Explore your study statistics</summary><div className="mt-4"><FocusInsights refreshKey={statisticsRevision}/></div></details>
             <p className="border-t border-outline pt-4 text-xs leading-relaxed text-content-muted">Original audio generated locally. Timer and preferences stay saved in this browser. Only server-confirmed study time appears in your recorded totals.</p>
