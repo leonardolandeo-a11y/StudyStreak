@@ -3,7 +3,8 @@ import { Text, View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { apiClient } from '../../services/apiClient';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { BarChart } from '../study/BarChart';
 import { MetricCard } from '../study/MetricCard';
 import { ActionButton } from '../ui/ActionButton';
@@ -11,6 +12,8 @@ import { activityColor, barPercent, calendarPadding, sessionDate } from '../stud
 interface Entry { id:string;goal_name:string;source:string;state:string;confirmed_seconds:number;planned_seconds:number;verified:boolean;started_at:string; }
 const sections=['Activity','Goals','Together','History'] as const;
 export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
+ const styles = useThemedStyles(createStyles);
+ const { theme: { colors: palette } } = useAppearance();
  const [section,setSection]=useState<typeof sections[number]>('Activity');
  const [scale,setScale]=useState<'Daily'|'Weekly'|'Monthly'>('Daily');
  const [selectedDay,setSelectedDay]=useState<number|null>(null);
@@ -28,6 +31,7 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
  const maxGoal=Math.max(0,...data.byGoal.map(item=>item.minutes));
  const day=selectedDay===null?null:data.activity[selectedDay];
  return <View style={styles.stack}>
+  <Text style={styles.caption}>Recorded activity below includes historical estimates unless explicitly labelled verified.</Text>
   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:6}}>{sections.map(item=><Pressable key={item} accessibilityRole="button" accessibilityState={{selected:section===item}} onPress={()=>setSection(item)} style={[styles.tab,section===item&&styles.selected]}><Text style={[styles.tabText,section===item&&styles.selectedText]}>{item}</Text></Pressable>)}</ScrollView>
   {section==='Activity'&&<>
    <View style={styles.metrics}><MetricCard label="Active days" value={data.activeDays} detail={`Last ${data.days} days`}/><MetricCard label="Focus streak" value={`${data.studyStreak} days`} detail={`Best ${data.bestStudyStreak} · separate from Daily Records`}/></View>
@@ -36,7 +40,7 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
    <View style={styles.panel}><Text style={styles.heading}>A year of showing up</Text><Text style={styles.caption}>365 days · Monday at the top · swipe through weeks</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator><View style={{height:336,flexDirection:'column',flexWrap:'wrap',gap:4}}>
      {Array.from({length:calendarPadding(data.activity[0]?.date)},(_,i)=><View key={`pad-${i}`} style={{width:44,height:44}}/>)}
-     {data.activity.map((item,index)=><Pressable key={item.date} accessibilityRole="button" accessibilityLabel={`${item.date}: ${item.minutes} minutes, ${item.sessions} sessions`} onPress={()=>setSelectedDay(index)} style={{width:44,height:44,borderRadius:4,backgroundColor:activityColor(item.minutes)}}/>)}
+     {data.activity.map((item,index)=><Pressable key={item.date} accessibilityRole="button" accessibilityLabel={`${item.date}: ${item.minutes} minutes, ${item.sessions} sessions`} onPress={()=>setSelectedDay(index)} style={{width:44,height:44,borderRadius:4,backgroundColor:activityColor(item.minutes, palette)}}/>)}
     </View></ScrollView>
     <Text accessibilityLiveRegion="polite" style={styles.caption}>{day?`${day.date} · ${day.minutes} min · ${day.sessions} sessions`:'Tap a date for its recorded activity.'}</Text><Text style={styles.caption}>Intensity: 0 · 1–29 · 30–59 · 60+ min</Text>
    </View>
@@ -49,7 +53,7 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
   </View>}
   {section==='Together'&&<>
    <View style={styles.metrics}><MetricCard label="Individual" value={`${data.individualMinutes} min`} detail="Period · includes historical estimates"/><MetricCard label="Group" value={`${data.groupMinutes} min`} detail={`${data.groupSessions} completed group sessions`}/></View>
-   <View style={styles.panel}><Text style={styles.heading}>Your study balance</Text><View accessible accessibilityLabel={`Individual ${data.individualMinutes} minutes, group ${data.groupMinutes} minutes`} style={[styles.track,{height:20,flexDirection:'row'}]}><View style={{height:20,width:`${barPercent(data.individualMinutes,data.periodMinutes)}%`,backgroundColor:palette.primary}}/><View style={{height:20,width:`${barPercent(data.groupMinutes,data.periodMinutes)}%`,backgroundColor:'#bae6fd'}}/></View><Text style={styles.caption}>Mint: individual · light blue: group. Only saved time appears here.</Text></View>
+   <View style={styles.panel}><Text style={styles.heading}>Your study balance</Text><View accessible accessibilityLabel={`Individual ${data.individualMinutes} minutes, group ${data.groupMinutes} minutes`} style={[styles.track,{height:20,flexDirection:'row'}]}><View style={{height:20,width:`${barPercent(data.individualMinutes,data.periodMinutes)}%`,backgroundColor:palette.primary}}/><View style={{height:20,width:`${barPercent(data.groupMinutes,data.periodMinutes)}%`,backgroundColor:palette.info}}/></View><Text style={styles.caption}>Accent: individual · info color: group. Only saved time appears here.</Text></View>
    <View style={styles.panel}><BarChart items={[{label:'Previous',value:data.previousMinutes},{label:'Current',value:data.periodMinutes}]} label={`Two ${data.days}-day periods`}/><Text style={styles.caption}>{data.changePercent===null?'No prior baseline for percentage comparison.':`${data.changePercent>0?'+':''}${data.changePercent.toFixed(1)}% compared with the previous period.`}</Text></View>
   </>}
   {section==='History'&&<>
@@ -61,6 +65,6 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
   </>}
  </View>;
 }
-const styles=StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
  stack:{gap:20},panel:{padding:16,borderRadius:16,backgroundColor:palette.surface,borderWidth:1,borderColor:palette.border,gap:14},row:{flexDirection:'row',flexWrap:'wrap',gap:8,alignItems:'center'},metrics:{flexDirection:'row',flexWrap:'wrap',gap:10},heading:{color:palette.text,fontSize:18,fontWeight:'700'},caption:{color:palette.muted,fontSize:13,lineHeight:20},large:{color:palette.text,fontSize:30,fontWeight:'700',fontVariant:['tabular-nums']},tab:{minHeight:48,paddingHorizontal:14,paddingVertical:14,borderRadius:12,backgroundColor:palette.surfaceRaised},selected:{backgroundColor:palette.primary},tabText:{color:palette.text,fontWeight:'600',fontSize:14},selectedText:{color:palette.primaryText},track:{height:10,borderRadius:8,overflow:'hidden',backgroundColor:palette.surfaceRaised},fill:{height:10,backgroundColor:palette.primary,borderRadius:8},badge:{color:palette.primary,fontSize:13,fontWeight:'600'},
 });

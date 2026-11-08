@@ -18,8 +18,9 @@ export function useCreationBusy(busy: boolean) {
   useEffect(() => busy ? context?.lockClose() : undefined, [busy, context]);
 }
 export function useCreationComplete() { return useContext(FlowContext)?.complete; }
-export function CreationModal({ visible, title, busy = false, onClose, onBack, onComplete, children }: {
+export function CreationModal({ visible, title, busy = false, onClose, onBack, onComplete, children, cancelLabel = 'Cancel creation', showBack = true }: {
   visible: boolean; title: string; busy?: boolean; onClose(): void; onBack?: () => void; onComplete?: () => void; children: ReactNode;
+  cancelLabel?: string; showBack?: boolean;
 }) {
   const { theme, reduceMotion } = useAppearance();
   const handlers = useRef<{ run(): void }[]>([]);
@@ -45,12 +46,12 @@ export function CreationModal({ visible, title, busy = false, onClose, onBack, o
       <SafeAreaView accessibilityViewIsModal style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8,
           minHeight: 56, backgroundColor: theme.colors.surface }}>
-          <NavigationPressable accessibilityRole="button" accessibilityLabel="Back" disabled={locked} onPress={back}
+          {showBack ? <NavigationPressable accessibilityRole="button" accessibilityLabel="Back" disabled={locked} onPress={back}
             style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>
             <AppIcon name="back" color={theme.colors.text} />
-          </NavigationPressable>
+          </NavigationPressable> : null}
           <Text accessibilityRole="header" style={{ flex: 1, color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>{title}</Text>
-          <NavigationPressable accessibilityRole="button" accessibilityLabel="Cancel creation" disabled={locked}
+          <NavigationPressable accessibilityRole="button" accessibilityLabel={cancelLabel} disabled={locked}
             onPress={onClose} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>
             <AppIcon name="close" color={theme.colors.muted} size={20} />
           </NavigationPressable>
