@@ -1,3 +1,4 @@
+import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -252,6 +253,7 @@ function TrackingLinks() {
                                     <article key={link.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
                                         <p className="text-xs uppercase tracking-wide text-slate-500">Tracking with</p>
                                         <p className="mt-1 text-lg font-semibold text-slate-100">@{partnerName || "Unknown user"}</p>
+                                        <MemberProfileLink id={link.requesterId === currentUser.id ? link.receiverId : link.requesterId} name={partnerName || "member"} />
                                         <span className="mt-2 inline-block rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300">ACCEPTED</span>
                                         <button
                                             type="button"

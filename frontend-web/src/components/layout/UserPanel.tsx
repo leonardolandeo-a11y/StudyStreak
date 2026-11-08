@@ -1,3 +1,5 @@
+import { useSocial } from "../../contexts/SocialContext";
+import { PresenceDot } from "../social/PresenceStatus";
 import { useProfile } from "../../hooks/useProfile";
 import { ProfileAvatar } from "../profile/ProfileAvatar";
 import { Settings } from "lucide-react";
@@ -7,10 +9,11 @@ import type { AuthenticatedUser } from "../../types/auth";
 
 export function UserPanel({ user, onSettingsClick, onProfileClick }: { user: Pick<AuthenticatedUser, "username" | "email">; onSettingsClick?: () => void; onProfileClick?: () => void }) {
     const shared = useProfile();
+    const social = useSocial();
     const name = shared?.profile?.presentationName || user.username;
     return <div role="group" aria-label="User panel" className="flex min-w-0 items-center gap-2 rounded-control px-2 py-3">
         <NavLink to={ROUTES.profile} onClick={onProfileClick} aria-label={`Open profile for ${name}`} className="sidebar-profile-link flex min-w-0 flex-1 items-center gap-2 rounded-control px-1 py-1">
-            <ProfileAvatar name={name} src={shared?.avatarUrl} />
+            <span className="relative shrink-0"><ProfileAvatar name={name} src={shared?.avatarUrl} /><PresenceDot presence={social?.presence} /></span>
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-content" title={name}>{name}</p><p className="truncate text-xs text-content-muted" title={user.email}>{user.email}</p></div>
         </NavLink>
         <NavLink to={ROUTES.settings} onClick={onSettingsClick} aria-label="Open settings" title="Settings"

@@ -1,3 +1,4 @@
+import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { RoomCollaboration } from "../components/study/RoomCollaboration";
 import { RoomMedia } from "../components/study/RoomMedia";
 import { ParticipantCard } from "../components/study/ParticipantCard";
@@ -337,6 +338,7 @@ export default function StudyRoomsPage() {
                         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {room.members.map(member => (
                                 <ParticipantCard key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
+                                    <MemberProfileLink id={member.userId} name={member.username} />
                                     {room.host && !member.host && <button type="button" disabled={busy || stale} className="study-button mt-3" onClick={() => { if (window.confirm(`Transfer host controls to ${member.username}?`)) void manageRoom(member.userId); }}>Make host</button>}
                                 </ParticipantCard>
                             ))}

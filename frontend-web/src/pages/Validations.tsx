@@ -1,3 +1,4 @@
+import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
@@ -319,6 +320,7 @@ function Validations() {
                                 <article key={link.id} className={`rounded-xl border p-4 ${selected ? "border-sky-500/60 bg-sky-950/20" : "border-slate-800 bg-slate-950/50"}`}>
                                     <p className="text-xs uppercase tracking-wide text-slate-500">Tracking partner</p>
                                     <h3 className="mt-1 font-semibold text-slate-100">{partner.username}</h3>
+                                    <MemberProfileLink id={partner.id} name={partner.username} />
                                     <button
                                         type="button"
                                         aria-pressed={selected}

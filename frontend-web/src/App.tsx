@@ -17,6 +17,7 @@ import {
 import LoadingState
     from "./components/ui/LoadingState";
 
+const SocialProfile = lazy(() => import("./pages/SocialProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Home = lazy(()=> import("./pages/Home"));
@@ -67,6 +68,7 @@ function App(){
               </ProtectedRoute>
             }
           >
+            <Route path={ROUTE_PATTERNS.socialProfile} element={<SocialProfile />} />
             <Route path={ROUTES.profile} element={<Profile />} />
             <Route path={ROUTES.settings} element={<Settings />} />
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>

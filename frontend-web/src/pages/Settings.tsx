@@ -1,3 +1,4 @@
+import { SocialPrivacySettings } from "../components/social/SocialPrivacySettings";
 import { LogOut, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -30,6 +31,7 @@ export default function Settings() {
             <p className="text-sm text-content-muted" role="status">{reducedMotion ? "Reduced motion is active." : "Standard motion is active."} Your system’s reduced motion preference is always respected.</p>
             <p className="text-xs text-content-muted">Keyboard focus stays visible in every theme. Pomodoro durations and session sounds remain in Focus Studio’s gear dialog.</p>
         </section>
+        <SocialPrivacySettings />
         <section aria-labelledby="account-heading" className="study-panel space-y-3">
             <h2 id="account-heading" className="text-xl font-semibold">Account</h2>
             {currentUser && <p className="break-words text-sm text-content-secondary">Signed in as {currentUser.username} · {currentUser.email}</p>}

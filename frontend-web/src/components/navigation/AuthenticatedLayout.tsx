@@ -3,6 +3,7 @@ import {
     useLocation
 } from "react-router-dom";
 
+import { SocialProvider } from "../../contexts/SocialProvider";
 import { ProfileProvider } from "../../contexts/ProfileProvider";
 import AppSidebar from "../layout/AppSidebar";
 
@@ -21,7 +22,7 @@ function AuthenticatedLayout() {
         location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
 
     return (
-        <ProfileProvider><div className="min-h-screen bg-slate-950 text-slate-100">
+        <SocialProvider><ProfileProvider><div className="min-h-screen bg-slate-950 text-slate-100">
 
             <div className="flex min-h-screen">
 
@@ -84,7 +85,7 @@ function AuthenticatedLayout() {
 
             </div>
 
-        </div></ProfileProvider>
+        </div></ProfileProvider></SocialProvider>
     );
 }
 
