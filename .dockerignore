@@ -6,3 +6,6 @@ target
 .env.*
 frontend-web/
 frontend-mobile/
+
+# Backups, private uploads and disposable test artifacts must never enter builds.
+.local/

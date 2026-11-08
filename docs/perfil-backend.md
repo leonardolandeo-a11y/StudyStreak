@@ -33,7 +33,8 @@ La respuesta incluye id, username, displayName/bio opcionales, presentationName
 users.display_name varchar(60) y users.bio varchar(300), ambos nullable. Puede
 repetirse; no escribe nombres inventados, sesiones, datos históricos ni secuencias.
 
-**No se ha aplicado a la base local habitual.** Un backend actualizado con
+**Aplicada posteriormente al entorno local con autorización y respaldo.** Véase
+[Activación local](perfil-local.md). En otros destinos todavía requiere autorización. Un backend actualizado con
 Hibernate validate necesita estas columnas antes de arrancar. No iniciar el jar
 nuevo contra esa base hasta revisar y autorizar su migración con respaldo previo.
 Hibernate update también puede ejecutar DDL: no utilizarlo para saltarse esa
@@ -43,7 +44,7 @@ Cuando exista autorización específica para un destino, detener únicamente la
 aplicación que lo utiliza, verificar/restaurar un respaldo en un destino aislado,
 seleccionar explícitamente el esquema y ejecutar el SQL con ON_ERROR_STOP. Después
 arrancar con ddl-auto=validate y las inicializaciones generales desactivadas.
-Ejemplo de ejecución manual posterior (no ejecutarlo todavía en el entorno habitual):
+Ejemplo manual para otros destinos autorizados (no repetirlo en local por inercia):
 
 ```bash
 PGOPTIONS='-c search_path=public' psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 \
@@ -139,10 +140,10 @@ Para un despliegue posterior autorizado:
    los nombres utilizan los IDs reales de usuarios. No intercambiar carpetas entre
    bases con IDs diferentes. Verificar lectura autenticada después de restaurar.
 
-No se ha montado ese volumen ni modificado Compose/.env en el entorno habitual.
-Tampoco se ha arrancado allí el nuevo jar ni aplicado su migración. El directorio
+La activación local posterior utiliza un bind privado mediante un override Compose;
+véase [perfil-local.md](perfil-local.md). El Compose y .env anteriores se conservan. El directorio
 predeterminado dentro de un contenedor efímero se pierde al recrearlo; el montaje
-persistente sigue pendiente de autorización. El borrado administrativo de cuentas
+persistente debe configurarse en cada despliegue autorizado. El borrado administrativo de cuentas
 existente no se modifica: archivos huérfanos requieren mantenimiento posterior,
 verificando que su usuario ya no exista y respetando la política de retención.
 
@@ -169,6 +170,6 @@ que las integraciones anteriores exigían el nombre studystreak_schema_check; se
 creó esa base únicamente dentro del contenedor desechable y se ajustó el wrapper,
 sin relajar las protecciones ni modificar los tests anteriores.
 
-El backend habitual continúa con su imagen anterior. Migración y montaje de
-almacenamiento persistente siguen pendientes de revisión/autorización; no iniciar
-el backend nuevo contra la base habitual hasta completar esos pasos.
+El backend habitual fue actualizado posteriormente con autorización; migración,
+respaldo y almacenamiento local se documentan en [perfil-local.md](perfil-local.md).
+Otros despliegues necesitan completar esos pasos antes de iniciar el jar nuevo.
