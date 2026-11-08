@@ -1,3 +1,4 @@
+import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { RoomCollaboration } from "../components/study/RoomCollaboration";
 import { RoomMedia } from "../components/study/RoomMedia";
@@ -226,7 +227,7 @@ export default function StudyRoomsPage() {
     const studyingCount = room?.members.filter(member => member.online && member.studying).length ?? 0;
 
     return (
-        <div className="space-y-7 pb-12">
+        <TrackingAvatarProvider revision={0}><div className="space-y-7 pb-12">
             <header>
                 <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-emerald-400">
                     <Users size={16} /> STUDY TOGETHER
@@ -337,7 +338,7 @@ export default function StudyRoomsPage() {
                         <h3 className="flex items-center gap-2 text-xl font-extrabold text-content"><Users className="text-emerald-400" size={20}/> Studying together</h3>
                         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {room.members.map(member => (
-                                <ParticipantCard key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
+                                <ParticipantCard avatar={<TrackingAvatar id={member.userId} name={member.username} className="size-11 text-lg" />} key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
                                     <MemberProfileLink id={member.userId} name={member.username} />
                                     {room.host && !member.host && <button type="button" disabled={busy || stale} className="study-button mt-3" onClick={() => { if (window.confirm(`Transfer host controls to ${member.username}?`)) void manageRoom(member.userId); }}>Make host</button>}
                                 </ParticipantCard>
@@ -348,6 +349,6 @@ export default function StudyRoomsPage() {
                     <p className="flex items-center gap-2 text-xs text-slate-500"><Headphones size={15}/> Open Focus Studio separately to listen to study sounds. The shared room does not play or stream music.</p>
                 </div>
             )}
-        </div>
+        </div></TrackingAvatarProvider>
     );
 }

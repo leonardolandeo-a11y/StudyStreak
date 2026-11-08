@@ -1,8 +1,8 @@
+import { PageTurnBookIcon } from "../icons/PageTurnBookIcon";
 import { UserPanel } from "./UserPanel";
 import {
     Bell,
     BadgeCheck,
-    BookOpen,
     Headphones,
     LayoutDashboard,
     Link2,
@@ -58,7 +58,7 @@ function AppSidebar() {
         {
             label: "Resources",
             to: ROUTES.resources,
-            icon: BookOpen
+            icon: PageTurnBookIcon
         },
         {
             label: "Tracking",

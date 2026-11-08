@@ -1,3 +1,4 @@
+import { TrackingAvatar } from "./TrackingAvatar";
 import type { TrackingLink } from "../../types/trackingLink";
 
 interface TrackingLinkCardProps {
@@ -12,9 +13,10 @@ function TrackingLinkCard({ trackingLink, currentUserId }: TrackingLinkCardProps
     return (
         <article className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-appearance-shadow/10 transition hover:border-outline-strong">
             <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">Tracking connection</p>
-                    <h3 className="mt-1 text-xl font-semibold text-slate-100">@{partnerName || "Unknown user"}</h3>
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <TrackingAvatar id={isRequester ? trackingLink.receiverId : trackingLink.requesterId} name={partnerName || "?"} className="size-12 text-lg" />
+                    <div className="min-w-0"><p className="text-xs uppercase tracking-wide text-slate-500">Tracking connection</p>
+                    <h3 title={partnerName} className="mt-1 truncate text-xl font-semibold text-slate-100">@{partnerName || "Unknown user"}</h3></div>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     trackingLink.status === "ACCEPTED" ? "bg-emerald-950/60 text-emerald-300" :

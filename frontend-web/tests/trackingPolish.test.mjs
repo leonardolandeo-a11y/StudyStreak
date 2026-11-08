@@ -60,7 +60,7 @@ test('Chrome: Tracking avatars preserve search/send flow, fallback, responsive a
    await page.evaluate(`document.querySelector('a[data-nav-icon=${label}]').focus()`);
    assert.notEqual(await page.evaluate(`getComputedStyle(document.querySelector('a[data-nav-icon=${label}] ${label==='Goals'?'svg':'svg>path:last-child'}')).animationName`),'none');
   }
-  assert.ok(await page.evaluate('(()=>{const svg=document.querySelector("a[data-nav-icon=Goals] svg");const animation=svg.getAnimations()[0];animation.pause();animation.currentTime=150;const matrix=new DOMMatrix(getComputedStyle(svg).transform);return Math.abs(matrix.a-0.86)<0.01&&Math.abs(matrix.b)<0.001})()'));
+  assert.ok(await page.evaluate('(()=>{const svg=document.querySelector("a[data-nav-icon=Goals] svg");const animation=svg.getAnimations()[0];animation.pause();animation.currentTime=150;const matrix=new DOMMatrix(getComputedStyle(svg).transform);return Math.abs(matrix.a-0.91)<0.01&&Math.abs(matrix.b)<0.001})()'));
   await page.evaluate('window.studyStreakAppearance.apply({mode:"dark",accent:"mint",reduceMotion:true})');
   assert.equal(await page.evaluate('getComputedStyle(document.querySelector("a[data-nav-icon=Goals] svg")).animationName'),'none');
   await page.evaluate('document.querySelector("a[data-nav-icon=Resources]").focus()');

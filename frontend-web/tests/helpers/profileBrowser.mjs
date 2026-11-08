@@ -71,6 +71,6 @@ export async function profileBrowser({ api = 'https://profile.invalid', port = 0
   return { origin, command, evaluate, wait, click, fill, key, errors,
     reload: async () => { const complete = new Promise(resolve => { loaded = resolve; }); await command('Page.reload'); await complete; },
     navigate: async path => { await command('Page.navigate', { url: origin + path }); await wait('!!document.querySelector("h1")'); },
-    close: async () => { closing = true; browser.kill('SIGKILL'); for (const item of pending.values()) { clearTimeout(item.timer); item.reject(Error('Browser closed')); } pending.clear(); await vite.close(); await rm(folder, { recursive: true, force: true }); }
+    close: async () => { closing = true; browser.kill('SIGKILL'); for (const item of pending.values()) { clearTimeout(item.timer); item.reject(Error('Browser closed')); } pending.clear(); await vite.close(); await rm(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); }
   };
 }

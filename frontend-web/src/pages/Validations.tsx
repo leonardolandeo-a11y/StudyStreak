@@ -1,3 +1,4 @@
+import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -277,7 +278,7 @@ function Validations() {
     if (!currentUser) return null;
 
     return (
-        <div className="space-y-8">
+        <TrackingAvatarProvider revision={partnersRevision}><div className="space-y-8">
             <header>
                 <p className="text-sm font-medium text-sky-400">Review progress</p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Validations</h1>
@@ -318,17 +319,20 @@ function Validations() {
                             const selected = partner.id === partnerId;
                             return (
                                 <article key={link.id} className={`rounded-xl border p-4 ${selected ? "border-sky-500/60 bg-sky-950/20" : "border-slate-800 bg-slate-950/50"}`}>
-                                    <p className="text-xs uppercase tracking-wide text-slate-500">Tracking partner</p>
-                                    <h3 className="mt-1 font-semibold text-slate-100">{partner.username}</h3>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                    <TrackingAvatar id={partner.id} name={partner.username} className="size-10" />
+                                    <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-wide text-slate-500">Tracking partner</p>
+                                    <h3 title={partner.username} className="mt-1 truncate font-semibold text-slate-100">{partner.username}</h3>
+                                    <div className="flex flex-wrap items-center gap-2">
                                     <MemberProfileLink id={partner.id} name={partner.username} />
                                     <button
                                         type="button"
                                         aria-pressed={selected}
                                         onClick={() => selectPartner(partner)}
-                                        className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-surface-hover"
+                                        className="mt-2 min-h-11 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-surface-hover"
                                     >
                                         {selected ? "Refresh goals" : "View goals"}
-                                    </button>
+                                    </button></div></div></div>
                                 </article>
                             );
                         })}
@@ -443,7 +447,7 @@ function Validations() {
                     )}
                 </section>
             )}
-        </div>
+        </div></TrackingAvatarProvider>
     );
 }
 
