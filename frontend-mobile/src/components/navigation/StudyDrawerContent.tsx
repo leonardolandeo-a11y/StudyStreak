@@ -42,7 +42,7 @@ export function StudyDrawerContent({ active, close, navigate }: {
         onPress={() => { navigate(item.name); close(); }} />)}
       <View style={{ flex: 1, minHeight: 20 }} />
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 8 }}>
-        <AppIcon name="menu" color={theme.colors.primary} />
+        <AppIcon name="dashboard" color={theme.colors.primary} />
         <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800' }}>StudyStreak</Text>
       </View>
       <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Build your study rhythm.</Text>

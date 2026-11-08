@@ -26,11 +26,18 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
   return <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ width: size, height: size }}>
     <Animated.View testID={`icon-${name}-motion`} style={{ width: 24, height: 24, left: (size - 24) / 2, top: (size - 24) / 2,
       transform: [{ scale: size / 24 }, { rotate: name === 'focus' || name === 'notifications' ? tilt : '0deg' }] }}>
-      {name === 'menu' || name === 'dashboard' ? [[2, 2], [14, 2], [2, 14], [14, 14]].map(([x, y], index) =>
+      {name === 'dashboard' ? [[2, 2], [14, 2], [2, 14], [14, 14]].map(([x, y], index) =>
         <Animated.View key={index} style={[box(x, y, 8, 8), { transform: [
           { translateX: motion.interpolate({ inputRange: [0, 1], outputRange: [0, x < 10 ? -1.5 : 1.5] }) },
           { translateY: motion.interpolate({ inputRange: [0, 1], outputRange: [0, y < 10 ? -1.5 : 1.5] }) },
         ] }]} />) : null}
+      {name === 'menu' ? <><View style={line(1, 6, 14, -40)} /><View style={line(10, 6, 14, 40)} />
+        <View testID="icon-house" style={[box(4, 10, 16, 12, 1), { borderTopWidth: 0 }]} />
+        <View style={box(9, 14, 6, 8, 1)} />
+        <Animated.View testID="icon-door" style={[box(9, 14, 6, 8, 1), { transformOrigin: 'left center', transform: [
+          { perspective: 80 }, { rotateY: motion.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-75deg'] }) },
+        ] }]}><View style={{ position: 'absolute', right: 0, top: 3, width: 2, height: 2, borderRadius: 1, backgroundColor: color }} /></Animated.View>
+      </> : null}
       {name === 'focus' ? <><View style={[box(3, 2, 18, 17, 10), { borderBottomWidth: 0 }]} />
         <View style={box(1, 12, 6, 10, 3)} /><View style={box(17, 12, 6, 10, 3)} /></> : null}
       {name === 'resources' ? <><View style={box(1, 4, 11, 17)} /><View style={box(12, 4, 11, 17)} />
@@ -41,9 +48,13 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
       {name === 'notifications' ? <><View style={[box(5, 3, 14, 16, 8), { borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }]} />
         <View style={line(2, 19, 20)} /><View style={{ ...line(10, 22, 4), height: 2 }} /></> : null}
       {name === 'device' ? <><View style={box(5, 1, 14, 22, 3)} /><View style={line(10, 19, 4)} /></> : null}
-      {name === 'settings' ? <><View style={box(5, 5, 14, 14, 7)} /><View style={box(9, 9, 6, 6, 3)} />
-        {[0, 45, 90, 135].map(angle => <View key={angle} style={{ position: 'absolute', width: 24, height: 24, transform: [{ rotate: `${angle}deg` }] }}>
-          <View style={line(10, 1, 4, 90)} /><View style={line(10, 21, 4, 90)} /></View>)}</> : null}
+      {name === 'settings' ? <View testID="icon-gear" style={{ width: 24, height: 24 }}>
+        {Array.from({ length: 8 }, (_, index) => <View key={index} style={{ position: 'absolute', width: 24, height: 24,
+          transform: [{ rotate: `${index * 45}deg` }] }}>
+          <View style={{ position: 'absolute', left: 10, top: 2, width: 4, height: 5, borderRadius: 1, backgroundColor: color }} />
+        </View>)}
+        <View style={[box(5, 5, 14, 14, 7), { borderWidth: 2.5 }]} /><View style={box(9, 9, 6, 6, 3)} />
+      </View> : null}
       {name === 'bars' ? [10, 18, 14].map((height, index) => <View key={index} style={box(2 + index * 8, 22 - height, 5, height, 1)} />) : null}
       {name === 'lines' ? <><View style={line(1, 14, 10, -40)} /><View style={line(8, 12, 9, 30)} /><View style={line(14, 8, 11, -55)} /></> : null}
       {name === 'back' ? <><View style={line(3, 11, 18)} /><View style={line(1, 7, 10, -45)} /><View style={line(1, 15, 10, 45)} /></> : null}

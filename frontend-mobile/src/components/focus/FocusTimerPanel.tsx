@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import type { PomodoroMode } from '../../features/focus/pomodoroState';
@@ -12,6 +13,7 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
   onMode(mode: PomodoroMode): void; onToggle(): void; onReset(): void; onSettings(): void;
 }) {
   const { theme } = useAppearance();
+  const [diameter, setDiameter] = useState(230);
   return <Card style={{ padding: 16, gap: 14 }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>Pomodoro</Text>
@@ -29,12 +31,14 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
           <Text style={{ color: mode === item.id ? theme.colors.primary : theme.colors.muted, fontSize: 13 }}>{item.label}</Text>
         </NavigationPressable>)}
     </View>
-    <View style={{ width: '100%', maxWidth: 230, aspectRatio: 1, borderRadius: 130, borderWidth: 5,
+    <View onLayout={event => setDiameter(Math.min(230, event.nativeEvent.layout.width))} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+    <View testID="pomodoro-circle" style={{ width: diameter, height: diameter, flexShrink: 0, borderRadius: diameter / 2, borderWidth: 5,
       borderColor: theme.colors.primarySoft, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
       <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{mode === 'focus' ? 'DEEP WORK' : 'TAKE A BREAK'}</Text>
       <Text accessibilityLabel={`Time remaining ${time}`} style={{ color: theme.colors.text, fontSize: 50, fontWeight: '700',
         fontVariant: ['tabular-nums'] }}>{time}</Text>
       <Text style={{ color: theme.colors.primary, fontSize: 13 }}>{!ready ? 'Restoring…' : running ? 'In progress' : paused ? 'Paused' : 'Ready'}</Text>
+    </View>
     </View>
     <View accessibilityRole="progressbar" accessibilityLabel="Session progress" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
       style={{ height: 5, borderRadius: 3, backgroundColor: theme.colors.surfaceRaised, overflow: 'hidden' }}>

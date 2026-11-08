@@ -65,6 +65,9 @@ try {
   for (const width of [320, 390, 768, 1440]) {
     await browser.command('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: true });
     await browser.wait('document.documentElement.scrollWidth <= innerWidth');
+    await browser.wait(`(() => {const r=document.querySelector('[data-testid="pomodoro-circle"]').getBoundingClientRect();return r.width>0 && Math.abs(r.width-r.height)<1;})()`);
+    assert.equal(await browser.evaluate(`(() => {const e=document.querySelector('[data-testid="pomodoro-circle"]');const r=e.getBoundingClientRect();return Math.abs(parseFloat(getComputedStyle(e).borderRadius)-r.width/2)<1;})()`),true);
+
   }
   await browser.command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await browser.evaluate(`document.querySelector('[aria-label="Focus settings"]').scrollIntoView()`);
@@ -76,12 +79,33 @@ try {
   assert.equal(await browser.evaluate(`document.body.innerText.includes('99 min historical estimates')`),true);
   await browser.click('30 days'); await browser.wait(`document.body.innerText.includes('Last 30 days · verified only')`);
   await browser.click('Hide statistics');
+  assert.equal(await browser.evaluate(`!!document.querySelector('[aria-label="Focus settings"] [data-testid="icon-gear"]')`),true);
+  async function pressMenu(expectedMotion) {
+    await browser.click('Open menu');
+    await browser.wait(`Array.from(document.querySelectorAll('[aria-label="Menu"]')).some(e=>!e.closest('[aria-hidden="true"]') && e.getBoundingClientRect().left>=0)`);
+    assert.equal(await browser.evaluate(`!!document.querySelector('[aria-label="Settings"] [data-testid="icon-gear"]')`),true);
+    assert.equal(await browser.evaluate(`!!document.querySelector('[aria-label="Menu"] [data-testid="icon-house"]') && !document.querySelector('[aria-label="Dashboard"] [data-testid="icon-house"]')`),true);
+    const pos=await browser.evaluate(`(() => {const el=Array.from(document.querySelectorAll('[aria-label="Menu"]')).find(e=>!e.closest('[aria-hidden="true"]') && e.getBoundingClientRect().left>=0);const r=el.getBoundingClientRect();return {x:r.x+20,y:r.y+r.height/2,before:getComputedStyle(el.querySelector('[data-testid="icon-door"]')).transform};})()`);
+    await browser.command('Input.dispatchMouseEvent',{type:'mouseMoved',x:pos.x,y:pos.y});
+    await browser.command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,x:pos.x,y:pos.y});
+    await new Promise(resolve=>setTimeout(resolve,70));
+    const during=await browser.evaluate(`getComputedStyle(Array.from(document.querySelectorAll('[aria-label="Menu"]')).find(e=>!e.closest('[aria-hidden="true"]') && e.getBoundingClientRect().left>=0).querySelector('[data-testid="icon-door"]')).transform`);
+    assert.equal(pos.before!==during,expectedMotion);
+    await new Promise(resolve=>setTimeout(resolve,350));
+    const returned=await browser.evaluate(`getComputedStyle(Array.from(document.querySelectorAll('[aria-label="Menu"]')).find(e=>!e.closest('[aria-hidden="true"]') && e.getBoundingClientRect().left>=0).querySelector('[data-testid="icon-door"]')).transform`);
+    assert.equal(returned,pos.before);
+    await browser.command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:pos.x,y:pos.y});
+    await browser.waitForDrawerClosed();
+  }
+  await pressMenu(true);
+  await browser.click('Open menu'); await browser.click('Focus Studio'); await browser.waitForDrawerClosed();
   await browser.click('Open menu'); await browser.click('Settings'); await browser.wait(has('Light')); await browser.click('Light'); await browser.click('Orange');
   await browser.evaluate(`document.querySelector('[aria-label="Reduce motion"]').click()`);
   await browser.evaluate('history.back()'); await browser.wait(has('Focus settings')); await browser.click('Focus settings');
   await browser.key('Tab'); assert.equal(await browser.evaluate(`!!document.activeElement?.closest('[aria-modal="true"]')`),true);
   const lightImage = await browser.command('Page.captureScreenshot', { format: 'png' }); writeFileSync('.expo/focus-settings-light.png',Buffer.from(lightImage.data,'base64'));
   await browser.click('Cancel');
+  await pressMenu(false);
   assert.deepEqual(browser.errors, []);
   process.stdout.write('Focus browser checks passed: settings, goal selection, start/pause/resume, immutable linked duration, navigation, cancellation and 320–1440px.\n');
 } catch(error) {
