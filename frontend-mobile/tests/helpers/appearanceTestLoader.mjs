@@ -11,6 +11,7 @@ const mocks = new Map([
   ['expo-secure-store', './secureStoreMock.mjs'],
   ['expo-file-system', './appearanceFileSystemMock.mjs'],
   ['expo-audio', './focusAudioMock.mjs'],
+  ['expo-image-picker', './profilePickerMock.mjs'],
 ]);
 registerHooks({
   resolve(specifier, context, nextResolve) {
