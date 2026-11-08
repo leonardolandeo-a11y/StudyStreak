@@ -14,6 +14,7 @@ import java.nio.ByteOrder;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 
 /** Decode actual image pixels, after checking bounded dimensions and container integrity. */
@@ -29,7 +30,7 @@ public class ProfileImageValidator {
             declared = parsed.getType().toLowerCase(Locale.ROOT) + "/" + parsed.getSubtype().toLowerCase(Locale.ROOT);
         } catch (IllegalArgumentException e) { throw unsupported(); }
         if (!TYPES.containsValue(declared)) throw unsupported();
-        if (!decoders.tryAcquire()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image decoder busy; retry later");
+        acquireDecoder();
         try (var input = new MemoryCacheImageInputStream(new ByteArrayInputStream(bytes))) {
             var readers = ImageIO.getImageReaders(input);
             if (!readers.hasNext()) throw invalid();
@@ -50,6 +51,18 @@ public class ProfileImageValidator {
         } catch (ResponseStatusException e) { throw e; }
         catch (IOException | RuntimeException e) { throw invalid(); }
         finally { decoders.release(); }
+    }
+
+    private void acquireDecoder() {
+        try {
+            // Own and partner avatar/banner reads arrive together. Keep decoding
+            // bounded to two images, but allow that normal burst to queue briefly.
+            if (!decoders.tryAcquire(2, TimeUnit.SECONDS))
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image decoder busy; retry later");
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Image decoder busy; retry later");
+        }
     }
 
     private boolean intact(byte[] data, String type) {

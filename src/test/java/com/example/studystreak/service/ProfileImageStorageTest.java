@@ -26,6 +26,32 @@ class ProfileImageStorageTest {
     void status(int expected, org.junit.jupiter.api.function.Executable action) {
         assertEquals(expected, assertThrows(ResponseStatusException.class, action).getStatusCode().value());
     }
+    @Test void concurrentProfileReadsWaitForDecoderCapacityInsteadOfFailingImmediately() throws Exception {
+        var permits=(java.util.concurrent.Semaphore)org.springframework.test.util.ReflectionTestUtils.getField(validator,"decoders");
+        assertNotNull(permits);
+        byte[] image=fixture("png");
+        permits.acquire(2);
+        boolean held=true;
+        try (var executor=java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var waiting=executor.submit(()->validator.validate(image,"image/png"));
+            try {
+                for(int i=0;i<100 && !permits.hasQueuedThreads() && !waiting.isDone();i++) Thread.sleep(5);
+                assertTrue(permits.hasQueuedThreads(),"A concurrent image read should wait briefly for the two occupied decoder slots");
+            } finally { permits.release(2);held=false; }
+            assertEquals("image/png",waiting.get(3,java.util.concurrent.TimeUnit.SECONDS));
+        } finally { if(held)permits.release(2); }
+        assertEquals(2,permits.availablePermits());
+    }
+    @Test void decoderCapacityWaitIsBoundedAndDoesNotReleaseUnownedPermits() throws Exception {
+        var permits=(java.util.concurrent.Semaphore)org.springframework.test.util.ReflectionTestUtils.getField(validator,"decoders");
+        assertNotNull(permits);
+        permits.acquire(2);
+        try {
+            assertTimeout(java.time.Duration.ofSeconds(4),()->status(503,()->validator.validate(fixture("png"),"image/png")));
+            assertEquals(0,permits.availablePermits());
+        } finally { permits.release(2); }
+        assertEquals("image/png",validator.validate(fixture("png"),"image/png"));
+    }
     @Test void decodesOnlyRealPngJpegAndWebp() throws Exception {
         for (var entry : java.util.Map.of("png","image/png","jpg","image/jpeg","webp","image/webp").entrySet()) {
             byte[] bytes = fixture(entry.getKey());
