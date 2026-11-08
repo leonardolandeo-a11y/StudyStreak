@@ -6,6 +6,7 @@ import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-nativ
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { palette } from '../../constants/palette';
+import { useAppearance } from '../../hooks/useAppearance';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
 import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -51,6 +52,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
   // Create the native player *after* the authenticated M4A has been saved.
   // This avoids repeatedly replacing the empty source while the file loads.
   const player = useAudioPlayer(uri);
+  const { reduceMotion } = useAppearance();
   const status = useAudioPlayerStatus(player);
   const [pulse] = useState(() => new Animated.Value(1));
   const [loadTimedOut, setLoadTimedOut] = useState(false);
@@ -63,7 +65,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
   }, [status.isLoaded, status.error]);
 
   useEffect(() => {
-    if (!status.playing) {
+    if (!status.playing || reduceMotion) {
       pulse.setValue(1);
       return;
     }
@@ -73,7 +75,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
     ]));
     animation.start();
     return () => { animation.stop(); pulse.setValue(1); };
-  }, [status.playing, pulse]);
+  }, [status.playing, pulse, reduceMotion]);
 
   const elapsed = Math.max(0, status.currentTime || 0);
   const duration = Math.max(0, status.duration || 0);

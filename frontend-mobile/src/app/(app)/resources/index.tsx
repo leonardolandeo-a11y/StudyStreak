@@ -5,12 +5,14 @@ import { Screen } from '../../../components/ui/Screen';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { palette } from '../../../constants/palette';
+import { useAppearance } from '../../../hooks/useAppearance';
 import { getBookSearchErrorMessage, googleBooksService } from '../../../services/googleBooksService';
 import type { StudyBook } from '../../../types/studyBook';
 
 type SearchRequest = { term: string; revision: number };
 
 export default function StudyResources() {
+  const { reduceMotion } = useAppearance();
   const { topic } = useLocalSearchParams<{ topic?: string }>();
   const initialTopic = typeof topic === 'string' ? topic.trim().slice(0, 80) : '';
   const hasInitialSearch = initialTopic.length >= 2;
@@ -141,7 +143,7 @@ export default function StudyResources() {
       )) : null}
       <Text style={styles.credit}>Book information provided by Google Books.</Text>
 
-      <Modal visible={selectedBook !== null} animationType="slide" transparent
+      <Modal visible={selectedBook !== null} animationType={reduceMotion ? 'none' : 'slide'} transparent
         onRequestClose={closeBook} statusBarTranslucent>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalPanel}>

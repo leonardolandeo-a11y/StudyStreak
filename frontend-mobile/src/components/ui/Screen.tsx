@@ -2,12 +2,21 @@ import type { ReactNode } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { palette } from '../../constants/palette';
+import { useSegments } from 'expo-router';
+import { useAppearance } from '../../hooks/useAppearance';
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+// Legacy screens keep their dark canvas until their own fixed text is migrated.
+export function Screen({ children, scroll = true, themed = false }: {
+  children: ReactNode; scroll?: boolean; themed?: boolean;
+}) {
+  const { theme } = useAppearance();
+  const segments = useSegments();
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: themed ? theme.colors.background : palette.background }]}
+      edges={segments[0] === '(app)' ? ['bottom'] : ['top', 'bottom']}>
       {scroll ? (
-        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.body}>
+        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets contentContainerStyle={styles.body}>
           {children}
         </ScrollView>
       ) : (

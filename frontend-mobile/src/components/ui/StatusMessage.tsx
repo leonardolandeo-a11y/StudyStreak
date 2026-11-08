@@ -1,17 +1,24 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { palette } from '../../constants/palette';
+import { useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 
-export function StatusMessage({ message, error = false }: { message: string; error?: boolean }) {
+export function StatusMessage({ message, error = false, variant = 'info' }: {
+  message: string; error?: boolean; variant?: 'info' | 'success';
+}) {
+  const styles = useThemedStyles(createStyles);
   return (
-    <View accessibilityRole="alert" style={[styles.box, error && styles.error]}>
-      <Text style={[styles.text, error && styles.errorText]}>{message}</Text>
+    <View accessibilityRole={error ? 'alert' : undefined} accessibilityLiveRegion={error ? 'assertive' : 'polite'}
+      style={[styles.box, variant === 'success' && styles.success, error && styles.error]}>
+      <Text style={[styles.text, variant === 'success' && styles.successText, error && styles.errorText]}>{message}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  box: { backgroundColor: palette.surfaceRaised, borderRadius: 10, padding: 13 },
-  error: { backgroundColor: '#4c1425', borderWidth: 1, borderColor: '#881337' },
-  text: { color: palette.text, lineHeight: 20 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  box: { backgroundColor: palette.infoSurface, borderRadius: 12, padding: 13 },
+  error: { backgroundColor: palette.errorSurface, borderWidth: 1, borderColor: palette.errorBorder },
+  text: { color: palette.info, lineHeight: 22 },
   errorText: { color: palette.error },
+  success: { backgroundColor: palette.successSurface },
+  successText: { color: palette.success },
 });

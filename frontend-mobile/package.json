@@ -53,6 +53,7 @@
     "web": "expo start --web",
     "lint": "eslint src",
     "test:auth": "node --experimental-strip-types --test tests/authSession.test.mjs tests/jwt.test.mjs tests/mobileSessionIntegration.test.mjs",
+    "test:appearance": "node --experimental-strip-types --test tests/appearanceState.test.mjs tests/mobileAppearanceRendering.test.mjs",
     "test:pagination": "node --experimental-strip-types --test tests/pagination.test.mjs",
     "test:review": "node --experimental-strip-types --test tests/reviewNavigation.test.mjs",
     "test:focus": "node --experimental-strip-types --test tests/focusTimer.test.mjs tests/focusCatalog.test.mjs tests/focusSoundSynthesis.test.mjs tests/focusGoalTracking.test.mjs tests/focusSessionId.test.mjs tests/studyRoomClock.test.mjs"
