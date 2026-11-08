@@ -80,12 +80,17 @@ export async function mobileBrowser({ intercept } = {}) {
     throw Error('Condition timed out: ' + expression);
   };
   const click = async text => {
-    const found = await evaluate(`(() => { const el=Array.from(document.querySelectorAll('button,[role=button],[role=tab]')).find(b=>(b.getAttribute('aria-label')===${JSON.stringify(text)} || b.textContent.trim()===${JSON.stringify(text)})); if(!el) return false; el.focus(); el.click(); return true; })()`);
+    const candidates = `Array.from(document.querySelectorAll('button,[role=button],[role=tab]')).filter(b =>
+      !b.closest('[aria-hidden="true"]') && b.getClientRects().length &&
+      (b.getAttribute('aria-label')===${JSON.stringify(text)} || b.textContent.trim()===${JSON.stringify(text)}))`;
+    await wait(`${candidates}.some(b => {const r=b.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth+1;})`);
+    const found = await evaluate(`(() => { const el=${candidates}.find(b=>{const r=b.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth+1;}); if(!el) return false; el.scrollIntoView({block:'center'}); el.focus(); el.click(); return true; })()`);
     assert.ok(found, 'Button not found: ' + text);
   };
   const fill = async (selector, value) => evaluate(`(() => {const e=document.querySelector(${JSON.stringify(selector)});const p=e instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(p,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const key = async value => { const windowsVirtualKeyCode = { Tab: 9, Escape: 27, Enter: 13 }[value]; await command('Input.dispatchKeyEvent', { type: 'keyDown', key: value, code: value, windowsVirtualKeyCode }); await command('Input.dispatchKeyEvent', { type: 'keyUp', key: value, code: value, windowsVirtualKeyCode }); };
-  return { origin, command, evaluate, wait, click, fill, key, errors,
+  const waitForDrawerClosed = () => wait(`Array.from(document.querySelectorAll('[aria-label="Close menu"]')).every(el => !el.getClientRects().length || el.getBoundingClientRect().right <= 1)`);
+  return { origin, command, evaluate, wait, click, fill, key, errors, waitForDrawerClosed,
     reload: async () => { const complete = new Promise(resolve => { loaded = resolve; }); await command('Page.reload'); await complete; },
     navigate: async path => { await command('Page.navigate', { url: origin + path }); await wait('!!document.body'); },
     close: async () => { closing = true; browser.kill('SIGKILL'); for (const item of pending.values()) { clearTimeout(item.timer); item.reject(Error('Browser closed')); } pending.clear(); await new Promise(done => server.close(done)); await rm(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); }

@@ -4,7 +4,10 @@ export const Platform = { OS: 'ios' };
 const flatten = style => Object.assign({}, ...(Array.isArray(style) ? style.flat(Infinity) : [style]).filter(Boolean));
 export const StyleSheet = { create: value => value, flatten };
 function propsFor(props) {
-  return { style: flatten(props.style), role: props.accessibilityRole,
+  const style = flatten(props.style);
+  if (Array.isArray(style.transform)) style.transform = style.transform.flatMap(item =>
+    Object.entries(item).map(([name, value]) => `${name}(${value})`)).join(' ');
+  return { style, role: props.accessibilityRole,
     'aria-label': props.accessibilityLabel, 'aria-selected': props.accessibilityState?.selected,
     'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };
 }

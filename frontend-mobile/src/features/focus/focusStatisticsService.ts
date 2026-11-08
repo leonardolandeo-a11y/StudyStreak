@@ -12,6 +12,7 @@ export interface GoalFocus {
   sessions: number;
 }
 export interface FocusStatistics {
+    verifiedPeriod?: { minutes: number; sessions: number; daily: DailyFocus[] };
     timeZone: string;
     verifiedMinutes: number; estimatedMinutes: number;
     groupMinutes: number; individualMinutes: number; groupSessions: number;
