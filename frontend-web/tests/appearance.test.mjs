@@ -259,7 +259,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     const checkUserPanel = async () => {
       const panel = await evaluate(`(() => {
         const panel=[...document.querySelectorAll('[aria-label="User panel"]')].find(e=>e.checkVisibility());
-        const gear=panel.querySelector('a'), p=panel.getBoundingClientRect(), g=gear.getBoundingClientRect();
+        const gear=panel.querySelector('a[aria-label="Open settings"]'), p=panel.getBoundingClientRect(), g=gear.getBoundingClientRect();
         return { name:gear.getAttribute('aria-label'), tooltip:gear.title, href:gear.getAttribute('href'), width:g.width, height:g.height, inside:g.x>=p.x && g.right<=p.right, overflow:panel.scrollWidth>panel.clientWidth, user:panel.querySelector('[title]').textContent, email:panel.querySelectorAll('p')[1].textContent };
       })()`);
       assert.equal(panel.name,'Open settings'); assert.equal(panel.tooltip,'Settings'); assert.equal(panel.href,'/settings');

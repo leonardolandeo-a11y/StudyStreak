@@ -3,6 +3,7 @@ import {
     useLocation
 } from "react-router-dom";
 
+import { ProfileProvider } from "../../contexts/ProfileProvider";
 import AppSidebar from "../layout/AppSidebar";
 
 import BackButton from "./BackButton";
@@ -20,7 +21,7 @@ function AuthenticatedLayout() {
         location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100">
+        <ProfileProvider><div className="min-h-screen bg-slate-950 text-slate-100">
 
             <div className="flex min-h-screen">
 
@@ -83,7 +84,7 @@ function AuthenticatedLayout() {
 
             </div>
 
-        </div>
+        </div></ProfileProvider>
     );
 }
 

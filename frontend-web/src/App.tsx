@@ -17,6 +17,7 @@ import {
 import LoadingState
     from "./components/ui/LoadingState";
 
+const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Home = lazy(()=> import("./pages/Home"));
 const Login = lazy(()=> import("./pages/Login"));
@@ -66,6 +67,7 @@ function App(){
               </ProtectedRoute>
             }
           >
+            <Route path={ROUTES.profile} element={<Profile />} />
             <Route path={ROUTES.settings} element={<Settings />} />
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>
             <Route path={ROUTES.focusStudio} element={<FocusStudioPage />} />

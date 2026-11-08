@@ -9,8 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:auth": "node --experimental-strip-types --test tests/jwt.test.mjs",
-    "test:web": "node --experimental-strip-types --test tests/jwt.test.mjs tests/studyActivity.test.mjs tests/pageBounds.test.mjs tests/validationAccess.test.mjs tests/apiTimeout.test.mjs tests/recordAccess.test.mjs tests/pomodoroState.test.mjs tests/soundscapes.test.mjs tests/pomodoroGoalTracking.test.mjs tests/studyRoomClock.test.mjs tests/mediaCapture.test.mjs && npm run test:ui",
-    "test:ui": "node --test --test-concurrency=1 tests/uiRendering.test.mjs tests/designSystem.test.mjs tests/dashboardRendering.test.mjs tests/focusStudioRendering.test.mjs tests/appearance.test.mjs"
+    "test:web": "node --experimental-strip-types --test tests/jwt.test.mjs tests/profileValidation.test.mjs tests/studyActivity.test.mjs tests/pageBounds.test.mjs tests/validationAccess.test.mjs tests/apiTimeout.test.mjs tests/recordAccess.test.mjs tests/pomodoroState.test.mjs tests/soundscapes.test.mjs tests/pomodoroGoalTracking.test.mjs tests/studyRoomClock.test.mjs tests/mediaCapture.test.mjs && npm run test:ui",
+    "test:ui": "node --test --test-concurrency=1 tests/uiRendering.test.mjs tests/designSystem.test.mjs tests/dashboardRendering.test.mjs tests/focusStudioRendering.test.mjs tests/appearance.test.mjs tests/profileRendering.test.mjs",
+    "test:profile": "node --experimental-strip-types --test tests/profileValidation.test.mjs && node --test tests/profileRendering.test.mjs",
+    "test:profile:integration": "node --test tests/profileIntegration.test.mjs"
   },
   "dependencies": {
     "axios": "^1.20.0",

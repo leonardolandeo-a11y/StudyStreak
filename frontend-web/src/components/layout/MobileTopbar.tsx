@@ -247,7 +247,7 @@ function MobileTopbar() {
 
                         <div className="border-t border-slate-800 p-4">
 
-                            {currentUser && <UserPanel user={currentUser} onSettingsClick={() => setOpen(false)} />}
+                            {currentUser && <UserPanel user={currentUser} onSettingsClick={() => setOpen(false)} onProfileClick={() => setOpen(false)} />}
 
                             <button
                                 type="button"
