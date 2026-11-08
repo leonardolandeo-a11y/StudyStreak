@@ -11,7 +11,9 @@ import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { ValidationEditor } from '../../../../../components/validations/ValidationEditor';
 import { RecordPhoto } from '../../../../../components/records/RecordPhoto';
 import { RecordVoice } from '../../../../../components/records/RecordVoice';
-import { palette } from '../../../../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../../features/appearance/theme';
+import { CreationModal, useCreationBack, useCreationBusy, useCreationComplete } from '../../../../../components/ui/CreationModal';
 import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { trackingLinkService } from '../../../../../services/trackingLinkService';
@@ -43,6 +45,7 @@ function partnerFromLink(link: TrackingLink, currentUserId: number): Partner {
 }
 
 function Section({ step, title, children }: { step: number; title: string; children: ReactNode }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <Text style={styles.step}>Step {step} of 4</Text>
@@ -53,6 +56,8 @@ function Section({ step, title, children }: { step: number; title: string; child
 }
 
 function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string }) {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   return (
     <>
       {state.loading ? <ActivityIndicator color={palette.primary} /> : null}
@@ -68,6 +73,9 @@ function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string })
 }
 
 function RecordReview({ goalId, record, partnerName }: { goalId: number; record: DailyRecord; partnerName: string }) {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
+  const complete = useCreationComplete();
   const [validation, setValidation] = useState<Validation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +83,7 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
   const currentRevision = useRef(revision);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  useCreationBusy(saving);
 
   useFocusEffect(useCallback(() => {
     const controller = new AbortController();
@@ -113,6 +122,7 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
         : await validationService.create(goalId, record.id, request);
       setValidation(result);
       setMessage(validation ? 'Validation updated.' : 'Validation created.');
+      complete?.();
       return true;
     } catch (cause) {
       if (isAxiosError(cause) && cause.response?.status === 409) {
@@ -160,10 +170,13 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
 }
 
 function GoalRecords({ goal, partnerName }: { goal: Goal; partnerName: string }) {
+  const styles = useThemedStyles(createStyles);
   const [selectedRecord, setSelectedRecord] = useState<DailyRecord | null>(null);
   const loadRecords = useCallback((page: number, signal: AbortSignal) =>
     dailyRecordService.list(goal.id, page, signal), [goal.id]);
   const records = usePagedResource(loadRecords);
+  useCreationBack(() => setSelectedRecord(null), selectedRecord !== null);
+  if (selectedRecord) return <RecordReview key={selectedRecord.id} goalId={goal.id} record={selectedRecord} partnerName={partnerName} />;
 
   return (
     <>
@@ -177,26 +190,28 @@ function GoalRecords({ goal, partnerName }: { goal: Goal; partnerName: string })
             {records.data.content.map((record) => (
               <Pressable key={record.id} accessibilityRole="button" accessibilityLabel={`Review record ${record.date}`}
                 onPress={() => setSelectedRecord(record)}
-                style={[styles.item, selectedRecord?.id === record.id && styles.itemSelected]}>
+                style={styles.item}>
                 <Text style={styles.itemTitle}>{record.date}</Text>
                 <Text numberOfLines={2} style={styles.meta}>{record.note || 'No note provided.'}</Text>
-                <Text style={styles.link}>{selectedRecord?.id === record.id ? 'Selected' : 'Review record'}</Text>
+                <Text style={styles.link}>Review record</Text>
               </Pressable>
             ))}
             <PageControls page={records.page} totalPages={records.data.totalPages} onChange={records.setPage} />
           </>
         ) : null}
       </Section>
-      {selectedRecord ? <RecordReview key={selectedRecord.id} goalId={goal.id} record={selectedRecord} partnerName={partnerName} /> : null}
     </>
   );
 }
 
 function PartnerGoals({ partner }: { partner: Partner }) {
+  const styles = useThemedStyles(createStyles);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const loadGoals = useCallback((page: number, signal: AbortSignal) =>
     goalService.list(partner.id, page, signal), [partner.id]);
   const goals = usePagedResource(loadGoals);
+  useCreationBack(() => setSelectedGoal(null), selectedGoal !== null);
+  if (selectedGoal) return <GoalRecords key={selectedGoal.id} goal={selectedGoal} partnerName={partner.username} />;
 
   return (
     <>
@@ -210,23 +225,24 @@ function PartnerGoals({ partner }: { partner: Partner }) {
             {goals.data.content.map((goal) => (
               <Pressable key={goal.id} accessibilityRole="button" accessibilityLabel={`View records for ${goal.topic}`}
                 onPress={() => setSelectedGoal(goal)}
-                style={[styles.item, selectedGoal?.id === goal.id && styles.itemSelected]}>
+                style={styles.item}>
                 <Text style={styles.itemTitle}>{goal.topic}</Text>
                 <Text style={styles.meta}>{goal.completed ? 'Completed' : 'Active'} · {goal.frequency} sessions/week</Text>
-                <Text style={styles.link}>{selectedGoal?.id === goal.id ? 'Selected' : 'View daily records'}</Text>
+                <Text style={styles.link}>View daily records</Text>
               </Pressable>
             ))}
             <PageControls page={goals.page} totalPages={goals.data.totalPages} onChange={goals.setPage} />
           </>
         ) : null}
       </Section>
-      {selectedGoal ? <GoalRecords key={selectedGoal.id} goal={selectedGoal} partnerName={partner.username} /> : null}
     </>
   );
 }
 
 export default function Validations() {
+  const styles = useThemedStyles(createStyles);
   const { currentUser } = useAuth();
+  const [notice, setNotice] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const loadPartners = useCallback((page: number, signal: AbortSignal) =>
@@ -238,14 +254,7 @@ export default function Validations() {
 
   if (!currentUser) return null;
 
-  return (
-    <Screen scrollRef={menuScroll}>
-      <Text style={styles.title}>Validations</Text>
-      <Text style={styles.subtitle}>Review study records from your connected partners.</Text>
-      {starting || selectedPartner ? <ActionButton title="Close validation flow" secondary
-        onPress={() => { setStarting(false); setSelectedPartner(null); }} /> : null}
-      {starting && !selectedPartner ? <StatusMessage message="Choose a tracking partner below, then a goal and a daily record to validate." /> : null}
-      <Section step={1} title="Tracking partners">
+  const partnersList = (<Section step={1} title="Tracking partners">
         <ActionButton secondary title="Refresh partners" onPress={partners.reload} />
         <ListStatus state={partners} empty="No active tracking partners yet." />
         {!partners.loading && !partners.error && partners.data ? (
@@ -265,13 +274,24 @@ export default function Validations() {
             <PageControls page={partners.page} totalPages={partners.data.totalPages} onChange={partners.setPage} />
           </>
         ) : null}
-      </Section>
-      {selectedPartner ? <PartnerGoals key={selectedPartner.id} partner={selectedPartner} /> : null}
+      </Section>);
+  return <>
+    <CreationModal visible={starting || selectedPartner !== null} title="New Validation"
+      onClose={() => { setStarting(false); setSelectedPartner(null); }}
+      onBack={() => { if (selectedPartner) setSelectedPartner(null); else setStarting(false); }}
+      onComplete={() => { setStarting(false); setSelectedPartner(null); setNotice('Validation saved.'); partners.reload(); }}>
+      {selectedPartner ? <PartnerGoals key={selectedPartner.id} partner={selectedPartner} /> : partnersList}
+    </CreationModal>
+    <Screen themed scrollRef={menuScroll}>
+      <Text style={styles.title}>Validations</Text>
+      <Text style={styles.subtitle}>Review study records from your connected partners.</Text>
+      {notice ? <StatusMessage variant="success" message={notice} /> : null}
+      {!(starting || selectedPartner) ? partnersList : null}
     </Screen>
-  );
+  </>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
   title: { color: palette.text, fontSize: 30, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },

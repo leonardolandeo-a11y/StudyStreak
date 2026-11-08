@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { ActionButton } from '../ui/ActionButton';
 import { PageControls } from '../ui/PageControls';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { userSearchService } from '../../services/userSearchService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { getPageFallback } from '../../utils/pageBounds';
@@ -14,6 +15,8 @@ export function PartnerSearch({ onSend, busy }: {
   onSend: (userId: number) => Promise<boolean>;
   busy: boolean;
 }) {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<UserSearchResult | null>(null);
   const [page, setPage] = useState(0);
@@ -116,7 +119,7 @@ export function PartnerSearch({ onSend, busy }: {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 18, borderRadius: 16, gap: 13 },
   heading: { color: palette.text, fontSize: 19, fontWeight: '700' },
   description: { color: palette.muted, fontSize: 13, lineHeight: 21 },

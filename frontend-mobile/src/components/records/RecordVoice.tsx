@@ -5,8 +5,8 @@ import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
-import { useAppearance } from '../../hooks/useAppearance';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
 import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -53,6 +53,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
   // This avoids repeatedly replacing the empty source while the file loads.
   const player = useAudioPlayer(uri);
   const { reduceMotion } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const status = useAudioPlayerStatus(player);
   const [pulse] = useState(() => new Animated.Value(1));
   const [loadTimedOut, setLoadTimedOut] = useState(false);
@@ -141,6 +142,8 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   onDelete?: () => void;
   readOnly?: boolean;
 }) {
+  const { theme: { colors: palette } } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const [uri, setUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -229,16 +232,16 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   );
 }
 
-const styles = StyleSheet.create({
-  container: { gap: 10 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  container: { gap: 10, backgroundColor: palette.surface, borderRadius: 12, padding: 12 },
   label: { color: palette.text, fontWeight: '700', fontSize: 14 },
   playback: { backgroundColor: palette.surfaceRaised, borderRadius: 12, padding: 13, gap: 10 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   indicator: { width: 10, height: 10, borderRadius: 5 },
-  indicatorPlaying: { backgroundColor: '#fb4b5e' },
+  indicatorPlaying: { backgroundColor: palette.error },
   indicatorIdle: { backgroundColor: palette.muted },
   stateText: { color: palette.text, fontSize: 13, fontWeight: '700', flex: 1 },
-  statePlaying: { color: '#fda4af' },
+  statePlaying: { color: palette.error },
   timer: { color: palette.muted, fontSize: 12, fontVariant: ['tabular-nums'] },
   track: { height: 5, backgroundColor: palette.border, borderRadius: 4, overflow: 'hidden' },
   progress: { height: '100%', backgroundColor: palette.primary, borderRadius: 4 },

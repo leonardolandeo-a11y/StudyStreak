@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import { activityDate, activityNumber, chartGeometry, type VerifiedPeriod } from '../../features/dashboard/verifiedActivity';
-import { ActionButton } from '../ui/ActionButton';
+import { NavigationPressable } from '../navigation/NavigationPressable';
 
 export function ActivityPlot({ period, style }: { period: VerifiedPeriod; style: 'bars' | 'lines' }) {
   const { theme } = useAppearance();
@@ -43,7 +43,11 @@ export function ActivityPlot({ period, style }: { period: VerifiedPeriod; style:
         </View>
       </ScrollView>
     </View>
-    <ActionButton title={showValues ? 'Hide daily values' : 'Show daily values'} secondary onPress={() => setShowValues(value => !value)} />
+    <NavigationPressable accessibilityRole="button" accessibilityLabel={showValues ? 'Hide daily values' : 'Show daily values'}
+      onPress={() => setShowValues(value => !value)} style={{ alignSelf: 'flex-start', minHeight: 44,
+        justifyContent: 'center', borderRadius: 8, paddingHorizontal: 4 }}>
+      <Text style={{ color: theme.colors.primary, fontSize: 13, fontWeight: '600' }}>{showValues ? 'Hide daily values' : 'Show daily values'}</Text>
+    </NavigationPressable>
     {showValues ? period.daily.map(day => <View key={day.date} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8,
       justifyContent: 'space-between', borderBottomWidth: 1, borderColor: theme.colors.border, paddingVertical: 8 }}>
       <Text style={{ color: theme.colors.text }}>{activityDate(day.date)}</Text>

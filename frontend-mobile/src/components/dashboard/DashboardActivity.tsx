@@ -10,6 +10,8 @@ import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { ActivityPlot } from './ActivityPlot';
 import { NavigationPressable } from '../navigation/NavigationPressable';
+import { AppIcon } from '../ui/AppIcon';
+import { SegmentedControl } from '../ui/SegmentedControl';
 
 export function DashboardActivity({ days, onDaysChange, state, retry }: {
   days: StudyPeriod; onDaysChange(days: StudyPeriod): void; state: ResourceState<FocusStatistics>; retry(): void;
@@ -27,26 +29,23 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
       unit: 'days', detail: 'All completed study days, including historical estimates. Independent of the period above.' },
   ];
   return <>
-    <Card style={{ padding: 16, gap: 12 }}>
+    <Card style={{ padding: 14, gap: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 20, fontWeight: '700' }}>Study activity</Text>
           <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Daily focus · confirmed minutes{stats?.timeZone ? ` · ${stats.timeZone}` : ''}</Text>
         </View>
-        <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh activity" onPress={retry}
-          style={{ width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceRaised }}>
-          <Text accessible={false} style={{ color: theme.colors.primary, fontSize: 24 }}>↻</Text>
-        </NavigationPressable>
-      </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {([7, 30] as const).map(value => <ActionButton key={value} title={`${value} days`} secondary selected={days === value} onPress={() => onDaysChange(value)} />)}
-        </View>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <ActionButton title="Bars" secondary selected={style === 'bars'} onPress={() => setStyle('bars')} />
-          <ActionButton title="Lines" secondary selected={style === 'lines'} onPress={() => setStyle('lines')} />
+        <View style={{ flexDirection: 'row', gap: 2 }}>
+          {(['bars', 'lines'] as const).map(value => <NavigationPressable key={value} accessibilityRole="button"
+            accessibilityLabel={value === 'bars' ? 'Bars' : 'Lines'} accessibilityState={{ selected: style === value }}
+            onPress={() => setStyle(value)} style={{ width: 44, height: 44, borderRadius: 10,
+              alignItems: 'center', justifyContent: 'center', backgroundColor: style === value ? theme.colors.primarySoft : 'transparent' }}>
+            <AppIcon name={value} color={style === value ? theme.colors.primary : theme.colors.muted} size={20} />
+          </NavigationPressable>)}
         </View>
       </View>
+      <SegmentedControl options={[{ value: 7 as const, label: '7 days' }, { value: 30 as const, label: '30 days' }]}
+        value={days} onChange={onDaysChange} />
       {state.status === 'loading' ? <StatusMessage message="Loading verified activity…" />
         : state.status === 'error' || !period ? <><StatusMessage error message={state.status === 'error'
           ? 'Your study activity could not be loaded.' : 'Verified activity is unavailable or inconsistent. Historical estimates have not been substituted.'} />
@@ -56,7 +55,7 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
         : <ActivityPlot period={period} style={style} />}
       <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
     </Card>
-    {metrics.map(metric => <Card key={metric.label} style={{ padding: 16, gap: 6 }}>
+    {metrics.map(metric => <Card key={metric.label} style={{ padding: 12, gap: 4 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         <Text accessibilityRole="header" style={{ color: theme.colors.textSecondary, fontSize: 14 }}>{metric.label}</Text>
         <Text style={{ color: theme.colors.text, fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{metric.unit}</Text></Text>

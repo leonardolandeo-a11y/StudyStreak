@@ -6,6 +6,7 @@ import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../../components/ui/PageControls';
+import { CreationModal } from '../../../../../components/ui/CreationModal';
 import { GoalForm } from '../../../../../components/goals/GoalForm';
 import { palette } from '../../../../../constants/palette';
 import { useAuth } from '../../../../../hooks/useAuth';
@@ -49,14 +50,14 @@ export default function Goals() {
     }
   }
 
-  return (
+  return <>
+    <CreationModal visible={showCreate} title="New Goal" busy={busy} onClose={() => setShowCreate(false)}>
+      <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
+      {formError ? <StatusMessage message={formError} error /> : null}
+    </CreationModal>
     <Screen scrollRef={menuScroll}>
       <Text style={styles.title}>My Goals</Text>
       <Text style={styles.subtitle}>Create study goals and manage your daily records.</Text>
-      {showCreate ? (
-        <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
-      ) : null}
-      {formError ? <StatusMessage message={formError} error /> : null}
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>
@@ -87,7 +88,7 @@ export default function Goals() {
       ) : null}
       {!loading && error ? <ActionButton secondary title="Retry" onPress={reload} /> : null}
     </Screen>
-  );
+  </>;
 }
 
 const styles = StyleSheet.create({

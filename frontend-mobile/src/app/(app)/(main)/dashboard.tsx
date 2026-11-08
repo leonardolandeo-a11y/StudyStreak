@@ -21,7 +21,7 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const { state, retry } = useFocusedResource(load);
   const stats = state.status === 'success' ? state.data : null;
   const period = stats ? verifiedActivity(stats, days) : null;
-  return <Screen themed>
+  return <Screen themed compact onRefresh={retry} refreshing={state.status === 'loading'}>
     <PageHeading title={`Welcome back, ${username}`} eyebrow="YOUR STUDY SPACE" />
     <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} />
     <DashboardActivity days={days} onDaysChange={setDays} state={state} retry={retry} />

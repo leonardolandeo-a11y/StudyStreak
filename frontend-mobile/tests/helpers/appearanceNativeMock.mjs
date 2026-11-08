@@ -8,6 +8,7 @@ function propsFor(props) {
   if (Array.isArray(style.transform)) style.transform = style.transform.flatMap(item =>
     Object.entries(item).map(([name, value]) => `${name}(${value})`)).join(' ');
   return { style, role: props.accessibilityRole,
+    'data-testid': props.testID, 'aria-modal': props.accessibilityViewIsModal || undefined,
     'aria-label': props.accessibilityLabel, 'aria-selected': props.accessibilityState?.selected,
     'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };
 }
@@ -33,4 +34,14 @@ export function ActivityIndicator(props) { return React.createElement('span', { 
 export const AppState = { currentState: 'active', addEventListener: () => ({ remove() {} }) };
 export const Keyboard = { addListener: () => ({ remove() {} }) };
 export const BackHandler = { addEventListener: () => ({ remove() {} }) };
+export const RefreshControl = () => null;
+export function Modal({ visible, children }) { return visible ? React.createElement('div', { role: 'dialog' }, children) : null; }
+class AnimatedValue {
+  constructor(value) { this.value = value; }
+  interpolate({ outputRange }) { return outputRange[0]; }
+  setValue(value) { this.value = value; }
+  stopAnimation() {}
+}
+export const Animated = { Value: AnimatedValue, View,
+  timing: () => ({ start() {}, stop() {} }), sequence: () => ({ start() {}, stop() {} }) };
 export function Image(props) { return React.createElement('img', { alt: props.accessibilityLabel, src: props.source.uri, style: props.style }); }

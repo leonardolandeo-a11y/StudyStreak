@@ -106,9 +106,6 @@ export default function Notifications() {
 
   return (
     <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Home</Text>
-      </Pressable>
       <Text style={styles.title}>Notifications</Text>
       <Text style={styles.subtitle}>Stay informed about your goals and study partners.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}

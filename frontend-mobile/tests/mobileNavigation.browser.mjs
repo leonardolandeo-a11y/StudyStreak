@@ -31,10 +31,10 @@ try {
   await browser.click('Cancel'); await browser.wait(has('Tracking'));
   await browser.click('Tracking'); await browser.wait(has('Send a tracking request'));
   await browser.click('Send a tracking request'); await browser.wait(has('Search study partners'));
-  await browser.click('Close request form'); await browser.wait(has('Validations'));
+  await browser.click('Cancel creation'); await browser.wait(has('Validations'));
   await browser.click('Validations'); await browser.wait(has('Start a validation'));
-  await browser.click('Start a validation'); await browser.wait(`document.body.innerText.includes('Choose a tracking partner below')`);
-  await browser.click('Close validation flow'); await browser.wait(has('Study Rooms'));
+  await browser.click('Start a validation'); await browser.wait(`document.body.innerText.includes('New Validation')`);
+  await browser.click('Cancel creation'); await browser.wait(has('Study Rooms'));
   await browser.click('Study Rooms'); await browser.wait(has('Create a study room'));
   await browser.click('Create a study room'); await browser.wait(has('Room name'));
   await browser.click('Cancel creation'); await browser.wait(has('Create a study room'));
@@ -47,8 +47,8 @@ try {
   await browser.click('Open your profile, Fixture Student'); await browser.wait(`document.body.innerText.includes('Fixture biography')`);
   assert.equal(await browser.evaluate('Array.from(document.querySelectorAll("[role=tab]")).filter(el => el.getClientRects().length && !el.closest("[aria-hidden=true]")).length'), 0);
   await browser.evaluate('history.back()'); await browser.wait(has('Open menu'));
-  await browser.click('Open menu'); await browser.wait(has('Notifications (3 unread)'));
-  await browser.click('Notifications (3 unread)'); await browser.wait(`location.pathname.includes('notifications')`);
+  await browser.click('Open menu'); await browser.wait(has('Notifications'));
+  await browser.click('Notifications'); await browser.wait(`location.pathname.includes('notifications')`);
   await browser.click('Open menu'); await browser.wait(has('Menu')); await browser.click('Menu');
   await browser.wait(has('Create a study room')); // Menu remembers the selected tab.
   assert.deepEqual(mutations, []);

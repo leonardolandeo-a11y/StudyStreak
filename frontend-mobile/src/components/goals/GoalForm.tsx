@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { FormField } from '../ui/FormField';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import type { GoalRequest } from '../../types/goal';
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
+  const styles = useThemedStyles(createStyles);
   const [topic, setTopic] = useState(initialValues?.topic ?? '');
   const [frequency, setFrequency] = useState(String(initialValues?.frequency ?? 1));
   const [duration, setDuration] = useState(String(initialValues?.duration ?? 30));
@@ -28,7 +30,7 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
     if (!Number.isSafeInteger(days) || days <= 0) { setError('Frequency must be a positive integer.'); return; }
     if (!Number.isSafeInteger(minutes) || minutes <= 0) { setError('Duration must be a positive integer.'); return; }
     setError(null);
-    await onSubmit({ topic: name, frequency: days, duration: minutes, completed });
+    await onSubmit({ topic: name, frequency: days, duration: minutes, completed: initialValues ? completed : false });
   }
 
   return (
@@ -40,11 +42,11 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
         onChangeText={setFrequency} keyboardType="number-pad" editable={!busy} />
       <FormField label="Duration" hint="Minutes per session" value={duration}
         onChangeText={setDuration} keyboardType="number-pad" editable={!busy} />
-      <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
+      {initialValues ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
         disabled={busy} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
         <Text style={styles.check}>{completed ? '☑' : '☐'}</Text>
         <Text style={styles.checkLabel}>Completed</Text>
-      </Pressable>
+      </Pressable> : null}
       {error ? <StatusMessage error message={error} /> : null}
       <ActionButton title={initialValues ? 'Save changes' : 'Create goal'} busy={busy}
         onPress={() => { void submit(); }} />
@@ -53,7 +55,7 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   form: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 18, gap: 14 },
   heading: { color: palette.text, fontSize: 20, fontWeight: '700' },
   checkbox: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 },

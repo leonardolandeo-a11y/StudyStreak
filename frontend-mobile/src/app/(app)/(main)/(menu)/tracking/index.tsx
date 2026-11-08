@@ -5,6 +5,7 @@ import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { PageControls } from '../../../../../components/ui/PageControls';
 import { StatusMessage } from '../../../../../components/ui/StatusMessage';
+import { CreationModal } from '../../../../../components/ui/CreationModal';
 import { PartnerSearch } from '../../../../../components/tracking/PartnerSearch';
 import { TrackingLinkCard } from '../../../../../components/tracking/TrackingLinkCard';
 import { useAuth } from '../../../../../hooks/useAuth';
@@ -78,7 +79,7 @@ export default function Tracking() {
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const menuScroll = useMenuAction('Send a tracking request', () => setShowSend(true), showSend, () => { if (!sending) setShowSend(false); });
+  const menuScroll = useMenuAction('Send a tracking request', () => { clearMessages(); setShowSend(true); }, showSend, () => { if (!sending) setShowSend(false); });
 
   function clearMessages() {
     setNotice(null);
@@ -158,14 +159,14 @@ export default function Tracking() {
 
   if (!currentUser) return null;
 
-  return (
+  return <>
+    <CreationModal visible={showSend} title="Send Tracking Request" busy={sending} onClose={() => setShowSend(false)}>
+      <PartnerSearch busy={sending} onSend={sendRequest} />
+      {actionError ? <StatusMessage error message={actionError} /> : null}
+    </CreationModal>
     <Screen scrollRef={menuScroll}>
       <Text style={styles.title}>Tracking Links</Text>
       <Text style={styles.subtitle}>Connect with study partners and validate progress together.</Text>
-      {showSend ? <>
-        <ActionButton title="Close request form" secondary disabled={sending} onPress={() => setShowSend(false)} />
-        <PartnerSearch busy={sending} onSend={sendRequest} />
-      </> : null}
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
       <ActionButton title="Refresh all connections" secondary onPress={refreshAll} />
@@ -179,7 +180,7 @@ export default function Tracking() {
         state={history} mode="history" currentUserId={currentUser.id} busy={busyId !== null}
         onRespond={respond} onRemove={remove} />
     </Screen>
-  );
+  </>;
 }
 
 const styles = StyleSheet.create({

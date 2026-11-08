@@ -11,6 +11,9 @@ import {
   ActivityIndicator, Alert, AppState, Pressable,
   StyleSheet, Text, TextInput, View, Share,
 } from 'react-native';
+import { useAppearance } from '../../../../hooks/useAppearance';
+import { Card } from '../../../../components/ui/Card';
+import { CreationModal } from '../../../../components/ui/CreationModal';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -26,6 +29,7 @@ type Snapshot = { room: StudyRoom; receivedAt: number };
 
 export default function StudyRooms() {
   const { currentUser } = useAuth();
+  const { theme } = useAppearance();
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState('');
@@ -41,7 +45,7 @@ export default function StudyRooms() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const menuScroll = useMenuAction('Create a study room', () => setShowCreate(true), showCreate || roomId !== null, () => {
+  const menuScroll = useMenuAction('Create a study room', () => { setError(null); setShowCreate(true); }, showCreate || roomId !== null, () => {
     if (busy) return;
     setShowCreate(false); setRoomId(null); setSnapshot(null);
   });
@@ -230,7 +234,19 @@ export default function StudyRooms() {
   const online = room?.members.filter(m => m.online).length ?? 0;
   const studyingCount = room?.members.filter(m => m.online && m.studying).length ?? 0;
 
-  return (
+  return <>
+    <CreationModal visible={showCreate} title="New Study Room" busy={busy} onClose={() => setShowCreate(false)}>
+          <Card>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Create a study room</Text>
+            <Text style={[styles.description, { color: theme.colors.muted }]}>Invite up to 11 friends with a private code.</Text>
+            <TextInput accessibilityLabel="Room name" placeholder="Late-night calculus"
+              placeholderTextColor={theme.colors.muted} value={roomName} maxLength={60}
+              onChangeText={setRoomName} style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.borderStrong }]} editable={!busy}/>
+            <ActionButton title="Create room" busy={busy} onPress={() => { void create(); }}/>
+            <ActionButton title="Cancel" secondary disabled={busy} onPress={() => setShowCreate(false)} />
+          </Card>
+      {error ? <Text accessibilityRole="alert" style={[styles.error, { color: theme.colors.error }]}>{error}</Text> : null}
+    </CreationModal>
     <Screen scrollRef={menuScroll}>
       {room ? <ActionButton title="All rooms" secondary onPress={() => { setRoomId(null); setSnapshot(null); }} /> : null}
       <View style={styles.heading}>
@@ -243,15 +259,6 @@ export default function StudyRooms() {
 
       {!room ? (
         <>
-          {showCreate ? <View style={styles.card}>
-            <Text style={styles.cardTitle}>Create a study room</Text>
-            <Text style={styles.description}>Invite up to 11 friends with a private code.</Text>
-            <TextInput accessibilityLabel="Room name" placeholder="Late-night calculus"
-              placeholderTextColor="#64748b" value={roomName} maxLength={60}
-              onChangeText={setRoomName} style={styles.input} editable={!busy}/>
-            <ActionButton title="Create room" busy={busy} onPress={() => { void create(); }}/>
-            <ActionButton title="Cancel creation" secondary disabled={busy} onPress={() => setShowCreate(false)} />
-          </View> : null}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Join friends</Text>
             <Text style={styles.description}>Enter the 10-character invite code.</Text>
@@ -335,7 +342,7 @@ export default function StudyRooms() {
         </>
       )}
     </Screen>
-  );
+  </>;
 }
 
 const styles = StyleSheet.create({

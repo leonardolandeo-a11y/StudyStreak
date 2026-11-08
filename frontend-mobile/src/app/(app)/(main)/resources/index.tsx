@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
@@ -95,9 +95,6 @@ export default function StudyResources() {
 
   return (
     <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
-      </Pressable>
       <Text style={styles.title}>Study resources</Text>
       <Text style={styles.muted}>Find books related to your study goals using Google Books.</Text>
       <View style={styles.searchBox}>

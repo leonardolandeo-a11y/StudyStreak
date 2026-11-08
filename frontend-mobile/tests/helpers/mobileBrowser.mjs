@@ -80,7 +80,7 @@ export async function mobileBrowser({ intercept } = {}) {
     throw Error('Condition timed out: ' + expression);
   };
   const click = async text => {
-    const candidates = `Array.from(document.querySelectorAll('button,[role=button],[role=tab]')).filter(b =>
+    const candidates = `Array.from(document.querySelectorAll('button,[role=button],[role=tab],[role=radio],[role=checkbox]')).filter(b =>
       !b.closest('[aria-hidden="true"]') && b.getClientRects().length &&
       (b.getAttribute('aria-label')===${JSON.stringify(text)} || b.textContent.trim()===${JSON.stringify(text)}))`;
     await wait(`${candidates}.some(b => {const r=b.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth+1;})`);

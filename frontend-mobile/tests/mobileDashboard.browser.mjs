@@ -68,11 +68,11 @@ try {
   await browser.click('30 days'); await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days, 60 verified minutes"]')`);
   holdSeven = false; releaseSeven();
   await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days, 60 verified minutes"]')`);
-  mode = 'empty'; await browser.click('Refresh activity'); await browser.wait(`document.body.innerText.includes('No verified study time')`);
-  mode = 'error'; await browser.click('Refresh activity'); await browser.wait(has('Retry activity'));
+  mode = 'empty'; await browser.click('7 days'); await browser.wait(`document.body.innerText.includes('No verified study time')`);
+  mode = 'error'; await browser.click('30 days'); await browser.wait(has('Retry activity'));
   mode = 'missing'; await browser.click('Retry activity'); await browser.wait(`document.body.innerText.includes('unavailable or inconsistent')`);
   mode = 'success'; await browser.click('Retry activity'); await browser.wait(chart('Line'));
-  recentError = true; await browser.click('Refresh activity'); await browser.wait(has('Retry recent activity'));
+  recentError = true; await browser.click('7 days'); await browser.wait(has('Retry recent activity'));
   recentError = false; await browser.click('Retry recent activity'); await browser.wait(`document.body.innerText.includes('Recent session 0')`);
   goalsError = true; await browser.click('Open menu'); await browser.click('Menu'); await browser.wait(has('Create a goal'));
   await browser.click('Open menu'); await browser.click('Dashboard'); await browser.wait(has('Retry goals'));
@@ -83,6 +83,7 @@ try {
     await browser.wait('document.documentElement.scrollWidth <= innerWidth');
   }
   await browser.command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await browser.click('30 days'); await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days"]')`);
   await browser.click('Bars'); await browser.wait(chart('Bar'));
   const barImage = await browser.command('Page.captureScreenshot', { format: 'png' });
   writeFileSync('.expo/dashboard-bars.png', Buffer.from(barImage.data, 'base64'));

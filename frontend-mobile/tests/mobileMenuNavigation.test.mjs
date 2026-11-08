@@ -44,7 +44,7 @@ test('drawer order, unread count, profile and Settings access are functional and
   })));
   let previous = -1;
   for (const item of drawerItems) { const offset = html.indexOf(`>${item.label}`); assert.ok(offset > previous); previous = offset; }
-  assert.match(html, /Notifications \(3 unread\)/); assert.match(html, /avatar, initials/);
+  assert.match(html, /data-testid="unread-badge"/); assert.doesNotMatch(html, /\(3 unread\)/); assert.match(html, /avatar, initials/);
   controls.get('Menu').onPress(); assert.deepEqual(visited, ['(menu)']); assert.equal(closed, 1);
   controls.get('Open your profile, A long display name').onPress(); assert.equal(history.at(-1), '/(app)/profile');
   controls.get('Settings').onPress(); assert.equal(history.at(-1), '/(app)/settings'); assert.equal(closed, 3);

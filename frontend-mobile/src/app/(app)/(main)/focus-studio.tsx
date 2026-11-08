@@ -438,9 +438,6 @@ export default function FocusStudioMobile() {
   if (!currentUser) return null;
   return (
     <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
-      </Pressable>
 
       <View style={styles.heading}>
         <Text style={styles.eyebrow}>♫  YOUR PERSONAL LISTENING ROOM</Text>

@@ -4,7 +4,8 @@ import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { photoEvidenceService } from '../../services/photoEvidenceService';
 import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -18,6 +19,8 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
   onDelete?: () => void;
   readOnly?: boolean;
 }) {
+  const { theme: { colors: palette } } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -117,8 +120,8 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
   );
 }
 
-const styles = StyleSheet.create({
-  container: { gap: 10 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  container: { gap: 10, backgroundColor: palette.surface, borderRadius: 12, padding: 12 },
   label: { color: palette.text, fontSize: 14, fontWeight: '700' },
   image: { width: '100%', height: 230, backgroundColor: palette.surfaceRaised, borderRadius: 10 },
 });
