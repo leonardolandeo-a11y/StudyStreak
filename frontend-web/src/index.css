@@ -114,3 +114,24 @@
 @keyframes sidebar-ring { 25% { transform: rotate(12deg); } 55% { transform: rotate(-10deg); } 80% { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; } }
 :root[data-motion="reduce"] .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; }
+
+/* The desktop rail takes layout space; mobile uses a native modal top layer. */
+.partners-desktop {
+    position: sticky; top: 0; align-self: flex-start; flex-shrink: 0;
+    width: 0; height: 100dvh; overflow: hidden;
+    transition: width 240ms ease;
+}
+.partners-desktop[data-open="true"] { width: 18rem; border-left: 1px solid var(--ss-border); }
+.partners-desktop .partners-panel-shell { width: calc(18rem - 1px); }
+.partners-drawer {
+    position: fixed; inset: 0 0 0 auto; margin: 0 0 0 auto; padding: 0;
+    width: min(22rem, calc(100vw - 1rem)); max-width: 100vw;
+    height: 100dvh; max-height: 100dvh; border: 0; border-left: 1px solid var(--ss-border);
+    background: var(--ss-surface); color: var(--ss-text);
+    transform: translateX(100%); opacity: 0;
+    transition: transform 240ms ease, opacity 240ms ease;
+}
+.partners-drawer[data-open="true"] { transform: translateX(0); opacity: 1; }
+.partners-drawer::backdrop { background: rgb(0 0 0 / 55%); }
+@starting-style { .partners-drawer[open][data-open="true"] { transform: translateX(100%); opacity: 0; } }
+.partners-member-link { transition: background-color 240ms ease; }

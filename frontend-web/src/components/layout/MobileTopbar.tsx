@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { UserPanel } from "./UserPanel";
 import {
     BadgeCheck,
@@ -33,7 +34,7 @@ import {
     useUnreadNotifications
 } from "../../hooks/useUnreadNotifications";
 
-function MobileTopbar() {
+function MobileTopbar({ actions }: { actions?: ReactNode }) {
 
     const [open, setOpen] = useState(false);
     const {unreadCount} = useUnreadNotifications();
@@ -132,7 +133,7 @@ function MobileTopbar() {
                 </div>
 
 
-                <button
+                <div className="flex items-center gap-2">{actions}<button
                     type="button"
                     onClick={() =>
                         setOpen((current) => !current)
@@ -151,7 +152,7 @@ function MobileTopbar() {
                     {open
                         ? <X size={20} />
                         : <Menu size={20} />}
-                </button>
+                </button></div>
             </header>
 
 
