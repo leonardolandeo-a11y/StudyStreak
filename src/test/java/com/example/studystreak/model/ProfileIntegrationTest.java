@@ -50,6 +50,41 @@ class ProfileIntegrationTest {
         builder.header("Content-Type","application/json");
         return HttpClient.newHttpClient().send(builder.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
     }
+    @Test void validJwtKeepsMissingRoutesAndUnsupportedMethodsDistinctFromAuthentication() throws Exception {
+        assertEquals(200,request("GET","/api/profile",null,token).statusCode());
+        // An old backend without social mappings reaches the same MVC missing-resource path.
+        String unmapped="/api/users/"+other.getId()+"/profile/unmapped-diagnostic";
+        assertEquals(401,request("GET",unmapped,null,null).statusCode());
+        var missing=request("GET",unmapped,null,token);
+        assertEquals(404,missing.statusCode());
+        assertEquals(unmapped,json.readTree(missing.body()).path("path").asString());
+        assertEquals(403,request("GET","/users/"+other.getId(),null,token).statusCode());
+        assertEquals(404,request("GET","/api/users/"+other.getId()+"/profile",null,token).statusCode());
+        var wrongMethod=request("POST","/api/profile","{}",token);
+        assertEquals(405,wrongMethod.statusCode());
+        assertTrue(wrongMethod.headers().firstValue("Allow").orElseThrow().contains("GET"));
+        assertEquals(405,request("GET","/refresh",null,null).statusCode());
+        assertEquals(401,request("GET","/api/profile",null,"invalid-diagnostic-jwt").statusCode());
+        var expired=new JwtService();
+        org.springframework.test.util.ReflectionTestUtils.setField(expired,"secretKey",System.getenv("JWT_SECRET"));
+        org.springframework.test.util.ReflectionTestUtils.setField(expired,"jwtExpiration",-1000L);
+        assertEquals(401,request("GET","/api/profile",null,expired.generateToken(owner)).statusCode());
+        var wrongKey=new JwtService();
+        org.springframework.test.util.ReflectionTestUtils.setField(wrongKey,"secretKey","ZGlmZmVyZW50LWRpc3Bvc2FibGUtdGVzdC1vbmx5LWp3dC1rZXktMjAyNg==");
+        org.springframework.test.util.ReflectionTestUtils.setField(wrongKey,"jwtExpiration",3600000L);
+        assertEquals(401,request("GET","/api/profile",null,wrongKey.generateToken(owner)).statusCode());
+    }
+    @Test void refreshRenewsAccessButDoesNotChangeMissingRouteStatus() throws Exception {
+        var login=request("POST","/login",json.writeValueAsString(Map.of("username",owner.getUsername(),"password","ProfileTest123!")),null);
+        assertEquals(200,login.statusCode());
+        String refresh=json.readTree(login.body()).path("refreshToken").asString();
+        var response=request("POST","/refresh",json.writeValueAsString(Map.of("refreshToken",refresh)),null);
+        assertEquals(200,response.statusCode());
+        String access=json.readTree(response.body()).path("token").asString();
+        assertEquals(200,request("GET","/api/profile",null,access).statusCode());
+        assertEquals(404,request("GET","/api/users/"+other.getId()+"/profile/unmapped-diagnostic",null,access).statusCode());
+        assertEquals(401,request("POST","/refresh",json.writeValueAsString(Map.of("refreshToken",refresh)),null).statusCode());
+    }
     @Test void existingUserReadsNullProfileWithUsernameFallbackAndPrivateAccess() throws Exception {
         var response=request("GET","/api/profile",null,token);assertEquals(200,response.statusCode());
         var profile=json.readTree(response.body());assertEquals(owner.getId(),profile.path("id").asLong());
