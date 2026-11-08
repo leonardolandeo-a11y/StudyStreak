@@ -131,7 +131,7 @@ export default function GoalDetails() {
     setMutationError(null);
     try {
       await goalService.remove(userId, goalId);
-      router.replace('/(app)/goals');
+      router.replace('/goals');
     } catch (cause) {
       setMutationError(getApiErrorMessage(cause, 'Unable to delete goal.'));
     } finally { setBusy(false); }
@@ -215,16 +215,16 @@ export default function GoalDetails() {
               sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined}
               error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
             <Text style={styles.focusNote}>Saved individual and group sessions. Daily Records and their streaks are tracked separately.</Text>
-            <ActionButton secondary title="Study Rooms" onPress={() => router.push('/(app)/study-rooms')} />
+            <ActionButton secondary title="Study Rooms" onPress={() => router.push('/study-rooms')} />
             {!goal.completed && (
               <ActionButton title="Study this Goal" onPress={() => router.push({
-                pathname: '/(app)/focus-studio', params: { goalId: String(goal.id) },
+                pathname: '/focus-studio', params: { goalId: String(goal.id) },
               })} />
             )}
           </View>
           <StreakCard key={`streak-${goal.id}`} goalId={goal.id} />
           <ActionButton secondary title="Find books for this goal"
-            onPress={() => router.push({ pathname: '/(app)/resources', params: { topic: goal.topic } })} />
+            onPress={() => router.push({ pathname: '/resources', params: { topic: goal.topic } })} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>

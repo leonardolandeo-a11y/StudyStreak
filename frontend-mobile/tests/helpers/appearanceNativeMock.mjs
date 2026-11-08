@@ -28,3 +28,6 @@ export function Switch(props) {
 }
 export function ActivityIndicator(props) { return React.createElement('span', { 'aria-label': props.accessibilityLabel ?? 'Loading', 'data-color': props.color }); }
 export const AppState = { currentState: 'active', addEventListener: () => ({ remove() {} }) };
+export const Keyboard = { addListener: () => ({ remove() {} }) };
+export const BackHandler = { addEventListener: () => ({ remove() {} }) };
+export function Image(props) { return React.createElement('img', { alt: props.accessibilityLabel, src: props.source.uri, style: props.style }); }

@@ -1,19 +1,19 @@
 import { useCallback, useState } from 'react';
-import { router } from 'expo-router';
+import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../../../components/ui/Screen';
-import { ActionButton } from '../../../components/ui/ActionButton';
-import { PageControls } from '../../../components/ui/PageControls';
-import { StatusMessage } from '../../../components/ui/StatusMessage';
-import { PartnerSearch } from '../../../components/tracking/PartnerSearch';
-import { TrackingLinkCard } from '../../../components/tracking/TrackingLinkCard';
-import { useAuth } from '../../../hooks/useAuth';
-import { usePagedResource } from '../../../hooks/usePagedResource';
-import { trackingLinkService } from '../../../services/trackingLinkService';
-import { getApiErrorMessage } from '../../../utils/apiError';
-import { palette } from '../../../constants/palette';
-import type { PageResponse } from '../../../types/page';
-import type { TrackingDecision, TrackingLink } from '../../../types/trackingLink';
+import { Screen } from '../../../../../components/ui/Screen';
+import { ActionButton } from '../../../../../components/ui/ActionButton';
+import { PageControls } from '../../../../../components/ui/PageControls';
+import { StatusMessage } from '../../../../../components/ui/StatusMessage';
+import { PartnerSearch } from '../../../../../components/tracking/PartnerSearch';
+import { TrackingLinkCard } from '../../../../../components/tracking/TrackingLinkCard';
+import { useAuth } from '../../../../../hooks/useAuth';
+import { usePagedResource } from '../../../../../hooks/usePagedResource';
+import { trackingLinkService } from '../../../../../services/trackingLinkService';
+import { getApiErrorMessage } from '../../../../../utils/apiError';
+import { palette } from '../../../../../constants/palette';
+import type { PageResponse } from '../../../../../types/page';
+import type { TrackingDecision, TrackingLink } from '../../../../../types/trackingLink';
 
 type SectionMode = 'pending' | 'active' | 'history';
 
@@ -72,10 +72,13 @@ export default function Tracking() {
   const pending = usePagedResource(pendingLoader, currentUser !== null);
   const active = usePagedResource(activeLoader, currentUser !== null);
   const history = usePagedResource(historyLoader, currentUser !== null);
+  const [showSend, setShowSend] = useState(false);
   const [sending, setSending] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const menuScroll = useMenuAction('Send a tracking request', () => setShowSend(true), showSend, () => { if (!sending) setShowSend(false); });
 
   function clearMessages() {
     setNotice(null);
@@ -99,6 +102,7 @@ export default function Tracking() {
     try {
       await trackingLinkService.request(userId);
       setNotice('Tracking request sent.');
+      setShowSend(false);
       if (history.page !== 0) history.setPage(0);
       else history.reload();
       return true;
@@ -155,11 +159,13 @@ export default function Tracking() {
   if (!currentUser) return null;
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.back}>‹ Home</Text></Pressable>
+    <Screen scrollRef={menuScroll}>
       <Text style={styles.title}>Tracking Links</Text>
       <Text style={styles.subtitle}>Connect with study partners and validate progress together.</Text>
-      <PartnerSearch busy={sending} onSend={sendRequest} />
+      {showSend ? <>
+        <ActionButton title="Close request form" secondary disabled={sending} onPress={() => setShowSend(false)} />
+        <PartnerSearch busy={sending} onSend={sendRequest} />
+      </> : null}
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
       <ActionButton title="Refresh all connections" secondary onPress={refreshAll} />

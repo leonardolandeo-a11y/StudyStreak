@@ -1,20 +1,20 @@
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../../../components/ui/Screen';
-import { ActionButton } from '../../../components/ui/ActionButton';
-import { StatusMessage } from '../../../components/ui/StatusMessage';
-import { PageControls } from '../../../components/ui/PageControls';
-import { NotificationCard } from '../../../components/notifications/NotificationCard';
-import { useAuth } from '../../../hooks/useAuth';
-import { usePagedResource } from '../../../hooks/usePagedResource';
-import { notificationService } from '../../../services/notificationService';
-import { getApiErrorMessage } from '../../../utils/apiError';
-import { palette } from '../../../constants/palette';
-import { notificationTypeLabels, notificationTypes } from '../../../types/notification';
-import { notificationDestination } from '../../../utils/notificationDestination';
-import type { Notification, NotificationType } from '../../../types/notification';
-import type { PageResponse } from '../../../types/page';
+import { Screen } from '../../../../components/ui/Screen';
+import { ActionButton } from '../../../../components/ui/ActionButton';
+import { StatusMessage } from '../../../../components/ui/StatusMessage';
+import { PageControls } from '../../../../components/ui/PageControls';
+import { NotificationCard } from '../../../../components/notifications/NotificationCard';
+import { useAuth } from '../../../../hooks/useAuth';
+import { usePagedResource } from '../../../../hooks/usePagedResource';
+import { notificationService } from '../../../../services/notificationService';
+import { getApiErrorMessage } from '../../../../utils/apiError';
+import { palette } from '../../../../constants/palette';
+import { notificationTypeLabels, notificationTypes } from '../../../../types/notification';
+import { notificationDestination } from '../../../../utils/notificationDestination';
+import type { Notification, NotificationType } from '../../../../types/notification';
+import type { PageResponse } from '../../../../types/page';
 
 type Filter = 'all' | 'unread' | 'type';
 
@@ -86,7 +86,7 @@ export default function Notifications() {
           params: { goalId: String(target.goalId), recordId: String(target.recordId), review: '1' },
         });
         break;
-      case 'validations': router.push('/(app)/validations'); break;
+      case 'validations': router.push('/validations'); break;
       case 'reviewedRecord':
         router.push({
           pathname: '/(app)/goals/[goalId]/records/[recordId]',
@@ -96,8 +96,8 @@ export default function Notifications() {
       case 'goal':
         router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(target.goalId) } });
         break;
-      case 'goals': router.push('/(app)/goals'); break;
-      case 'tracking': router.push('/(app)/tracking'); break;
+      case 'goals': router.push('/goals'); break;
+      case 'tracking': router.push('/tracking'); break;
       case 'home': router.push('/(app)/home'); break;
     }
   }

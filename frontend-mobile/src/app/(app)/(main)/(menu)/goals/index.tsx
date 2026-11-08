@@ -1,18 +1,19 @@
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
+import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../../../components/ui/Screen';
-import { ActionButton } from '../../../components/ui/ActionButton';
-import { StatusMessage } from '../../../components/ui/StatusMessage';
-import { PageControls } from '../../../components/ui/PageControls';
-import { GoalForm } from '../../../components/goals/GoalForm';
-import { palette } from '../../../constants/palette';
-import { useAuth } from '../../../hooks/useAuth';
-import { usePagedResource } from '../../../hooks/usePagedResource';
-import { goalService } from '../../../services/goalService';
-import { getApiErrorMessage } from '../../../utils/apiError';
-import type { Goal, GoalRequest } from '../../../types/goal';
-import type { PageResponse } from '../../../types/page';
+import { Screen } from '../../../../../components/ui/Screen';
+import { ActionButton } from '../../../../../components/ui/ActionButton';
+import { StatusMessage } from '../../../../../components/ui/StatusMessage';
+import { PageControls } from '../../../../../components/ui/PageControls';
+import { GoalForm } from '../../../../../components/goals/GoalForm';
+import { palette } from '../../../../../constants/palette';
+import { useAuth } from '../../../../../hooks/useAuth';
+import { usePagedResource } from '../../../../../hooks/usePagedResource';
+import { goalService } from '../../../../../services/goalService';
+import { getApiErrorMessage } from '../../../../../utils/apiError';
+import type { Goal, GoalRequest } from '../../../../../types/goal';
+import type { PageResponse } from '../../../../../types/page';
 
 export default function Goals() {
   const { currentUser } = useAuth();
@@ -26,6 +27,8 @@ export default function Goals() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const menuScroll = useMenuAction('Create a goal', () => { setShowCreate(true); setFormError(null); }, showCreate, () => { if (!busy) setShowCreate(false); });
 
   async function create(request: GoalRequest): Promise<boolean> {
     if (userId == null) return false;
@@ -47,14 +50,9 @@ export default function Goals() {
   }
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Home</Text>
-      </Pressable>
+    <Screen scrollRef={menuScroll}>
       <Text style={styles.title}>My Goals</Text>
       <Text style={styles.subtitle}>Create study goals and manage your daily records.</Text>
-      <ActionButton title={showCreate ? 'Close form' : 'Create a goal'} secondary={showCreate}
-        onPress={() => { setShowCreate((value) => !value); setFormError(null); }} />
       {showCreate ? (
         <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
       ) : null}
@@ -81,7 +79,7 @@ export default function Goals() {
               <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
               <Text style={styles.link}>View progress and records ›</Text>
             </Pressable>
-            {!goal.completed && <ActionButton secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/(app)/focus-studio',params:{goalId:String(goal.id)}})} />}
+            {!goal.completed && <ActionButton secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})} />}
             </View>
           ))}
           <PageControls page={page} totalPages={data.totalPages} onChange={setPage} />

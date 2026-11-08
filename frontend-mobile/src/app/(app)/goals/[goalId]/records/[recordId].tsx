@@ -149,7 +149,7 @@ export default function ReviewedRecordDetails() {
             </View>
           ) : null}
           {reviewedRecordExit(reviewRequested) === 'validations' ? (
-            <ActionButton secondary title="Browse partner goals" onPress={() => router.push('/(app)/validations')} />
+            <ActionButton secondary title="Browse partner goals" onPress={() => router.push('/validations')} />
           ) : (
             <ActionButton secondary title="View full goal" onPress={() => router.push({
               pathname: '/(app)/goals/[goalId]', params: { goalId: String(goalId) },

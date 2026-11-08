@@ -1,31 +1,33 @@
-import { RoomModeration } from "../../components/media/RoomModeration";
-import { RoomCollaboration } from "../../components/media/RoomCollaboration";
-import { RoomMedia } from "../../components/media/RoomMedia";
-import { ParticipantCard } from "../../components/study/ParticipantCard";
-import { StudyRoomGoal } from "../../components/focus/StudyRoomGoal";
+import { RoomModeration } from "../../../../components/media/RoomModeration";
+import { RoomCollaboration } from "../../../../components/media/RoomCollaboration";
+import { RoomMedia } from "../../../../components/media/RoomMedia";
+import { ParticipantCard } from "../../../../components/study/ParticipantCard";
+import { StudyRoomGoal } from "../../../../components/focus/StudyRoomGoal";
 import { useCallback, useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import { useMenuAction } from '../../../../contexts/MenuActionContext';
 import {
   ActivityIndicator, Alert, AppState, Pressable,
   StyleSheet, Text, TextInput, View, Share,
 } from 'react-native';
-import { Screen } from '../../components/ui/Screen';
-import { ActionButton } from '../../components/ui/ActionButton';
-import { useAuth } from '../../hooks/useAuth';
-import { getApiErrorMessage } from '../../utils/apiError';
+import { Screen } from '../../../../components/ui/Screen';
+import { ActionButton } from '../../../../components/ui/ActionButton';
+import { useAuth } from '../../../../hooks/useAuth';
+import { getApiErrorMessage } from '../../../../utils/apiError';
 import {
   displayRoomTime, sharedTimeRemaining, studyRoomService,
-} from '../../services/studyRoomService';
-import type { StudyRoom, StudyRoomAction } from '../../services/studyRoomService';
+} from '../../../../services/studyRoomService';
+import type { StudyRoom, StudyRoomAction } from '../../../../services/studyRoomService';
 
-import { isNewerRoom } from "../../services/studyRoomClock";
+import { isNewerRoom } from "../../../../services/studyRoomClock";
 
 type Snapshot = { room: StudyRoom; receivedAt: number };
 
 export default function StudyRooms() {
   const { currentUser } = useAuth();
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [code, setCode] = useState('');
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -38,6 +40,12 @@ export default function StudyRooms() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const menuScroll = useMenuAction('Create a study room', () => setShowCreate(true), showCreate || roomId !== null, () => {
+    if (busy) return;
+    setShowCreate(false); setRoomId(null); setSnapshot(null);
+  });
+
 
 
   const showRoom = useCallback((room: StudyRoom) => {
@@ -134,6 +142,7 @@ export default function StudyRooms() {
     try {
       const room = await studyRoomService.create(roomName.trim());
       setRoomName('');
+      setShowCreate(false);
       showRoom(room);
       void refreshLobby().catch(() => {});
     } catch (cause) {
@@ -222,11 +231,8 @@ export default function StudyRooms() {
   const studyingCount = room?.members.filter(m => m.online && m.studying).length ?? 0;
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button"
-        onPress={() => { if (room) { setRoomId(null); setSnapshot(null); } else router.back(); }}>
-        <Text style={styles.back}>‹ {room ? 'All rooms' : 'Home'}</Text>
-      </Pressable>
+    <Screen scrollRef={menuScroll}>
+      {room ? <ActionButton title="All rooms" secondary onPress={() => { setRoomId(null); setSnapshot(null); }} /> : null}
       <View style={styles.heading}>
         <Text style={styles.eyebrow}>● STUDY TOGETHER</Text>
         <Text style={styles.title}>Study Rooms<Text style={styles.green}>.</Text></Text>
@@ -237,14 +243,15 @@ export default function StudyRooms() {
 
       {!room ? (
         <>
-          <View style={styles.card}>
+          {showCreate ? <View style={styles.card}>
             <Text style={styles.cardTitle}>Create a study room</Text>
             <Text style={styles.description}>Invite up to 11 friends with a private code.</Text>
             <TextInput accessibilityLabel="Room name" placeholder="Late-night calculus"
               placeholderTextColor="#64748b" value={roomName} maxLength={60}
               onChangeText={setRoomName} style={styles.input} editable={!busy}/>
             <ActionButton title="Create room" busy={busy} onPress={() => { void create(); }}/>
-          </View>
+            <ActionButton title="Cancel creation" secondary disabled={busy} onPress={() => setShowCreate(false)} />
+          </View> : null}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Join friends</Text>
             <Text style={styles.description}>Enter the 10-character invite code.</Text>

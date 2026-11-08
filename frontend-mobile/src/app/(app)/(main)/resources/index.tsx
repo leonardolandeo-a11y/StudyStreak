@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Screen } from '../../../components/ui/Screen';
-import { ActionButton } from '../../../components/ui/ActionButton';
-import { StatusMessage } from '../../../components/ui/StatusMessage';
-import { palette } from '../../../constants/palette';
-import { useAppearance } from '../../../hooks/useAppearance';
-import { getBookSearchErrorMessage, googleBooksService } from '../../../services/googleBooksService';
-import type { StudyBook } from '../../../types/studyBook';
+import { Screen } from '../../../../components/ui/Screen';
+import { ActionButton } from '../../../../components/ui/ActionButton';
+import { StatusMessage } from '../../../../components/ui/StatusMessage';
+import { palette } from '../../../../constants/palette';
+import { useAppearance } from '../../../../hooks/useAppearance';
+import { getBookSearchErrorMessage, googleBooksService } from '../../../../services/googleBooksService';
+import type { StudyBook } from '../../../../types/studyBook';
 
 type SearchRequest = { term: string; revision: number };
 

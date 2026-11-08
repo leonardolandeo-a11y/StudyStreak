@@ -1,28 +1,29 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
+import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../../../components/ui/Screen';
-import { ActionButton } from '../../../components/ui/ActionButton';
-import { PageControls } from '../../../components/ui/PageControls';
-import { StatusMessage } from '../../../components/ui/StatusMessage';
-import { ValidationEditor } from '../../../components/validations/ValidationEditor';
-import { RecordPhoto } from '../../../components/records/RecordPhoto';
-import { RecordVoice } from '../../../components/records/RecordVoice';
-import { palette } from '../../../constants/palette';
-import { useAuth } from '../../../hooks/useAuth';
-import { usePagedResource } from '../../../hooks/usePagedResource';
-import { trackingLinkService } from '../../../services/trackingLinkService';
-import { goalService } from '../../../services/goalService';
-import { dailyRecordService } from '../../../services/dailyRecordService';
-import { validationService } from '../../../services/validationService';
-import { getApiErrorMessage } from '../../../utils/apiError';
-import type { TrackingLink } from '../../../types/trackingLink';
-import type { Goal } from '../../../types/goal';
-import type { DailyRecord } from '../../../types/dailyRecord';
-import type { Validation, ValidationRequest } from '../../../types/validation';
-import type { PageResponse } from '../../../types/page';
+import { Screen } from '../../../../../components/ui/Screen';
+import { ActionButton } from '../../../../../components/ui/ActionButton';
+import { PageControls } from '../../../../../components/ui/PageControls';
+import { StatusMessage } from '../../../../../components/ui/StatusMessage';
+import { ValidationEditor } from '../../../../../components/validations/ValidationEditor';
+import { RecordPhoto } from '../../../../../components/records/RecordPhoto';
+import { RecordVoice } from '../../../../../components/records/RecordVoice';
+import { palette } from '../../../../../constants/palette';
+import { useAuth } from '../../../../../hooks/useAuth';
+import { usePagedResource } from '../../../../../hooks/usePagedResource';
+import { trackingLinkService } from '../../../../../services/trackingLinkService';
+import { goalService } from '../../../../../services/goalService';
+import { dailyRecordService } from '../../../../../services/dailyRecordService';
+import { validationService } from '../../../../../services/validationService';
+import { getApiErrorMessage } from '../../../../../utils/apiError';
+import type { TrackingLink } from '../../../../../types/trackingLink';
+import type { Goal } from '../../../../../types/goal';
+import type { DailyRecord } from '../../../../../types/dailyRecord';
+import type { Validation, ValidationRequest } from '../../../../../types/validation';
+import type { PageResponse } from '../../../../../types/page';
 
 type Partner = { id: number; username: string };
 
@@ -226,20 +227,24 @@ function PartnerGoals({ partner }: { partner: Partner }) {
 
 export default function Validations() {
   const { currentUser } = useAuth();
+  const [starting, setStarting] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const loadPartners = useCallback((page: number, signal: AbortSignal) =>
     trackingLinkService.active(page, signal), []);
   const partners = usePagedResource(loadPartners, currentUser !== null);
 
+  const menuScroll = useMenuAction('Start a validation', () => { setSelectedPartner(null); setStarting(true); }, starting || selectedPartner !== null,
+    () => { setStarting(false); setSelectedPartner(null); });
+
   if (!currentUser) return null;
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Home</Text>
-      </Pressable>
+    <Screen scrollRef={menuScroll}>
       <Text style={styles.title}>Validations</Text>
       <Text style={styles.subtitle}>Review study records from your connected partners.</Text>
+      {starting || selectedPartner ? <ActionButton title="Close validation flow" secondary
+        onPress={() => { setStarting(false); setSelectedPartner(null); }} /> : null}
+      {starting && !selectedPartner ? <StatusMessage message="Choose a tracking partner below, then a goal and a daily record to validate." /> : null}
       <Section step={1} title="Tracking partners">
         <ActionButton secondary title="Refresh partners" onPress={partners.reload} />
         <ListStatus state={partners} empty="No active tracking partners yet." />

@@ -1,35 +1,35 @@
-import { RecordedSummary } from "../../components/study/RecordedSummary";
-import { getApiErrorMessage } from "../../utils/apiError";
-import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
+import { RecordedSummary } from "../../../components/study/RecordedSummary";
+import { getApiErrorMessage } from "../../../utils/apiError";
+import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../../services/studyTracking";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import {
   AppState, Pressable, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
-import { Screen } from '../../components/ui/Screen';
-import { useAuth } from '../../hooks/useAuth';
-import { palette } from '../../constants/palette';
-import { MobileFocusAudio } from '../../features/focus/mobileFocusAudio';
-import { FocusInsightsMobile } from '../../components/focus/FocusInsightsMobile';
+import { Screen } from '../../../components/ui/Screen';
+import { useAuth } from '../../../hooks/useAuth';
+import { palette } from '../../../constants/palette';
+import { MobileFocusAudio } from '../../../features/focus/mobileFocusAudio';
+import { FocusInsightsMobile } from '../../../components/focus/FocusInsightsMobile';
 import {
   advancePomodoro, discardPendingFocusSession, durationMs, formatPomodoroTime, newPomodoro,
   pausePomodoro, remainingPomodoroMs, resetPomodoro, restorePomodoro,
   selectPomodoroMode, startPomodoro, updatePomodoroPreferences,
-} from '../../features/focus/pomodoroState';
+} from '../../../features/focus/pomodoroState';
 import type {
   CompletedFocusSession, PomodoroMode, PomodoroPreferences, PomodoroState, Soundscape,
-} from '../../features/focus/pomodoroState';
+} from '../../../features/focus/pomodoroState';
 import {
   SOUND_CATEGORIES, SOUNDSCAPES, soundscapeById,
-} from '../../features/focus/soundscapes';
-import type { SoundCategory } from '../../features/focus/soundscapes';
-import type { Goal } from '../../types/goal';
+} from '../../../features/focus/soundscapes';
+import type { SoundCategory } from '../../../features/focus/soundscapes';
+import type { Goal } from '../../../types/goal';
 import {
   getMobileFocusSummary, listActiveFocusGoals, recordMobileFocusCompletion,
-} from '../../features/focus/focusGoalService';
-import type { FocusSummary } from '../../features/focus/focusGoalService';
-import { createFocusSessionId } from '../../features/focus/focusSessionId';
+} from '../../../features/focus/focusGoalService';
+import type { FocusSummary } from '../../../features/focus/focusGoalService';
+import { createFocusSessionId } from '../../../features/focus/focusSessionId';
 
 type DurationField = 'focusMinutes' | 'shortBreakMinutes' | 'longBreakMinutes';
 
@@ -518,7 +518,7 @@ export default function FocusStudioMobile() {
       <View style={styles.panel}>
           <View style={styles.goalHeading}>
             <Text style={styles.goalTitle}>◎  Study toward a Goal</Text>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/(app)/goals')}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/goals')}>
               <Text style={styles.goalLink}>My Goals ›</Text>
             </Pressable>
           </View>
@@ -639,7 +639,7 @@ export default function FocusStudioMobile() {
 
       <Pressable accessibilityRole="button" accessibilityState={{expanded:insightsOpen}} style={{minHeight:48,justifyContent:'center'}} onPress={()=>setInsightsOpen(value=>!value)}><Text style={styles.goalLink}>{insightsOpen?'Hide statistics':'Explore your study statistics'} ›</Text></Pressable>
       {insightsOpen && <FocusInsightsMobile refreshKey={syncRevision} />}
-      <Pressable accessibilityRole="button" style={{minHeight:48,justifyContent:'center'}} onPress={()=>router.push('/(app)/study-rooms')}><Text style={styles.goalLink}>Study together · Open Study Rooms ›</Text></Pressable>
+      <Pressable accessibilityRole="button" style={{minHeight:48,justifyContent:'center'}} onPress={()=>router.push('/study-rooms')}><Text style={styles.goalLink}>Study together · Open Study Rooms ›</Text></Pressable>
 
       <View style={styles.library}>
         <Text style={styles.libraryTitle}>Made for your focus</Text>

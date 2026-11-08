@@ -82,7 +82,7 @@ test('header navigates to Settings once, marks the active route and retains nati
   assert.deepEqual(history, ['/(app)/home', '/(app)/settings']);
   await appearance.setPreferences({ mode: 'light', reduceMotion: true });
   const layout = render(h(Layout), appearance);
-  assert.match(layout, /data-title="Settings"/); assert.match(layout, /data-title="Tracking Links"/);
+  assert.match(layout, /data-title="Settings"/); assert.match(layout, /data-title="Goal details"/);
   assert.equal(screenOptions.at(-1).animation, 'none');
   assert.equal(screenOptions.at(-1).headerBackButtonDisplayMode, 'minimal');
   router.back(); assert.equal(history.at(-1), '/(app)/home');
@@ -92,23 +92,19 @@ test('header navigates to Settings once, marks the active route and retains nati
   assert.equal(history.at(-1), '/(app)/home');
 });
 
-test('Home, Login and Register render with the theme and keep existing fields, routes and actions', async () => {
+test('Login/Register keep their theme and fields; the old Home deep link now opens Menu', async () => {
   const appearance = store();
   for (const mode of ['light', 'dark']) {
     await appearance.setPreferences({ mode, accent: 'blue' });
     const expected = createTheme({ mode, accent: 'blue', reduceMotion: false }, null).colors.background;
-    for (const component of [SignIn, SignUp, Home]) {
+    for (const component of [SignIn, SignUp]) {
       const html = render(h(component), appearance);
       assert.ok(html.includes(expected)); assert.match(html, /STUDYSTREAK/);
-      if (component !== Home) {
-        assert.match(html, /aria-label="Username"/); assert.match(html, /type="password"/);
-        assert.match(html, /href="\/sign-/);
-      } else {
-        assert.match(html, /Open Focus Studio/); assert.match(html, /Sign out/);
-        controls.get('Settings').onPress(); assert.equal(history.at(-1), '/(app)/settings');
-      }
+      assert.match(html, /aria-label="Username"/); assert.match(html, /type="password"/);
+      assert.match(html, /href="\/sign-/);
     }
   }
+  assert.match(render(h(Home), appearance), /data-redirect="\/goals"/);
 });
 
 test('only one appearance provider is mounted; motion preference reaches existing decorative animations', () => {
@@ -117,6 +113,6 @@ test('only one appearance provider is mounted; motion preference reaches existin
   assert.match(root, /<AuthProvider>/);
   const voice = readFileSync(new URL('../src/components/records/RecordVoice.tsx', import.meta.url), 'utf8');
   assert.match(voice, /!status.playing \|\| reduceMotion/);
-  const resources = readFileSync(new URL('../src/app/(app)/resources/index.tsx', import.meta.url), 'utf8');
+  const resources = readFileSync(new URL('../src/app/(app)/(main)/resources/index.tsx', import.meta.url), 'utf8');
   assert.match(resources, /animationType=\{reduceMotion \? 'none' : 'slide'\}/);
 });
