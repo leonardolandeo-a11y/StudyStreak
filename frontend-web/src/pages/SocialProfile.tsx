@@ -48,7 +48,7 @@ function SocialProfileView({ id }: { id: number }) {
             <button type="button" className="study-button" onClick={() => setRevision(r => r + 1)}>Refresh profile</button></header>
         {error && <p role="alert" className="study-panel text-danger">{error}</p>}
         {!profile && !error && <LoadingState message="Loading member profile…" />}
-        {profile && <><ProfileIdentity name={profile.presentationName} username={profile.username} bio={profile.bio} avatarUrl={avatarUrl} bannerUrl={bannerUrl} presence={profile.presence} registrationDate={profile.registrationDate}>
+        {profile && <><ProfileIdentity showPresenceDot={false} emphasizePresence name={profile.presentationName} username={profile.username} bio={profile.bio} avatarUrl={avatarUrl} bannerUrl={bannerUrl} presence={profile.presence} registrationDate={profile.registrationDate}>
             {imageError && <p role="status" className="mt-3 text-sm text-warning">Some images could not be loaded. Refresh to retry.</p>}
         </ProfileIdentity>
             {Object.keys(profile.statistics).length > 0 && <section aria-label="Shared study statistics" className="grid gap-3 sm:grid-cols-2">

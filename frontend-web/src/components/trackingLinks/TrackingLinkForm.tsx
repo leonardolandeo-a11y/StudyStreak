@@ -1,3 +1,4 @@
+import { TrackingAvatar } from "./TrackingAvatar";
 import { useEffect, useState, type SubmitEvent } from "react";
 import { searchUsers } from "../../services/userSearchService";
 import type { UserSearchResult } from "../../types/userSearch";
@@ -88,7 +89,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                     maxLength={100}
                 />
                 {selected ? (
-                    <p className="mt-2 text-sm text-emerald-300" role="status">Selected: @{selected.username}</p>
+                    <div className="mt-3 flex min-w-0 items-center gap-3 rounded-control bg-accent-soft p-3" role="status"><TrackingAvatar id={selected.id} name={selected.username} /><p className="min-w-0 truncate text-sm text-accent" title={selected.username}>Selected: @{selected.username}</p></div>
                 ) : query.trim().length >= 2 ? (
                     <div className="mt-2 rounded-lg border border-outline-strong bg-slate-950 p-2">
                         {searching && <p className="px-2 py-1 text-sm text-slate-400" role="status">Searching...</p>}
@@ -105,9 +106,9 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                                     setQuery(user.username);
                                     setResults([]);
                                 }}
-                                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-100 hover:bg-slate-800 focus:bg-slate-800 focus:outline-none"
+                                className="flex min-h-14 w-full min-w-0 items-center gap-3 rounded-control px-3 py-2 text-left text-sm text-content hover:bg-surface-hover focus-visible:bg-surface-hover"
                             >
-                                @{user.username}
+                                <TrackingAvatar id={user.id} name={user.username} /><span className="min-w-0 truncate font-medium" title={user.username}>@{user.username}</span>
                             </button>
                         ))}
                     </div>

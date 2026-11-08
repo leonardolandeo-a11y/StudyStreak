@@ -1,3 +1,4 @@
+import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -184,7 +185,7 @@ function TrackingLinks() {
     if (!currentUser) return null;
 
     return (
-        <div className="space-y-8">
+        <TrackingAvatarProvider revision={revision}><div className="space-y-8">
             <header>
                 <p className="text-sm font-medium text-sky-400">Connections</p>
                 <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Tracking Links</h1>
@@ -251,8 +252,11 @@ function TrackingLinks() {
                                 const partnerName = link.requesterId === currentUser.id ? link.receiverUsername : link.requesterUsername;
                                 return (
                                     <article key={link.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500">Tracking with</p>
-                                        <p className="mt-1 text-lg font-semibold text-slate-100">@{partnerName || "Unknown user"}</p>
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <TrackingAvatar id={link.requesterId === currentUser.id ? link.receiverId : link.requesterId} name={partnerName || "?"} className="size-12 text-lg" />
+                                            <div className="min-w-0"><p className="text-xs uppercase tracking-wide text-content-muted">Tracking with</p>
+                                                <p className="mt-1 truncate text-lg font-semibold text-content" title={partnerName}>@{partnerName || "Unknown user"}</p></div>
+                                        </div>
                                         <MemberProfileLink id={link.requesterId === currentUser.id ? link.receiverId : link.requesterId} name={partnerName || "member"} />
                                         <span className="mt-2 inline-block rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300">ACCEPTED</span>
                                         <button
@@ -291,7 +295,7 @@ function TrackingLinks() {
                     {pagination("page", page, allLinks)}
                 </section>
             )}
-        </div>
+        </div></TrackingAvatarProvider>
     );
 }
 

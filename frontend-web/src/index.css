@@ -103,13 +103,15 @@
 .sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Study Rooms"] svg > :is(:nth-child(2), :nth-child(3)),
 .sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Tracking"] svg > :nth-child(2) { animation: sidebar-part-right 300ms ease-in-out; }
 .sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Focus Studio"] svg { animation: sidebar-sway 300ms ease-in-out; }
-.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Goals"] svg { animation: sidebar-turn 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Goals"] svg { animation: sidebar-goal-pulse 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Resources"] svg > :last-child { animation: sidebar-page 300ms ease-in-out; }
 .sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Validations"] svg > :last-child { stroke-dasharray: 24; animation: sidebar-check 300ms ease-out; }
 .sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Notifications"] svg { transform-origin: 50% 15%; animation: sidebar-ring 300ms ease-in-out; }
 @keyframes sidebar-part-left { 50% { transform: translateX(-2px); } }
 @keyframes sidebar-part-right { 50% { transform: translateX(2px); } }
 @keyframes sidebar-sway { 30% { transform: rotate(-9deg); } 70% { transform: rotate(7deg); } }
-@keyframes sidebar-turn { 50% { transform: rotate(35deg); } }
+@keyframes sidebar-goal-pulse { 50% { transform: scale(0.86); } }
+@keyframes sidebar-page { 50% { transform: perspective(40px) rotateY(-24deg) skewY(-3deg); } }
 @keyframes sidebar-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
 @keyframes sidebar-ring { 25% { transform: rotate(12deg); } 55% { transform: rotate(-10deg); } 80% { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; } }

@@ -48,10 +48,12 @@ test('Chrome: social authorization states, privacy, navigation, themes, keyboard
     assert.ok(await page.evaluate('document.querySelector("[data-social-profile]").textContent.includes("<b>Plain text</b>") && !document.querySelector("[data-social-profile] b")'));
     assert.equal(pulses,0);
     social={...social,statistics:{verifiedMinutes:12.5},presence:{status:'ONLINE',lastSeenAt:null,serverNow:'2026-11-07T12:00:00Z'}};
-    await page.click('Refresh profile');await page.wait('!!document.querySelector("[data-social-profile] [aria-label=Online]")');
+    await page.click('Refresh profile');await page.wait('!!document.querySelector("[data-social-profile] [data-presence-status=ONLINE]")');
+    assert.ok(await page.evaluate('document.querySelector("[data-presence-status=ONLINE]").classList.contains("text-success") && !document.querySelector("[data-social-profile] [role=img]")'));
     assert.ok(await page.evaluate('document.querySelector("[aria-label^=Shared]").textContent.includes(new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(12.5)) && !document.querySelector("[aria-label^=Shared]").textContent.includes("Verified sessions")'));
     social={...social,presence:{status:'OFFLINE',lastSeenAt:'2026-11-07T10:00:00Z',serverNow:'2026-11-07T12:00:00Z'}};
-    await page.evaluate('window.__socialTimers.forEach(fn=>fn())');await page.wait('!!document.querySelector("[data-social-profile] [aria-label=Offline]")');
+    await page.evaluate('window.__socialTimers.forEach(fn=>fn())');await page.wait('!!document.querySelector("[data-social-profile] [data-presence-status=OFFLINE]")');
+    assert.ok(await page.evaluate('document.querySelector("[data-presence-status=OFFLINE]").classList.contains("text-content-muted") && !document.querySelector("[data-social-profile] [role=img]")'));
     assert.ok(await page.evaluate('document.querySelector("[data-social-profile]").textContent.includes("Last seen "+new Intl.RelativeTimeFormat(undefined,{numeric:"auto"}).format(-2,"hour"))'));
     for(const width of [320,375,768,1024,1440]){
       await page.command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<768});
