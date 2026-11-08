@@ -23,11 +23,11 @@ export default function Profile() {
             <section aria-label="Your identity" className="overflow-hidden rounded-panel border border-outline bg-surface">
                 <div className="relative h-36 bg-linear-to-br from-accent-soft via-surface-hover to-surface sm:h-48">
                     {bannerUrl && <img src={bannerUrl} alt="Your profile banner" className="size-full object-cover" />}
-                    <button type="button" onClick={() => edit("banner")} className="study-button absolute right-3 bottom-3 bg-surface text-xs"><Camera size={16} aria-hidden="true" />Change banner</button>
+                    <button type="button" onClick={() => edit("banner")} aria-label="Change banner" title="Change banner" className="study-button profile-icon-button absolute right-3 bottom-3 bg-surface"><Camera size={16} aria-hidden="true" /><span className="sr-only">Change banner</span></button>
                 </div>
                 <div className="px-4 pb-6 sm:px-6"><div className="flex flex-wrap items-end justify-between gap-3">
                     <button type="button" aria-label="Change avatar" title="Change avatar" onClick={() => edit("avatar")} className="relative -mt-10 rounded-full border-4 border-surface bg-surface"><ProfileAvatar name={profile.presentationName} src={avatarUrl} className="size-24 text-3xl sm:size-28" /></button>
-                    <button type="button" className="study-button mt-3" onClick={() => edit()}><Pencil size={16} aria-hidden="true" />Edit profile</button></div>
+                    <button type="button" className="study-button profile-icon-button mt-3" aria-label="Edit profile" title="Edit profile" onClick={() => edit()}><Pencil size={16} aria-hidden="true" /><span className="sr-only">Edit profile</span></button></div>
                     <h2 className="mt-4 break-words text-2xl font-bold sm:text-3xl">{profile.presentationName}</h2>
                     <p className="mt-1 break-all text-sm text-content-muted">@{profile.username}</p>
                     <p className={`mt-4 whitespace-pre-wrap break-words text-sm leading-relaxed ${profile.bio ? "text-content-secondary" : "text-content-muted"}`}>{profile.bio || "A little about you, and what you’re learning. Add a bio to get started."}</p>

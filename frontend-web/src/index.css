@@ -78,3 +78,39 @@
     transition: none !important;
     scroll-behavior: auto !important;
 }
+
+.profile-icon-button { width: 44px; height: 44px; padding: 0; }
+.profile-icon-button, .profile-file-button, .profile-remove-button, .sidebar-profile-link {
+    transition: background-color 250ms, color 250ms, border-color 250ms, box-shadow 250ms;
+}
+:is(.profile-icon-button, .profile-file-button):is(:hover, :focus-visible) {
+    background-color: var(--ss-accent-soft); border-color: var(--ss-accent); color: var(--ss-accent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--ss-accent) 18%, transparent);
+}
+.profile-remove-button { color: var(--ss-danger); border-color: var(--ss-danger-border); background-color: var(--ss-danger-surface); }
+.profile-remove-button:enabled:is(:hover, :focus-visible) { background-color: var(--ss-danger); color: var(--ss-on-danger); }
+.sidebar-profile-link:is(:hover, :focus-visible) { background-color: var(--ss-surface-hover); }
+.sidebar-profile-link > :first-child { transition: transform 250ms; }
+.sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: rotate(-5deg) scale(1.05); }
+
+/* Each icon returns to rest after a single 300 ms interaction. */
+.sidebar-nav-link svg { overflow: visible; }
+.sidebar-nav-link svg > * { transform-box: fill-box; transform-origin: center; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Dashboard"] svg > :is(:nth-child(1), :nth-child(4)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Study Rooms"] svg > :is(:nth-child(1), :nth-child(4)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Tracking"] svg > :first-child { animation: sidebar-part-left 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Dashboard"] svg > :is(:nth-child(2), :nth-child(3)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Study Rooms"] svg > :is(:nth-child(2), :nth-child(3)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Tracking"] svg > :nth-child(2) { animation: sidebar-part-right 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Focus Studio"] svg { animation: sidebar-sway 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Goals"] svg { animation: sidebar-turn 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Validations"] svg > :last-child { stroke-dasharray: 24; animation: sidebar-check 300ms ease-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Notifications"] svg { transform-origin: 50% 15%; animation: sidebar-ring 300ms ease-in-out; }
+@keyframes sidebar-part-left { 50% { transform: translateX(-2px); } }
+@keyframes sidebar-part-right { 50% { transform: translateX(2px); } }
+@keyframes sidebar-sway { 30% { transform: rotate(-9deg); } 70% { transform: rotate(7deg); } }
+@keyframes sidebar-turn { 50% { transform: rotate(35deg); } }
+@keyframes sidebar-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes sidebar-ring { 25% { transform: rotate(12deg); } 55% { transform: rotate(-10deg); } 80% { transform: rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; } }
+:root[data-motion="reduce"] .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; }

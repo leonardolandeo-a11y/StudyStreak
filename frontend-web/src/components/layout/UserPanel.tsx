@@ -9,7 +9,7 @@ export function UserPanel({ user, onSettingsClick, onProfileClick }: { user: Pic
     const shared = useProfile();
     const name = shared?.profile?.presentationName || user.username;
     return <div role="group" aria-label="User panel" className="flex min-w-0 items-center gap-2 rounded-control px-2 py-3">
-        <NavLink to={ROUTES.profile} onClick={onProfileClick} aria-label={`Open profile for ${name}`} className="flex min-w-0 flex-1 items-center gap-2 rounded-control py-1">
+        <NavLink to={ROUTES.profile} onClick={onProfileClick} aria-label={`Open profile for ${name}`} className="sidebar-profile-link flex min-w-0 flex-1 items-center gap-2 rounded-control px-1 py-1">
             <ProfileAvatar name={name} src={shared?.avatarUrl} />
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-content" title={name}>{name}</p><p className="truncate text-xs text-content-muted" title={user.email}>{user.email}</p></div>
         </NavLink>

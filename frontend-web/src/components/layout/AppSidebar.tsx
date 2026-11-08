@@ -149,8 +149,9 @@ function AppSidebar() {
                         <NavLink
                             key={to}
                             to={to}
+                            data-nav-icon={label}
                             className={({ isActive }) => `
-                                group
+                                group sidebar-nav-link
                                 flex items-center
                                 gap-3
                                 rounded-lg
@@ -169,6 +170,7 @@ function AppSidebar() {
                             {({ isActive }) => (
                                 <>
                                     <Icon
+                                        aria-hidden="true"
                                         size={18}
                                         strokeWidth={1.8}
                                         className={

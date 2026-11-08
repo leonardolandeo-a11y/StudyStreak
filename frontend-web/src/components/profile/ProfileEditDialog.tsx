@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useProfile } from "../../hooks/useProfile";
 import { useObjectUrl } from "../../hooks/useObjectUrl";
 import { deleteProfileImage, patchProfile, putProfileImage } from "../../services/profileService";
@@ -7,6 +7,7 @@ import { normalizeProfileName, profileImageError, profileTextError, unicodeLengt
 import { getApiErrorMessage } from "../../utils/apiError";
 import type { ProfileImageSlot, UserProfile } from "../../types/profile";
 import { ProfileAvatar } from "./ProfileAvatar";
+import { ProfileImagePicker } from "./ProfileImagePicker";
 
 type ImageDraft = File | "remove" | null;
 export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
@@ -27,7 +28,7 @@ export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
     const validation = profileTextError(displayName, bio);
     useEffect(() => {
         dialog.current?.showModal();
-        if (initialField) dialog.current?.querySelector<HTMLInputElement>(`[data-image-slot="${initialField}"]`)?.focus();
+        if (initialField) dialog.current?.querySelector<HTMLButtonElement>(`[data-image-picker="${initialField}"]`)?.focus();
     }, [initialField]);
     function close() { if (!saving) { dialog.current?.close(); onClose(); } }
     function select(slot: ProfileImageSlot, file?: File) {
@@ -57,7 +58,7 @@ export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
         onCancel={event => { event.preventDefault(); close(); }}
         onKeyDown={event => {
             if (event.key !== "Tab") return;
-            const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), textarea:not(:disabled)"));
+            const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled):not([hidden]), textarea:not(:disabled)"));
             const first = controls[0], last = controls.at(-1);
             if (!first) { event.preventDefault(); return; }
             if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
@@ -69,24 +70,18 @@ export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
                 <button type="button" className="study-button size-11 p-0" aria-label="Close edit profile" disabled={saving} onClick={close}><X size={18} aria-hidden="true" /></button></div>
             <p id={descriptionId} className="mt-2 text-sm text-content-muted">Make this space yours. Changes are saved only when you choose Save changes.</p>
             <fieldset disabled={saving} className="mt-5 min-w-0 space-y-5">
-                <div className="relative h-28 overflow-hidden rounded-panel border border-outline bg-linear-to-br from-accent-soft via-surface-hover to-surface">
-                    {banner && <img src={banner} alt="Banner preview" className="size-full object-cover" />}
-                </div>
-                <div className="-mt-12 ml-4 w-fit rounded-full border-4 border-surface bg-surface"><ProfileAvatar name={normalizeProfileName(displayName) || profile.username} src={avatar} className="size-20 text-2xl" /></div>
-                {(["avatar", "banner"] as const).map(slot => <div key={slot} className="rounded-control border border-outline p-3">
-                    <label className="block text-sm font-medium" htmlFor={`${titleId}-${slot}`}><ImagePlus size={16} className="mr-2 inline" aria-hidden="true" />{slot === "avatar" ? "Avatar" : "Banner"}</label>
-                    <p id={`${titleId}-${slot}-help`} className="mt-1 text-xs text-content-muted">PNG, JPEG or WebP · up to {slot === "avatar" ? 2 : 5} MiB. Server checks image contents.</p>
-                    <input id={`${titleId}-${slot}`} data-image-slot={slot} type="file" accept="image/png,image/jpeg,image/webp"
-                        aria-describedby={`${titleId}-${slot}-help`} onChange={event => { select(slot, event.target.files?.[0]); event.target.value = ""; }}
-                        className="mt-2 block min-h-11 w-full min-w-0 rounded-control border border-outline-strong bg-canvas p-2 text-xs file:mr-2 file:rounded-control file:border-0 file:bg-surface-hover file:p-2 file:text-content" />
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        {draft[slot] instanceof File && <span className="min-w-0 break-all text-content-muted">New {slot} selected</span>}
-                        {draft[slot] === "remove" && <span className="text-content-muted">Will be removed when saved.</span>}
-                        {(draft[slot] instanceof File || (slot === "avatar" ? shared.avatarUrl : shared.bannerUrl)) && draft[slot] !== "remove" &&
-                            <button type="button" className="study-button text-xs" onClick={() => setDraft(previous => ({ ...previous, [slot]: "remove" }))}>Remove {slot}</button>}
-                        {draft[slot] !== null && <button type="button" className="study-button text-xs" onClick={() => setDraft(previous => ({ ...previous, [slot]: null }))}>Undo {slot} change</button>}
+                <div className="profile-editor-preview">
+                    <div className="h-28 overflow-hidden rounded-panel border border-outline bg-linear-to-br from-accent-soft via-surface-hover to-surface">
+                        {banner && <img src={banner} alt="Banner preview" className="size-full object-cover" />}
                     </div>
-                </div>)}
+                    <div className="relative -mt-10 ml-4 w-fit rounded-full border-4 border-surface bg-surface"><ProfileAvatar name={normalizeProfileName(displayName) || profile.username} src={avatar} className="size-20 text-2xl" /></div>
+                </div>
+                {(["avatar", "banner"] as const).map(slot => <ProfileImagePicker key={slot} slot={slot}
+                    file={draft[slot] instanceof File ? draft[slot] : null} removed={draft[slot] === "remove"}
+                    removable={draft[slot] instanceof File || !!(slot === "avatar" ? shared.avatarUrl : shared.bannerUrl)} changed={draft[slot] !== null}
+                    onSelect={file => select(slot, file)}
+                    onRemove={() => setDraft(previous => ({ ...previous, [slot]: "remove" }))}
+                    onUndo={() => setDraft(previous => ({ ...previous, [slot]: null }))} />)}
                 <div><label htmlFor={nameId} className="text-sm font-medium">Display name</label>
                     <input id={nameId} autoComplete="nickname" value={displayName} onChange={event => setDisplayName(event.target.value)}
                         aria-describedby={`${nameId}-help`} className="mt-2 min-h-11 w-full rounded-control border border-outline-strong bg-canvas px-3 text-content" />
