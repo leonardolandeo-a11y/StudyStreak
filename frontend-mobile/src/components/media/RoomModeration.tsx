@@ -1,12 +1,15 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { Alert, AppState, Text, View } from 'react-native';
+import { AppState, Text, View } from 'react-native';
 import { apiClient } from '../../services/apiClient';
 import type { StudyRoom } from '../../services/studyRoomService';
+import { CreationModal } from '../ui/CreationModal';
 import { ActionButton } from '../ui/ActionButton';
-import { palette } from '../../constants/palette';
+import { useAppearance } from '../../hooks/useAppearance';
 
 export function RoomModeration({room}:{room:StudyRoom}) {
+    const { theme: { colors: palette } } = useAppearance();
+    const [removing,setRemoving]=useState<number|null>(null);
     const [permissions,setPermissions]=useState<{userId:number;canPublish:boolean}[]>([]);
     const [error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false);
     const endpoint=`/api/study-rooms/${room.id}/media`;
@@ -15,7 +18,7 @@ export function RoomModeration({room}:{room:StudyRoom}) {
         const controller=new AbortController();let pending=false;
         const poll=async()=>{
             if(pending||AppState.currentState!=='active')return;pending=true;
-            try{const {data}=await apiClient.get(endpoint,{signal:controller.signal});if(!controller.signal.aborted)setPermissions(data.permissions);}
+            try{const {data}=await apiClient.get(endpoint,{signal:controller.signal});if(!controller.signal.aborted){setPermissions(data.permissions);setError(null);}}
             catch{if(!controller.signal.aborted)setError('Unable to refresh permissions.');}
             finally{pending=false;}
         };
@@ -37,10 +40,15 @@ export function RoomModeration({room}:{room:StudyRoom}) {
         {room.members.filter(member=>!member.host).map(member=>{
             const allowed=permissions.find(item=>item.userId===member.userId)?.canPublish??false;
             return <View key={member.userId} style={{gap:8}}><Text style={{color:palette.text}}>{member.username}</Text>
-                <ActionButton secondary title={allowed?'Revoke screen permission':'Allow screen sharing'} disabled={busy} onPress={()=>void moderate(member.userId,!allowed)}/>
-                <ActionButton secondary title="Remove from room" disabled={busy} onPress={()=>Alert.alert('Remove participant?',member.username,[{text:'Cancel',style:'cancel'},{text:'Remove',style:'destructive',onPress:()=>void moderate(member.userId)}])}/>
+                <ActionButton compact secondary title={allowed?'Revoke screen permission':'Allow screen sharing'} disabled={busy} onPress={()=>void moderate(member.userId,!allowed)}/>
+                <ActionButton compact secondary title="Remove from room" disabled={busy} onPress={()=>setRemoving(member.userId)}/>
             </View>;
         })}
+        <CreationModal visible={removing!==null} title="Remove participant?" showBack={false} busy={busy} cancelLabel="Cancel participant removal" onClose={()=>setRemoving(null)}>
+            <Text style={{color:palette.text}}>Remove {room.members.find(member=>member.userId===removing)?.username} from this room?</Text>
+            <ActionButton compact title="Confirm remove participant" busy={busy} onPress={()=>{if(removing!==null){void moderate(removing);setRemoving(null);}}}/>
+            <ActionButton compact secondary title="Keep participant" disabled={busy} onPress={()=>setRemoving(null)}/>
+        </CreationModal>
         <Text style={{color:palette.muted}}>Permission changes disconnect media for everyone. Reconnect for fresh authorization.</Text>
     </View>;
 }

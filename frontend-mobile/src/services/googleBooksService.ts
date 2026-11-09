@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import { apiClient } from './apiClient';
+import { getSessionRevision } from './authSession';
 import type { StudyBook } from '../types/studyBook';
 
 // Google Books may omit fields. Older backend responses also lack some
@@ -58,7 +59,7 @@ export const googleBooksService = {
     const response = await apiClient.get<unknown>('/api/resources/books', {
       params: { q: term },
       timeout: 15000,
-      signal,
+      ...{ signal, _sessionRevision: getSessionRevision() },
     });
     if (!Array.isArray(response.data)) {
       throw new Error('Invalid Google Books response.');

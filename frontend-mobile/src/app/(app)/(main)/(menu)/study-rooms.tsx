@@ -8,11 +8,12 @@ import { isAxiosError } from 'axios';
 import { useFocusEffect } from 'expo-router';
 import { useMenuAction } from '../../../../contexts/MenuActionContext';
 import {
-  ActivityIndicator, Alert, AppState, Pressable,
+  ActivityIndicator, AppState,
   StyleSheet, Text, TextInput, View, Share,
 } from 'react-native';
-import { useAppearance } from '../../../../hooks/useAppearance';
-import { Card } from '../../../../components/ui/Card';
+import type { ThemeColors } from '../../../../features/appearance/theme';
+import { NavigationPressable } from '../../../../components/navigation/NavigationPressable';
+import { useAppearance, useThemedStyles } from '../../../../hooks/useAppearance';
 import { CreationModal } from '../../../../components/ui/CreationModal';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
@@ -30,6 +31,8 @@ type Snapshot = { room: StudyRoom; receivedAt: number };
 export default function StudyRooms() {
   const { currentUser } = useAuth();
   const { theme } = useAppearance();
+  const styles = useThemedStyles(createStyles);
+  const [confirmation, setConfirmation] = useState<{ title: string; message: string; label: string; run(): void } | null>(null);
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState('');
@@ -66,8 +69,9 @@ export default function StudyRooms() {
   }, []);
 
   const refreshLobby = useCallback(async () => {
-    setRooms(await studyRoomService.list());
-    setLoading(false);
+    setLoading(true);
+    try { setRooms(await studyRoomService.list()); setError(null); }
+    finally { setLoading(false); }
   }, []);
 
   useFocusEffect(useCallback(() => {
@@ -218,14 +222,9 @@ export default function StudyRooms() {
 
   function askLeave() {
     if (!snapshot) return;
-    Alert.alert(snapshot.room.host ? 'Close study room?' : 'Leave study room?',
-      snapshot.room.host ? 'Closing this room removes everyone. This cannot be undone.' :
-        'You can rejoin later with the invite code.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: snapshot.room.host ? 'Close room' : 'Leave', style: 'destructive',
-          onPress: () => { void leave(); } },
-      ]);
+    setConfirmation({ title: snapshot.room.host ? 'Close study room?' : 'Leave study room?',
+      message: snapshot.room.host ? 'Closing this room removes everyone. This cannot be undone.' : 'You can rejoin later with the invite code.',
+      label: snapshot.room.host ? 'Close room' : 'Leave', run: () => { void leave(); } });
   }
 
   const stale = snapshot !== null && (!confirmed || now - snapshot.receivedAt > 15_000);
@@ -235,20 +234,28 @@ export default function StudyRooms() {
   const studyingCount = room?.members.filter(m => m.online && m.studying).length ?? 0;
 
   return <>
+    <CreationModal visible={confirmation !== null} title={confirmation?.title ?? 'Confirm room action'} busy={busy} showBack={false}
+      cancelLabel="Cancel room action" onClose={() => setConfirmation(null)}>
+      <Text style={styles.description}>{confirmation?.message}</Text>
+      <ActionButton compact title={confirmation?.label ?? 'Confirm'} disabled={busy || stale} onPress={() => {
+        const run = confirmation?.run; setConfirmation(null); run?.();
+      }} />
+      <ActionButton compact secondary title="Keep room unchanged" onPress={() => setConfirmation(null)} />
+    </CreationModal>
     <CreationModal visible={showCreate} title="New Study Room" busy={busy} onClose={() => setShowCreate(false)}>
-          <Card>
+          <View style={{ gap: 12 }}>
             <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Create a study room</Text>
             <Text style={[styles.description, { color: theme.colors.muted }]}>Invite up to 11 friends with a private code.</Text>
             <TextInput accessibilityLabel="Room name" placeholder="Late-night calculus"
               placeholderTextColor={theme.colors.muted} value={roomName} maxLength={60}
               onChangeText={setRoomName} style={[styles.input, { backgroundColor: theme.colors.background, color: theme.colors.text, borderColor: theme.colors.borderStrong }]} editable={!busy}/>
-            <ActionButton title="Create room" busy={busy} onPress={() => { void create(); }}/>
-            <ActionButton title="Cancel" secondary disabled={busy} onPress={() => setShowCreate(false)} />
-          </Card>
+            <ActionButton compact title="Create room" busy={busy} onPress={() => { void create(); }}/>
+            <ActionButton compact title="Cancel" secondary disabled={busy} onPress={() => setShowCreate(false)} />
+          </View>
       {error ? <Text accessibilityRole="alert" style={[styles.error, { color: theme.colors.error }]}>{error}</Text> : null}
     </CreationModal>
-    <Screen scrollRef={menuScroll}>
-      {room ? <ActionButton title="All rooms" secondary onPress={() => { setRoomId(null); setSnapshot(null); }} /> : null}
+    <Screen themed compact scrollRef={menuScroll}>
+      {room ? <ActionButton compact title="All rooms" secondary onPress={() => { setRoomId(null); setSnapshot(null); }} /> : null}
       <View style={styles.heading}>
         <Text style={styles.eyebrow}>● STUDY TOGETHER</Text>
         <Text style={styles.title}>Study Rooms<Text style={styles.green}>.</Text></Text>
@@ -263,27 +270,27 @@ export default function StudyRooms() {
             <Text style={styles.cardTitle}>Join friends</Text>
             <Text style={styles.description}>Enter the 10-character invite code.</Text>
             <TextInput accessibilityLabel="Invite code" placeholder="ABCDEFGHIJ"
-              placeholderTextColor="#64748b" value={code} maxLength={10}
+              placeholderTextColor={theme.colors.muted} value={code} maxLength={10}
               autoCapitalize="characters" autoCorrect={false}
               onChangeText={v => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
               style={[styles.input, styles.codeInput]} editable={!busy}/>
-            <ActionButton title="Join room" busy={busy} disabled={code.length !== 10}
+            <ActionButton compact title="Join room" busy={busy} disabled={code.length !== 10}
               onPress={() => { void join(); }}/>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Your rooms</Text>
-            <ActionButton secondary title="Refresh" onPress={() => { void refreshLobby().catch(() => setError('Could not load rooms.')); }}/>
-            {loading && <ActivityIndicator color="#4ade80"/>}
+            <ActionButton compact secondary title="Refresh" onPress={() => { void refreshLobby().catch(() => setError('Could not load rooms.')); }}/>
+            {loading && <ActivityIndicator color={theme.colors.primary}/>}
             {!loading && rooms.length === 0 && <Text style={styles.description}>No rooms yet. Create one or join with a code.</Text>}
             {rooms.map(item => (
-              <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open study room ${item.name}`} onPress={() => showRoom(item)}
+              <NavigationPressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open study room ${item.name}`} onPress={() => showRoom(item)}
                 style={styles.roomRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.roomName}>{item.name}</Text>
                   <Text style={styles.description}>{item.members.length}/12 members · {item.members.filter(m => m.online).length} online</Text><Text style={styles.description}>Host: {item.members.find(m=>m.host)?.username ?? "—"} · {item.phase} / {item.timerStatus}</Text>
                 </View>
                 <Text style={styles.green}>Open ›</Text>
-              </Pressable>
+              </NavigationPressable>
             ))}
           </View>
         </>
@@ -295,7 +302,7 @@ export default function StudyRooms() {
             <Text style={styles.description}>{online} online · {studyingCount} studying · {room.members.length}/12 members</Text>
             <View style={styles.inviteBox}>
               <Text style={styles.codeLabel}>INVITATION CODE · Long-press to copy</Text>
-              <Text selectable style={styles.inviteCode}>{room.inviteCode}</Text><ActionButton secondary title="Share invitation" onPress={()=>{void Share.share({message:`Join my StudyStreak room: ${room.inviteCode}`}).catch(()=>setError("Sharing unavailable. Long-press the code to copy it."));}}/>
+              <Text selectable style={styles.inviteCode}>{room.inviteCode}</Text><ActionButton compact secondary title="Share invitation" onPress={()=>{void Share.share({message:`Join my StudyStreak room: ${room.inviteCode}`}).catch(()=>setError("Sharing unavailable. Long-press the code to copy it."));}}/>
             </View>
             <View style={styles.timerBox}>
               <Text style={styles.timerLabel}>{room.phase === 'FOCUS' ? 'SHARED FOCUS' : 'GROUP BREAK'}</Text>
@@ -304,24 +311,24 @@ export default function StudyRooms() {
             </View>
             {room.host ? (
               <View style={styles.controls}><Text style={styles.timerLabel}>HOST CONTROLS</Text>
-                <ActionButton title={room.timerStatus === 'RUNNING' && remaining > 0 ? 'Pause timer' : 'Start timer'}
+                <ActionButton compact title={room.timerStatus === 'RUNNING' && remaining > 0 ? 'Pause timer' : 'Start timer'}
                   busy={busy} disabled={stale} onPress={() => { void timer(room.timerStatus === 'RUNNING' && remaining > 0 ? 'PAUSE' : 'START'); }}/>
                 <View style={styles.controlRow}>
-                  <Pressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
-                    onPress={() => { Alert.alert('Reset shared timer?', 'Open participation in this round will be cancelled.', [{text:'Cancel',style:'cancel'},{text:'Reset',style:'destructive',onPress:()=>{void timer('RESET');}}]); }}><Text style={styles.controlText}>↻ Reset</Text></Pressable>
-                  <Pressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
-                    onPress={() => { Alert.alert('Change phase?', 'Open participation in this round will be cancelled.', [{text:'Cancel',style:'cancel'},{text:'Change phase',onPress:()=>{void timer(room.phase === 'FOCUS' ? 'BREAK' : 'FOCUS');}}]); }}>
+                  <NavigationPressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
+                    onPress={() => { setConfirmation({title:'Reset shared timer?', message:'Open participation in this round will be cancelled.', label:'Reset', run:()=>{void timer('RESET');}}); }}><Text style={styles.controlText}>↻ Reset</Text></NavigationPressable>
+                  <NavigationPressable accessibilityRole="button" disabled={busy || stale} style={styles.controlButton}
+                    onPress={() => { setConfirmation({title:'Change phase?', message:'Open participation in this round will be cancelled.', label:'Change phase', run:()=>{void timer(room.phase === 'FOCUS' ? 'BREAK' : 'FOCUS');}}); }}>
                     <Text style={styles.controlText}>{room.phase === 'FOCUS' ? '5-min break' : '25-min focus'}</Text>
-                  </Pressable>
+                  </NavigationPressable>
                 </View>
               </View>
             ) : <Text style={styles.description}>Only the host can control the shared timer.</Text>}
-            <Pressable accessibilityRole="button" disabled={busy || stale} onPress={() => { void changeStudying(); }}
+            <NavigationPressable accessibilityRole="button" disabled={busy || stale} onPress={() => { void changeStudying(); }}
               style={[styles.studyButton, studying && styles.studyingActive]}>
               <Text style={[styles.studyButtonText, studying && styles.activeText]}>
                 {studying ? '✓ I am studying' : 'Mark me as studying'}
               </Text>
-            </Pressable>
+            </NavigationPressable>
           </View>
           <RoomMedia key={`media-${room.id}`} roomId={room.id}/>
                     <RoomModeration key={`moderation-${room.id}`} room={room}/>
@@ -329,15 +336,15 @@ export default function StudyRooms() {
           <StudyRoomGoal key={room.id} roomId={room.id}/>
           <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, padding: 14, borderRadius: 14 }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text, fontSize: 18, fontWeight: '600' }]}>Participants · {room.members.length}/12</Text>
-            {room.host && <ActionButton secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => Alert.alert('Replace invitation?', 'The previous code will stop working.', [{ text: 'Cancel' }, { text: 'Replace', onPress: () => { void manageRoom(); } }])}/> }
+            {room.host && <ActionButton compact secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => setConfirmation({title:'Replace invitation?',message:'The previous code will stop working.',label:'Replace',run:()=>{void manageRoom();}})}/> }
             {room.members.map(member => (
               <ParticipantCard key={member.userId} userId={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
-                {room.host && !member.host && <ActionButton secondary title="Make host" disabled={busy || stale} onPress={() => Alert.alert('Transfer host?', `Give controls to ${member.username}?`, [{ text: 'Cancel' }, { text: 'Transfer', onPress: () => { void manageRoom(member.userId); } }])}/>}
+                {room.host && !member.host && <ActionButton compact secondary title="Make host" disabled={busy || stale} onPress={() => setConfirmation({title:'Transfer host?',message:`Give controls to ${member.username}?`,label:'Transfer',run:()=>{void manageRoom(member.userId);}})}/>}
               </ParticipantCard>
             ))}
           </View>
           <Text style={styles.footer}>Room state refreshes every 4 seconds using the server clock. Your optional private Goal records eligible group participation.</Text>
-          <ActionButton secondary title={room.host ? 'Close room for everyone' : 'Leave room'}
+          <ActionButton compact secondary title={room.host ? 'Close room for everyone' : 'Leave room'}
             disabled={busy || stale} onPress={askLeave} />
         </>
       )}
@@ -345,39 +352,39 @@ export default function StudyRooms() {
   </>;
 }
 
-const styles = StyleSheet.create({
-  back: { fontSize: 14, fontWeight: '700', color: '#86efac' },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  back: { fontSize: 14, fontWeight: '700', color: palette.primary },
   heading: { gap: 8 },
-  eyebrow: { color: '#75dab0', fontSize: 12, fontWeight: '900', letterSpacing: 2 },
-  title: { color: '#fff', fontSize: 34, fontWeight: '900' },
-  green: { color: '#75dab0', fontWeight: '800' },
-  description: { color: '#9eb0be', fontSize: 14, lineHeight: 21 },
-  card: { borderColor: '#2e3c4c', borderWidth: 1, padding: 18, borderRadius: 19, backgroundColor: '#141c22', gap: 13 },
-  cardTitle: { color: '#f8fafc', fontSize: 20, fontWeight: '900' },
-  input: { borderColor: '#465361', borderWidth: 1, borderRadius: 12, color: '#fff', backgroundColor: '#0b1420', padding: 14, fontSize: 15 },
+  eyebrow: { color: palette.primary, fontSize: 12, fontWeight: '900', letterSpacing: 2 },
+  title: { color: palette.text, fontSize: 24, fontWeight: '900' },
+  green: { color: palette.primary, fontWeight: '800' },
+  description: { color: palette.muted, fontSize: 14, lineHeight: 21 },
+  card: { borderColor: palette.border, borderWidth: 1, padding: 12, borderRadius: 12, backgroundColor: palette.surface, gap: 13 },
+  cardTitle: { color: palette.text, fontSize: 20, fontWeight: '900' },
+  input: { borderColor: palette.border, borderWidth: 1, borderRadius: 12, color: palette.text, backgroundColor: palette.background, padding: 14, fontSize: 15 },
   codeInput: { fontWeight: '900', letterSpacing: 3 },
-  error: { color: '#fda4af', padding: 12, borderColor: '#fda4af55', borderWidth: 1, borderRadius: 12 },
-  roomRow: { backgroundColor: '#0a1620', padding: 15, borderRadius: 13, borderColor: '#2c4451', borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },
-  roomName: { color: '#fff', fontWeight: '800', fontSize: 15 },
-  feature: { borderColor: '#216442', borderWidth: 1, backgroundColor: '#141c22', padding: 19, borderRadius: 24, gap: 17 },
-  roomTitle: { color: '#fff', fontSize: 28, fontWeight: '900' },
-  inviteBox: { backgroundColor: '#091c15', padding: 16, borderRadius: 14, gap: 7 },
-  codeLabel: { color: '#a7c4b1', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  inviteCode: { color: '#a7f3d0', letterSpacing: 3, fontWeight: '900', fontSize: 25 },
-  timerBox: { backgroundColor: '#0b1014', borderRadius: 18, paddingVertical: 27, paddingHorizontal: 12, alignItems: 'center', gap: 8 },
-  timerLabel: { color: '#a7f3d0', fontSize: 12, letterSpacing: 2, fontWeight: '800' },
-  timer: { color: '#fff', fontWeight: '900', fontSize: 60, fontVariant: ['tabular-nums'] },
+  error: { color: palette.error, padding: 12, borderColor: palette.border, borderWidth: 1, borderRadius: 12 },
+  roomRow: { backgroundColor: palette.background, padding: 15, borderRadius: 13, borderColor: palette.border, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  roomName: { color: palette.text, fontWeight: '800', fontSize: 15 },
+  feature: { borderColor: palette.border, borderWidth: 1, backgroundColor: palette.surface, padding: 12, borderRadius: 12, gap: 12 },
+  roomTitle: { color: palette.text, fontSize: 22, fontWeight: '900' },
+  inviteBox: { backgroundColor: palette.surfaceRaised, padding: 16, borderRadius: 14, gap: 7 },
+  codeLabel: { color: palette.muted, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  inviteCode: { color: palette.primary, letterSpacing: 3, fontWeight: '900', fontSize: 25 },
+  timerBox: { backgroundColor: palette.background, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', gap: 8 },
+  timerLabel: { color: palette.primary, fontSize: 12, letterSpacing: 2, fontWeight: '800' },
+  timer: { color: palette.text, fontWeight: '900', fontSize: 48, fontVariant: ['tabular-nums'] },
   controls: { gap: 13 },
   controlRow: { flexWrap: 'wrap', flexDirection: 'row', gap: 8 },
-  controlButton: { flex: 1, minWidth: 100, minHeight: 48, backgroundColor: '#26323b', padding: 13, borderRadius: 12, alignItems: 'center' },
-  controlText: { color: '#cdf8df', fontSize: 13, fontWeight: '800' },
-  studyButton: { borderWidth: 1, borderColor: '#75dab0', padding: 15, borderRadius: 35, alignItems: 'center' },
-  studyingActive: { backgroundColor: '#75dab0' },
-  studyButtonText: { color: '#a7f3d0', fontWeight: '900', fontSize: 15 },
-  activeText: { color: '#08311e' },
+  controlButton: { flex: 1, minWidth: 100, minHeight: 48, backgroundColor: palette.surfaceRaised, padding: 13, borderRadius: 12, alignItems: 'center' },
+  controlText: { color: palette.text, fontSize: 13, fontWeight: '800' },
+  studyButton: { borderWidth: 1, borderColor: palette.primary, padding: 15, borderRadius: 10, alignItems: 'center' },
+  studyingActive: { backgroundColor: palette.primary },
+  studyButtonText: { color: palette.primary, fontWeight: '900', fontSize: 15 },
+  activeText: { color: palette.primaryText },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
-  avatar: { borderRadius: 25, backgroundColor: '#1c5137', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#d1fae5', fontSize: 17, fontWeight: '900' },
-  memberName: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  footer: { color: '#8197a6', fontSize: 12, lineHeight: 19 },
+  avatar: { borderRadius: 25, backgroundColor: palette.primarySoft, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: palette.primaryText, fontSize: 17, fontWeight: '900' },
+  memberName: { color: palette.text, fontWeight: '800', fontSize: 14 },
+  footer: { color: palette.muted, fontSize: 12, lineHeight: 19 },
 });

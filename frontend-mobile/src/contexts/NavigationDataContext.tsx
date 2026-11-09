@@ -2,12 +2,13 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { AppState } from 'react-native';
 import { getOwnProfile, type OwnProfile, type ProfileImageSlot } from '../services/ownProfileService';
 import { OwnProfileMedia, cleanStaleProfileMedia, type SelectedProfileAsset, type ProfileImageDraft } from '../features/profile/ownProfileMedia';
+import { createUnreadCounter } from '../features/notifications/unreadCounter';
 import { notificationService } from '../services/notificationService';
 import { getApiErrorMessage } from '../utils/apiError';
 import { getSessionRevision } from '../services/authSession';
 
 type Value = { profile: OwnProfile | null; avatar: string | null; banner?: string | null; loading: boolean; error: string | null;
-  imageErrors?: Partial<Record<ProfileImageSlot, string>>; unread: number | null; retry(): void;
+  imageErrors?: Partial<Record<ProfileImageSlot, string>>; unread: number | null; refreshUnread(): Promise<void>; retry(): void;
   refresh(): Promise<void>; ensureBanner(): Promise<void>;
   prepareImage(slot: ProfileImageSlot, asset: SelectedProfileAsset): Promise<ProfileImageDraft>;
   imageBytes(draft: ProfileImageDraft): Promise<ArrayBuffer>; releaseImage(uri: string): void };
@@ -21,6 +22,8 @@ export function NavigationDataProvider({ userId, children }: { userId: number; c
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unread, setUnread] = useState<number | null>(null);
+  const unreadCounter = useRef<ReturnType<typeof createUnreadCounter> | null>(null);
+  const refreshUnread = useCallback(() => unreadCounter.current?.refresh(true) ?? Promise.resolve(), []);
   const scope = useRef<Scope | null>(null);
   const bannerRequested = useRef(false);
   const loadImage = useCallback(async (owner: Scope, slot: ProfileImageSlot) => {
@@ -76,19 +79,14 @@ export function NavigationDataProvider({ userId, children }: { userId: number; c
     return () => { owner.controller.abort(); owner.media.dispose(); if (scope.current === owner) scope.current = null; };
   }, [userId, reload]);
   useEffect(() => {
-    const controller = new AbortController(); let inFlight = false;
-    const refresh = () => {
-      if (inFlight || AppState.currentState !== 'active' || controller.signal.aborted) return;
-      inFlight = true;
-      void notificationService.countUnread(userId, controller.signal).then(count => {
-        if (!controller.signal.aborted) setUnread(count);
-      }).catch(() => {}).finally(() => { inFlight = false; });
-    };
+    const counter = createUnreadCounter(signal => notificationService.countUnread(userId, signal), setUnread);
+    unreadCounter.current = counter;
+    const refresh = () => { if (AppState.currentState === 'active') void counter.refresh(); };
     refresh(); const timer = setInterval(refresh, 30000);
     const listener = AppState.addEventListener('change', refresh);
-    return () => { controller.abort(); clearInterval(timer); listener.remove(); };
+    return () => { counter.dispose(); clearInterval(timer); listener.remove(); if (unreadCounter.current === counter) unreadCounter.current = null; };
   }, [userId]);
-  return <NavigationDataContext.Provider value={{ profile, avatar, banner, loading, error, imageErrors, unread, retry, refresh, ensureBanner,
+  return <NavigationDataContext.Provider value={{ profile, avatar, banner, loading, error, imageErrors, unread, refreshUnread, retry, refresh, ensureBanner,
     prepareImage: (slot, asset) => { if (!scope.current) return Promise.reject(new Error('Profile is unavailable.')); return scope.current.media.prepare(slot, asset); },
     imageBytes: draft => { if (!scope.current) return Promise.reject(new Error('Profile is unavailable.')); return scope.current.media.bytes(draft); },
     releaseImage: uri => scope.current?.media.release(uri),

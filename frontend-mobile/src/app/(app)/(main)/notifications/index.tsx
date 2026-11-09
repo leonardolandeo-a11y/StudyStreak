@@ -1,16 +1,19 @@
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../components/ui/PageControls';
 import { NotificationCard } from '../../../../components/notifications/NotificationCard';
+import { useNavigationData } from '../../../../contexts/NavigationDataContext';
+import { NavigationPressable } from '../../../../components/navigation/NavigationPressable';
 import { useAuth } from '../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../hooks/usePagedResource';
 import { notificationService } from '../../../../services/notificationService';
 import { getApiErrorMessage } from '../../../../utils/apiError';
-import { palette } from '../../../../constants/palette';
+import { useThemedStyles } from '../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../features/appearance/theme';
 import { notificationTypeLabels, notificationTypes } from '../../../../types/notification';
 import { notificationDestination } from '../../../../utils/notificationDestination';
 import type { Notification, NotificationType } from '../../../../types/notification';
@@ -19,6 +22,8 @@ import type { PageResponse } from '../../../../types/page';
 type Filter = 'all' | 'unread' | 'type';
 
 export default function Notifications() {
+  const styles = useThemedStyles(createStyles);
+  const { refreshUnread } = useNavigationData();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
   const [filter, setFilter] = useState<Filter>('all');
@@ -52,6 +57,7 @@ export default function Notifications() {
     try {
       if (action === 'read') await notificationService.markRead(userId, id);
       else await notificationService.remove(userId, id);
+      void refreshUnread();
       setMessage(action === 'read' ? 'Notification marked as read.' : 'Notification deleted.');
       if ((action === 'delete' || filter === 'unread') && page > 0 && data?.content.length === 1) {
         setPage(page - 1);
@@ -72,6 +78,7 @@ export default function Notifications() {
     if (!notification.read) {
       try {
         await notificationService.markRead(userId, notification.id);
+        void refreshUnread();
         reload();
       } catch (cause) {
         setActionError(getApiErrorMessage(cause, 'Could not mark notification as read.'));
@@ -105,7 +112,7 @@ export default function Notifications() {
   if (!currentUser) return null;
 
   return (
-    <Screen>
+    <Screen themed compact>
       <Text style={styles.title}>Notifications</Text>
       <Text style={styles.subtitle}>Stay informed about your goals and study partners.</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}
@@ -120,17 +127,17 @@ export default function Notifications() {
       </ScrollView>
       <View style={styles.row}>
         <Text style={styles.heading}>{filter === 'unread' ? 'Unread notifications' : filter === 'type' ? notificationTypeLabels[selectedType] : 'All notifications'}</Text>
-        <Pressable accessibilityRole="button" onPress={reload}>
+        <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh notifications" onPress={() => { reload(); void refreshUnread(); }} style={{ minHeight: 48, paddingHorizontal: 8, justifyContent: 'center' }}>
           <Text style={styles.refresh}>Refresh</Text>
-        </Pressable>
+        </NavigationPressable>
       </View>
       {message ? <StatusMessage message={message} /> : null}
       {actionError ? <StatusMessage message={actionError} error /> : null}
-      {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
+      {loading ? <ActivityIndicator accessibilityLabel="Loading notifications" /> : null}
       {error ? (
         <>
           <StatusMessage error message={error} />
-          <ActionButton title="Retry" secondary onPress={reload} />
+          <ActionButton compact title="Retry" secondary onPress={reload} />
         </>
       ) : null}
       {!loading && !error && data ? (
@@ -153,21 +160,22 @@ export default function Notifications() {
 }
 
 function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(createStyles);
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ selected: active }}
+    <NavigationPressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}
       onPress={onPress} style={[styles.chip, active && styles.activeChip]}>
       <Text style={[styles.chipText, active && styles.activeChipText]}>{label}</Text>
-    </Pressable>
+    </NavigationPressable>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
-  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
   filterBar: { flexGrow: 0 },
   filters: { gap: 8, paddingVertical: 6, alignItems: 'center' },
-  chip: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
+  chip: { minHeight: 48, justifyContent: 'center', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1,
     borderColor: palette.border, backgroundColor: palette.surface },
   activeChip: { backgroundColor: palette.primary, borderColor: palette.primary },
   chipText: { fontSize: 13, color: palette.muted, fontWeight: '700' },

@@ -114,5 +114,7 @@ test('only one appearance provider is mounted; motion preference reaches existin
   const voice = readFileSync(new URL('../src/components/records/RecordVoice.tsx', import.meta.url), 'utf8');
   assert.match(voice, /!status.playing \|\| reduceMotion/);
   const resources = readFileSync(new URL('../src/app/(app)/(main)/resources/index.tsx', import.meta.url), 'utf8');
-  assert.match(resources, /animationType=\{reduceMotion \? 'none' : 'slide'\}/);
+  assert.match(resources, /<CreationModal/);
+  const modal = readFileSync(new URL('../src/components/ui/CreationModal.tsx', import.meta.url), 'utf8');
+  assert.match(modal, /animationType=\{reduceMotion \? 'none' : 'slide'\}/);
 });

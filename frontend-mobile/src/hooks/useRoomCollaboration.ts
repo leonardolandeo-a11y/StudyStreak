@@ -11,6 +11,8 @@ export function useRoomCollaboration(roomId:string) {
     const [revision,setRevision]=useState(0);
     const [text,setText]=useState(''),[error,setError]=useState<string|null>(null),[busy,setBusy]=useState(false);
     const [loadError,setLoadError]=useState<string|null>(null);
+    const [loading,setLoading]=useState(true);
+    const retry=useCallback(()=>setRevision(value=>value+1),[]);
     const pending=useRef<{id:string;text:string}|null>(null);
     const endpoint=`/api/study-rooms/${roomId}/collaboration`;
     const reload=useCallback(async(signal?:AbortSignal)=>{
@@ -19,8 +21,8 @@ export function useRoomCollaboration(roomId:string) {
     },[endpoint,page,revision]);
     useFocusEffect(useCallback(()=>{
         const controller=new AbortController();let loading=false;
-        const poll=async()=>{if(loading||AppState.currentState!=='active')return;loading=true;try{await reload(controller.signal);}catch{if(!controller.signal.aborted){setFeed(null);setLoadError('Chat unavailable. Check connection and room membership.');}}finally{loading=false;}};
-        void poll();const timer=setInterval(()=>void poll(),2500);
+        const poll=async()=>{if(loading||AppState.currentState!=='active')return;loading=true;try{await reload(controller.signal);}catch{if(!controller.signal.aborted){setFeed(null);setLoadError('Chat unavailable. Check connection and room membership.');}}finally{loading=false;if(!controller.signal.aborted)setLoading(false);}};
+        setLoading(true);void poll();const timer=setInterval(()=>void poll(),2500);
         return ()=>{controller.abort();clearInterval(timer);};
     },[reload]));
     async function action(path:string,body?:unknown,method:'post'|'put'|'delete'='post') {
@@ -37,5 +39,5 @@ export function useRoomCollaboration(roomId:string) {
         catch{setError('Message not confirmed. Retry keeps the same message ID to avoid duplicates.');}
         finally{setBusy(false);}
     }
-    return {feed,page,setPage,text,setText,error:error??loadError,busy,send,action};
+    return {feed,page,setPage,text,setText,error:error??loadError,busy,loading,retry,send,action};
 }

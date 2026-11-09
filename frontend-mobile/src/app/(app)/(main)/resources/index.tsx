@@ -1,20 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../components/ui/Screen';
+import { CreationModal } from '../../../../components/ui/CreationModal';
+import { NavigationPressable } from '../../../../components/navigation/NavigationPressable';
+import { BookCover } from '../../../../components/resources/BookCover';
+import { FormField } from '../../../../components/ui/FormField';
 import { ActionButton } from '../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../components/ui/StatusMessage';
-import { palette } from '../../../../constants/palette';
-import { useAppearance } from '../../../../hooks/useAppearance';
+import { useAppearance, useThemedStyles } from '../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../features/appearance/theme';
 import { getBookSearchErrorMessage, googleBooksService } from '../../../../services/googleBooksService';
 import type { StudyBook } from '../../../../types/studyBook';
 
 type SearchRequest = { term: string; revision: number };
 
 export default function StudyResources() {
-  const { reduceMotion } = useAppearance();
   const { topic } = useLocalSearchParams<{ topic?: string }>();
   const initialTopic = typeof topic === 'string' ? topic.trim().slice(0, 80) : '';
+  return <ResourcesContent key={initialTopic} initialTopic={initialTopic} />;
+}
+function ResourcesContent({ initialTopic }: { initialTopic: string }) {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const hasInitialSearch = initialTopic.length >= 2;
   const [query, setQuery] = useState(initialTopic);
   const [request, setRequest] = useState<SearchRequest | null>(
@@ -26,7 +34,7 @@ export default function StudyResources() {
   const [selectedBook, setSelectedBook] = useState<StudyBook | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (!request) return;
     const controller = new AbortController();
 
@@ -48,7 +56,7 @@ export default function StudyResources() {
     });
 
     return () => controller.abort();
-  }, [request]);
+  }, [request]));
 
   function submitSearch() {
     if (loading) return;
@@ -94,68 +102,49 @@ export default function StudyResources() {
   }
 
   return (
-    <Screen>
+    <Screen themed compact>
       <Text style={styles.title}>Study resources</Text>
       <Text style={styles.muted}>Find books related to your study goals using Google Books.</Text>
       <View style={styles.searchBox}>
-        <Text style={styles.label}>Topic</Text>
-        <TextInput
-          accessibilityLabel="Book search topic"
-          style={styles.input}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Example: differential equations"
-          placeholderTextColor={palette.muted}
-          maxLength={80}
-          autoCapitalize="sentences"
-          returnKeyType="search"
-          onSubmitEditing={submitSearch}
-        />
-        <ActionButton title="Search books" busy={loading} onPress={submitSearch} />
+        <FormField variant="subtle" label="Book search topic" value={query} onChangeText={setQuery}
+          placeholder="Example: differential equations" maxLength={80} autoCapitalize="sentences"
+          returnKeyType="search" onSubmitEditing={submitSearch} />
+        <View style={styles.searchActions}>
+          <ActionButton compact title="Search books" busy={loading} onPress={submitSearch} />
+          {loading ? <ActionButton compact secondary title="Cancel search" onPress={() => {
+            setRequest(null); setLoading(false); setBooks([]); setError(null);
+          }} /> : null}
+        </View>
       </View>
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? <StatusMessage error message={error} /> : null}
-      {error && request ? <ActionButton title="Retry search" secondary onPress={retry} /> : null}
+      {error && request ? <ActionButton compact title="Retry search" secondary onPress={retry} /> : null}
       {!request && !error ? <Text style={styles.muted}>Enter a topic to find study books.</Text> : null}
       {request && !loading && !error && books.length === 0 ? (
         <Text style={styles.muted}>No books were found. Try a broader topic.</Text>
       ) : null}
       {!loading && !error ? books.map((book) => (
-        <Pressable key={book.id} accessibilityRole="button"
+        <NavigationPressable key={book.id} accessibilityRole="button"
           accessibilityLabel={`View details for ${book.title}`} onPress={() => showBook(book)}
           style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
           <View style={styles.bookRow}>
-            {book.thumbnailUrl ? (
-              <Image source={{ uri: book.thumbnailUrl }} style={styles.thumbnail} resizeMode="contain" />
-            ) : null}
+            <BookCover key={book.thumbnailUrl ?? book.id} uri={book.thumbnailUrl} title={book.title} />
             <View style={styles.bookInfo}>
-              <Text style={styles.bookTitle}>{book.title}</Text>
-              <Text style={styles.muted}>{book.authors?.length ? book.authors.join(', ') : 'Unknown author'}</Text>
+              <Text numberOfLines={2} style={styles.bookTitle}>{book.title}</Text>
+              <Text numberOfLines={2} style={styles.muted}>{book.authors?.length ? book.authors.join(', ') : 'Unknown author'}</Text>
               {book.publishedDate ? <Text style={styles.muted}>Published: {book.publishedDate}</Text> : null}
             </View>
           </View>
           {book.description ? <Text style={styles.description} numberOfLines={3}>{book.description}</Text> : null}
           <Text style={styles.tapHint}>View book details ›</Text>
-        </Pressable>
+        </NavigationPressable>
       )) : null}
       <Text style={styles.credit}>Book information provided by Google Books.</Text>
 
-      <Modal visible={selectedBook !== null} animationType={reduceMotion ? 'none' : 'slide'} transparent
-        onRequestClose={closeBook} statusBarTranslucent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close book details"
-              onPress={closeBook} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕ Close</Text>
-            </Pressable>
-            <ScrollView keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.modalBody}>
+      <CreationModal visible={selectedBook !== null} title="Book details" onClose={closeBook} cancelLabel="Close book details">
               {selectedBook ? (
                 <>
-                  {selectedBook.thumbnailUrl ? (
-                    <Image source={{ uri: selectedBook.thumbnailUrl }}
-                      style={styles.cover} resizeMode="contain" />
-                  ) : null}
+                  <View style={{ alignItems: 'center' }}><BookCover key={selectedBook.id} uri={selectedBook.thumbnailUrl} title={selectedBook.title} large /></View>
                   <Text style={styles.detailTitle}>{selectedBook.title}</Text>
                   <Text style={styles.muted}>{selectedBook.authors?.length
                     ? selectedBook.authors.join(', ') : 'Unknown author'}</Text>
@@ -178,51 +167,34 @@ export default function StudyResources() {
                   )}
                   {linkError ? <StatusMessage error message={linkError} /> : null}
                   {selectedBook.previewLink ? (
-                    <ActionButton title="Preview on Google Books" secondary
+                    <ActionButton compact title="Preview on Google Books" secondary
                       onPress={() => { if (selectedBook.previewLink) void openBook(selectedBook.previewLink); }} />
                   ) : null}
-                  <ActionButton title="Open on Google Books"
+                  <ActionButton compact title="Open on Google Books"
                     disabled={!selectedBook.infoLink}
                     onPress={() => { if (selectedBook.infoLink) void openBook(selectedBook.infoLink); }} />
                   <Text style={styles.credit}>Reading availability depends on the publisher.</Text>
                 </>
               ) : null}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      </CreationModal>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  back: { color: palette.primary, fontWeight: '700', fontSize: 15 },
-  title: { color: palette.text, fontSize: 28, fontWeight: '800' },
-  muted: { color: palette.muted, fontSize: 14, lineHeight: 21 },
-  label: { color: palette.text, fontSize: 15, fontWeight: '700' },
-  searchBox: { gap: 12, borderWidth: 1, borderColor: palette.border,
-    backgroundColor: palette.surface, padding: 17, borderRadius: 16 },
-  input: { borderWidth: 1, borderColor: palette.border, borderRadius: 10,
-    color: palette.text, paddingHorizontal: 14, minHeight: 48, fontSize: 16,
-    backgroundColor: palette.surfaceRaised },
-  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 16,
-    backgroundColor: palette.surface, padding: 17, gap: 10 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  title: { color: palette.text, fontSize: 24, fontWeight: '700' },
+  muted: { color: palette.muted, fontSize: 13, lineHeight: 20 },
+  searchBox: { gap: 10 },
+  searchActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 12,
+    backgroundColor: palette.surface, padding: 12, gap: 10 },
   pressed: { opacity: 0.75 },
   bookRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  bookInfo: { flex: 1, gap: 6 },
-  thumbnail: { width: 76, height: 110, borderRadius: 5, backgroundColor: palette.surfaceRaised },
-  bookTitle: { color: palette.text, fontWeight: '800', fontSize: 18 },
+  bookInfo: { flex: 1, minWidth: 0, gap: 4 },
+  bookTitle: { color: palette.text, fontWeight: '600', fontSize: 16 },
   description: { color: palette.muted, fontSize: 13, lineHeight: 20 },
-  tapHint: { color: palette.primary, fontSize: 14, fontWeight: '700' },
+  tapHint: { color: palette.primary, fontSize: 13, fontWeight: '600' },
   credit: { color: palette.muted, fontSize: 12, paddingVertical: 6 },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.78)', justifyContent: 'flex-end' },
-  modalPanel: { backgroundColor: palette.background, borderTopLeftRadius: 20,
-    borderTopRightRadius: 20, paddingHorizontal: 20, paddingTop: 18,
-    paddingBottom: 24, height: '90%', borderWidth: 1, borderColor: palette.border },
-  closeButton: { alignSelf: 'flex-end', paddingVertical: 10, paddingHorizontal: 4 },
-  closeText: { color: palette.primary, fontWeight: '700', fontSize: 15 },
-  modalBody: { paddingBottom: 28, gap: 14 },
-  cover: { width: 140, height: 195, alignSelf: 'center', backgroundColor: palette.surfaceRaised },
-  detailTitle: { color: palette.text, fontWeight: '800', fontSize: 24, lineHeight: 30 },
+  detailTitle: { color: palette.text, fontWeight: '700', fontSize: 22, lineHeight: 28 },
   detailDescription: { color: palette.text, fontSize: 15, lineHeight: 23 },
 });
