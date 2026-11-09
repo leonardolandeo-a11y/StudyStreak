@@ -1,11 +1,13 @@
 import { NavigationPressable } from '../../../components/navigation/NavigationPressable';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Drawer, type DrawerNavigationProp } from 'expo-router/drawer';
 import type { ParamListBase } from 'expo-router/react-navigation';
 import { BackHandler, Modal, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useAppearance } from '../../../hooks/useAppearance';
 import { StudyDrawerContent } from '../../../components/navigation/StudyDrawerContent';
+import { StudyPartnersPanel } from '../../../components/social/StudyPartnersPanel';
+import { AppIcon } from '../../../components/ui/AppIcon';
 import { primaryBackTarget } from '../../../features/navigation/menu';
 export const unstable_settings = { initialRouteName: '(menu)' };
 
@@ -13,6 +15,10 @@ export default function MainLayout() {
   const { theme, reduceMotion } = useAppearance();
   const { width } = useWindowDimensions();
   const trigger = useRef<ComponentRef<typeof Pressable>>(null);
+  const [partnersOpen, setPartnersOpen] = useState(false);
+  const partnersTrigger = useRef<ComponentRef<typeof Pressable>>(null);
+  const restorePartnersFocus = useRef(false);
+  const closePartners = () => { restorePartnersFocus.current = true; setPartnersOpen(false); requestAnimationFrame(() => partnersTrigger.current?.focus()); };
   const [reducedMenu, setReducedMenu] = useState<DrawerNavigationProp<ParamListBase> | null>(null);
   const close = () => { setReducedMenu(null); trigger.current?.focus(); };
   return <View style={{ flex: 1 }}>
@@ -23,6 +29,11 @@ export default function MainLayout() {
         headerStyle: { backgroundColor: theme.colors.surface }, headerTintColor: theme.colors.text,
         headerShadowVisible: false, drawerStyle: { width: Math.min(320, width * .88), backgroundColor: theme.colors.surface },
         swipeEnabled: !reduceMotion,
+        headerRight: () => <NavigationPressable ref={partnersTrigger} accessibilityRole="button" accessibilityLabel="Study Partners"
+          accessibilityState={{ expanded: partnersOpen }} onPress={() => { navigation.closeDrawer(); restorePartnersFocus.current = false; setPartnersOpen(true); }}
+          style={{ width: 48, height: 48, marginRight: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+          <AppIcon name="partners" color={theme.colors.text} />
+        </NavigationPressable>,
         headerLeft: () => <PrimaryMenuButton navigation={navigation}><NavigationPressable ref={trigger} accessibilityRole="button" accessibilityLabel="Open menu"
           onPress={() => reduceMotion ? setReducedMenu(navigation) : navigation.openDrawer()}
           style={{ minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
@@ -35,6 +46,10 @@ export default function MainLayout() {
       <Drawer.Screen name="resources/index" options={{ title: 'Resources' }} />
       <Drawer.Screen name="notifications/index" options={{ title: 'Notifications' }} />
     </Drawer>
+    <StudyPartnersPanel visible={partnersOpen} onClose={closePartners}
+      onDismiss={() => { if (restorePartnersFocus.current) partnersTrigger.current?.focus(); }}
+      onMember={id => { restorePartnersFocus.current = false; setPartnersOpen(false); router.push({ pathname: '/(app)/users/[userId]/profile', params: { userId: String(id) } }); }}
+      onManage={() => { restorePartnersFocus.current = false; setPartnersOpen(false); router.navigate('/tracking'); }} />
     {/* The installed native drawer forces spring animation. The same content
         uses an unanimated native Modal when reduced motion is requested. */}
     <Modal visible={reduceMotion && reducedMenu !== null} transparent animationType="none" onRequestClose={close} onDismiss={() => trigger.current?.focus()}>

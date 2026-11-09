@@ -25,6 +25,9 @@ export const socialService = {
   async presence(id: number, signal: AbortSignal, revision = getSessionRevision()): Promise<Presence> {
     return (await apiClient.get(`/api/users/${id}/presence`, config(signal, revision))).data;
   },
+  async activePage(page: number, signal: AbortSignal, revision = getSessionRevision()): Promise<PageResponse<TrackingLink>> {
+    return (await apiClient.get('/api/tracking-links/active', { ...config(signal, revision), params: { page, size: 10 } })).data;
+  },
   async accepted(ownerId: number, signal: AbortSignal, revision = getSessionRevision()): Promise<Set<number>> {
     const ids = new Set<number>();
     for (let page = 0; ; page++) {

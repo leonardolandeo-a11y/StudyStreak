@@ -10,6 +10,7 @@ const empty = (): MemberState => ({ status: 'loading', profile: null, avatar: nu
 export class SocialDirectory {
   private snapshot: DirectorySnapshot = emptyDirectorySnapshot;
   private listeners = new Set<() => void>();
+  private revocations = new Set<(id: number) => void>();
   private accepted = new Set<number>();
   private checkedAt = 0;
   private active = false;
@@ -168,15 +169,37 @@ export class SocialDirectory {
     })();
     this.profiles.set(id, task); await task; if (this.profiles.get(id) === task) this.profiles.delete(id);
   }
+  subscribeRevocations = (listener: (id: number) => void) => {
+    this.revocations.add(listener); return () => { this.revocations.delete(listener); };
+  };
+  invalidatePartnerAvatar(id: number) {
+    this.media.get(id)?.dispose(); this.media.delete(id); this.avatars.delete(id); this.avatarJobs.delete(id); this.emit();
+  }
+  /** Called only after the panel confirms ACCEPTED and successfully reads this member's profile. */
+  async partnerAvatar(id: number, signal: AbortSignal): Promise<string | null> {
+    if (!Number.isSafeInteger(id) || id <= 0 || id === this.ownerId || signal.aborted || !this.active || this.disposed) throw new Error('Avatar request cancelled.');
+    const media = this.resources(id);
+    const cancel = () => { if (!this.watchers.has(id) && this.media.get(id) === media) this.invalidatePartnerAvatar(id); };
+    signal.addEventListener('abort', cancel, { once: true });
+    try {
+      const uri = await this.image(async () => {
+        if (signal.aborted || this.media.get(id) !== media) throw new Error('Avatar request cancelled.');
+        return media.load('avatar');
+      });
+      if (signal.aborted || this.media.get(id) !== media) throw new Error('Avatar request cancelled.');
+      this.avatars.set(id, uri); this.emit(); return uri;
+    } finally { signal.removeEventListener('abort', cancel); }
+  }
   revoke(id: number, status: 'unavailable' | 'error' = 'unavailable') {
     this.checkedAt = 0;
     this.profileControllers.get(id)?.abort(); this.accepted.delete(id); this.media.get(id)?.dispose(); this.media.delete(id);
     this.avatars.delete(id); this.avatarJobs.delete(id);
     this.members.set(id, { ...empty(), status }); this.emit();
+    for (const listener of this.revocations) listener(id);
   }
   invalidateRelations() { this.checkedAt = 0; void this.refresh(true); }
   dispose() {
     this.setActive(false); this.disposed = true; this.controller.abort(); this.stopTimer?.(); this.stopTimer = undefined;
-    this.watchers.clear(); this.members.clear(); this.listeners.clear();
+    this.watchers.clear(); this.members.clear(); this.listeners.clear(); this.revocations.clear();
   }
 }

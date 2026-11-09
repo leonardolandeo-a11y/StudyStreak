@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, View, type ViewStyle } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 
-export type IconName = 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close';
+export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close';
 export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName; color: string; size?: number; pulse?: number }) {
   const { reduceMotion } = useAppearance();
   const [motion] = useState(() => new Animated.Value(0));
@@ -38,6 +38,9 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
           { perspective: 80 }, { rotateY: motion.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-75deg'] }) },
         ] }]}><View style={{ position: 'absolute', right: 0, top: 3, width: 2, height: 2, borderRadius: 1, backgroundColor: color }} /></Animated.View>
       </> : null}
+      {name === 'partners' ? <><View style={box(3, 3, 7, 7, 4)} /><View style={box(14, 3, 7, 7, 4)} />
+        <View style={[box(1, 13, 11, 8, 5), { borderBottomLeftRadius: 2, borderBottomRightRadius: 2 }]} />
+        <View style={[box(12, 13, 11, 8, 5), { borderBottomLeftRadius: 2, borderBottomRightRadius: 2 }]} /></> : null}
       {name === 'focus' ? <><View style={[box(3, 2, 18, 17, 10), { borderBottomWidth: 0 }]} />
         <View style={box(1, 12, 6, 10, 3)} /><View style={box(17, 12, 6, 10, 3)} /></> : null}
       {name === 'resources' ? <><View style={box(1, 4, 11, 17)} /><View style={box(12, 4, 11, 17)} />

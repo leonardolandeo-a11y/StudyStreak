@@ -33,3 +33,22 @@ test('social protected images reuse native files and cleanup never deletes own p
 test('social requests queued under an old account do not execute with new credentials',async()=>{
   let sent=0;adapter=async config=>{sent++;return ok(config);};const request=socialService.profile(3,new AbortController().signal);beginSessionChange();await assert.rejects(request,/session changed/);assert.equal(sent,0);
 });
+
+test('panel and social rows share native avatar downloads; closing a panel preserves an active row lease',async()=>{
+  const { SocialDirectory }=await import('../src/features/social/socialDirectory.ts');
+  const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'));
+  let finish,reads=0,transportSignal;
+  adapter=config=>{reads++;transportSignal=config.signal;return new Promise(resolve=>{finish=()=>resolve(ok(config,png.buffer,{'content-type':'image/png'}));});};
+  const directory=new SocialDirectory(1,{accepted:async()=>new Set([3])},{every:()=>()=>{}});directory.setActive(true);const stop=directory.watch(3,'avatar');
+  while(!finish)await new Promise(resolve=>setImmediate(resolve));
+  const panel=new AbortController();const request=directory.partnerAvatar(3,panel.signal);panel.abort();
+  assert.equal(transportSignal.aborted,false);finish();await assert.rejects(request);await directory.refresh();assert.equal(reads,1);assert.ok(directory.avatar(3));
+  const cached=await directory.partnerAvatar(3,new AbortController().signal);assert.equal(cached,directory.avatar(3));assert.equal(reads,1);
+  directory.revoke(3);assert.equal(files.has(cached),false);stop();directory.dispose();
+});
+test('closing a panel cancels an avatar download with no remaining consumers',async()=>{
+  const { SocialDirectory }=await import('../src/features/social/socialDirectory.ts');let finish,signal;
+  adapter=config=>{signal=config.signal;return new Promise(resolve=>{finish=()=>resolve(ok(config,new Uint8Array().buffer,{'content-type':'image/png'}));});};
+  const directory=new SocialDirectory(1,{}, {every:()=>()=>{}});directory.setActive(true);
+  const panel=new AbortController(),request=directory.partnerAvatar(3,panel.signal);while(!finish)await new Promise(resolve=>setImmediate(resolve));panel.abort();assert.equal(signal.aborted,true);finish();await assert.rejects(request);assert.equal(files.size,0);directory.dispose();
+});
