@@ -31,6 +31,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
   useFocusEffect(useCallback(() => {
     if (!available) return;
     let active = true;
+    const controller = new AbortController();
     let localFile: File | null = null;
 
     function dispose(file: File | null) {
@@ -43,7 +44,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
       setError(null);
       setLoading(true);
       try {
-        localFile = await downloadEvidence(photoEvidenceService.url(goalId, recordId), 'jpg', reloadKey);
+        localFile = await downloadEvidence(photoEvidenceService.url(goalId, recordId), 'jpg', reloadKey, controller.signal);
         if (active) setPhotoUri(localFile.uri);
       } catch (cause) {
         if (active) {
@@ -67,6 +68,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
     void loadPhoto();
     return () => {
       active = false;
+      controller.abort();
       dispose(localFile);
     };
   }, [available, goalId, recordId, reloadKey]));
@@ -105,16 +107,16 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
       {error ? (
         <>
           <StatusMessage error message={error} />
-          <ActionButton title="Retry photo preview" secondary disabled={busy || loading}
+          <ActionButton compact title="Retry photo preview" secondary disabled={busy || loading}
             onPress={() => setReloadKey((value) => value + 1)} />
         </>
       ) : null}
       {!readOnly ? (
-        <ActionButton title={confirm ? 'Cancel photo deletion' : 'Delete photo'} secondary disabled={busy}
+        <ActionButton compact title={confirm ? 'Cancel photo deletion' : 'Delete photo'} secondary disabled={busy}
           onPress={() => setConfirm((old) => !old)} />
       ) : null}
       {confirm && !readOnly ? (
-        <ActionButton title="Confirm delete photo" busy={busy} onPress={() => { void remove(); }} />
+        <ActionButton compact title="Confirm delete photo" busy={busy} onPress={() => { void remove(); }} />
       ) : null}
     </View>
   );

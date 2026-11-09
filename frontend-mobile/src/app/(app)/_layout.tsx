@@ -22,6 +22,7 @@ export default function AuthenticatedLayout() {
       headerLeft: navigation.canGoBack() ? undefined : () =>
         <ActionButton title="Home" secondary onPress={() => router.replace('/(app)/home')} /> })} />
     <Stack.Screen name="goals/[goalId]" options={{ title: 'Goal details' }} />
+    <Stack.Screen name="goals/[goalId]/tags" options={{ title: 'Goal tags' }} />
     <Stack.Screen name="goals/[goalId]/records/[recordId]" options={{ title: 'Daily record' }} />
     <Stack.Screen name="camera" options={{ title: 'Photo evidence' }} />
     <Stack.Screen name="voice" options={{ title: 'Voice evidence' }} />

@@ -36,11 +36,11 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
   return (
     <View style={styles.form}>
       <Text style={styles.heading}>{initialValues ? 'Edit goal' : 'New study goal'}</Text>
-      <FormField label="Topic" placeholder="e.g. Differential equations" value={topic}
+      <FormField variant="subtle" label="Topic" placeholder="e.g. Differential equations" value={topic}
         onChangeText={setTopic} maxLength={150} editable={!busy} />
-      <FormField label="Frequency" hint="Study sessions per week" value={frequency}
+      <FormField variant="subtle" label="Frequency" hint="Study sessions per week" value={frequency}
         onChangeText={setFrequency} keyboardType="number-pad" editable={!busy} />
-      <FormField label="Duration" hint="Minutes per session" value={duration}
+      <FormField variant="subtle" label="Duration" hint="Minutes per session" value={duration}
         onChangeText={setDuration} keyboardType="number-pad" editable={!busy} />
       {initialValues ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
         disabled={busy} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
@@ -48,15 +48,15 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
         <Text style={styles.checkLabel}>Completed</Text>
       </Pressable> : null}
       {error ? <StatusMessage error message={error} /> : null}
-      <ActionButton title={initialValues ? 'Save changes' : 'Create goal'} busy={busy}
+      <ActionButton compact title={initialValues ? 'Save changes' : 'Create goal'} busy={busy}
         onPress={() => { void submit(); }} />
-      <ActionButton title="Cancel" secondary disabled={busy} onPress={onCancel} />
+      <ActionButton compact title="Cancel" secondary disabled={busy} onPress={onCancel} />
     </View>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  form: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 18, gap: 14 },
+  form: { backgroundColor: 'transparent', gap: 12 },
   heading: { color: palette.text, fontSize: 20, fontWeight: '700' },
   checkbox: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 },
   check: { color: palette.primary, fontSize: 24 },

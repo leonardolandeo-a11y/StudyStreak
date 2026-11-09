@@ -5,7 +5,8 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { Screen } from '../../components/ui/Screen';
 import { StatusMessage } from '../../components/ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { File } from 'expo-file-system';
@@ -20,6 +21,7 @@ function deleteTemporaryRecording(uri: string | null) {
 }
 
 export default function StudyVoice() {
+  const styles = useThemedStyles(createStyles);
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
   const goalId = Number(goalParam);
   const recordId = Number(recordParam);
@@ -156,7 +158,7 @@ export default function StudyVoice() {
 
 
   return (
-    <Screen>
+    <Screen themed compact>
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
         <Text style={styles.link}>‹ Back to goal</Text>
       </Pressable>
@@ -193,9 +195,9 @@ export default function StudyVoice() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   link: { color: palette.primary, fontWeight: '700', fontSize: 15 },
-  title: { color: palette.text, fontSize: 27, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   muted: { color: palette.muted, fontSize: 14, lineHeight: 21 },
   time: { color: palette.primary, fontSize: 18, fontWeight: '700' },
   card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: 16, padding: 16, gap: 14 },

@@ -116,13 +116,13 @@ export function PartnerSearch({ onSend, busy }: {
           ) : null}
         </View>
       )}
-      <ActionButton title="Send tracking request" disabled={!selected} busy={busy} onPress={() => { void send(); }} />
+      <ActionButton compact title="Send tracking request" disabled={!selected} busy={busy} onPress={() => { void send(); }} />
     </View>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 18, borderRadius: 16, gap: 13 },
+  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 12, borderRadius: 16, gap: 10 },
   heading: { color: palette.text, fontSize: 19, fontWeight: '700' },
   description: { color: palette.muted, fontSize: 13, lineHeight: 21 },
   input: { backgroundColor: palette.background, color: palette.text, borderWidth: 1, borderColor: palette.border, borderRadius: 12, minHeight: 48, paddingHorizontal: 14, fontSize: 15 },

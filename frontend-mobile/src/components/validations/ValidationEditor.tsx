@@ -42,19 +42,19 @@ export function ValidationEditor({ initial, busy, onSubmit }: Props) {
           <Text style={[styles.choiceText, approved === false && styles.selectedText]}>Reject</Text>
         </Pressable>
       </View>
-      <FormField label="Comment (optional)" value={comment} onChangeText={setComment}
+      <FormField variant="subtle" label="Comment (optional)" value={comment} onChangeText={setComment}
         maxLength={500} multiline numberOfLines={3} textAlignVertical="top"
         editable={!busy} style={styles.comment} placeholder="Explain your decision" />
       <Text style={styles.counter}>{comment.length}/500</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <ActionButton title={initial ? 'Update validation' : 'Create validation'} busy={busy}
+      <ActionButton compact title={initial ? 'Update validation' : 'Create validation'} busy={busy}
         onPress={() => { void submit(); }} />
     </View>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  wrap: { gap: 12, backgroundColor: palette.surface, borderRadius: 12, padding: 12 },
+  wrap: { gap: 10 },
   label: { color: palette.text, fontWeight: '700', fontSize: 15 },
   choices: { flexDirection: 'row', gap: 10 },
   choice: { flex: 1, paddingVertical: 15, backgroundColor: palette.surfaceRaised, borderWidth: 1,

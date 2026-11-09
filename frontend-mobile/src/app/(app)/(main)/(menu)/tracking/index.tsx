@@ -42,7 +42,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <Pressable accessibilityRole="button" onPress={state.reload}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Refresh ${title}`} onPress={state.reload} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8 }}>
           <Text style={styles.refresh}>Refresh</Text>
         </Pressable>
       </View>
@@ -50,7 +50,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
       {state.error ? (
         <>
           <StatusMessage error message={state.error} />
-          <ActionButton title="Retry" secondary onPress={state.reload} />
+          <ActionButton compact title="Retry" secondary onPress={state.reload} />
         </>
       ) : null}
       {!state.loading && !state.error && state.data?.empty ? <Text style={styles.empty}>{emptyMessage}</Text> : null}
@@ -179,7 +179,7 @@ export default function Tracking() {
       <Text style={styles.subtitle}>Connect with study partners and validate progress together.</Text>
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
-      <ActionButton title="Refresh all connections" secondary onPress={refreshAll} />
+      <ActionButton compact title="Refresh all connections" secondary onPress={refreshAll} />
       <TrackingSection title="Pending invitations" emptyMessage="You have no pending invitations."
         state={pending} mode="pending" currentUserId={currentUser.id} busy={busyId !== null}
         onRespond={respond} onRemove={remove} />
@@ -195,12 +195,12 @@ export default function Tracking() {
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
-  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
   section: { gap: 12, paddingTop: 6 },
   sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   sectionTitle: { color: palette.text, fontSize: 20, fontWeight: '700', flex: 1 },
   refresh: { color: palette.primary, fontSize: 14, fontWeight: '700' },
   count: { color: palette.muted, fontSize: 12 },
-  empty: { color: palette.muted, fontSize: 14, backgroundColor: palette.surface, padding: 18, borderRadius: 12 },
+  empty: { color: palette.muted, fontSize: 14, backgroundColor: palette.surface, padding: 12, borderRadius: 12 },
 });

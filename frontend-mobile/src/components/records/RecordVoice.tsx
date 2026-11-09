@@ -125,11 +125,11 @@ function VoicePlayback({ uri, busy, onRetry }: {
           <View style={[styles.progress, { width: `${percent}%` as `${number}%` }]} />
         </View>
       </View>
-      <ActionButton title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary
+      <ActionButton compact title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary
         disabled={!canPlay && !status.playing} onPress={togglePlayback} />
       {playbackError ? <StatusMessage error message={playbackError} /> : null}
       {playbackError ? (
-        <ActionButton title="Retry voice playback" secondary disabled={busy} onPress={onRetry} />
+        <ActionButton compact title="Retry voice playback" secondary disabled={busy} onPress={onRetry} />
       ) : null}
     </>
   );
@@ -154,6 +154,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   useFocusEffect(useCallback(() => {
     if (!available) return;
     let active = true;
+    const controller = new AbortController();
     let localFile: File | null = null;
 
     function cleanUp(file: File | null) {
@@ -167,7 +168,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
       setLoading(true);
       try {
         await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-        const downloaded = await downloadEvidence(voiceEvidenceService.url(goalId, recordId), 'm4a', retryKey);
+        const downloaded = await downloadEvidence(voiceEvidenceService.url(goalId, recordId), 'm4a', retryKey, controller.signal);
         localFile = downloaded;
         verifyM4a(downloaded);
         if (active) {
@@ -186,6 +187,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
     void loadVoiceNote();
     return () => {
       active = false;
+      controller.abort();
       setUri(null);
       cleanUp(localFile);
     };
@@ -221,13 +223,13 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
         <VoicePlayback key={uri} uri={uri} busy={busy} onRetry={() => setRetryKey((value) => value + 1)} />
       ) : null}
       {error ? <StatusMessage error message={error} /> : null}
-      {error ? <ActionButton title="Retry voice playback" secondary disabled={busy || loading}
+      {error ? <ActionButton compact title="Retry voice playback" secondary disabled={busy || loading}
         onPress={() => setRetryKey((value) => value + 1)} /> : null}
       {!readOnly ? (
-        <ActionButton title={confirm ? 'Cancel deletion' : 'Delete voice note'} secondary disabled={busy}
+        <ActionButton compact title={confirm ? 'Cancel deletion' : 'Delete voice note'} secondary disabled={busy}
           onPress={() => setConfirm((old) => !old)} />
       ) : null}
-      {confirm && !readOnly ? <ActionButton title="Confirm delete voice note" busy={busy} onPress={() => { void remove(); }} /> : null}
+      {confirm && !readOnly ? <ActionButton compact title="Confirm delete voice note" busy={busy} onPress={() => { void remove(); }} /> : null}
     </View>
   );
 }

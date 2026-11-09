@@ -65,7 +65,7 @@ function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string })
       {state.error ? (
         <>
           <StatusMessage message={state.error} error />
-          <ActionButton title="Retry" secondary onPress={state.reload} />
+          <ActionButton compact title="Retry" secondary onPress={state.reload} />
         </>
       ) : null}
       {!state.loading && !state.error && state.data?.empty ? <Text style={styles.empty}>{empty}</Text> : null}
@@ -150,7 +150,7 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
       {error ? (
         <>
           <StatusMessage error message={error} />
-          <ActionButton title="Reload validation" secondary onPress={() => setRevision((v) => v + 1)} />
+          <ActionButton compact title="Reload validation" secondary onPress={() => setRevision((v) => v + 1)} />
         </>
       ) : null}
       {message ? <StatusMessage message={message} /> : null}
@@ -183,7 +183,7 @@ function GoalRecords({ goal, partnerName }: { goal: Goal; partnerName: string })
     <>
       <Section step={3} title={`Daily records · ${goal.topic}`}>
         <Text style={styles.meta}>Choose a record to review the note and evidence.</Text>
-        <ActionButton secondary title="Refresh records" onPress={records.reload} />
+        <ActionButton compact secondary title="Refresh records" onPress={records.reload} />
         <ListStatus state={records} empty="This goal has no daily records." />
         {!records.loading && !records.error && records.data ? (
           <>
@@ -218,7 +218,7 @@ function PartnerGoals({ partner }: { partner: Partner }) {
     <>
       <Section step={2} title={`Study goals · ${partner.username}`}>
         <Text style={styles.meta}>Select a goal from your tracking partner.</Text>
-        <ActionButton secondary title="Refresh goals" onPress={goals.reload} />
+        <ActionButton compact secondary title="Refresh goals" onPress={goals.reload} />
         <ListStatus state={goals} empty="This partner has no goals." />
         {!goals.loading && !goals.error && goals.data ? (
           <>
@@ -257,7 +257,7 @@ export default function Validations() {
   if (!currentUser) return null;
 
   const partnersList = (<Section step={1} title="Tracking partners">
-        <ActionButton secondary title="Refresh partners" onPress={partners.reload} />
+        <ActionButton compact secondary title="Refresh partners" onPress={partners.reload} />
         <ListStatus state={partners} empty="No active tracking partners yet." />
         {!partners.loading && !partners.error && partners.data ? (
           <>
@@ -299,10 +299,9 @@ export default function Validations() {
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
-  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
-  section: { gap: 12, padding: 18, borderWidth: 1, borderColor: palette.border,
-    backgroundColor: palette.surface, borderRadius: 16 },
+  section: { gap: 12 },
   step: { color: palette.primary, fontSize: 12, fontWeight: '700' },
   heading: { color: palette.text, fontSize: 20, fontWeight: '700' },
   meta: { color: palette.muted, fontSize: 13, lineHeight: 20 },

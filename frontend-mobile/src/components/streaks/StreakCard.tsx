@@ -1,12 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { streakService } from '../../services/streakService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { Streak } from '../../types/streak';
 
 export function StreakCard({ goalId }: { goalId: number }) {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const [streak, setStreak] = useState<Streak | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +86,7 @@ export function StreakCard({ goalId }: { goalId: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   card: { borderWidth: 1, borderColor: palette.border, borderRadius: 16,
     backgroundColor: palette.surface, padding: 17, gap: 13 },
   headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },

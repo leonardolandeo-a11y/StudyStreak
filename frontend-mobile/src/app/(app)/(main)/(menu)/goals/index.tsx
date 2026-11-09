@@ -8,7 +8,8 @@ import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../../components/ui/PageControls';
 import { CreationModal } from '../../../../../components/ui/CreationModal';
 import { GoalForm } from '../../../../../components/goals/GoalForm';
-import { palette } from '../../../../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../../features/appearance/theme';
 import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { goalService } from '../../../../../services/goalService';
@@ -17,6 +18,8 @@ import type { Goal, GoalRequest } from '../../../../../types/goal';
 import type { PageResponse } from '../../../../../types/page';
 
 export default function Goals() {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
   const fetchGoals = useCallback((page: number, signal: AbortSignal): Promise<PageResponse<Goal>> => {
@@ -55,7 +58,7 @@ export default function Goals() {
       <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
       {formError ? <StatusMessage message={formError} error /> : null}
     </CreationModal>
-    <Screen scrollRef={menuScroll}>
+    <Screen themed compact scrollRef={menuScroll}>
       <Text style={styles.title}>My Goals</Text>
       <Text style={styles.subtitle}>Create study goals and manage your daily records.</Text>
       {message ? <StatusMessage message={message} /> : null}
@@ -80,20 +83,20 @@ export default function Goals() {
               <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
               <Text style={styles.link}>View progress and records ›</Text>
             </Pressable>
-            {!goal.completed && <ActionButton secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})} />}
+            {!goal.completed && <ActionButton compact secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})} />}
             </View>
           ))}
           <PageControls page={page} totalPages={data.totalPages} onChange={setPage} />
         </>
       ) : null}
-      {!loading && error ? <ActionButton secondary title="Retry" onPress={reload} /> : null}
+      {!loading && error ? <ActionButton compact secondary title="Retry" onPress={reload} /> : null}
     </Screen>
   </>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
-  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
   row: { flexDirection: 'row', flexWrap:'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   section: { color: palette.text, fontSize: 20, fontWeight: '700' },

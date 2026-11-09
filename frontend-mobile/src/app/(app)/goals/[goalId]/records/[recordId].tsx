@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { ValidationEditor } from '../../../../../components/validations/ValidationEditor';
 import { RecordPhoto } from '../../../../../components/records/RecordPhoto';
 import { RecordVoice } from '../../../../../components/records/RecordVoice';
-import { palette } from '../../../../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../../features/appearance/theme';
 import { dailyRecordService } from '../../../../../services/dailyRecordService';
 import { validationService } from '../../../../../services/validationService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
@@ -17,6 +18,8 @@ import type { DailyRecord } from '../../../../../types/dailyRecord';
 import type { Validation, ValidationRequest } from '../../../../../types/validation';
 
 export default function ReviewedRecordDetails() {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const { goalId: goalParam, recordId: recordParam, review } = useLocalSearchParams<{
     goalId: string;
     recordId: string;
@@ -96,19 +99,16 @@ export default function ReviewedRecordDetails() {
     }
   }
 
-  if (!valid) return <Screen><StatusMessage error message="Invalid record link." /></Screen>;
+  if (!valid) return <Screen themed compact><StatusMessage error message="Invalid record link." /></Screen>;
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
-      </Pressable>
+    <Screen themed compact>
       <Text style={styles.title}>Daily record</Text>
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? (
         <>
           <StatusMessage error message={error} />
-          <ActionButton secondary title="Try again" onPress={() => setRevision((n) => n + 1)} />
+          <ActionButton compact secondary title="Try again" onPress={() => setRevision((n) => n + 1)} />
         </>
       ) : null}
       {record ? (
@@ -132,15 +132,18 @@ export default function ReviewedRecordDetails() {
               <Text style={styles.muted}>{validationError || 'Awaiting peer review.'}</Text>
             )}
           </View>
+          <View style={styles.card}>
+            <Text style={styles.heading}>Evidence</Text>
+              <RecordPhoto goalId={goalId} recordId={recordId} available={record.photoAvailable} readOnly />
+              <RecordVoice goalId={goalId} recordId={recordId} available={record.voiceAvailable} readOnly />
+          </View>
           {reviewRequested ? (
             <View style={styles.card}>
               <Text style={styles.heading}>Review this record</Text>
-              <RecordPhoto goalId={goalId} recordId={recordId} available={record.photoAvailable} readOnly />
-              <RecordVoice goalId={goalId} recordId={recordId} available={record.voiceAvailable} readOnly />
               {saveMessage ? <StatusMessage message={saveMessage} /> : null}
               {validationError ? <StatusMessage error message={validationError} /> : null}
               {validationAccess === 'unavailable' ? (
-                <ActionButton secondary title="Retry validation" onPress={() => setRevision((n) => n + 1)} />
+                <ActionButton compact secondary title="Retry validation" onPress={() => setRevision((n) => n + 1)} />
               ) : null}
               {validationAccess === null ? (
                 <ValidationEditor key={validation?.id ?? 'new'} initial={validation}
@@ -149,9 +152,9 @@ export default function ReviewedRecordDetails() {
             </View>
           ) : null}
           {reviewedRecordExit(reviewRequested) === 'validations' ? (
-            <ActionButton secondary title="Browse partner goals" onPress={() => router.push('/validations')} />
+            <ActionButton compact secondary title="Browse partner goals" onPress={() => router.push('/validations')} />
           ) : (
-            <ActionButton secondary title="View full goal" onPress={() => router.push({
+            <ActionButton compact secondary title="View full goal" onPress={() => router.push({
               pathname: '/(app)/goals/[goalId]', params: { goalId: String(goalId) },
             })} />
           )}
@@ -161,10 +164,10 @@ export default function ReviewedRecordDetails() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, fontWeight: '700' },
-  title: { color: palette.text, fontSize: 27, fontWeight: '800' },
-  card: { padding: 18, gap: 12, borderWidth: 1, borderColor: palette.border,
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
+  card: { padding: 14, gap: 10, borderWidth: 1, borderColor: palette.border,
     borderRadius: 16, backgroundColor: palette.surface },
   heading: { color: palette.text, fontSize: 21, fontWeight: '700' },
   body: { color: palette.text, fontSize: 15, lineHeight: 24 },

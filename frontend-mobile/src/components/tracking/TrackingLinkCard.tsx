@@ -34,19 +34,19 @@ export function TrackingLinkCard({ link, currentUserId, mode, busy, onRespond, o
       <MemberProfileLink userId={partnerId} name={username} />
       {mode === 'pending' ? (
         <View style={styles.buttons}>
-          <View style={styles.action}><ActionButton title="Accept" disabled={busy} onPress={() => { void onRespond(link.id, 'ACCEPTED'); }} /></View>
-          <View style={styles.action}><ActionButton title="Reject" secondary disabled={busy} onPress={() => { void onRespond(link.id, 'REJECTED'); }} /></View>
+          <View style={styles.action}><ActionButton compact title="Accept" disabled={busy} onPress={() => { void onRespond(link.id, 'ACCEPTED'); }} /></View>
+          <View style={styles.action}><ActionButton compact title="Reject" secondary disabled={busy} onPress={() => { void onRespond(link.id, 'REJECTED'); }} /></View>
         </View>
       ) : null}
       {(mode !== 'pending' && !confirmRemove) ? (
-        <ActionButton title={removeLabel} secondary disabled={busy} onPress={() => setConfirmRemove(true)} />
+        <ActionButton compact title={removeLabel} secondary disabled={busy} onPress={() => setConfirmRemove(true)} />
       ) : null}
       {confirmRemove ? (
         <View style={styles.confirm}>
           <Text style={styles.confirmText}>Remove this tracking link?</Text>
           <View style={styles.buttons}>
-            <View style={styles.action}><ActionButton title="Keep" secondary disabled={busy} onPress={() => setConfirmRemove(false)} /></View>
-            <View style={styles.action}><ActionButton title="Remove" busy={busy} onPress={() => {
+            <View style={styles.action}><ActionButton compact title="Keep" secondary disabled={busy} onPress={() => setConfirmRemove(false)} /></View>
+            <View style={styles.action}><ActionButton compact title="Remove" busy={busy} onPress={() => {
               void onRemove(link.id).then((removed) => { if (removed) setConfirmRemove(false); });
             }} /></View>
           </View>
@@ -57,7 +57,7 @@ export function TrackingLinkCard({ link, currentUserId, mode, busy, onRespond, o
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { padding: 17, borderRadius: 14, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, gap: 13 },
+  card: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, gap: 10 },
   heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   user: { color: palette.text, fontWeight: '700', fontSize: 17 },
   status: { fontWeight: '600', fontSize: 12, color: palette.muted },
