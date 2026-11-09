@@ -1,3 +1,4 @@
+import { StudyBrand } from "../branding/StudyBrand";
 import { PageTurnBookIcon } from "../icons/PageTurnBookIcon";
 import { UserPanel } from "./UserPanel";
 import {
@@ -92,34 +93,7 @@ function AppSidebar() {
     >
         {/* Brand */}
 
-        <div className="flex h-16 items-center px-5">
-
-            <div
-                className="
-                    flex h-9 w-9
-                    items-center justify-center
-                    rounded-xl
-                    bg-sky-500
-                    font-bold
-                    text-on-accent
-
-                "
-            >
-                S
-            </div>
-
-            <div className="ml-3">
-                <p className="text-sm font-semibold text-slate-100">
-                    StudyStreak
-                </p>
-
-                <p className="text-xs text-slate-500">
-                    Make time for progress
-                </p>
-            </div>
-
-        </div>
-
+        <div className="flex h-16 items-center px-5"><StudyBrand /></div>
 
         {/* Navigation */}
 

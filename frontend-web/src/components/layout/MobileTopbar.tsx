@@ -1,3 +1,4 @@
+import { StudyBrand } from "../branding/StudyBrand";
 import type { ReactNode } from "react";
 import { UserPanel } from "./UserPanel";
 import {
@@ -111,27 +112,7 @@ function MobileTopbar({ actions }: { actions?: ReactNode }) {
                     lg:hidden
                 "
             >
-                <div className="flex items-center gap-3">
-
-                    <div
-                        className="
-                            flex h-9 w-9
-                            items-center justify-center
-                            rounded-lg
-                            bg-sky-500
-                            font-bold
-                            text-on-accent
-                        "
-                    >
-                        S
-                    </div>
-
-                    <span className="font-semibold text-slate-100">
-                        StudyStreak
-                    </span>
-
-                </div>
-
+                <StudyBrand variant="compact" />
 
                 <div className="flex items-center gap-2">{actions}<button
                     type="button"

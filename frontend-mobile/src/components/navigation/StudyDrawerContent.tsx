@@ -1,3 +1,4 @@
+import { StudyBrand } from '../branding/StudyBrand';
 import { NavigationPressable } from './NavigationPressable';
 import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
@@ -41,11 +42,7 @@ export function StudyDrawerContent({ active, close, navigate }: {
         selected={active === item.name} unread={item.name === 'notifications/index' ? unread : null}
         onPress={() => { navigate(item.name); close(); }} />)}
       <View style={{ flex: 1, minHeight: 20 }} />
-      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 8 }}>
-        <AppIcon name="dashboard" color={theme.colors.primary} />
-        <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: '800' }}>StudyStreak</Text>
-      </View>
-      <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Build your study rhythm.</Text>
+      <View style={{ padding: 8 }}><StudyBrand /></View>
     </ScrollView>
   </SafeAreaView>;
 }
