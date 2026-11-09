@@ -47,3 +47,6 @@ class AnimatedValue {
 export const Animated = { Value: AnimatedValue, View,
   timing: () => ({ start() {}, stop() {} }), sequence: () => ({ start() {}, stop() {} }) };
 export function Image(props) { return React.createElement('img', { alt: props.accessibilityLabel, src: props.source.uri, style: props.style }); }
+
+export const totalMemory = 4 * 1024 ** 3;
+export const Easing = { ease: value => value, inOut: value => value };

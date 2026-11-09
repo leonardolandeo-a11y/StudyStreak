@@ -16,19 +16,21 @@ export function AuthScreen({ title, description, children, footer }: { title: st
         return () => { show.remove(); hide.remove(); };
     }, []);
     const compact = keyboard || height < 600;
-    return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top','bottom']}>
+    return <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <StudyScene period={period} width={width} height={height} />
+        <SafeAreaView style={{ flex: 1 }} edges={['top','bottom']}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
-                contentContainerStyle={{ flexGrow: 1, width: '100%', maxWidth: 520, alignSelf: 'center', padding: 16, gap: 18 }}>
-                {!compact ? <View testID="auth-art" style={{ alignItems: 'center', gap: 12 }}>
-                    <StudyBrand variant="signature" />
-                    <StudyScene period={period} width={Math.min(width - 32, 360)} />
-                </View> : null}
+                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16, paddingTop: compact ? 16 : 64, paddingBottom: 24 }}>
+                <View style={{ width: '100%', maxWidth: 440, alignSelf: 'center', backgroundColor: colors.surface + 'f5', borderColor: colors.borderStrong, borderWidth: 1, borderRadius: 12, padding: 20, gap: 18 }}>
+                <View testID="auth-brand" style={{ alignItems: 'center' }}><StudyBrand variant={compact ? 'compact' : 'signature'} /></View>
                 <View style={{ gap: 8 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '700' }}>{title}</Text>
                     <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 21 }}>{description}</Text></View>
                 {children}
                 {footer}
+                </View>
             </ScrollView>
         </KeyboardAvoidingView>
-    </SafeAreaView>;
+    </SafeAreaView>
+    </View>;
 }

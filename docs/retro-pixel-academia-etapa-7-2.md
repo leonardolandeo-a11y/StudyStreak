@@ -1,5 +1,7 @@
 # Etapa 7.2 — Autenticación Retro Pixel Academia
 
+> Registro de la entrega inicial. La composición de dos columnas y las escenas estáticas fueron sustituidas por la [revisión fullscreen animada](retro-pixel-academia-etapa-7-2-fullscreen.md). Consultar esa revisión para el estado actual.
+
 Rama: `feat/ui-ux-web-mobile`. Base: `f866d23`, documentación de 7.1. Alcance: presentación de Login/Register Web y Mobile. No se cambia ningún servicio, contrato, proveedor de autenticación ni otro módulo.
 
 ## Recuperación de la interrupción

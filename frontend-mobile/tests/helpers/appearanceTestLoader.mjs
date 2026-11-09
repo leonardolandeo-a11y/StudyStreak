@@ -6,6 +6,7 @@ import ts from 'typescript';
 const root = new URL('../../src/', import.meta.url).href;
 const mocks = new Map([
   ['react-native', './appearanceNativeMock.mjs'],
+  ['expo-device', './appearanceNativeMock.mjs'],
   ['react-native-safe-area-context', './appearanceNativeMock.mjs'],
   ['expo-router', './appearanceRouterMock.mjs'],
   ['expo-secure-store', './secureStoreMock.mjs'],
@@ -26,6 +27,7 @@ registerHooks({
     return nextResolve(specifier, context);
   },
   load(url, context, nextLoad) {
+    if (url.endsWith('.png')) return { format: 'module', shortCircuit: true, source: `export default {uri:${JSON.stringify(url)}};` };
     if (url.startsWith(root) && url.endsWith('.tsx')) {
       return { format: 'module', shortCircuit: true, source: ts.transpileModule(readFileSync(new URL(url), 'utf8'), {
         compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },

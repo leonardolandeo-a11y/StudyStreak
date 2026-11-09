@@ -56,8 +56,8 @@ export default function SignIn() {
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border,
-    padding: 16, borderRadius: 10, gap: 14 },
+  card: { backgroundColor: 'transparent', borderWidth: 0,
+    padding: 0, borderRadius: 0, gap: 14 },
   recovery: { gap: 10 },
   footer: { textAlign: 'center', color: palette.muted, lineHeight: 22 },
   link: { color: palette.primary, fontWeight: '700' },

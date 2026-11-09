@@ -57,8 +57,8 @@ export default function SignUp() {
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1,
-    borderRadius: 10, padding: 16, gap: 16 },
+  card: { backgroundColor: 'transparent', borderWidth: 0,
+    borderRadius: 0, padding: 0, gap: 16 },
   footer: { textAlign: 'center', color: palette.muted },
   link: { color: palette.primary, fontWeight: '700' },
 });
