@@ -5,7 +5,7 @@ import { activityNumber } from "../../utils/studyActivity";
 import type { StudyPeriod } from "../../utils/studyActivity";
 
 function DashboardMetric({ label, value, unit, detail, icon }: { label: string; value: string; unit: string; detail: string; icon: ReactNode }) {
-    return <article className="study-panel min-w-0"><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-medium text-content-secondary">{label}</h3><span className="shrink-0 text-accent" aria-hidden="true">{icon}</span></div><p className="mt-3 break-words text-3xl font-semibold tracking-tight text-content tabular-nums">{value} <span className="text-sm font-normal text-content-muted">{unit}</span></p><p className="mt-2 text-xs leading-relaxed text-content-muted">{detail}</p></article>;
+    return <article className="study-panel academic-metric min-w-0"><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-medium text-content-secondary">{label}</h3><span className="shrink-0 text-accent" aria-hidden="true">{icon}</span></div><p className="mt-3 break-words text-3xl font-semibold tracking-tight text-content tabular-nums">{value} <span className="text-sm font-normal text-content-muted">{unit}</span></p><p className="mt-2 text-xs leading-relaxed text-content-muted">{detail}</p></article>;
 }
 
 export default function DashboardMetrics({ days, stats, period, loading }: { days: StudyPeriod; stats: FocusStatistics | null; period: VerifiedFocusPeriod | null; loading: boolean }) {

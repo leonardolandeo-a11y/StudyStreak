@@ -6,7 +6,7 @@ import { useFocusedResource } from '../../hooks/useFocusedResource';
 import { listActiveFocusGoals } from '../../features/focus/focusGoalService';
 import { getRecentStudySessions } from '../../services/dashboardActivityService';
 import { activityDate, activityNumber } from '../../features/dashboard/verifiedActivity';
-import { Card } from '../ui/Card';
+import { AcademicPanel as Card, AcademicEmpty, PixelGlyph } from '../academic/Academic';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { NavigationPressable } from '../navigation/NavigationPressable';
@@ -20,11 +20,11 @@ export function DashboardGoals({ userId }: { userId: number }) {
     <ActionButton title="All goals" secondary onPress={() => router.navigate('/goals')} />
     {state.status === 'loading' ? <StatusMessage message="Loading your goals…" />
       : state.status === 'error' ? <><StatusMessage error message="Your goals could not be loaded." /><ActionButton title="Retry goals" onPress={retry} /></>
-      : state.data.length === 0 ? <StatusMessage message="Create your first study goal from Menu using +." /> : <>
+      : state.data.length === 0 ? <AcademicEmpty><StatusMessage message="Create your first study goal from Menu using +." /></AcademicEmpty> : <>
         {state.data.slice(0, 3).map(goal => <NavigationPressable key={goal.id} accessibilityRole="button"
           accessibilityLabel={`Open ${goal.topic}`} onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })}
-          style={{ padding: 12, borderRadius: 12, gap: 6, backgroundColor: theme.colors.background }}>
-          <Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '600' }}>{goal.topic}</Text>
+          style={{ padding: 12, borderRadius: 6, gap: 6, backgroundColor: theme.colors.background }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}><PixelGlyph name="book" size={20} /><Text style={{ color: theme.colors.primary, fontSize: 16, fontWeight: '600', flex: 1 }}>{goal.topic}</Text></View>
           <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Target: {goal.frequency} times / week · {goal.duration} min / session</Text>
           <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>Study records and progress ›</Text>
         </NavigationPressable>)}
@@ -41,7 +41,7 @@ export function DashboardRecent({ from, to, timeZone }: { from: string; to: stri
     <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Started {activityDate(from)} – {activityDate(to)} · {timeZone}. Chart uses completion dates.</Text>
     {state.status === 'loading' ? <StatusMessage message="Loading recent activity…" />
       : state.status === 'error' ? <><StatusMessage error message="Recent activity could not be loaded." /><ActionButton title="Retry recent activity" onPress={retry} /></>
-      : state.data.length === 0 ? <StatusMessage message="No study attempts started in this period." />
+      : state.data.length === 0 ? <AcademicEmpty><StatusMessage message="No study attempts started in this period." /></AcademicEmpty>
         : state.data.map(session => <View key={session.id} style={{ borderBottomWidth: 1, borderColor: theme.colors.border, paddingVertical: 10, gap: 5 }}>
           <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 15 }}>{session.goal_name}</Text>
           <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{({ COMPLETE: 'Complete', CANCELLED: 'Cancelled', PAUSED: 'Paused', RUNNING: 'Running' })[session.state] ?? 'State unavailable'} · {Number.isFinite(session.confirmed_seconds) && session.confirmed_seconds >= 0 ? activityNumber(session.confirmed_seconds / 60) : '—'} min saved</Text>

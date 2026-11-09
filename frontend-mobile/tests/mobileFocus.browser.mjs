@@ -1,3 +1,4 @@
+import { academicGallery } from './helpers/academicGallery.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
@@ -62,11 +63,13 @@ try {
   await browser.click('Reset current session'); await browser.wait(has('Start focus'));
   for (let attempt = 0; session && attempt < 100; attempt++) await new Promise(resolve => setTimeout(resolve,20));
   assert.equal(session, null); assert.ok(writes.some(write => write.body?.action === 'CANCEL'));
-  for (const width of [320, 390, 768, 1440]) {
+  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Session progress"]').getAttribute('aria-valuenow')`),'0');
+  for (const width of [320, 390, 768, 1440, 1920]) {
     await browser.command('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: true });
     await browser.wait('document.documentElement.scrollWidth <= innerWidth');
     await browser.wait(`(() => {const r=document.querySelector('[data-testid="pomodoro-circle"]').getBoundingClientRect();return r.width>0 && Math.abs(r.width-r.height)<1;})()`);
     assert.equal(await browser.evaluate(`(() => {const e=document.querySelector('[data-testid="pomodoro-circle"]');const r=e.getBoundingClientRect();return Math.abs(parseFloat(getComputedStyle(e).borderRadius)-r.width/2)<1;})()`),true);
+    const frame=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/73a-focus-${width}.png`,Buffer.from(frame.data,'base64'));
 
   }
   await browser.command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -106,8 +109,10 @@ try {
   const lightImage = await browser.command('Page.captureScreenshot', { format: 'png' }); writeFileSync('.expo/focus-settings-light.png',Buffer.from(lightImage.data,'base64'));
   await browser.click('Cancel');
   await pressMenu(false);
+  await browser.click('Open menu');await browser.click('Focus Studio');await browser.waitForDrawerClosed();
+  await academicGallery(browser,'focus');
   assert.deepEqual(browser.errors, []);
-  process.stdout.write('Focus browser checks passed: settings, goal selection, start/pause/resume, immutable linked duration, navigation, cancellation and 320–1440px.\n');
+  process.stdout.write('Focus browser checks passed: settings, goal selection, start/pause/resume, immutable linked duration, navigation, cancellation and 320–1920px.\n');
 } catch(error) {
   writeFileSync('.expo/focus-failure.json',JSON.stringify({ text: await browser.evaluate('document.body.innerText'), writes, errors: browser.errors })); throw error;
 } finally { await browser.close(); }

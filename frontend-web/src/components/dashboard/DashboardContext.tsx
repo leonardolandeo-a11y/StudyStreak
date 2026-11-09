@@ -1,3 +1,4 @@
+import { AcademicEmpty, PixelGlyph } from "../academic/Academic";
 import { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
@@ -21,8 +22,8 @@ export function DashboardGoals({ userId }: { userId: number }) {
     return <section className="study-panel min-w-0 p-4 sm:p-5" aria-labelledby="dashboard-goals-heading"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 id="dashboard-goals-heading" className="text-lg font-semibold text-content">Your active goals</h2><Link to={ROUTES.goals} className="study-button">All goals <ArrowUpRight size={16} aria-hidden="true"/></Link></div>
         {state.status === "loading" ? <LoadingState message="Loading your goals…"/>
         : state.status === "error" ? <><ErrorMessage message="Your goals could not be loaded."/><Retry onRetry={retry}/></>
-        : state.data.length === 0 ? <><p className="text-sm text-content-muted">Create your first study goal.</p><Link className="study-button mt-3" to={ROUTES.goals}>Create a goal</Link></>
-        : <><ul className="space-y-3">{state.data.slice(0, 3).map(goal => <li key={goal.id} className="rounded-control border border-outline p-4"><Link to={goalDetailsPath(goal.id)} className="block break-words font-semibold text-content hover:text-accent">{goal.topic}</Link><p className="mt-1 text-xs text-content-muted">Target: {goal.frequency} times / week · {goal.duration} min / session</p><Link className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent" to={dailyRecordsPath(goal.id)}>Study records <ArrowUpRight size={14} aria-hidden="true"/></Link></li>)}</ul><p className="mt-3 text-xs leading-relaxed text-content-muted">{state.data.length} active {state.data.length === 1 ? "goal" : "goals"}. Targets are your plan; confirmed session time appears above.</p></>}
+        : state.data.length === 0 ? <><AcademicEmpty><p>Create your first study goal.</p></AcademicEmpty><Link className="study-button mt-3" to={ROUTES.goals}>Create a goal</Link></>
+        : <><ul className="space-y-3">{state.data.slice(0, 3).map(goal => <li key={goal.id} className="rounded-control border border-outline p-4"><Link to={goalDetailsPath(goal.id)} className="flex items-start gap-2 break-words font-semibold text-content hover:text-accent"><PixelGlyph name="book" size={20} /><span className="min-w-0">{goal.topic}</span></Link><p className="mt-1 text-xs text-content-muted">Target: {goal.frequency} times / week · {goal.duration} min / session</p><Link className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-accent" to={dailyRecordsPath(goal.id)}>Study records <ArrowUpRight size={14} aria-hidden="true"/></Link></li>)}</ul><p className="mt-3 text-xs leading-relaxed text-content-muted">{state.data.length} active {state.data.length === 1 ? "goal" : "goals"}. Targets are your plan; confirmed session time appears above.</p></>}
     </section>;
 }
 
@@ -47,7 +48,7 @@ export function DashboardRecentContent({ from, to, timeZone, state, onRetry }: R
         <p className="mt-1 mb-3 text-xs leading-relaxed text-content-muted">Started {activityDate(from)} – {activityDate(to)} · {timeZone}. Chart uses completion dates.</p>
         {state.status === "loading" ? <LoadingState message="Loading recent activity…"/>
         : state.status === "error" ? <><ErrorMessage message="Recent activity could not be loaded."/><Retry onRetry={onRetry}/></>
-        : state.data.length === 0 ? <p className="text-sm text-content-muted">No study attempts started in this period.</p>
+        : state.data.length === 0 ? <AcademicEmpty><p>No study attempts started in this period.</p></AcademicEmpty>
         : <>
             <ol className="divide-y divide-outline">
                 {state.data.map(session => <li key={session.id} className="py-3 first:pt-0 last:pb-0">

@@ -8,6 +8,7 @@ function propsFor(props) {
   if (Array.isArray(style.transform)) style.transform = style.transform.flatMap(item =>
     Object.entries(item).map(([name, value]) => `${name}(${value})`)).join(' ');
   return { style, role: props.accessibilityRole,
+    'aria-valuemin': props['aria-valuemin'], 'aria-valuemax': props['aria-valuemax'], 'aria-valuenow': props['aria-valuenow'],
     'data-testid': props.testID, 'aria-modal': props.accessibilityViewIsModal || undefined,
     'aria-label': props.accessibilityLabel, 'aria-selected': props.accessibilityState?.selected,
     'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };

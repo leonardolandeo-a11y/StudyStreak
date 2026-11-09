@@ -1,3 +1,4 @@
+import { academicGallery } from './helpers/academicGallery.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
@@ -54,6 +55,7 @@ try {
   await browser.click('Sign in'); await browser.wait(has('Open menu')); await browser.click('Open menu');
   await browser.click('Dashboard'); await browser.wait(chart('Bar'));
   await browser.waitForDrawerClosed();
+  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Active study days in this period"]').getAttribute('aria-valuenow')`),'1');
   await browser.wait(`document.body.innerText.includes('Algebra from page two') && document.body.innerText.includes('Historical / unverified')`);
   assert.equal(await browser.evaluate(`document.body.innerText.includes('77777')`), false);
   assert.equal(await browser.evaluate(`document.body.innerText.includes('Recent session 4')`), false);
@@ -78,9 +80,11 @@ try {
   await browser.click('Open menu'); await browser.click('Dashboard'); await browser.wait(has('Retry goals'));
   goalsError = false; await browser.click('Retry goals'); await browser.wait(has('Open Algebra from page two'));
   await browser.waitForDrawerClosed();
-  for (const width of [320, 390, 768, 1440]) {
+  for (const width of [320, 390, 768, 1440, 1920]) {
     await browser.command('Emulation.setDeviceMetricsOverride', { width, height: 844, deviceScaleFactor: 1, mobile: true });
     await browser.wait('document.documentElement.scrollWidth <= innerWidth');
+    await browser.evaluate(`Array.from(document.querySelectorAll('div')).filter(e=>e.scrollHeight>e.clientHeight&&['auto','scroll'].includes(getComputedStyle(e).overflowY)).forEach(e=>e.scrollTop=0)`);
+    const frame=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/73a-dashboard-${width}.png`,Buffer.from(frame.data,'base64'));
   }
   await browser.command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await browser.click('30 days'); await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days"]')`);
@@ -96,8 +100,9 @@ try {
   await browser.evaluate('history.back()'); await browser.wait(chart('Line'));
   await browser.click('Open menu'); await browser.wait(has('Dismiss menu')); await browser.key('Escape');
   await browser.wait(`!document.querySelector('[aria-label="Dismiss menu"]')`);
+  await academicGallery(browser,'dashboard');
   assert.deepEqual(mutations, []); assert.deepEqual(browser.errors, []);
-  process.stdout.write('Dashboard browser checks passed: both charts, 7/30, empty/error/retry, missing verifiedPeriod, paged goals, recent labels, themes, reduced-motion menu and 320–1440px.\n');
+  process.stdout.write('Dashboard browser checks passed: both charts, 7/30, empty/error/retry, missing verifiedPeriod, paged goals, recent labels, themes, reduced-motion menu and 320–1920px.\n');
 } catch (error) {
   writeFileSync('.expo/dashboard-failure.json', JSON.stringify({ text: await browser.evaluate('document.body.innerText'), statRequests, errors: browser.errors }));
   throw error;

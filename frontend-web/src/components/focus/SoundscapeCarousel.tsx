@@ -25,7 +25,7 @@ function SoundCard({ track, selected, playing, onChooseTrack }: {
     const [showInfo, setShowInfo] = useState(false);
     const descriptionId = useId();
     return (
-        <article className={`group h-full rounded-panel border p-2 ${selected ? "border-accent bg-accent-soft" : "border-outline bg-surface"}`}>
+        <article className={`academic-sound-card group h-full rounded-panel border p-2 ${selected ? "border-accent bg-accent-soft" : "border-outline bg-surface"}`}>
             <div className="relative isolate overflow-hidden rounded-control">
                 <TrackArtwork track={track.id} thumbnail />
                 <div id={descriptionId} className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-2 bg-canvas/95 px-3 pb-14 pt-4 transition-opacity duration-150 motion-reduce:transition-none group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 ${showInfo ? "opacity-100" : "opacity-0"}`}>

@@ -30,7 +30,7 @@ export function FocusSoundCarousel({ selected, playing, loading, ready, onChoose
         accessibilityLabel={`${selected === item.id && (playing || loading) ? 'Pause' : 'Play'} ${item.title}`}
         accessibilityHint={`${item.kind}. ${item.description}`} accessibilityState={{ selected: selected === item.id, busy: selected === item.id && loading }}
         onFocus={() => scroll.current?.scrollTo({ x: index * 156, animated: !reduceMotion })} onPress={() => onChoose(item.id)}
-        style={{ width: 144, padding: 10, borderRadius: 14, gap: 8, backgroundColor: selected === item.id ? theme.colors.primarySoft : theme.colors.surface }}>
+        style={{ width: 144, padding: 10, borderRadius: 8, borderWidth: 1, borderColor: selected === item.id ? theme.colors.primary : theme.colors.border, gap: 8, backgroundColor: selected === item.id ? theme.colors.primarySoft : theme.colors.surface }}>
         <FocusArtwork sound={item.id} size={116} />
         <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '600' }}>{item.title}</Text>
         <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{item.kind}</Text>

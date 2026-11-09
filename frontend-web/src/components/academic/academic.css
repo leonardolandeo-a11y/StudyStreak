@@ -1,0 +1,29 @@
+/* Scoped to Dashboard/Focus. Semantic tokens and global controls remain unchanged. */
+.academic-page { --academic-mono: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.academic-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 4px 0 14px; border-bottom: 1px solid var(--ss-border); }
+.academic-heading-copy { min-width: 0; flex: 1 1 220px; }
+.academic-heading-kicker { display: flex; align-items: center; gap: 10px; color: var(--ss-accent); font: 600 11px/1.5 var(--academic-mono); letter-spacing: 1px; text-transform: uppercase; }
+.academic-heading h1 { color: var(--ss-text); font-size: clamp(24px, 3vw, 30px); line-height: 1.25; font-weight: 700; letter-spacing: -.6px; margin-top: 8px; overflow-wrap: anywhere; }
+.academic-heading p { color: var(--ss-text-muted); margin-top: 6px; font-size: 14px; }
+.academic-fill-ink { fill: var(--ss-text); } .academic-fill-accent { fill: var(--ss-accent); } .academic-fill-paper { fill: var(--ss-surface); } .academic-fill-muted { fill: var(--ss-text-muted); }
+.academic-page .study-panel { border-radius: 8px; box-shadow: 2px 2px 0 var(--ss-border); }
+.academic-page .study-panel h2,.academic-page .study-panel h3 { letter-spacing: -.2px; }
+.academic-page .study-button { border-radius: 6px; }
+.academic-page :is(.study-button,.study-tab,.academic-action) { transition: background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease; }
+.academic-page :is(.study-button,.study-tab,.academic-action):active:not(:disabled) { box-shadow: inset 0 -2px 0 var(--ss-border-strong); }
+.academic-page .study-tab { border-radius: 5px; }
+.academic-page .study-tab[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--ss-accent); }
+.academic-metric { position: relative; overflow: hidden; padding: 16px; }
+.academic-metric::before { content: ''; position: absolute; top: 0; left: 0; width: 20px; height: 3px; background: var(--ss-accent); box-shadow: 20px 3px 0 var(--ss-accent-soft); }
+.academic-empty { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--ss-text-muted); font-size: 14px; }
+.academic-empty svg { flex-shrink: 0; }
+.academic-progress { height: 6px; width: 100%; background: var(--ss-surface-hover); overflow: hidden; border: 1px solid var(--ss-border); }
+.academic-progress > span { display: block; height: 100%; background: repeating-linear-gradient(90deg,var(--ss-accent) 0 9px,transparent 9px 11px); transition: width 250ms ease; }
+.academic-dial { border-radius: 50%; background: radial-gradient(circle, var(--ss-accent-soft), transparent 65%); }
+.academic-dial [role="timer"] { text-shadow: 2px 2px 0 var(--ss-border); }
+.academic-session-state { border-radius: 4px; font-family: var(--academic-mono); }
+.academic-sound-card { border-radius: 8px; box-shadow: 2px 2px 0 var(--ss-border); }
+.academic-art-corner { position: absolute; top: 8px; left: 8px; width: 12px; height: 12px; border-top: 2px solid currentColor; border-left: 2px solid currentColor; opacity: .55; }
+.academic-page .academic-timer-settings { border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .academic-page * { transition-duration: 0s !important; } }
+:root[data-motion="reduce"] .academic-page * { transition-duration: 0s !important; }

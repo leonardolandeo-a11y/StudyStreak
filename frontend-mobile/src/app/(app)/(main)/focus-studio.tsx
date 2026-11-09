@@ -9,7 +9,7 @@ import {
 import { Screen } from '../../../components/ui/Screen';
 import { useAuth } from '../../../hooks/useAuth';
 import { useAppearance } from '../../../hooks/useAppearance';
-import { Card } from '../../../components/ui/Card';
+import { AcademicPanel as Card, AcademicHeading } from '../../../components/academic/Academic';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { NavigationPressable } from '../../../components/navigation/NavigationPressable';
@@ -355,6 +355,7 @@ export default function FocusStudioMobile() {
   if (!currentUser) return null;
   return <>
     <Screen themed compact>
+      <AcademicHeading title="Focus Studio" eyebrow="YOUR FOCUS SPACE" description="One task. Your pace. Your sound." focus />
       <FocusTimerPanel mode={timer.mode} time={formatPomodoroTime(remaining)} progress={progress} running={running}
         paused={!running && (goalLocked || remaining < total)} ready={ready} locked={goalLocked} busy={timerBusy}
         onMode={mode => setTimer(previous => selectPomodoroMode(previous, mode))} onToggle={() => { void runTimerAction(); }}

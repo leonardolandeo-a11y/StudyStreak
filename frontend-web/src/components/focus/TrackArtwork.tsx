@@ -33,6 +33,7 @@ export function TrackArtwork({ track, compact = false, thumbnail = false }: {
                 <div className="absolute inset-[27%] rounded-full border border-white/10" />
                 <div className="absolute inset-[42%] rounded-full border border-white/20 bg-white/15" />
             </div>
+            <span className="academic-art-corner" />
             <Icon aria-hidden="true" className={`relative drop-shadow-lg ${compact ? "h-5 w-5" : "h-16 w-16 sm:h-20 sm:w-20"}`} strokeWidth={1.25} />
             {!compact && !thumbnail && <span className="absolute bottom-4 left-5 text-[10px] font-bold uppercase tracking-[0.28em] text-white/60">STUDYSTREAK ORIGINALS</span>}
         </div>

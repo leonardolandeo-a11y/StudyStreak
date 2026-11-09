@@ -1,8 +1,9 @@
+import { AcademicHeading } from "../academic/Academic";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
 import { useEffect, useRef, useState } from "react";
 import {
-    BookOpen, Check, Clock3, Headphones, Music2, Pause, Play,
+    BookOpen, Check, Clock3, Music2, Pause, Play,
     RotateCcw, Settings, Sparkles, Volume2, VolumeX
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
@@ -341,11 +342,10 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }
 
     return (
-        <div className="min-w-0 space-y-5 pb-4">
-            <header className="flex flex-wrap items-center justify-between gap-4">
-                <div><p className="study-kicker flex items-center gap-2"><Headphones size={15} aria-hidden="true"/>Your focus space</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-content">Focus Studio<span className="text-accent">.</span></h1><p className="mt-2 text-sm text-content-muted">One task. Your pace. Your sound.</p></div>
+        <div className="academic-page academic-focus min-w-0 space-y-5 pb-4">
+            <AcademicHeading title="Focus Studio" eyebrow="Your focus space" description="One task. Your pace. Your sound." focus>
                 <Link to={ROUTES.studyRooms} className="study-button">Study together →</Link>
-            </header>
+            </AcademicHeading>
                 <section aria-label="Pomodoro session timer" className="study-panel min-w-0 p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
                         <div>
@@ -353,9 +353,13 @@ export default function FocusStudio({ userId }: { userId: number }) {
                                 <Clock3 size={19} className={style.accent} aria-hidden="true" /> Your session
                             </p>
                         </div>
-                        <span className={`sr-only rounded-full border px-3 py-1.5 text-[11px] font-semibold sm:not-sr-only ${style.selected}`}>
+                        <span className={`academic-session-state sr-only rounded-full border px-3 py-1.5 text-[11px] font-semibold sm:not-sr-only ${style.selected}`}>
                             {running ? "In progress" : linkedSession ? "Paused" : "Ready to begin"}
                         </span>
+                        <button type="button" className="academic-timer-settings study-button size-11 shrink-0 rounded-full p-0" onClick={() => setSettingsOpen(true)}
+                            aria-label="Pomodoro settings" title="Pomodoro settings" aria-haspopup="dialog">
+                            <Settings size={18} aria-hidden="true" />
+                        </button>
                     </div>
 
                     <div className="mx-auto mt-4 flex max-w-md flex-wrap gap-1 rounded-xl border border-outline bg-canvas p-1" aria-label="Session type">
@@ -371,12 +375,16 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         ))}
                     </div>
 
-                    <div className="relative mx-auto mt-3 aspect-square w-full max-w-[360px]">
+                    <div className="academic-dial relative mx-auto mt-3 aspect-square w-full max-w-[360px]">
                         <svg viewBox="0 0 250 250" aria-hidden="true" className="h-full w-full -rotate-90">
-                            <circle cx="125" cy="125" r="110" fill="none" stroke="var(--ss-border-strong)" strokeWidth="8" />
+                            {Array.from({ length: 12 }, (_,index) => {
+                                const angle = index * Math.PI / 6;
+                                return <rect key={index} x={123.5 + Math.cos(angle)*119} y={123.5 + Math.sin(angle)*119} width="3" height="3" fill="var(--ss-text-muted)" />;
+                            })}
+                            <circle cx="125" cy="125" r="110" fill="none" stroke="var(--ss-border-strong)" strokeWidth="5" />
                             <circle cx="125" cy="125" r="110" fill="none" stroke={style.outline} strokeWidth="8" strokeLinecap="round"
                                 strokeDasharray={CIRCUMFERENCE} strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
-                                className="transition-[stroke-dashoffset] duration-500" />
+                                className="transition-[stroke-dashoffset] duration-250" />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <p className={`text-[11px] font-bold uppercase tracking-[0.28em] ${style.accent}`}>
@@ -390,7 +398,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
 
                     <div className="mx-auto flex max-w-xs items-center justify-center gap-2">
                         <button type="button" onClick={toggleTimer}
-                            className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold ${style.strong}`}>
+                            className={`academic-action flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold ${style.strong}`}>
                             {running ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
                             {running ? "Pause timer" : remaining < total ? "Resume session" : timer.mode === "focus" ? "Start focusing" : "Start break"}
                         </button>
@@ -399,10 +407,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             className="flex size-11 shrink-0 items-center justify-center rounded-full border border-outline-strong bg-canvas text-content-secondary hover:bg-surface-hover">
                             <RotateCcw size={19} aria-hidden="true" />
                         </button>
-                        <button type="button" className="study-button size-11 shrink-0 rounded-full p-0" onClick={() => setSettingsOpen(true)}
-                            aria-label="Pomodoro settings" title="Pomodoro settings" aria-haspopup="dialog">
-                            <Settings size={18} aria-hidden="true" />
-                        </button>
+
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-center gap-2" aria-label={`${cycle} of 4 sessions until your next long break`}>

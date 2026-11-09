@@ -5,7 +5,7 @@ import { useAppearance } from '../../hooks/useAppearance';
 import type { ResourceState } from '../../hooks/useFocusedResource';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
 import { activityNumber, verifiedActivity, type StudyPeriod } from '../../features/dashboard/verifiedActivity';
-import { Card } from '../ui/Card';
+import { AcademicPanel as Card, AcademicEmpty, PixelGlyph, PixelProgress } from '../academic/Academic';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { ActivityPlot } from './ActivityPlot';
@@ -50,14 +50,15 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
         : state.status === 'error' || !period ? <><StatusMessage error message={state.status === 'error'
           ? 'Your study activity could not be loaded.' : 'Verified activity is unavailable or inconsistent. Historical estimates have not been substituted.'} />
           <ActionButton title="Retry activity" onPress={retry} /></>
-        : period.minutes === 0 ? <><StatusMessage message="No verified study time in this period." />
+        : period.minutes === 0 ? <><AcademicEmpty><StatusMessage message="No verified study time in this period." /></AcademicEmpty>
           <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
         : <ActivityPlot period={period} style={style} />}
+      {period ? <PixelProgress value={period.daily.filter(day => day.minutes > 0).length} max={days} label="Active study days in this period" /> : null}
       <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
     </Card>
-    {metrics.map(metric => <Card key={metric.label} style={{ padding: 12, gap: 4 }}>
+    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 12, gap: 4 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <Text accessibilityRole="header" style={{ color: theme.colors.textSecondary, fontSize: 14 }}>{metric.label}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}><PixelGlyph name={(['chart','spark','lamp','book'] as const)[index]} size={20} /><Text accessibilityRole="header" style={{ color: theme.colors.textSecondary, fontSize: 14, flexShrink: 1 }}>{metric.label}</Text></View>
         <Text style={{ color: theme.colors.text, fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{metric.unit}</Text></Text>
       </View>
       <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text>

@@ -1,5 +1,5 @@
 import { Screen } from '../../../components/ui/Screen';
-import { PageHeading } from '../../../components/ui/PageHeading';
+import { AcademicHeading } from '../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
@@ -22,8 +22,8 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const stats = state.status === 'success' ? state.data : null;
   const period = stats ? verifiedActivity(stats, days) : null;
   return <Screen themed compact onRefresh={retry} refreshing={state.status === 'loading'}>
-    <PageHeading title={`Welcome back, ${username}`} eyebrow="YOUR STUDY SPACE" />
-    <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} />
+    <AcademicHeading title={`Welcome back, ${username}`} eyebrow="YOUR STUDY SPACE" />
+    <ActionButton compact title="Start focusing" onPress={() => router.navigate('/focus-studio')} />
     <DashboardActivity days={days} onDaysChange={setDays} state={state} retry={retry} />
     <DashboardGoals userId={userId} />
     {period && stats ? <DashboardRecent from={period.daily[0].date} to={period.daily.at(-1)!.date} timeZone={stats.timeZone} />

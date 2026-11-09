@@ -28,7 +28,7 @@ export function ActivityPlot({ period, style }: { period: VerifiedPeriod; style:
             {style === 'bars' ? period.daily.map((day, index) => <View key={day.date} style={{ position: 'absolute',
               left: graph.step * index + graph.step * .2, bottom: 0, width: graph.step * .6,
               height: day.minutes === 0 ? 0 : Math.max(2, height - graph.points[index].y), backgroundColor: theme.colors.primary,
-              borderTopLeftRadius: 3, borderTopRightRadius: 3 }} />) : <>
+              borderTopLeftRadius: 1, borderTopRightRadius: 1 }} />) : <>
               {graph.segments.map((segment, index) => <View key={index} style={{ position: 'absolute', left: segment.left,
                 top: segment.top, width: segment.length, height: 2, backgroundColor: theme.colors.primary,
                 transform: [{ rotate: `${segment.angle}deg` }] }} />)}

@@ -6,9 +6,10 @@ const colors: Record<Soundscape, string> = {
 };
 const symbols: Record<Soundscape, string> = { dream: '☾', keys: '♫', classical: '♬', lofi: '♪', white: '≈', pink: '≈', brown: '≋', rain: '☂', forest: '♧', ocean: '≈', cafe: '☕', fireplace: '✦' };
 export function FocusArtwork({ sound, size = 64 }: { sound: Soundscape; size?: number }) {
-  return <View accessible={false} style={{ width: size, height: size, borderRadius: 14, backgroundColor: colors[sound], alignItems: 'center', justifyContent: 'center' }}>
+  return <View accessible={false} style={{ width: size, height: size, borderRadius: 6, backgroundColor: colors[sound], alignItems: 'center', justifyContent: 'center' }}>
     <View style={{ position: 'absolute', width: size * .72, height: size * .72, borderRadius: size / 2,
       borderWidth: 1, borderColor: '#ffffff50' }} />
+    <View accessible={false} style={{ position: 'absolute', top: 6, left: 6, width: 8, height: 8, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#ffffff88' }} />
     <Text accessible={false} style={{ color: '#ffffff', fontSize: size * .36 }}>{symbols[sound]}</Text>
   </View>;
 }

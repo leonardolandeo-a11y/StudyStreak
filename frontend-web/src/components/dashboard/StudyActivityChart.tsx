@@ -1,3 +1,4 @@
+import { AcademicEmpty, PixelProgress } from "../academic/Academic";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartColumn, ChartLine, RefreshCw } from "lucide-react";
@@ -41,7 +42,7 @@ export default function StudyActivityChart({ days, onDaysChange, period, status,
         {status === "loading" ? <LoadingState message="Loading verified study activity…"/>
         : status === "error" || !period ? <div className="space-y-3"><ErrorMessage message={status === "error" ? "Study activity could not be loaded. Your saved sessions are safe." : "Verified statistics are unavailable. The server needs the verifiedPeriod update."}/><button type="button" className="study-button" onClick={onRetry}>Retry study activity</button></div>
         : <>
-            {period.sessions === 0 ? <div className="study-empty p-4"><p>No verified sessions completed in these {days} days.</p><Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-accent" to={ROUTES.focusStudio}>Open Focus Studio</Link></div>
+            {period.sessions === 0 ? <div className="study-empty p-4"><AcademicEmpty><p>No verified sessions completed in these {days} days.</p></AcademicEmpty><Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-accent" to={ROUTES.focusStudio}>Open Focus Studio</Link></div>
             : <div className="h-64 w-full min-w-0 sm:h-72" role="img" aria-label={`Daily verified focus: ${activityNumber(period.minutes)} minutes in ${period.sessions} sessions. Full daily values in the table below.`}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <Chart data={period.daily} margin={{ top: 12, right: 8, bottom: 0, left: -16 }} accessibilityLayer>
@@ -49,12 +50,13 @@ export default function StudyActivityChart({ days, onDaysChange, period, status,
                         <XAxis dataKey="date" tickFormatter={date => activityDate(String(date))} tick={{ fill: "var(--ss-text-muted)", fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={24} tickMargin={12}/>
                         <YAxis tick={{ fill: "var(--ss-text-muted)", fontSize: 11 }} axisLine={false} tickLine={false} width={52}/>
                         <Tooltip labelFormatter={label => activityDate(String(label), true)} formatter={value => [`${activityNumber(Number(value))} min`, "Confirmed focus"]} contentStyle={{ background: "var(--ss-surface)", border: "1px solid var(--ss-border-strong)", borderRadius: "var(--ss-radius-control)", color: "var(--ss-text)" }} itemStyle={{ color: "var(--ss-accent)" }} labelStyle={{ color: "var(--ss-text)" }} cursor={{ stroke: "var(--ss-border-strong)", fill: "var(--ss-accent-soft)" }}/>
-                        {style === "bars" ? <Bar dataKey="minutes" fill="var(--ss-accent)" radius={[5, 5, 0, 0]} maxBarSize={36} isAnimationActive={false}/>
+                        {style === "bars" ? <Bar dataKey="minutes" fill="var(--ss-accent)" radius={[2, 2, 0, 0]} maxBarSize={36} isAnimationActive={false}/>
                         : <Line type="linear" dataKey="minutes" stroke="var(--ss-accent)" strokeWidth={3} dot={{ r: 3, fill: "var(--ss-accent)" }} activeDot={{ r: 5 }} isAnimationActive={false}/>}
                     </Chart>
                 </ResponsiveContainer>
             </div>}
             <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-outline pt-3 text-xs text-content-muted"><span>{period.daily.filter(day => day.minutes > 0).length} active days of {days}</span><span>Completed individual & group sessions</span></div>
+            <PixelProgress value={period.daily.filter(day => day.minutes > 0).length} max={days} label="Active study days in this period" />
             <details className="mt-2 text-sm text-content-secondary"><summary className="w-fit cursor-pointer rounded-control px-1 py-2 font-medium">View daily data</summary><div className="mt-2 overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Daily verified focus in {timeZone}; minutes and completed sessions</caption><thead><tr className="border-b border-outline text-content-muted"><th scope="col" className="py-2 pr-3">Date</th><th scope="col" className="py-2 pr-3">Minutes</th><th scope="col" className="py-2">Sessions</th></tr></thead><tbody>{period.daily.map(day => <tr key={day.date} className="border-b border-outline"><th scope="row" className="py-2 pr-3 font-normal"><time dateTime={day.date}>{activityDate(day.date, true)}</time></th><td className="pr-3 tabular-nums">{activityNumber(day.minutes)}</td><td className="tabular-nums">{day.sessions}</td></tr>)}</tbody></table></div></details>
         </>}
         <p className="mt-3 text-xs leading-relaxed text-content-muted">Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</p>

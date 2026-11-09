@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { useCallback, useState } from "react";
 import { ArrowRight, Bell, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -33,8 +34,10 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
 function DashboardContent({ userId, username }: { userId: number; username: string }) {
     const [days, setDays] = useState<StudyPeriod>(7);
     const { unreadCount } = useUnreadNotifications();
-    return <div className="min-w-0 space-y-4">
-        <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div className="min-w-0"><p className="study-kicker">Your study space</p><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-content sm:text-3xl">Welcome back, {username}</h1></div><Link to={ROUTES.focusStudio} className="study-button w-fit shrink-0 border-accent bg-accent text-on-accent hover:bg-accent-hover"><Timer size={18} aria-hidden="true"/>Start focusing <ArrowRight size={16} aria-hidden="true"/></Link></header>
+    return <div className="academic-page academic-dashboard min-w-0 space-y-4">
+        <AcademicHeading title={`Welcome back, ${username}`} eyebrow="Your study space">
+            <Link to={ROUTES.focusStudio} className="study-button w-fit shrink-0 border-accent bg-accent text-on-accent hover:bg-accent-hover"><Timer size={18} aria-hidden="true"/>Start focusing <ArrowRight size={16} aria-hidden="true"/></Link>
+        </AcademicHeading>
         <DashboardActivity days={days} onDaysChange={setDays} userId={userId}/>
         <Link to={ROUTES.notifications} className="flex min-h-11 flex-wrap items-center justify-between gap-3 rounded-control border border-outline px-4 py-3 text-sm text-content-secondary hover:bg-surface-hover"><span className="flex items-center gap-2"><Bell size={16} className="text-accent" aria-hidden="true"/>Your notifications</span><span className="text-content-muted">{unreadCount} unread <span aria-hidden="true">→</span></span></Link>
     </div>;

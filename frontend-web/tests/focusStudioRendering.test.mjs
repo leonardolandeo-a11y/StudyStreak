@@ -33,7 +33,7 @@ test('Focus Studio gives the timer a full-width row, followed by player and goal
   assert.doesNotMatch(html, /Featured focus mix|Get in the zone/);
   assert.match(html, /aria-label="Pomodoro settings" title="Pomodoro settings" aria-haspopup="dialog"/);
   assert.doesNotMatch(html, /Make it yours|>Aurora<|>Sunset<|>Ocean<|>Customize</);
-  assert.ok(html.indexOf('Reset current session') < html.indexOf('Pomodoro settings'));
+  assert.ok(html.indexOf('Pomodoro settings') < html.indexOf('role="timer"'), 'Settings stays at the side of the timer header');
 });
 
 test('duration dialog preserves interval limits and disables editing while running', () => {
