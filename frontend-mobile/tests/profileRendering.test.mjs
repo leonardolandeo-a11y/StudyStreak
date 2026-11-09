@@ -7,6 +7,7 @@ const { AppearanceContext } = await import('../src/contexts/AppearanceContext.ts
 const { NavigationDataContext } = await import('../src/contexts/NavigationDataContext.tsx');
 const { createAppearanceStore } = await import('../src/features/appearance/appearanceStore.ts');
 const { ProfileCover } = await import('../src/components/profile/ProfileCover.tsx');
+const { ProfileImageControls } = await import('../src/components/profile/ProfileImageControls.tsx');
 const { ProfileEditor } = await import('../src/components/profile/ProfileEditor.tsx');
 const { ProfileStudyStats } = await import('../src/components/profile/ProfileStudyStats.tsx');
 const { StudyDrawerContent } = await import('../src/components/navigation/StudyDrawerContent.tsx');
@@ -29,4 +30,16 @@ test('fallback and refreshed drawer identity use the shared profile and private 
   const html=render(h(StudyDrawerContent,{active:'dashboard',close(){},navigate(){}}),{profile:{...profile,presentationName:'Updated Ada'},avatar:'file:///private/updated.png'});
   assert.match(html,/Updated Ada/); assert.match(html,/file:\/\/\/private\/updated.png/);
   assert.equal(render(h(ProfileStudyStats,{})),'');
+});
+
+test('image controls retain selected, disabled and loading semantics with compact shared actions',()=>{
+  const props={slot:'avatar',change:null,busy:false,picking:false,onSelect(){},onRemove(){},onUndo(){}};
+  render(h(ProfileImageControls,{...props,change:{uri:'file:///preview.png',name:'Selected.png',type:'image/png',size:100}}));
+  assert.equal(controls.get('Select avatar').accessibilityState.selected,true);
+  render(h(ProfileImageControls,{...props,change:'remove'}));
+  assert.equal(controls.get('Remove avatar').disabled,true);
+  assert.equal(controls.get('Undo avatar change').disabled,false);
+  render(h(ProfileImageControls,{...props,busy:true,picking:true}));
+  assert.equal(controls.get('Select avatar').accessibilityState.busy,true);
+  assert.equal(controls.get('Remove avatar').disabled,true);
 });

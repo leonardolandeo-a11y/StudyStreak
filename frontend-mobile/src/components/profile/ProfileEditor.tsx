@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useNavigationData } from '../../contexts/NavigationDataContext';
 import { useAppearance } from '../../hooks/useAppearance';
 import type { OwnProfile, ProfileImageSlot } from '../../services/ownProfileService';
@@ -12,7 +12,7 @@ import { CreationModal } from '../ui/CreationModal';
 import { ActionButton } from '../ui/ActionButton';
 import { FormField } from '../ui/FormField';
 import { StatusMessage } from '../ui/StatusMessage';
-import { NavigationPressable } from '../navigation/NavigationPressable';
+import { ProfileImageControls } from './ProfileImageControls';
 import { ProfileCover } from './ProfileCover';
 export function ProfileEditor({ profile, onClose, onSaved }: { profile: OwnProfile; onClose(): void; onSaved(): void }) {
   const shared = useNavigationData();
@@ -74,26 +74,14 @@ export function ProfileEditor({ profile, onClose, onSaved }: { profile: OwnProfi
   }
   return <CreationModal visible showBack={false} title="Edit profile" cancelLabel="Close profile editor" busy={busy} onClose={onClose}>
     <ProfileCover banner={preview('banner')} avatar={preview('avatar')} name={normalizeProfileName(displayName) || profile.username} />
-    {(['avatar','banner'] as const).map(slot => <View key={slot} style={{ gap: 6 }}>
-      <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 14 }}>{slot === 'avatar' ? 'Avatar' : 'Banner'} · {slot === 'avatar' ? 2 : 5} MiB max</Text>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}><ActionButton title={`Select ${slot}`} secondary busy={picking === slot} disabled={busy}
-          onPress={() => { void chooseImage(slot); }} /></View>
-        <NavigationPressable accessibilityRole="button" accessibilityLabel={`Remove ${slot}`} disabled={busy || images[slot] === 'remove'}
-          onPress={() => changeImage(slot, 'remove')} style={{ minHeight: 48, paddingHorizontal: 14, borderRadius: 12, justifyContent: 'center', backgroundColor: theme.colors.errorSurface }}>
-          <Text style={{ color: theme.colors.error, fontWeight: '600' }}>Remove</Text>
-        </NavigationPressable>
-      </View>
-      {images[slot] ? <>
-        <Text numberOfLines={1} style={{ color: theme.colors.muted, fontSize: 12 }}>{images[slot] === 'remove' ? 'Will be removed when saved' : images[slot].name}</Text>
-        <ActionButton title={`Undo ${slot} change`} secondary disabled={busy} onPress={() => changeImage(slot, null)} />
-      </> : null}
-    </View>)}
+    {(['avatar','banner'] as const).map(slot => <ProfileImageControls key={slot} slot={slot} change={images[slot]}
+      busy={busy} picking={picking === slot} onSelect={() => { void chooseImage(slot); }}
+      onRemove={() => changeImage(slot, 'remove')} onUndo={() => changeImage(slot, null)} />)}
     <Text style={{ color: theme.colors.muted, fontSize: 12 }}>PNG, JPEG or WebP. Changes apply only after Save changes.</Text>
-    <FormField label="Display name" value={displayName} onChangeText={setDisplayName} editable={!busy} autoCapitalize="words"
+    <FormField variant="subtle" label="Display name" value={displayName} onChangeText={setDisplayName} editable={!busy} autoCapitalize="words"
       hint={`${unicodeLength(normalizeProfileName(displayName))}/60 characters · leave empty to use ${profile.username}`} />
-    <FormField label="Bio" value={bio} onChangeText={setBio} editable={!busy} multiline textAlignVertical="top"
-      style={{ minHeight: 96, paddingVertical: 12 }} hint={`${unicodeLength(bio)}/300 characters · plain text`} />
+    <FormField variant="subtle" label="Bio" value={bio} onChangeText={setBio} editable={!busy} multiline textAlignVertical="top"
+      style={{ minHeight: 84, paddingVertical: 10 }} hint={`${unicodeLength(bio)}/300 characters · plain text`} />
     {error || validation ? <StatusMessage error message={error || validation!} /> : null}
     <ActionButton title="Save changes" busy={saving} disabled={busy || !!validation} onPress={() => { void save(); }} />
     <ActionButton title="Cancel" secondary disabled={busy} onPress={onClose} />
