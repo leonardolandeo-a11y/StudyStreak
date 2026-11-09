@@ -15,6 +15,8 @@ function propsFor(props) {
 export function View(props) { return React.createElement('div', { ...propsFor(props), 'data-edges': props.edges?.join(',') }, props.children); }
 export const SafeAreaView = View;
 export const ScrollView = View;
+export const KeyboardAvoidingView = View;
+export function useWindowDimensions() { return { width: 390, height: 844, scale: 1, fontScale: 1 }; }
 export function Text(props) { return React.createElement('span', propsFor(props), props.children); }
 export function Pressable(props) {
   controls.set(props.accessibilityLabel, props);

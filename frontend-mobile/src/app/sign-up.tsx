@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, router } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
-import { Screen } from '../components/ui/Screen';
+import { AuthScreen } from '../components/auth/AuthScreen';
 import { FormField } from '../components/ui/FormField';
 import { ActionButton } from '../components/ui/ActionButton';
 import { StatusMessage } from '../components/ui/StatusMessage';
@@ -10,7 +10,6 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { useThemedStyles } from '../hooks/useAppearance';
 import type { ThemeColors } from '../features/appearance/theme';
 import { Card } from '../components/ui/Card';
-import { PageHeading } from '../components/ui/PageHeading';
 
 export default function SignUp() {
   const { signUp } = useAuth();
@@ -40,27 +39,26 @@ export default function SignUp() {
   }
 
   return (
-    <Screen themed>
-      <PageHeading eyebrow="STUDYSTREAK" title="Create your account" description="Start tracking your goals with your study partner." />
+    <AuthScreen title="Create your account" description="Start tracking your goals with your study partner."
+      footer={<Text style={styles.footer}>Already registered? <Link href="/sign-in" style={styles.link}>Sign in</Link></Text>}>
       <Card style={styles.card}>
-        <FormField label="Username" placeholder="Choose a username" value={username}
+        <FormField variant="subtle" label="Username" placeholder="Choose a username" value={username}
           onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} autoComplete="username" editable={!busy} />
-        <FormField label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail}
+        <FormField variant="subtle" label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail}
           autoCapitalize="none" keyboardType="email-address" autoComplete="email" editable={!busy} />
-        <FormField label="Password" placeholder="Create a password" value={password} onChangeText={setPassword}
+        <FormField variant="subtle" label="Password" placeholder="Create a password" value={password} onChangeText={setPassword}
           secureTextEntry autoComplete="new-password" editable={!busy}
           hint="8–72 characters with uppercase, lowercase and a number." />
         {error ? <StatusMessage message={error} error /> : null}
-        <ActionButton title="Create account" onPress={() => { void submit(); }} busy={busy} />
+        <ActionButton compact title="Create account" onPress={() => { void submit(); }} busy={busy} />
       </Card>
-      <Text style={styles.footer}>Already registered? <Link href="/sign-in" style={styles.link}>Sign in</Link></Text>
-    </Screen>
+    </AuthScreen>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1,
-    borderRadius: 18, padding: 20, gap: 16 },
+    borderRadius: 10, padding: 16, gap: 16 },
   footer: { textAlign: 'center', color: palette.muted },
   link: { color: palette.primary, fontWeight: '700' },
 });

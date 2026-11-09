@@ -99,7 +99,7 @@ test('Login/Register keep their theme and fields; the old Home deep link now ope
     const expected = createTheme({ mode, accent: 'blue', reduceMotion: false }, null).colors.background;
     for (const component of [SignIn, SignUp]) {
       const html = render(h(component), appearance);
-      assert.ok(html.includes(expected)); assert.match(html, /STUDYSTREAK/);
+      assert.ok(html.includes(expected)); assert.match(html, /aria-label="StudyStreak"/);
       assert.match(html, /aria-label="Username"/); assert.match(html, /type="password"/);
       assert.match(html, /href="\/sign-/);
     }
