@@ -22,3 +22,5 @@ Stack.Screen = function Screen({ name, options }) {
   const resolved = typeof options === 'function' ? options({ navigation: { canGoBack: () => history.length > 1 } }) : options;
   return React.createElement('div', { 'data-screen': name, 'data-title': resolved?.title }, resolved?.headerLeft?.());
 };
+
+export function useIsFocused() { return true; }

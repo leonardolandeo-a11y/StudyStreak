@@ -85,7 +85,7 @@ try {
   await browser.wait(has('Search study partners'));
   assert.equal(await browser.evaluate(inModal(`modal.innerText.includes('All tracking links') || modal.innerText.includes('Active partners')`)), false);
   await browser.fill('[aria-label="Search study partners"]', 'partner'); await browser.wait(`document.querySelector('[aria-modal="true"]').innerText.includes('@partner')`);
-  await browser.click('@partnerSelect'); await browser.click('Send tracking request');
+  await browser.click('Select tracking partner partner'); await browser.click('Send tracking request');
   await browser.wait(`!document.querySelector('[aria-label="Cancel creation"]')`); assert.ok(reads.history >= 2);
   await browser.click('Validations'); await browser.wait(has('Start a validation')); await browser.click('Start a validation');
   await browser.wait(has('Cancel creation')); await browser.click('Review goals from partner'); await browser.wait(has('View records for Partner algebra'));

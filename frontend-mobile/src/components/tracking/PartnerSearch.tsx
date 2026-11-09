@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SocialAvatar } from '../social/MemberReference';
 import { ActionButton } from '../ui/ActionButton';
 import { PageControls } from '../ui/PageControls';
 import { StatusMessage } from '../ui/StatusMessage';
@@ -98,11 +99,12 @@ export function PartnerSearch({ onSend, busy }: {
             <Text style={styles.description}>No matching users.</Text>
           ) : null}
           {!searching && !searchError ? results?.content.map((user) => (
-            <Pressable key={user.id} accessibilityRole="button" onPress={() => {
+            <Pressable key={user.id} accessibilityRole="button" accessibilityLabel={`Select tracking partner ${user.username}`} onPress={() => {
               setSelected(user);
               setResults(null);
             }} style={styles.result}>
-              <Text style={styles.user}>@{user.username}</Text>
+              <SocialAvatar userId={user.id} name={user.username} size={32} />
+              <Text numberOfLines={1} style={[styles.user, { flex: 1, minWidth: 0 }]}>@{user.username}</Text>
               <Text style={styles.select}>Select</Text>
             </Pressable>
           )) : null}
@@ -125,7 +127,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   description: { color: palette.muted, fontSize: 13, lineHeight: 21 },
   input: { backgroundColor: palette.background, color: palette.text, borderWidth: 1, borderColor: palette.border, borderRadius: 12, minHeight: 48, paddingHorizontal: 14, fontSize: 15 },
   results: { backgroundColor: palette.background, borderRadius: 12, padding: 12, gap: 10 },
-  result: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 6, borderBottomWidth: 1, borderColor: palette.border },
+  result: { gap: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 6, borderBottomWidth: 1, borderColor: palette.border },
   user: { color: palette.text, fontSize: 15, fontWeight: '600' },
   select: { color: palette.primary, fontWeight: '700', fontSize: 13 },
 });

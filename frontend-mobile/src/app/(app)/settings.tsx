@@ -1,4 +1,5 @@
 import { StyleSheet, Switch, Text, View } from 'react-native';
+import { SocialPrivacySettings } from '../../components/social/SocialPrivacySettings';
 import { Screen } from '../../components/ui/Screen';
 import { Card } from '../../components/ui/Card';
 import { ActionButton } from '../../components/ui/ActionButton';
@@ -44,6 +45,7 @@ export default function Settings() {
       onPress={() => { void setPreferences(defaultAppearance); }} style={styles.restore}>
       <Text style={styles.restoreText}>Restore defaults</Text>
     </NavigationPressable>
+    <SocialPrivacySettings />
     {persistenceError ? <View style={styles.recovery}>
       <StatusMessage error message={persistenceError} />
       <ActionButton title="Retry saving appearance" secondary onPress={() => { void retryPersistence(); }} />

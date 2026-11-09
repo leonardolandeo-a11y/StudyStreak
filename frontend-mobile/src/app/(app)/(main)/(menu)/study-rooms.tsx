@@ -276,7 +276,7 @@ export default function StudyRooms() {
             {loading && <ActivityIndicator color="#4ade80"/>}
             {!loading && rooms.length === 0 && <Text style={styles.description}>No rooms yet. Create one or join with a code.</Text>}
             {rooms.map(item => (
-              <Pressable key={item.id} accessibilityRole="button" onPress={() => showRoom(item)}
+              <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open study room ${item.name}`} onPress={() => showRoom(item)}
                 style={styles.roomRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.roomName}>{item.name}</Text>
@@ -327,11 +327,11 @@ export default function StudyRooms() {
                     <RoomModeration key={`moderation-${room.id}`} room={room}/>
                     <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}/>
           <StudyRoomGoal key={room.id} roomId={room.id}/>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Participants · {room.members.length}/12</Text>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, padding: 14, borderRadius: 14 }]}>
+            <Text style={[styles.cardTitle, { color: theme.colors.text, fontSize: 18, fontWeight: '600' }]}>Participants · {room.members.length}/12</Text>
             {room.host && <ActionButton secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => Alert.alert('Replace invitation?', 'The previous code will stop working.', [{ text: 'Cancel' }, { text: 'Replace', onPress: () => { void manageRoom(); } }])}/> }
             {room.members.map(member => (
-              <ParticipantCard key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
+              <ParticipantCard key={member.userId} userId={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
                 {room.host && !member.host && <ActionButton secondary title="Make host" disabled={busy || stale} onPress={() => Alert.alert('Transfer host?', `Give controls to ${member.username}?`, [{ text: 'Cancel' }, { text: 'Transfer', onPress: () => { void manageRoom(member.userId); } }])}/>}
               </ParticipantCard>
             ))}

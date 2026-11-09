@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../../components/ui/Screen';
@@ -12,7 +12,9 @@ import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { trackingLinkService } from '../../../../../services/trackingLinkService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
-import { palette } from '../../../../../constants/palette';
+import { useThemedStyles } from '../../../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../../../features/appearance/theme';
+import { SocialContext } from '../../../../../contexts/SocialContext';
 import type { PageResponse } from '../../../../../types/page';
 import type { TrackingDecision, TrackingLink } from '../../../../../types/trackingLink';
 
@@ -35,6 +37,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
   onRespond: (id: number, decision: TrackingDecision) => Promise<boolean>;
   onRemove: (id: number) => Promise<boolean>;
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
@@ -43,7 +46,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
           <Text style={styles.refresh}>Refresh</Text>
         </Pressable>
       </View>
-      {state.loading ? <ActivityIndicator color={palette.primary} /> : null}
+      {state.loading ? <ActivityIndicator /> : null}
       {state.error ? (
         <>
           <StatusMessage error message={state.error} />
@@ -66,6 +69,8 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
 }
 
 export default function Tracking() {
+  const styles = useThemedStyles(createStyles);
+  const social = useContext(SocialContext);
   const { currentUser } = useAuth();
   const pendingLoader = useCallback((page: number, signal: AbortSignal) => trackingLinkService.pending(page, signal), []);
   const activeLoader = useCallback((page: number, signal: AbortSignal) => trackingLinkService.active(page, signal), []);
@@ -87,6 +92,7 @@ export default function Tracking() {
   }
 
   function refreshAll() {
+    social?.directory.invalidateRelations();
     pending.reload();
     active.reload();
     history.reload();
@@ -121,6 +127,7 @@ export default function Tracking() {
     setBusyId(id);
     try {
       await trackingLinkService.respond(id, decision);
+      social?.directory.invalidateRelations();
       setNotice(decision === 'ACCEPTED' ? 'Request accepted.' : 'Request rejected.');
       if (pending.data?.content.length === 1 && pending.page > 0) pending.setPage(pending.page - 1);
       else pending.reload();
@@ -141,6 +148,9 @@ export default function Tracking() {
     setBusyId(id);
     try {
       await trackingLinkService.remove(id);
+      const removed = [...(active.data?.content ?? []), ...(history.data?.content ?? [])].find(link => link.id === id);
+      if (removed) social?.directory.revoke(removed.requesterId === currentUser?.id ? removed.receiverId : removed.requesterId);
+      social?.directory.invalidateRelations();
       setNotice('Tracking link removed.');
       if (pending.data?.content.length === 1 && pending.page > 0) pending.setPage(pending.page - 1);
       else pending.reload();
@@ -164,7 +174,7 @@ export default function Tracking() {
       <PartnerSearch busy={sending} onSend={sendRequest} />
       {actionError ? <StatusMessage error message={actionError} /> : null}
     </CreationModal>
-    <Screen scrollRef={menuScroll}>
+    <Screen themed scrollRef={menuScroll}>
       <Text style={styles.title}>Tracking Links</Text>
       <Text style={styles.subtitle}>Connect with study partners and validate progress together.</Text>
       {notice ? <StatusMessage message={notice} /> : null}
@@ -183,7 +193,7 @@ export default function Tracking() {
   </>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
   title: { color: palette.text, fontSize: 30, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },

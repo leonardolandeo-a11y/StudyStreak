@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { SocialAvatar, MemberProfileLink } from '../../../../../components/social/MemberReference';
+import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -240,6 +241,7 @@ function PartnerGoals({ partner }: { partner: Partner }) {
 }
 
 export default function Validations() {
+  const focused = useIsFocused();
   const styles = useThemedStyles(createStyles);
   const { currentUser } = useAuth();
   const [notice, setNotice] = useState<string | null>(null);
@@ -263,12 +265,16 @@ export default function Validations() {
             {partners.data.content.map((link) => {
               const partner = partnerFromLink(link, currentUser.id);
               return (
-                <Pressable key={link.id} accessibilityRole="button" accessibilityLabel={`Review goals from ${partner.username}`}
-                  onPress={() => setSelectedPartner(partner)}
-                  style={[styles.item, selectedPartner?.id === partner.id && styles.itemSelected]}>
-                  <Text style={styles.itemTitle}>{partner.username}</Text>
-                  <Text style={styles.link}>{selectedPartner?.id === partner.id ? 'Selected' : 'View goals'}</Text>
-                </Pressable>
+                <View key={link.id} style={[styles.item, selectedPartner?.id === partner.id && styles.itemSelected, { flexDirection: 'row', gap: 12 }]}>
+                  <SocialAvatar userId={partner.id} name={partner.username} />
+                  <View style={{ flex: 1, minWidth: 0 }}><Text numberOfLines={1} style={styles.itemTitle}>{partner.username}</Text>
+                    <MemberProfileLink userId={partner.id} name={partner.username} />
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Review goals from ${partner.username}`}
+                      onPress={() => setSelectedPartner(partner)} style={{ minHeight: 48, justifyContent: 'center' }}>
+                      <Text style={styles.link}>{selectedPartner?.id === partner.id ? 'Selected' : 'View goals'}</Text>
+                    </Pressable>
+                  </View>
+                </View>
               );
             })}
             <PageControls page={partners.page} totalPages={partners.data.totalPages} onChange={partners.setPage} />
@@ -276,7 +282,7 @@ export default function Validations() {
         ) : null}
       </Section>);
   return <>
-    <CreationModal visible={starting || selectedPartner !== null} title="New Validation"
+    <CreationModal visible={focused && (starting || selectedPartner !== null)} title="New Validation"
       onClose={() => { setStarting(false); setSelectedPartner(null); }}
       onBack={() => { if (selectedPartner) setSelectedPartner(null); else setStarting(false); }}
       onComplete={() => { setStarting(false); setSelectedPartner(null); setNotice('Validation saved.'); partners.reload(); }}>

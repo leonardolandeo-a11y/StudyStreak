@@ -14,10 +14,10 @@ export function imageMime(bytes: Uint8Array): string | null {
   if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0,4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8,12)) === 'WEBP') return 'image/webp';
   return null;
 }
-export function cleanStaleProfileMedia() {
+export function cleanStaleProfileMedia(kind: 'own' | 'social' = 'own') {
   try {
     for (const entry of new Directory(Paths.cache).list()) {
-      if (entry instanceof File && /^(own-profile-|own-avatar-)/.test(entry.name)) entry.delete();
+      if (entry instanceof File && (kind === 'own' ? /^(own-profile-|own-avatar-)/ : /^social-profile-/).test(entry.name)) entry.delete();
     }
   } catch { /* Unsupported web filesystem or OS-evicted cache; never touch library originals. */ }
 }
@@ -29,7 +29,8 @@ export class OwnProfileMedia {
   private downloads = new Map<ProfileImageSlot, Promise<string | null>>();
   private sequence = 0;
   private prefix: string;
-  constructor(userId: number) { this.prefix = `own-profile-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
+  private resource: string;
+  constructor(userId: number, resource = '/api/profile', kind: 'own' | 'social' = 'own') { this.resource = resource; this.prefix = `${kind}-profile-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`; }
   private check() {
     if (this.controller.signal.aborted) throw new Error('Profile image request cancelled.');
     assertSessionRevision(this.revision);
@@ -51,7 +52,7 @@ export class OwnProfileMedia {
   }
   private async download(slot: ProfileImageSlot): Promise<string | null> {
     try {
-      const response = await apiClient.get<ArrayBuffer>(`/api/profile/${slot}`, { signal: this.controller.signal, ...{ _sessionRevision: this.revision },
+      const response = await apiClient.get<ArrayBuffer>(`${this.resource}/${slot}`, { signal: this.controller.signal, ...{ _sessionRevision: this.revision },
         responseType: 'arraybuffer', adapter: 'fetch', timeout: 30000, maxContentLength: PROFILE_LIMITS[slot] });
       this.check();
       if (!(response.data instanceof ArrayBuffer)) throw new Error('Invalid image response.');
