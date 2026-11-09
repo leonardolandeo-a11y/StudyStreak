@@ -1,6 +1,8 @@
 import axios from "axios";
+import { ApiConfigurationError } from "../config/apiRuntime";
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof ApiConfigurationError) return error.message;
     if (!axios.isAxiosError(error)) return fallback;
     if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") return "The request timed out. Please try again.";
     if (!error.response) return "Could not connect to StudyStreak. Check your internet connection and try again.";

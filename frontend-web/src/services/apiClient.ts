@@ -5,12 +5,14 @@ import axios, {
 import type { LoginResponse } from "../types/auth";
 import { getUserFromToken } from "../utils/jwt";
 import { assertSessionRevision, getSessionRevision, storeRefreshedSession } from "./authSession";
+import { apiBaseUrl } from "../config/api";
+import { requireConfiguredApiBaseUrl } from "../config/apiRuntime";
 import { ROUTES } from "../routes/paths";
 
 const API_REQUEST_TIMEOUT_MS = 15000;
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: apiBaseUrl,
     timeout: API_REQUEST_TIMEOUT_MS,
 });
 
@@ -23,6 +25,7 @@ interface RetryRequestConfig extends InternalAxiosRequestConfig {
 let refreshTask: { revision: number; task: Promise<LoginResponse> } | null = null;
 
 apiClient.interceptors.request.use((config: RetryRequestConfig) => {
+    config.baseURL = requireConfiguredApiBaseUrl();
     const revision = config._sessionRevision ?? getSessionRevision();
     assertSessionRevision(revision);
     config._sessionRevision = revision;
@@ -57,7 +60,7 @@ apiClient.interceptors.response.use(
             }
             if (!refreshTask || refreshTask.revision !== revision) {
                 const task = axios.post<LoginResponse>(
-                    `${import.meta.env.VITE_API_BASE_URL}/refresh`, { refreshToken },
+                    `${requireConfiguredApiBaseUrl()}/refresh`, { refreshToken },
                     { timeout: API_REQUEST_TIMEOUT_MS },
                 ).then((response) => {
                     if (sessionStorage.getItem("refreshToken") !== refreshToken) {
