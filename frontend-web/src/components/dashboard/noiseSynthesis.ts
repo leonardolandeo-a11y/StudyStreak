@@ -32,12 +32,18 @@ export function makeNoise(
         }
     }
 
-    // Smooth transition at the buffer wrap point, rather than clicking at every loop.
+    // Crossfade into the time-reversed head: the last sample meets sample zero,
+    // rather than head[blend - 1]. Reversal preserves the noise color; a cosine
+    // taper avoids abruptly introducing the blend. The head/interior stay intact.
     const blend = Math.min(Math.floor(length / 3), 4096);
-    for (let i = 0; i < blend; i++) {
-        const fraction = (i + 1) / blend;
-        output[length - blend + i] =
-            output[length - blend + i] * (1 - fraction) + output[i] * fraction;
+    if (length > 1 && blend < 2) {
+        output[length - 1] = output[0];
+    } else {
+        for (let i = 0; i < blend; i++) {
+            const weight = (1 - Math.cos(Math.PI * i / (blend - 1))) / 2;
+            output[length - blend + i] =
+                output[length - blend + i] * (1 - weight) + output[blend - 1 - i] * weight;
+        }
     }
     return output;
 }
