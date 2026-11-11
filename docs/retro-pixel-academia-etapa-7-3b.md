@@ -99,3 +99,7 @@ La inspección confirmó campos y acciones legibles, tarjetas compactas, ausenci
 No se operó un teléfono físico. Pendiente en Expo Go: SafeArea/gestos, teclado y selección de texto en formularios/modales, fuente grande/TalkBack, contraste y nitidez a densidad real, cámara/micrófono y cancelación de evidencias, descarga/subida/limpieza de imágenes, background/foreground durante sala y sesiones, recepción multimedia en development build cuando corresponda. Usar cuentas autorizadas y un entorno aislado para escenarios con escrituras.
 
 Se registra el commit local solicitado mediante staging explícito. Un segundo commit sólo documental incorpora el hash real de implementación, evitando amend y una autorreferencia imposible. No hay push, merge, reset ni deployment. Los 16 elementos ajenos permanecen fuera de ambos commits. Fin de 7.3b; no comienza otra etapa.
+
+## Commit de implementación
+
+`db1f967 feat(ui): extend retro pixel styling across app modules` registra los 55 archivos de implementación, recursos, pruebas e informe inicial. Este añadido se registra por separado, sólo en documentación, para incluir el hash real sin amend. Estado posterior a la implementación: únicamente los 16 elementos preexistentes ajenos, sin archivos de la etapa pendientes.
