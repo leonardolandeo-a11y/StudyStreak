@@ -159,3 +159,5 @@ Todas las escrituras automatizadas usan mocks. No se ejercitó PostgreSQL persis
 - Este documento. No se modifican archivos de lógica de los módulos.
 
 El commit de refinamiento usa `refactor(ui): refine retro minimal styling across web and mobile`. El hash real se incorpora en un seguimiento exclusivamente documental, sin amend, igual que en el informe inicial. Fin de la revisión 7.3b; no se inicia otra etapa.
+
+**Commit del refinamiento:** `99579da refactor(ui): refine retro minimal styling across web and mobile` (23 archivos). Tras registrarlo sólo permanecen los 16 elementos ajenos originales, además de este añadido documental hasta su registro. Los commits anteriores `db1f967` y `d4a09d3` se conservan.
