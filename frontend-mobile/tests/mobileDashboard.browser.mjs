@@ -13,7 +13,7 @@ function stats(days) {
   const daily = Array.from({ length: days }, (_, index) => ({ date: new Date(Date.UTC(2026, 10, 31 - days + index)).toISOString().slice(0, 10),
     minutes: mode === 'empty' ? 0 : index === 0 ? 35 : index === days - 1 && days === 30 ? 25 : 0,
     sessions: mode === 'empty' ? 0 : index === 0 ? 2 : index === days - 1 && days === 30 ? 1 : 0 }));
-  return { days, timeZone: 'America/Lima', studyStreak: 4, totalMinutes: 77777, periodMinutes: 77777, daily,
+  return { days, timeZone: 'America/Lima', studyStreak: 4, totalMinutes: 95, verifiedMinutes: 75, estimatedMinutes: 20, completedSessions: 4, weekMinutes: 45, periodMinutes: 45, periodSessions: 2, activeDays: 1, bestStudyStreak: 5, completionPercent: 75, previousMinutes: 25, changePercent: 80, individualMinutes: 25, groupMinutes: 20, groupSessions: 1, activity: daily, hourly: [], weekly: [], monthly: [], byGoal: [], daily,
     verifiedPeriod: mode === 'missing' ? undefined : { minutes: mode === 'empty' ? 0 : days === 7 ? 35 : 60,
       sessions: mode === 'empty' ? 0 : days === 7 ? 2 : 3, daily } };
 }
@@ -55,7 +55,14 @@ try {
   await browser.click('Sign in'); await browser.wait(has('Open menu')); await browser.click('Open menu');
   await browser.click('Dashboard'); await browser.wait(chart('Bar'));
   await browser.waitForDrawerClosed();
-  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Active study days in this period"]').getAttribute('aria-valuenow')`),'1');
+  assert.equal(await browser.evaluate(`!!document.querySelector('[aria-label="Active study days in this period"]')`),false);
+  await browser.wait(`document.body.innerText.includes('All-time recorded')`);
+  assert.equal(statRequests.length,1);
+  await browser.click('Explore study details');await browser.wait(`document.body.innerText.includes('Completion rate')`);
+  await browser.click('Hide study details');
+  await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="academic-panel"]')).find(e=>e.textContent.includes('Time well spent.')).scrollIntoView({block:'start'})`);
+  const insightsShot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/74a-dashboard-insights.png',Buffer.from(insightsShot.data,'base64'));
+  assert.equal(statRequests.length,1);
   await browser.wait(`document.body.innerText.includes('Algebra from page two') && document.body.innerText.includes('Historical / unverified')`);
   assert.equal(await browser.evaluate(`document.body.innerText.includes('77777')`), false);
   assert.equal(await browser.evaluate(`document.body.innerText.includes('Recent session 4')`), false);

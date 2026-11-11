@@ -10,6 +10,7 @@ import { fetchFocusStatistics } from "../services/focusStatisticsService";
 import { verifiedActivity } from "../utils/studyActivity";
 import type { StudyPeriod } from "../utils/studyActivity";
 import StudyActivityChart from "../components/dashboard/StudyActivityChart";
+import FocusInsights from "../components/dashboard/FocusInsights";
 import DashboardMetrics from "../components/dashboard/DashboardMetrics";
 import { DashboardGoals, DashboardRecent } from "../components/dashboard/DashboardContext";
 
@@ -24,6 +25,7 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
             <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>
             <DashboardMetrics days={days} stats={stats} period={period} loading={state.status === "loading"}/>
         </div>
+        {stats && <FocusInsights data={stats} days={days}/>}
         <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
             <DashboardGoals userId={userId}/>
             {from && to && stats ? <DashboardRecent key={`${from}-${to}`} from={from} to={to} timeZone={stats.timeZone}/> : <section className="study-panel p-4 text-sm text-content-muted sm:p-5" aria-label="Recent study activity">{state.status === "loading" ? "Loading your study period…" : "Reload study activity to view recent attempts."}</section>}

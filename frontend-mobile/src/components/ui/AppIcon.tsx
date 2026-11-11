@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, View, type ViewStyle } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 
-export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close';
+export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close' | 'trash';
 export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName; color: string; size?: number; pulse?: number }) {
   const { reduceMotion } = useAppearance();
   const [motion] = useState(() => new Animated.Value(0));
@@ -61,6 +61,7 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
       {name === 'bars' ? [10, 18, 14].map((height, index) => <View key={index} style={box(2 + index * 8, 22 - height, 5, height, 1)} />) : null}
       {name === 'lines' ? <><View style={line(1, 14, 10, -40)} /><View style={line(8, 12, 9, 30)} /><View style={line(14, 8, 11, -55)} /></> : null}
       {name === 'back' ? <><View style={line(3, 11, 18)} /><View style={line(1, 7, 10, -45)} /><View style={line(1, 15, 10, 45)} /></> : null}
+      {name === 'trash' ? <><View style={line(3, 5, 18)}/><View style={box(8, 1, 8, 4, 1)}/><View style={box(5, 5, 14, 17, 2)}/><View style={line(4, 12, 10, 90)}/><View style={line(10, 12, 10, 90)}/></> : null}
       {name === 'close' ? <><View style={line(2, 11, 20, 45)} /><View style={line(2, 11, 20, -45)} /></> : null}
     </Animated.View>
   </View>;

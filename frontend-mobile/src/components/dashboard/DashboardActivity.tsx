@@ -5,7 +5,7 @@ import { useAppearance } from '../../hooks/useAppearance';
 import type { ResourceState } from '../../hooks/useFocusedResource';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
 import { activityNumber, verifiedActivity, type StudyPeriod } from '../../features/dashboard/verifiedActivity';
-import { AcademicPanel as Card, AcademicEmpty, PixelGlyph, PixelProgress } from '../academic/Academic';
+import { AcademicPanel as Card, AcademicEmpty, PixelGlyph } from '../academic/Academic';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { ActivityPlot } from './ActivityPlot';
@@ -53,7 +53,6 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
         : period.minutes === 0 ? <><AcademicEmpty><StatusMessage message="No verified study time in this period." /></AcademicEmpty>
           <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
         : <ActivityPlot period={period} style={style} />}
-      {period ? <PixelProgress value={period.daily.filter(day => day.minutes > 0).length} max={days} label="Active study days in this period" /> : null}
       <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
     </Card>
     {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 12, gap: 4 }}>

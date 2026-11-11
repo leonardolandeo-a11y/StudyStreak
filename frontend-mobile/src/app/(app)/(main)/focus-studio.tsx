@@ -18,7 +18,6 @@ import { FocusArtwork } from '../../../components/focus/FocusArtwork';
 import { FocusSoundCarousel } from '../../../components/focus/FocusSoundCarousel';
 import { FocusSettingsDialog } from '../../../components/focus/FocusSettingsDialog';
 import { MobileFocusAudio } from '../../../features/focus/mobileFocusAudio';
-import { FocusInsightsMobile } from '../../../components/focus/FocusInsightsMobile';
 import {
   advancePomodoro, discardPendingFocusSession, durationMs, formatPomodoroTime, newPomodoro,
   pausePomodoro, remainingPomodoroMs, resetPomodoro, restorePomodoro,
@@ -278,7 +277,6 @@ export default function FocusStudioMobile() {
   const selectedGoal = goals.find(goal => goal.id === selectedGoalId);
   const linkedSession = timer.activeFocusSession;
   const goalLocked = linkedSession !== null;
-  const [insightsOpen, setInsightsOpen] = useState(false);
   const pendingSync = timer.pendingFocusSessions.length;
 
   function updatePreferences(changes: Partial<PomodoroPreferences>) {
@@ -410,12 +408,7 @@ export default function FocusStudioMobile() {
       {saveError ? <><StatusMessage error message={saveError} /><ActionButton title="Retry sync" secondary onPress={retrySync} /></> : null}
       <FocusSoundCarousel selected={timer.preferences.soundscape} playing={playing} loading={loadingAudio} ready={ready}
         onChoose={sound => { void chooseSound(sound); }} />
-      <Card style={{ padding: 16 }}>
-        <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600' }}>Study statistics</Text>
-        <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{timer.focusSessions} local focus cycles on this device · not server-verified session totals</Text>
-        <ActionButton title={insightsOpen ? 'Hide statistics' : 'Explore your study statistics'} secondary onPress={() => setInsightsOpen(value => !value)} />
-        {insightsOpen ? <FocusInsightsMobile refreshKey={syncRevision} /> : null}
-      </Card>
+      <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{timer.focusSessions} local focus cycles on this device · not server-verified session totals</Text>
       <NavigationPressable accessibilityRole="button" accessibilityLabel="Open Study Rooms" onPress={() => router.navigate('/study-rooms')}
         style={{ minHeight: 48, justifyContent: 'center' }}><Text style={{ color: theme.colors.primary, fontSize: 14 }}>Study together · Open Study Rooms ›</Text></NavigationPressable>
       <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Sounds are synthesized on your device without streaming. Audio stops when you leave Focus Studio.</Text>

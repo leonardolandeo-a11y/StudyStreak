@@ -1,231 +1,87 @@
-import { StudyBrand } from "../branding/StudyBrand";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Bell, BadgeCheck, Headphones, LayoutDashboard, Link2, LogOut, PanelLeftClose, PanelLeftOpen, Target, Users } from "lucide-react";
+import { StudyBrand, StudyMark } from "../branding/StudyBrand";
 import { PageTurnBookIcon } from "../icons/PageTurnBookIcon";
 import { UserPanel } from "./UserPanel";
-import {
-    Bell,
-    BadgeCheck,
-    Headphones,
-    LayoutDashboard,
-    Link2,
-    LogOut,
-    Target,
-    Users
-} from "lucide-react";
-
-import {
-    NavLink,
-    useNavigate
-} from "react-router-dom";
-
 import { useAuth } from "../../hooks/useAuth";
 import { ROUTES } from "../../routes/paths";
-import {
-    useUnreadNotifications
-} from "../../hooks/useUnreadNotifications";
+import { useUnreadNotifications } from "../../hooks/useUnreadNotifications";
+import './sidebar.css';
 
-function AppSidebar() {
-    const { currentUser, logout } = useAuth();
-    const {unreadCount} = useUnreadNotifications();
-    const navigate = useNavigate();
+const navigation = [
+    { label: "Dashboard", to: ROUTES.dashboard, icon: LayoutDashboard, description: "Your verified activity and study insights." },
+    { label: "Focus Studio", to: ROUTES.focusStudio, icon: Headphones, description: "Settle into a Pomodoro with your soundscapes." },
+    { label: "Study Rooms", to: ROUTES.studyRooms, icon: Users, description: "Share a study clock with your partners." },
+    { label: "Goals", to: ROUTES.goals, icon: Target, description: "Plan your goals and keep a daily study record." },
+    { label: "Resources", to: ROUTES.resources, icon: PageTurnBookIcon, description: "Find books to support your study goals." },
+    { label: "Tracking", to: ROUTES.trackingLinks, icon: Link2, description: "Manage invitations and study connections." },
+    { label: "Validations", to: ROUTES.validations, icon: BadgeCheck, description: "Review your partners’ study evidence." },
+    { label: "Notifications", to: ROUTES.notifications, icon: Bell, description: "Catch up on requests and study updates." }
+];
 
-
-    function handleLogout() {
-        logout();
-        navigate(ROUTES.login);
+function SidebarDestination({ item, collapsed, count }: { item: typeof navigation[number]; collapsed: boolean; count: number }) {
+    const id = useId();
+    const link = useRef<HTMLAnchorElement>(null);
+    const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [tooltip, setTooltip] = useState<{ top: number; left: number } | null>(null);
+    useEffect(() => {
+        const dismiss = () => setTooltip(null);
+        window.addEventListener("scroll", dismiss, true);
+        window.addEventListener("resize", dismiss);
+        return () => {
+            if (hideTimer.current) clearTimeout(hideTimer.current);
+            window.removeEventListener("scroll", dismiss, true);
+            window.removeEventListener("resize", dismiss);
+        };
+    }, []);
+    function show() {
+        if (hideTimer.current) clearTimeout(hideTimer.current);
+        const rect = link.current?.getBoundingClientRect();
+        if (rect) setTooltip({ top: Math.max(8, Math.min(rect.top, window.innerHeight - 100)), left: rect.right + 10 });
     }
-
-
-    const navigation = [
-        {
-            label: "Dashboard",
-            to: ROUTES.dashboard,
-            icon: LayoutDashboard
-        },
-        {
-            label: "Focus Studio",
-            to: ROUTES.focusStudio,
-            icon: Headphones
-        },
-        {
-            label: "Study Rooms",
-            to: ROUTES.studyRooms,
-            icon: Users
-        },
-        {
-            label: "Goals",
-            to: ROUTES.goals,
-            icon: Target
-        },
-        {
-            label: "Resources",
-            to: ROUTES.resources,
-            icon: PageTurnBookIcon
-        },
-        {
-            label: "Tracking",
-            to: ROUTES.trackingLinks,
-            icon: Link2
-        },
-        {
-            label: "Validations",
-            to: ROUTES.validations,
-            icon: BadgeCheck
-        },
-        {
-            label: "Notifications",
-            to: ROUTES.notifications,
-            icon: Bell,
-            showBadge: true
-        }
-    ];
-
-
-    return (
-    <aside
-        className="
-            sticky top-0
-            hidden h-screen w-64
-            shrink-0 flex-col
-            border-r border-slate-800/80
-            bg-slate-950
-            lg:flex
-        "
-    >
-        {/* Brand */}
-
-        <div className="flex h-16 items-center px-5"><StudyBrand /></div>
-
-        {/* Navigation */}
-
-        <div className="px-3 pt-4">
-
-            <p
-                className="
-                    mb-2 px-3
-                    text-xs font-semibold
-                    uppercase tracking-wider
-                    text-slate-400
-                "
-            >
-                Workspace
-            </p>
-
-
-            <nav className="space-y-1">
-
-                {navigation.map(
-                    ({
-                        label,
-                        to,
-                        icon: Icon,
-                        showBadge
-                    }) => (
-                        <NavLink
-                            key={to}
-                            to={to}
-                            data-nav-icon={label}
-                            className={({ isActive }) => `
-                                group sidebar-nav-link
-                                flex items-center
-                                gap-3
-                                rounded-lg
-                                px-3 py-2.5
-                                text-sm font-medium
-                                transition-colors
-                                ${
-                                    isActive
-                                        ? to === ROUTES.focusStudio
-                                            ? "bg-accent-soft text-accent"
-                                            : "bg-accent-soft text-accent"
-                                        : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
-                                }
-                            `}
-                        >
-                            {({ isActive }) => (
-                                <>
-                                    <Icon
-                                        aria-hidden="true"
-                                        size={18}
-                                        strokeWidth={1.8}
-                                        className={
-                                            isActive
-                                                ? to === ROUTES.focusStudio ? "text-accent" : "text-accent"
-                                                : "text-slate-500 group-hover:text-slate-300"
-                                        }
-                                    />
-
-                                    <span className="flex-1">
-                                        {label}
-                                    </span>
-
-                                    {showBadge &&
-                                        unreadCount > 0 && (
-                                            <span
-                                                className="
-                                                    flex min-w-5
-                                                    items-center
-                                                    justify-center
-                                                    rounded-full
-                                                    bg-sky-500
-                                                    px-1.5 py-0.5
-                                                    text-xs
-                                                    font-bold
-                                                    leading-none
-                                                    text-on-accent
-                                                "
-                                            >
-                                                {unreadCount > 99
-                                                    ? "99+"
-                                                    : unreadCount}
-                                            </span>
-                                        )}
-                                </>
-                            )}
-                        </NavLink>
-                    )
-                )}
-
-            </nav>
-
-        </div>
-
-
-        <div className="flex-1" />
-
-
-        {/* User */}
-
-        <div className="border-t border-slate-800/80 p-3">
-
-            {currentUser && <UserPanel user={currentUser} />}
-
-            <button
-                type="button"
-                onClick={handleLogout}
-                className="
-                    mt-1
-                    flex w-full
-                    items-center gap-3
-                    rounded-lg
-                    px-3 py-2.5
-                    text-sm font-medium
-                    text-slate-500
-                    hover:bg-red-950/30
-                    hover:text-red-300
-                "
-            >
-                <LogOut
-                    size={18}
-                    strokeWidth={1.8}
-                />
-
-                Sign out
-            </button>
-
-        </div>
-    </aside>
-    );
+    function hide() {
+        if (hideTimer.current) clearTimeout(hideTimer.current);
+        hideTimer.current = setTimeout(() => setTooltip(null), 100);
+    }
+    const Icon = item.icon;
+    return <>
+        <NavLink ref={link} to={item.to} data-nav-icon={item.label} aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
+            aria-describedby={tooltip ? id : undefined} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}
+            onClick={() => setTooltip(null)} onKeyDown={event => { if (event.key === 'Escape') setTooltip(null); }}
+            className={({ isActive }) => `group sidebar-nav-link sidebar-destination ${isActive ? 'bg-accent-soft text-accent' : 'text-content-secondary hover:bg-surface-hover hover:text-content'}`}>
+            <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+            {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+            {count > 0 && <span className="sidebar-unread" aria-label={`${count} unread`}>{count > 99 ? "99+" : count}</span>}
+        </NavLink>
+        {tooltip && createPortal(<div id={id} role="tooltip" className="sidebar-description" style={tooltip}
+            onMouseEnter={show} onMouseLeave={hide}>
+            <strong aria-hidden="true">{item.label}</strong><span>{item.description}</span>
+        </div>, document.body)}
+    </>;
 }
 
-
-export default AppSidebar;
+export default function AppSidebar() {
+    const { currentUser, logout } = useAuth();
+    const { unreadCount } = useUnreadNotifications();
+    const navigate = useNavigate();
+    const [collapsed, setCollapsed] = useState(false);
+    return <aside aria-label="Workspace sidebar" data-collapsed={collapsed} className="workspace-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-outline bg-canvas lg:flex">
+        <div className="sidebar-brand">{collapsed ? <StudyMark size={36}/> : <StudyBrand/>}</div>
+        <button type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} aria-controls="workspace-navigation"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="sidebar-collapse study-button" onClick={() => setCollapsed(value => !value)}>
+            {collapsed ? <PanelLeftOpen size={21} aria-hidden="true"/> : <><PanelLeftClose size={21} aria-hidden="true"/><span>Collapse sidebar</span></>}
+        </button>
+        <nav id="workspace-navigation" aria-label="Workspace" className="sidebar-destinations">
+            {navigation.map(item => <SidebarDestination key={`${item.to}-${collapsed}`} item={item} collapsed={collapsed} count={item.to === ROUTES.notifications ? unreadCount : 0}/>)}
+        </nav>
+        <div className="sidebar-account border-t border-outline">
+            {currentUser && <UserPanel user={currentUser} compact={collapsed}/>}
+            <button type="button" onClick={() => { logout(); navigate(ROUTES.login); }} aria-label="Sign out" title={collapsed ? 'Sign out' : undefined}
+                className="sidebar-signout flex min-h-12 w-full items-center gap-3 rounded-control px-3 text-sm text-content-muted hover:bg-danger-surface hover:text-danger">
+                <LogOut size={22} strokeWidth={1.8} aria-hidden="true"/>{!collapsed && <span>Sign out</span>}
+            </button>
+        </div>
+    </aside>;
+}

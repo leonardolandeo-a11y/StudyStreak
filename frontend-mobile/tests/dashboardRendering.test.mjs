@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { controls } from './helpers/appearanceNativeMock.mjs';
 const { AppearanceContext } = await import('../src/contexts/AppearanceContext.ts');
 const { createAppearanceStore } = await import('../src/features/appearance/appearanceStore.ts');
 const { DashboardActivity } = await import('../src/components/dashboard/DashboardActivity.tsx');
@@ -38,4 +39,18 @@ test('loading, empty, error and missing verified contract remain distinct with r
   assert.match(render(h(DashboardActivity, { ...common, state: { status: 'success', data: { ...stats, verifiedPeriod: undefined } } })), /unavailable or inconsistent/);
   const empty = { ...stats, verifiedPeriod: { minutes: 0, sessions: 0, daily: daily.map(day => ({ ...day, minutes: 0, sessions: 0 })) } };
   assert.match(render(h(DashboardActivity, { ...common, state: { status: 'success', data: empty } })), /No verified study time/);
+});
+
+const { FocusInsightsMobile } = await import('../src/components/focus/FocusInsightsMobile.tsx');
+test('recorded insights consume the Dashboard snapshot and keep estimates distinct from verified metrics', () => {
+  controls.clear();
+  const html = render(h(FocusInsightsMobile, { days: 7, data: { ...stats, totalMinutes: 95,
+    verifiedMinutes: 75, estimatedMinutes: 20, weekMinutes: 45, completedSessions: 4, periodMinutes: 45, periodSessions: 2 } }));
+  assert.match(html, /All-time recorded/); assert.match(html, /75 min verified · 20 min historical estimates/);
+  assert.match(html, /Recorded in 7 days/); assert.match(html, /All-time completed sessions/);
+  assert.match(html, /Explore study details/);
+  assert.equal(controls.get('Explore study details')['aria-expanded'],false);
+  assert.equal(controls.get('Explore study details').accessibilityState.expanded,false);
+  assert.doesNotMatch(html, /Retry statistics|Verified focus|Verified sessions/);
+  assert.equal(controls.has('7 days'),false); assert.equal(controls.has('30 days'),false);
 });

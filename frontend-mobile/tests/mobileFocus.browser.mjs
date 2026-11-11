@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
 const claims = { type: 'access', userId: 101, sub: 'fixture-student', email: 'fixture@example.invalid', role: 'USER', exp: Math.floor(Date.now()/1000)+3600 };
 const page = content => ({ content, totalElements: content.length, totalPages: 1, last: true, number: 0, size: 10 });
-let session = null; let failGoals = false; let failStats = true; const writes = [];
+let session = null; let failGoals = false; const failStats = true; const writes = [], statsRequests = [];
 const browser = await mobileBrowser({ intercept: async request => {
   const path = new URL(request.url).pathname;
   if (path === '/login') return { body: { token: `fixture.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`, refreshToken: 'fixture-only' } };
@@ -24,6 +24,7 @@ const browser = await mobileBrowser({ intercept: async request => {
   if (path === '/users/101/goals') return { body: page([{ id: 1, topic: 'Algebra fixture', completed: false }, { id: 2, topic: 'Physics fixture', completed: false }]) };
   if (path.includes('notifications')) return { body: page([]) };
   if (path === '/api/focus-sessions/stats') {
+    statsRequests.push(path);
     if (failStats) return { status: 503 };
     const days = Number(new URL(request.url).searchParams.get('days'));
     const daily = Array.from({ length: days }, (_, index) => ({ date: new Date(Date.UTC(2026,10,index+1)).toISOString().slice(0,10), minutes: 0, sessions: 0 }));
@@ -57,7 +58,9 @@ try {
   assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Decrease Focus"]').getAttribute('aria-disabled')`), 'true');
   await browser.click('Close Focus settings'); await browser.click('Resume session'); await browser.wait(has('Pause timer'));
   assert.equal(session.id, id);
+  assert.deepEqual(statsRequests,[]);
   await browser.click('Open menu'); await browser.click('Dashboard'); await browser.waitForDrawerClosed();
+  await browser.wait(has('Retry activity'));assert.equal(statsRequests.length,1);statsRequests.length=0;
   await browser.click('Open menu'); await browser.click('Focus Studio'); await browser.waitForDrawerClosed(); await browser.wait(has('Pause timer'));
   assert.equal(writes.filter(write => write.path === '/api/study/sessions').length, 1);
   await browser.click('Reset current session'); await browser.wait(has('Start focus'));
@@ -77,11 +80,8 @@ try {
   const image = await browser.command('Page.captureScreenshot', { format: 'png' }); writeFileSync('.expo/focus-studio.png',Buffer.from(image.data,'base64'));
   const soundCards = await browser.evaluate(`document.querySelector('[aria-label="Soundscape carousel"]').querySelectorAll('[role="button"]').length`);
   assert.equal(soundCards,12);
-  await browser.click('Explore your study statistics'); await browser.wait(has('Retry statistics'));
-  failStats = false; await browser.click('Retry statistics'); await browser.wait(`document.body.innerText.includes('Verified focus')`);
-  assert.equal(await browser.evaluate(`document.body.innerText.includes('99 min historical estimates')`),true);
-  await browser.click('30 days'); await browser.wait(`document.body.innerText.includes('Last 30 days · verified only')`);
-  await browser.click('Hide statistics');
+  assert.equal(await browser.evaluate(`document.body.innerText.includes('Explore your study statistics') || document.body.innerText.includes('Time well spent.')`),false);
+  assert.deepEqual(statsRequests,[]);
   assert.equal(await browser.evaluate(`!!document.querySelector('[aria-label="Focus settings"] [data-testid="icon-gear"]')`),true);
   async function pressMenu(expectedMotion) {
     await browser.click('Open menu');

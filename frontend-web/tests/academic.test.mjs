@@ -33,7 +33,7 @@ test('Chrome: scoped academic Dashboard/Focus, themes, pixel progress and respon
   await page.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)})`});
   for(const route of ['/dashboard','/focus-studio']){
    await page.navigate(route);await page.wait('!!document.querySelector(".academic-page")');
-   if(route==='/dashboard')await page.wait(`!!document.querySelector('[aria-label="Active study days in this period"]')`);
+   if(route==='/dashboard')await page.wait(`!!document.querySelector('[aria-label="Recorded study statistics"]')`);
    for(const width of [320,390,768,1440,1920]){
     await page.command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<768});
     for(const mode of ['dark','light','system'])for(const accent of ['mint','blue','purple','orange']){
@@ -51,8 +51,8 @@ test('Chrome: scoped academic Dashboard/Focus, themes, pixel progress and respon
    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/73a-${route.slice(1)}-dark.png`,Buffer.from(shot.data,'base64'));
    if(route==='/dashboard'){
     assert.equal(await page.evaluate(`document.body.textContent.includes('99999')`),false);
-    assert.equal(await page.evaluate(`document.querySelector('[aria-label="Active study days in this period"]').getAttribute('aria-valuenow')`),'1');
-    await page.click('Lines');await page.click('30 days');await page.wait(`document.querySelector('[aria-label="Active study days in this period"]')?.getAttribute('aria-valuemax')==='30'`);
+    assert.equal(await page.evaluate(`!!document.querySelector('[aria-label="Active study days in this period"]')`),false);
+    await page.click('Lines');await page.click('30 days');await page.wait(`!!document.querySelector('[aria-label="Recorded study statistics"]') && document.body.textContent.includes('Across all 30 days')`);
    }else{
     await page.evaluate(`document.querySelector('[aria-label="Pomodoro settings"]').focus()`);assert.equal(await page.evaluate('document.activeElement.matches(":focus-visible")'),true);
     assert.equal(await page.evaluate(`document.querySelectorAll('[data-slot="carousel-item"]').length`),12);

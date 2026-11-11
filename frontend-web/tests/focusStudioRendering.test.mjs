@@ -17,16 +17,16 @@ const library = props => render(h(SoundscapeCarousel, {
   tracks: SOUNDSCAPES, category: 'all', onCategoryChange() {}, selected: 'dream', playing: false, async onChooseTrack() {}, ...props
 }));
 
-test('Focus Studio gives the timer a full-width row, followed by player and goal, sounds and statistics', () => {
+test('Focus Studio gives the timer a full-width row, followed by player and goal, sounds without the relocated statistics', () => {
   const html = render(h(MemoryRouter, {}, h(FocusStudio, { userId: 1 })));
   const timer = html.indexOf('aria-label="Pomodoro session timer"');
   const playing = html.indexOf('aria-label="Now playing"');
   const tools = html.indexOf('aria-label="Session tools"');
   const goal = html.indexOf('aria-label="Study goal"');
   const sounds = html.indexOf('id="sound-library-heading"');
-  const stats = html.indexOf('Explore your study statistics');
-  assert.ok(timer >= 0 && timer < tools && tools < playing && playing < goal && goal < sounds && sounds < stats);
+  assert.ok(timer >= 0 && timer < tools && tools < playing && playing < goal && goal < sounds);
   assert.match(html, /aria-label="Study goal"/);
+  assert.doesNotMatch(html, /Explore your study statistics|Time well spent|Focus study statistics/);
   assert.doesNotMatch(html, /Recorded for this Goal|Session audio|xl:grid-cols-/);
   assert.match(html, /role="timer" aria-live="off" aria-label="25:00 remaining"/);
   assert.match(html, /focus cycles on this device/);

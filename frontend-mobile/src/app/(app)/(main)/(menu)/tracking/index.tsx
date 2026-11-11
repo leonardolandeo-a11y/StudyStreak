@@ -1,3 +1,4 @@
+import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
 import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useContext, useState } from 'react';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
@@ -39,14 +40,18 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
   onRemove: (id: number) => Promise<boolean>;
 }) {
   const styles = useThemedStyles(createStyles);
+  const [expanded, setExpanded] = useState(true);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <NavigationPressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(value => !value)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10, minHeight: 48, borderRadius: 6 }}>
+          <Text aria-hidden style={styles.refresh}>{expanded ? '⌄' : '›'}</Text><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.count}>{state.data?.totalElements ?? '—'}</Text>
+        </NavigationPressable>
         <Pressable accessibilityRole="button" accessibilityLabel={`Refresh ${title}`} onPress={state.reload} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8 }}>
           <Text style={styles.refresh}>Refresh</Text>
         </Pressable>
       </View>
+      <View style={{ gap: 12, display: expanded ? 'flex' : 'none' }} accessibilityElementsHidden={!expanded} importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}>
       {state.loading ? <ActivityIndicator /> : null}
       {state.error ? (
         <>
@@ -57,7 +62,6 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
       {!state.loading && !state.error && state.data?.empty ? <AcademicEmpty><Text style={styles.empty}>{emptyMessage}</Text></AcademicEmpty> : null}
       {!state.loading && !state.error && state.data ? (
         <>
-          <Text style={styles.count}>{state.data.totalElements} total</Text>
           {state.data.content.map((link) => (
             <TrackingLinkCard key={link.id} link={link} mode={mode} currentUserId={currentUserId}
               busy={busy} onRespond={onRespond} onRemove={onRemove} />
@@ -65,6 +69,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
           <PageControls page={state.page} totalPages={state.data.totalPages} onChange={state.setPage} />
         </>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -179,11 +184,11 @@ export default function Tracking() {
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
       <ActionButton compact title="Refresh all connections" secondary onPress={refreshAll} />
-      <TrackingSection title="Pending invitations" emptyMessage="You have no pending invitations."
-        state={pending} mode="pending" currentUserId={currentUser.id} busy={busyId !== null}
-        onRespond={respond} onRemove={remove} />
       <TrackingSection title="Active partners" emptyMessage="You do not have an active partner yet."
         state={active} mode="active" currentUserId={currentUser.id} busy={busyId !== null}
+        onRespond={respond} onRemove={remove} />
+      <TrackingSection title="Pending invitations" emptyMessage="You have no pending invitations."
+        state={pending} mode="pending" currentUserId={currentUser.id} busy={busyId !== null}
         onRespond={respond} onRemove={remove} />
       <TrackingSection title="All tracking links" emptyMessage="No tracking history yet."
         state={history} mode="history" currentUserId={currentUser.id} busy={busyId !== null}
@@ -198,7 +203,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
   section: { gap: 12, paddingTop: 6 },
   sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  sectionTitle: { color: palette.text, fontSize: 20, fontWeight: '700', flex: 1 },
+  sectionTitle: { color: palette.text, fontSize: 18, fontWeight: '700', flex: 1 },
   refresh: { color: palette.primary, fontSize: 14, fontWeight: '700' },
   count: { color: palette.muted, fontSize: 12 },
   empty: { color: palette.muted, fontSize: 14, backgroundColor: palette.surface, padding: 12, borderRadius: 12 },

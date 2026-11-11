@@ -9,10 +9,11 @@ const page=content=>({content,empty:!content.length,totalElements:content.length
 const link=()=>({id:1,requesterId:owner,receiverId:3,requesterUsername:'fixture-student',receiverUsername:'partner',status:'ACCEPTED'});
 const room=()=>({id:'fixture-room',name:'Fixture room',inviteCode:'ABCDEFGHIJ',ownerId:owner,host:true,phase:'FOCUS',timerStatus:'PAUSED',remainingSeconds:1500,endsAt:null,serverNow:new Date().toISOString(),version:1,
   members:[{userId:owner,username:'fixture-student',host:true,online:true,studying:false},{userId:3,username:'partner',host:false,online:true,studying:true},{userId:4,username:'unapproved',host:false,online:true,studying:false}]});
-const images=[],beats=[],privacyWrites=[];
+const images=[],beats=[],privacyWrites=[],trackingReads=[],trackingWrites=[];
 const tokens=()=>({token:`fixture.${Buffer.from(JSON.stringify({type:'access',userId:owner,sub:owner===101?'fixture-student':'next-student',email:'fixture@example.invalid',role:'USER',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')}.signature`,refreshToken:'fixture-only'});
 const browser=await mobileBrowser({intercept:async request=>{
   const path=new URL(request.url).pathname;
+  if(path.startsWith('/api/tracking-links')){if(request.method==='GET')trackingReads.push(path);else trackingWrites.push(request.method);}
   if(path==='/login')return {body:tokens()};
   if(path==='/logout')return {status:204};
   if(path==='/api/profile/privacy'){
@@ -46,7 +47,19 @@ async function openMember(){await browser.click('View profile of partner');await
 try{
   await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await browser.navigate('/');await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture-student');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');await browser.wait(has('Open menu'));
-  assert.equal(beats.length,0);await browser.click('Tracking');await browser.wait(has('View profile of partner'));await reviewNativeModule(browser,'tracking');await openMember();await reviewNativeModule(browser,'member');
+  assert.equal(beats.length,0);await browser.click('Tracking');await browser.wait(has('View profile of partner'));
+  await browser.wait(`!document.body.innerText.includes('Loading')`);
+  const readCount=trackingReads.length;
+  for(const group of ['Active partners','Pending invitations','All tracking links']){
+    await browser.click(group);assert.equal(await browser.evaluate(`document.querySelector('[aria-label="${group}"]').getAttribute('aria-expanded')`),'false');
+    await browser.click(group);assert.equal(await browser.evaluate(`document.querySelector('[aria-label="${group}"]').getAttribute('aria-expanded')`),'true');
+  }
+  assert.equal(trackingReads.length,readCount);
+  assert.equal(await browser.evaluate(`Array.from(document.querySelectorAll('[role="button"]')).some(b=>b.textContent.trim()==='View profile')`),false);
+  await browser.click('Remove connection');await browser.wait(text('Remove this tracking link?'));
+  const confirmation=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/74a-tracking-confirm.png',Buffer.from(confirmation.data,'base64'));
+  await browser.click('Keep');assert.equal(trackingWrites.length,0);
+  await reviewNativeModule(browser,'tracking');await openMember();await reviewNativeModule(browser,'member');
   assert.equal(await browser.evaluate(text('Online')),true);assert.equal(await browser.evaluate(text('Verified focus time')),true);assert.equal(await browser.evaluate(has('Edit Profile')),false);
   member={...member,statistics:{verifiedMinutes:12.5},presence:{...member.presence,status:'OFFLINE',lastSeenAt:'2026-11-08T11:00:00Z'}};
   await browser.click('Refresh member profile');await browser.wait(text('Offline'));assert.equal(await browser.evaluate(text('Last seen')),true);assert.equal(await browser.evaluate(text('Verified sessions')),false);
@@ -75,7 +88,9 @@ try{
   for(const width of [320,390,768,1440]){await browser.command('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});await browser.wait('document.documentElement.scrollWidth<=innerWidth');}
   await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/social-member.png',Buffer.from(shot.data,'base64'));
-  accepted=false;await browser.click('Refresh member profile');await browser.wait(text('Profile unavailable'));assert.equal(await browser.evaluate(text('Shared algebra biography')),false);
+  await backToMenu();await browser.wait(has('Remove connection'));await browser.click('Remove connection');await browser.wait(text('Remove this tracking link?'));await browser.click('Remove');
+  await browser.wait(text('You do not have an active partner yet.'));assert.equal(accepted,false);assert.deepEqual(trackingWrites,['DELETE']);
+  await browser.evaluate('history.forward()');await browser.wait(has('Refresh member profile'));await browser.click('Refresh member profile');await browser.wait(text('Profile unavailable'));assert.equal(await browser.evaluate(text('Shared algebra biography')),false);
   await backToMenu();await browser.click('Refresh all connections');await browser.wait(`!document.querySelector('[aria-label="View profile of partner"]')`);
   await browser.click('Open menu');await browser.click('Open your profile, Fixture Student');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));
   owner=102;privacy={showPresence:false,showLastSeen:false,shareVerifiedMinutes:false,shareVerifiedSessions:false};await browser.fill('[aria-label="Username"]','next-student');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');await browser.wait(has('Open menu'));await browser.click('Tracking');await browser.wait(text('You do not have an active partner yet.'));

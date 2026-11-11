@@ -31,7 +31,7 @@ export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics 
   {section==='Activity'&&<div className="space-y-6">
    <div className="grid gap-3 sm:grid-cols-3">
     <MetricCard label="Active days" value={data.activeDays} detail={`In the last ${data.days} days`}/>
-    <MetricCard label="Focus streak" value={`${data.studyStreak} days`} detail={`Best: ${data.bestStudyStreak} · separate from Daily Records`}/>
+    <MetricCard label="Best study streak" value={`${data.bestStudyStreak} days`} detail="All completed study days · personal best"/>
     <MetricCard label="Completion rate" value={data.completionPercent===null?'—':`${data.completionPercent.toFixed(0)}%`} detail="Completed / verified attempts started in this period"/>
    </div>
    <div className="study-panel space-y-5">

@@ -7,7 +7,6 @@ import {
     RotateCcw, Settings, Sparkles, Volume2, VolumeX
 } from "lucide-react";
 import { PomodoroAudio } from "./pomodoroAudio";
-import FocusInsights from "./FocusInsights";
 import { TrackArtwork } from "../focus/TrackArtwork";
 import { SoundscapeCarousel } from "../focus/SoundscapeCarousel";
 import { FocusDurationDialog } from "../focus/FocusDurationDialog";
@@ -94,7 +93,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
         Number.isSafeInteger(requestedGoalId) && requestedGoalId > 0
             ? requestedGoalId : readSelectedGoal(goalKey)
     );
-    const [statisticsRevision, setStatisticsRevision] = useState(0);
     const [saveError, setSaveError] = useState<string | null>(null);
     const inFlight = useRef(new Set<string>());
     const failed = useRef(new Set<string>());
@@ -135,7 +133,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 if (response.session) setSelectedGoalId(response.session.goal_id);
                 setTimer(previous => recoverTrackedTimer({ ...previous, pendingFocusSessions:
                     mergePending(previous.pendingFocusSessions, pending) }, response.session, response.serverNow));
-                setStatisticsRevision(value => value + 1);
             } catch { if (active) setSaveError('Recording recovery unavailable. Pending sessions remain on this device.'); } finally { recovering = false; }
         };
         void recover();
@@ -197,7 +194,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 failed.current.delete(pending.sessionId);
                 setTimer(previous => discardPendingFocusSession(previous, pending.sessionId));
                 setSaveError(null);
-                setStatisticsRevision(value => value + 1);
             }).catch(cause => {
                 failed.current.add(pending.sessionId);
                 setSaveError(getApiErrorMessage(cause, "Awaiting server confirmation. Pending session retained for retry."));
@@ -506,7 +502,6 @@ export default function FocusStudio({ userId }: { userId: number }) {
             {settingsOpen && <FocusDurationDialog onClose={() => setSettingsOpen(false)} preferences={timer.preferences}
                 locked={running || goalLocked} onSave={saveSettings} />}
             <SoundscapeCarousel tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
-            <details className="study-panel"><summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold text-content">Explore your study statistics</summary><div className="mt-4"><FocusInsights refreshKey={statisticsRevision}/></div></details>
             <p className="border-t border-outline pt-4 text-xs leading-relaxed text-content-muted">Original audio generated locally. Timer and preferences stay saved in this browser. Only server-confirmed study time appears in your recorded totals.</p>
         </div>
     );

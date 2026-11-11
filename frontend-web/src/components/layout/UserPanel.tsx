@@ -7,14 +7,14 @@ import { NavLink } from "react-router-dom";
 import { ROUTES } from "../../routes/paths";
 import type { AuthenticatedUser } from "../../types/auth";
 
-export function UserPanel({ user, onSettingsClick, onProfileClick }: { user: Pick<AuthenticatedUser, "username" | "email">; onSettingsClick?: () => void; onProfileClick?: () => void }) {
+export function UserPanel({ user, onSettingsClick, onProfileClick, compact = false }: { user: Pick<AuthenticatedUser, "username" | "email">; onSettingsClick?: () => void; onProfileClick?: () => void; compact?: boolean }) {
     const shared = useProfile();
     const social = useSocial();
     const name = shared?.profile?.presentationName || user.username;
-    return <div role="group" aria-label="User panel" className="flex min-w-0 items-center gap-2 rounded-control px-2 py-3">
+    return <div role="group" aria-label="User panel" className={`flex min-w-0 gap-2 rounded-control py-2 ${compact ? "flex-col items-center" : "items-center px-2"}`}>
         <NavLink to={ROUTES.profile} onClick={onProfileClick} aria-label={`Open profile for ${name}`} className="sidebar-profile-link flex min-w-0 flex-1 items-center gap-2 rounded-control px-1 py-1">
             <span className="relative shrink-0"><ProfileAvatar name={name} src={shared?.avatarUrl} /><PresenceDot presence={social?.presence} /></span>
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-content" title={name}>{name}</p><p className="truncate text-xs text-content-muted" title={user.email}>{user.email}</p></div>
+            {!compact && <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-content" title={name}>{name}</p><p className="truncate text-xs text-content-muted" title={user.email}>{user.email}</p></div>}
         </NavLink>
         <NavLink to={ROUTES.settings} onClick={onSettingsClick} aria-label="Open settings" title="Settings"
             className={({ isActive }) => `flex size-11 shrink-0 items-center justify-center rounded-control ${isActive ? "bg-accent-soft text-accent" : "text-content-secondary hover:bg-surface-hover"}`}>

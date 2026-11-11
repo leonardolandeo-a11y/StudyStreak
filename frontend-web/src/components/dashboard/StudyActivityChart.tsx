@@ -1,4 +1,4 @@
-import { AcademicEmpty, PixelProgress } from "../academic/Academic";
+import { AcademicEmpty } from "../academic/Academic";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartColumn, ChartLine, RefreshCw } from "lucide-react";
@@ -55,8 +55,6 @@ export default function StudyActivityChart({ days, onDaysChange, period, status,
                     </Chart>
                 </ResponsiveContainer>
             </div>}
-            <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-outline pt-3 text-xs text-content-muted"><span>{period.daily.filter(day => day.minutes > 0).length} active days of {days}</span><span>Completed individual & group sessions</span></div>
-            <PixelProgress value={period.daily.filter(day => day.minutes > 0).length} max={days} label="Active study days in this period" />
             <details className="mt-2 text-sm text-content-secondary"><summary className="w-fit cursor-pointer rounded-control px-1 py-2 font-medium">View daily data</summary><div className="mt-2 overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Daily verified focus in {timeZone}; minutes and completed sessions</caption><thead><tr className="border-b border-outline text-content-muted"><th scope="col" className="py-2 pr-3">Date</th><th scope="col" className="py-2 pr-3">Minutes</th><th scope="col" className="py-2">Sessions</th></tr></thead><tbody>{period.daily.map(day => <tr key={day.date} className="border-b border-outline"><th scope="row" className="py-2 pr-3 font-normal"><time dateTime={day.date}>{activityDate(day.date, true)}</time></th><td className="pr-3 tabular-nums">{activityNumber(day.minutes)}</td><td className="tabular-nums">{day.sessions}</td></tr>)}</tbody></table></div></details>
         </>}
         <p className="mt-3 text-xs leading-relaxed text-content-muted">Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</p>

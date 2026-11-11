@@ -6,6 +6,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useFocusedResource } from '../../../hooks/useFocusedResource';
 import { getMobileFocusStatistics } from '../../../features/focus/focusStatisticsService';
 import { verifiedActivity, type StudyPeriod } from '../../../features/dashboard/verifiedActivity';
+import { FocusInsightsMobile } from '../../../components/focus/FocusInsightsMobile';
 import { DashboardActivity } from '../../../components/dashboard/DashboardActivity';
 import { DashboardGoals, DashboardRecent } from '../../../components/dashboard/DashboardContext';
 import { ActionButton } from '../../../components/ui/ActionButton';
@@ -25,6 +26,7 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
     <AcademicHeading title={`Welcome back, ${username}`} eyebrow="YOUR STUDY SPACE" />
     <ActionButton compact title="Start focusing" onPress={() => router.navigate('/focus-studio')} />
     <DashboardActivity days={days} onDaysChange={setDays} state={state} retry={retry} />
+    {stats ? <FocusInsightsMobile data={stats} days={days}/> : null}
     <DashboardGoals userId={userId} />
     {period && stats ? <DashboardRecent from={period.daily[0].date} to={period.daily.at(-1)!.date} timeZone={stats.timeZone} />
       : <StatusMessage message={state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'} />}

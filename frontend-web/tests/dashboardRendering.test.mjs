@@ -102,3 +102,16 @@ test('recent rows retain actual saved time, source, state and account-local date
   assert.match(html, /Nov 5, 11:30 PM/);
   assert.match(html, /Chart uses completion dates/);
 });
+
+const { default: Insights } = await server.ssrLoadModule('/src/components/dashboard/FocusInsights.tsx');
+test('relocated recorded statistics retain historical labels and share the Dashboard period without another selector', () => {
+  const data = { days: 7, daily, activity: daily, byGoal: [], hourly: [], weekly: [], monthly: [],
+    timeZone: 'America/Lima', totalMinutes: 95, verifiedMinutes: 75, estimatedMinutes: 20,
+    completedSessions: 4, periodMinutes: 45, periodSessions: 2, weekMinutes: 45,
+    activeDays: 1, studyStreak: 2, bestStudyStreak: 5, completionPercent: null };
+  const html = render(h(MemoryRouter, {}, h(Insights, { data, days: 7 })));
+  assert.match(html, /All-time recorded/); assert.match(html, /75 min verified · 20 min historical estimates/);
+  assert.match(html, /Recorded in 7 days/); assert.match(html, /All-time completed sessions/);
+  assert.match(html, /Best study streak/); assert.match(html, /Explore study details/);
+  assert.doesNotMatch(html, /Refresh focus statistics|Study period|Verified focus|Active study days in this period/);
+});
