@@ -1,3 +1,4 @@
+import { AcademicHeading } from '../../../../../components/academic/Academic';
 import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -103,7 +104,7 @@ export default function ReviewedRecordDetails() {
 
   return (
     <Screen themed compact>
-      <Text style={styles.title}>Daily record</Text>
+      <AcademicHeading title="Daily record" eyebrow="STUDY RECORD" glyph="note" />
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? (
         <>
@@ -168,7 +169,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, fontWeight: '700' },
   title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   card: { padding: 14, gap: 10, borderWidth: 1, borderColor: palette.border,
-    borderRadius: 16, backgroundColor: palette.surface },
+    borderRadius: 8, backgroundColor: palette.surface },
   heading: { color: palette.text, fontSize: 21, fontWeight: '700' },
   body: { color: palette.text, fontSize: 15, lineHeight: 24 },
   muted: { color: palette.muted, fontSize: 14, lineHeight: 22 },

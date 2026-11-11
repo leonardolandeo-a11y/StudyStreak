@@ -1,3 +1,4 @@
+import { reviewNativeModule } from './helpers/academicModuleReview.mjs';
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
 import {mobileBrowser} from './helpers/mobileBrowser.mjs';
@@ -60,7 +61,7 @@ const gone=()=>browser.wait(`!document.querySelector('[aria-modal="true"]')`);
 async function drawer(label){await browser.click('Open menu');await browser.click(label);await browser.waitForDrawerClosed();}
 async function filter(label){await browser.wait(has(label));await browser.evaluate(`document.querySelector('[aria-label="${label}"]').scrollIntoView({inline:'center',block:'nearest'})`);await browser.click(label);}
 async function search(q){await browser.fill('[aria-label="Book search topic"]',q);await browser.click('Search books');}
-async function snap(name){await browser.evaluate('document.activeElement?.blur()');const image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/parity65b-${name}.png`,Buffer.from(image.data,'base64'));}
+async function snap(name){await reviewNativeModule(browser,name);await browser.evaluate('document.activeElement?.blur()');const image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/parity65b-${name}.png`,Buffer.from(image.data,'base64'));}
 try{
  await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await browser.navigate('/');await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture');await browser.fill('[aria-label="Password"]','fixture-password');await browser.click('Sign in');await browser.wait(has('Study Rooms'));
  await browser.click('Study Rooms');await browser.wait(has('Create a study room'));await browser.click('Create a study room');await browser.wait(has('Room name'));await browser.fill('[aria-label="Room name"]','Fixture room');await browser.click('Create room');await gone();await browser.wait(text('Synced · server confirmed'));await browser.wait(has('Start timer'));

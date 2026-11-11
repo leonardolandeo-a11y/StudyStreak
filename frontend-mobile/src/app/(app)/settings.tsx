@@ -1,7 +1,7 @@
+import { AcademicHeading, AcademicPanel as Card } from '../../components/academic/Academic';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { SocialPrivacySettings } from '../../components/social/SocialPrivacySettings';
 import { Screen } from '../../components/ui/Screen';
-import { Card } from '../../components/ui/Card';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { StatusMessage } from '../../components/ui/StatusMessage';
 import { AppIcon } from '../../components/ui/AppIcon';
@@ -13,7 +13,7 @@ export default function Settings() {
   const { preferences, theme, systemMotion, persistenceError, setPreferences, retryPersistence } = useAppearance();
   const styles = useThemedStyles(createStyles);
   return <Screen themed compact>
-    <Text accessibilityRole="header" style={styles.title}>Appearance</Text>
+    <AcademicHeading title="Appearance" eyebrow="SETTINGS" glyph="gear" />
     <Card style={styles.section}>
       <Text accessibilityRole="header" style={styles.heading}>Theme</Text>
       <View style={styles.choices}>
@@ -56,11 +56,11 @@ function AppearanceChoice({ label, selected, onPress, color, compact = false, ch
   label: string; selected: boolean; onPress(): void; color: string; compact?: boolean; children?: React.ReactNode;
 }) {
   const { theme } = useAppearance();
-  const size = compact ? 44 : 56;
+  const size = compact ? 36 : 44;
   return <NavigationPressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}
-    style={({ pressed }) => ({ flex: 1, minHeight: compact ? 82 : 94, alignItems: 'center', justifyContent: 'center', gap: 8,
+    style={({ pressed }) => ({ flex: 1, minHeight: compact ? 68 : 78, alignItems: 'center', justifyContent: 'center', gap: 8,
       borderRadius: 10, opacity: pressed ? .7 : 1 })}>
-    <View style={{ width: size, height: size, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.borderStrong,
+    <View style={{ width: size, height: size, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.borderStrong,
       backgroundColor: color, alignItems: 'center', justifyContent: 'center' }}>
       {children}
       {selected ? <View style={{ position: 'absolute', right: -5, bottom: -5, width: 19, height: 19, borderRadius: 10,

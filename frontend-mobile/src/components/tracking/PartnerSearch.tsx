@@ -122,7 +122,7 @@ export function PartnerSearch({ onSend, busy }: {
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 12, borderRadius: 16, gap: 10 },
+  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 12, borderRadius: 8, gap: 10 },
   heading: { color: palette.text, fontSize: 19, fontWeight: '700' },
   description: { color: palette.muted, fontSize: 13, lineHeight: 21 },
   input: { backgroundColor: palette.background, color: palette.text, borderWidth: 1, borderColor: palette.border, borderRadius: 12, minHeight: 48, paddingHorizontal: 14, fontSize: 15 },

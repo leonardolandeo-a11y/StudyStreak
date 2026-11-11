@@ -48,7 +48,11 @@ test('Chrome: social authorization states, privacy, navigation, themes, keyboard
     assert.ok(await page.evaluate('document.querySelector("[data-social-profile]").textContent.includes("<b>Plain text</b>") && !document.querySelector("[data-social-profile] b")'));
     assert.equal(pulses,0);
     social={...social,statistics:{verifiedMinutes:12.5},presence:{status:'ONLINE',lastSeenAt:null,serverNow:'2026-11-07T12:00:00Z'}};
+    const oldBanner=await page.evaluate(`document.querySelector('[data-social-profile] img').src`);
     await page.click('Refresh profile');await page.wait('!!document.querySelector("[data-social-profile] [data-presence-status=ONLINE]")');
+    // Profile text can commit before protected images finish. The poll guard stays
+    // pending until that load completes, so wait for the refreshed asset first.
+    await page.wait(`document.querySelector('[data-social-profile] img')?.src!==${JSON.stringify(oldBanner)}&&document.querySelector('[data-social-profile] img')?.naturalWidth>0`);
     assert.ok(await page.evaluate('document.querySelector("[data-presence-status=ONLINE]").classList.contains("text-success") && !document.querySelector("[data-social-profile] [role=img]")'));
     assert.ok(await page.evaluate('document.querySelector("[aria-label^=Shared]").textContent.includes(new Intl.NumberFormat(undefined,{maximumFractionDigits:2}).format(12.5)) && !document.querySelector("[aria-label^=Shared]").textContent.includes("Verified sessions")'));
     social={...social,presence:{status:'OFFLINE',lastSeenAt:'2026-11-07T10:00:00Z',serverNow:'2026-11-07T12:00:00Z'}};

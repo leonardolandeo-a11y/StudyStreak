@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { RecordedSummary } from "../components/study/RecordedSummary";
 import { useState,useEffect } from "react";
 import { Link,useParams, useNavigate } from "react-router-dom";
@@ -266,7 +267,7 @@ useEffect(() => {
         );
     }
     return (
-    <div className="space-y-8">
+    <div className="academic-page academic-module space-y-6">
 
         <section
             className="
@@ -285,26 +286,7 @@ useEffect(() => {
                     gap-4
                 "
             >
-                <div>
-                    <p className="text-sm font-medium text-sky-400">
-                        Goal details
-                    </p>
-
-                    <h1
-                        className="
-                            mt-2
-                            text-3xl font-bold
-                            tracking-tight
-                            text-slate-100
-                        "
-                    >
-                        {goal.topic}
-                    </h1>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                        Goal #{goal.id}
-                    </p>
-                </div>
+                <AcademicHeading title={goal.topic} eyebrow="Goal details" description={`Goal #${goal.id}`} glyph="note" />
 
                 <span
                     className={`

@@ -1,10 +1,10 @@
+import { AcademicHeading, AcademicPanel as Card } from '../../components/academic/Academic';
 import { Text } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppearance } from '../../hooks/useAppearance';
 import { useNavigationData } from '../../contexts/NavigationDataContext';
 import { Screen } from '../../components/ui/Screen';
-import { Card } from '../../components/ui/Card';
 import { StatusMessage } from '../../components/ui/StatusMessage';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { ProfileCover } from '../../components/profile/ProfileCover';
@@ -25,6 +25,7 @@ export default function Profile() {
     ? new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`)) : null;
   return <>
     <Screen themed compact onRefresh={retry} refreshing={loading}>
+    <AcademicHeading title="Profile" eyebrow="YOUR SPACE" glyph="book" />
       {saved ? <StatusMessage variant="success" message="Profile saved." /> : null}
       {loading ? <StatusMessage message="Loading your profile…" /> : null}
       {error ? <><StatusMessage error message={error} /><ActionButton title="Retry profile" onPress={retry} /></> : null}

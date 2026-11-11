@@ -286,7 +286,9 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     for (const route of routes) {
       console.log(`Appearance route: ${route}`);
       await navigate(route);
-      assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(248, 250, 252)', route);
+      // Auth uses the fullscreen illustration from 7.2; its form remains theme-aware.
+      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(248, 250, 252)', route);
+      else assert.ok(await evaluate('!!document.querySelector(".auth-content")'));
       assert.equal(await evaluate('document.documentElement.dataset.accent'), 'blue', route);
       assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), 'rgb(15, 23, 42)', route);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `${route} desktop overflow`);
@@ -311,7 +313,8 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     assert.equal(await evaluate('document.querySelector("input[type=checkbox]").checked'), false);
     for (const path of ['/login', '/dashboard', '/focus-studio']) {
       await navigate(path);
-      assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(11, 16, 20)');
+      if (path === '/login') assert.equal(await evaluate('getComputedStyle(document.querySelector(".auth-content h1")).color'), 'rgb(241, 245, 249)');
+      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(11, 16, 20)');
     }
     await navigate('/settings');
     // Storage denial is reported truthfully while preferences still apply.

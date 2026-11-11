@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useEffect, useState } from "react";
@@ -278,14 +279,8 @@ function Validations() {
     if (!currentUser) return null;
 
     return (
-        <TrackingAvatarProvider revision={partnersRevision}><div className="space-y-8">
-            <header>
-                <p className="text-sm font-medium text-sky-400">Review progress</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Validations</h1>
-                <p className="mt-2 max-w-2xl text-slate-400">
-                    Review a connected partner's progress and approve or reject a daily record.
-                </p>
-            </header>
+        <TrackingAvatarProvider revision={partnersRevision}><div className="academic-page academic-module space-y-6">
+            <AcademicHeading title="Validations" eyebrow="Review progress" description="Review a connected partner's progress and approve or reject a daily record." glyph="note" />
 
             <nav aria-label="Validation steps" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[

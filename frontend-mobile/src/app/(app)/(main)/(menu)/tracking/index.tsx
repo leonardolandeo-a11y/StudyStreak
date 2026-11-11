@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useContext, useState } from 'react';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -53,7 +54,7 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
           <ActionButton compact title="Retry" secondary onPress={state.reload} />
         </>
       ) : null}
-      {!state.loading && !state.error && state.data?.empty ? <Text style={styles.empty}>{emptyMessage}</Text> : null}
+      {!state.loading && !state.error && state.data?.empty ? <AcademicEmpty><Text style={styles.empty}>{emptyMessage}</Text></AcademicEmpty> : null}
       {!state.loading && !state.error && state.data ? (
         <>
           <Text style={styles.count}>{state.data.totalElements} total</Text>
@@ -69,7 +70,6 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
 }
 
 export default function Tracking() {
-  const styles = useThemedStyles(createStyles);
   const social = useContext(SocialContext);
   const { currentUser } = useAuth();
   const pendingLoader = useCallback((page: number, signal: AbortSignal) => trackingLinkService.pending(page, signal), []);
@@ -175,8 +175,7 @@ export default function Tracking() {
       {actionError ? <StatusMessage error message={actionError} /> : null}
     </CreationModal>
     <Screen themed scrollRef={menuScroll}>
-      <Text style={styles.title}>Tracking Links</Text>
-      <Text style={styles.subtitle}>Connect with study partners and validate progress together.</Text>
+      <AcademicHeading title="Tracking Links" eyebrow="STUDY CONNECTIONS" glyph="people" description="Connect with study partners and validate progress together." />
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
       <ActionButton compact title="Refresh all connections" secondary onPress={refreshAll} />

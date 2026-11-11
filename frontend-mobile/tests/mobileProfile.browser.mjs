@@ -1,3 +1,4 @@
+import { reviewNativeModule } from './helpers/academicModuleReview.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
@@ -51,7 +52,7 @@ try{
   for(const width of [320,390,768,1440]){await browser.command('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});await browser.wait('document.documentElement.scrollWidth<=innerWidth');}
   await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await browser.evaluate(`document.querySelector('[aria-label="Edit Profile"]').scrollIntoView({block:'end'})`);
-  let image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/profile-mobile.png',Buffer.from(image.data,'base64'));
+  let image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/profile-mobile.png',Buffer.from(image.data,'base64'));await reviewNativeModule(browser,'profile');
   await browser.click('Edit Profile');await browser.wait(has('Bio'));await browser.wait(`!!document.activeElement?.closest('[aria-modal="true"]')`);await browser.key('Tab');assert.equal(await browser.evaluate(`!!document.activeElement?.closest('[aria-modal="true"]')`),true);
   await browser.evaluate(`document.querySelector('[aria-label="Display name"]').focus()`);
   await browser.wait(`getComputedStyle(document.querySelector('[aria-label="Display name"]')).borderTopColor !== getComputedStyle(document.querySelector('[aria-label="Bio"]')).borderTopColor`);

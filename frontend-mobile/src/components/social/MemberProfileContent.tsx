@@ -1,10 +1,10 @@
+import { AcademicHeading, AcademicPanel as Card } from '../academic/Academic';
 import { Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import type { MemberState } from '../../features/social/socialDirectory';
 import { ProfileCover } from '../profile/ProfileCover';
 import { PresenceLabel } from './PresenceLabel';
 import { Screen } from '../ui/Screen';
-import { Card } from '../ui/Card';
 import { StatusMessage } from '../ui/StatusMessage';
 import { ActionButton } from '../ui/ActionButton';
 export function MemberProfileContent({ member, onRefresh }: { member: MemberState | undefined; onRefresh(): void }) {
@@ -15,6 +15,7 @@ export function MemberProfileContent({ member, onRefresh }: { member: MemberStat
     && new Date(`${rawDate}T12:00:00Z`).toISOString().slice(0,10) === rawDate
     ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${rawDate}T12:00:00Z`)) : null;
   return <Screen themed compact>
+    <AcademicHeading title="Member profile" eyebrow="TRACKING PARTNER" glyph="people" />
     {!member || member.status === 'loading' ? <StatusMessage message="Loading member profile…" /> : null}
     {member?.status === 'unavailable' ? <StatusMessage error message="Profile unavailable. An accepted Tracking connection is required." /> : null}
     {member?.status === 'error' ? <StatusMessage error message="Could not load this profile. Status and private images are unavailable." /> : null}
@@ -30,7 +31,7 @@ export function MemberProfileContent({ member, onRefresh }: { member: MemberStat
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {([['verifiedMinutes','Verified focus time',' min'],['verifiedSessions','Verified sessions','']] as const).map(([field,label,unit]) => {
           const value = profile.statistics?.[field];
-          return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? <View key={field} style={{ flexGrow: 1, flexBasis: '45%', minWidth: 120, backgroundColor: colors.surface, padding: 12, borderRadius: 12, gap: 6 }}>
+          return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? <View key={field} style={{ flexGrow: 1, flexBasis: '45%', minWidth: 120, backgroundColor: colors.surface, padding: 12, borderRadius: 8, gap: 6 }}>
             <Text style={{ color: colors.muted, fontSize: 13 }}>{label}</Text>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>{new Intl.NumberFormat('en', { maximumFractionDigits: 2 }).format(value)}{unit}</Text>
             <Text style={{ color: colors.muted, fontSize: 12 }}>Shared by this member</Text>

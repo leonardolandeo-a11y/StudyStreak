@@ -1,3 +1,4 @@
+import { PixelGlyph } from "../academic/Academic";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, RefreshCw, Users, X } from "lucide-react";
@@ -55,8 +56,8 @@ export function StudyPartnersPanel({ open, rendered, generation, userId, trigger
         { label: "Offline", matches: item => item.presence?.status === "OFFLINE" },
         { label: "Other partners", matches: item => !item.presence || item.presence.status === "HIDDEN" },
     ];
-    const content = <div className="partners-panel-shell flex h-full min-h-0 flex-col bg-surface text-content">
-        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-outline px-4 py-4"><div><p className="study-kicker">Study together</p><h2 id={`${id}-title`} className="mt-1 text-lg font-semibold">Study partners</h2></div>
+    const content = <div className="academic-page academic-module partners-panel-shell flex h-full min-h-0 flex-col bg-surface text-content">
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-outline px-4 py-4"><div><p className="study-kicker flex items-center gap-2"><PixelGlyph name="people" size={20} />Study together</p><h2 id={`${id}-title`} className="mt-1 text-lg font-semibold">Study partners</h2></div>
             <button ref={closeButton} type="button" aria-label="Close study partners" title="Close study partners" className="study-button size-11 shrink-0 p-0" onClick={onClose}><X size={18} aria-hidden="true" /></button></header>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3" data-partners-scroll>
             <div className="mb-3 flex items-center justify-between gap-2"><span className="text-xs text-content-muted">Accepted Tracking connections</span><button type="button" className="study-button size-11 shrink-0 p-0" aria-label="Refresh study partners" title="Refresh study partners" onClick={refresh} disabled={data.loading}><RefreshCw size={16} aria-hidden="true" /></button></div>

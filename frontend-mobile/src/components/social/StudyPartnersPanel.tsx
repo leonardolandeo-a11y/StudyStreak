@@ -1,3 +1,4 @@
+import { PixelGlyph } from '../academic/Academic';
 import { useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState, Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,7 +43,8 @@ export function StudyPartnersBody({ state, onClose, onMember, onManage, onRetry,
   const { theme: { colors } } = useAppearance();
   return (
     <SafeAreaView accessibilityViewIsModal style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, minHeight: 56, backgroundColor: colors.surface }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10, minHeight: 56, backgroundColor: colors.surface }}>
+        <PixelGlyph name="people" size={24} />
         <Text accessibilityRole="header" style={{ flex: 1, color: colors.text, fontSize: 20, fontWeight: '600' }}>Study Partners</Text>
         <NavigationPressable accessibilityRole="button" accessibilityLabel="Close Study Partners" onPress={onClose}
           style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>

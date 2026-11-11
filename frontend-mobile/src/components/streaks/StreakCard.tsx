@@ -87,7 +87,7 @@ export function StreakCard({ goalId }: { goalId: number }) {
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 16,
+  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 8,
     backgroundColor: palette.surface, padding: 17, gap: 13 },
   headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   title: { color: palette.text, fontSize: 20, fontWeight: '700' },

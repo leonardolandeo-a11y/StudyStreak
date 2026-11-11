@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../components/academic/Academic';
 import { RoomModeration } from "../../../../components/media/RoomModeration";
 import { RoomCollaboration } from "../../../../components/media/RoomCollaboration";
 import { RoomMedia } from "../../../../components/media/RoomMedia";
@@ -256,11 +257,7 @@ export default function StudyRooms() {
     </CreationModal>
     <Screen themed compact scrollRef={menuScroll}>
       {room ? <ActionButton compact title="All rooms" secondary onPress={() => { setRoomId(null); setSnapshot(null); }} /> : null}
-      <View style={styles.heading}>
-        <Text style={styles.eyebrow}>● STUDY TOGETHER</Text>
-        <Text style={styles.title}>Study Rooms<Text style={styles.green}>.</Text></Text>
-        <Text style={styles.description}>Private spaces. One shared Pomodoro. Friends studying together.</Text>
-      </View>
+      <AcademicHeading title="Study Rooms" eyebrow="STUDY TOGETHER" glyph="clock" description="Private spaces. One shared Pomodoro. Friends studying together." />
       {room && <Text accessibilityLiveRegion="polite" style={styles.description}>{busy ? "Action pending · waiting for server" : error ? "Connection or action needs attention" : stale ? "Reconnecting · waiting for a fresh room state" : refreshingView ? "Updating room…" : "Synced · server confirmed"}</Text>}
       {error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
 
@@ -281,7 +278,7 @@ export default function StudyRooms() {
             <Text style={styles.cardTitle}>Your rooms</Text>
             <ActionButton compact secondary title="Refresh" onPress={() => { void refreshLobby().catch(() => setError('Could not load rooms.')); }}/>
             {loading && <ActivityIndicator color={theme.colors.primary}/>}
-            {!loading && rooms.length === 0 && <Text style={styles.description}>No rooms yet. Create one or join with a code.</Text>}
+            {!loading && rooms.length === 0 && <AcademicEmpty glyph="clock"><Text style={styles.description}>No rooms yet. Create one or join with a code.</Text></AcademicEmpty>}
             {rooms.map(item => (
               <NavigationPressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open study room ${item.name}`} onPress={() => showRoom(item)}
                 style={styles.roomRow}>
@@ -334,7 +331,7 @@ export default function StudyRooms() {
                     <RoomModeration key={`moderation-${room.id}`} room={room}/>
                     <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}/>
           <StudyRoomGoal key={room.id} roomId={room.id}/>
-          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, padding: 14, borderRadius: 14 }]}>
+          <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, padding: 14, borderRadius: 8 }]}>
             <Text style={[styles.cardTitle, { color: theme.colors.text, fontSize: 18, fontWeight: '600' }]}>Participants · {room.members.length}/12</Text>
             {room.host && <ActionButton compact secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => setConfirmation({title:'Replace invitation?',message:'The previous code will stop working.',label:'Replace',run:()=>{void manageRoom();}})}/> }
             {room.members.map(member => (
@@ -368,10 +365,10 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   roomName: { color: palette.text, fontWeight: '800', fontSize: 15 },
   feature: { borderColor: palette.border, borderWidth: 1, backgroundColor: palette.surface, padding: 12, borderRadius: 12, gap: 12 },
   roomTitle: { color: palette.text, fontSize: 22, fontWeight: '900' },
-  inviteBox: { backgroundColor: palette.surfaceRaised, padding: 16, borderRadius: 14, gap: 7 },
+  inviteBox: { backgroundColor: palette.surfaceRaised, padding: 16, borderRadius: 8, gap: 7 },
   codeLabel: { color: palette.muted, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   inviteCode: { color: palette.primary, letterSpacing: 3, fontWeight: '900', fontSize: 25 },
-  timerBox: { backgroundColor: palette.background, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', gap: 8 },
+  timerBox: { backgroundColor: palette.background, borderRadius: 8, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', gap: 8 },
   timerLabel: { color: palette.primary, fontSize: 12, letterSpacing: 2, fontWeight: '800' },
   timer: { color: palette.text, fontWeight: '900', fontSize: 48, fontVariant: ['tabular-nums'] },
   controls: { gap: 13 },

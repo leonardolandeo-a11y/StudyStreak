@@ -14,11 +14,11 @@ export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph;
         {glyphs[name].map(([x,y,width,height,role],index) => <View key={index} accessible={false} style={{ position: 'absolute', left: x*unit, top: y*unit, width: width*unit, height: height*unit, backgroundColor: fills[role] }} />)}
     </View>;
 }
-export function AcademicHeading({ title, eyebrow, description, focus = false }: { title: string; eyebrow: string; description?: string; focus?: boolean }) {
+export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book' }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph }) {
     const { theme: { colors } } = useAppearance();
     return <View style={{ gap: 8, paddingVertical: 6, paddingBottom: 14, borderBottomWidth: 1, borderColor: colors.border }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            {focus ? <StudyMark size={28} decorative /> : <PixelGlyph name="book" />}
+            {focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} />}
             <Text style={{ color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, letterSpacing: 1, flexShrink: 1 }}>{eyebrow}</Text><PixelRule />
         </View>
         <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: -.5 }}>{title}</Text>
@@ -30,8 +30,8 @@ export function AcademicPanel({ children, style }: { children: ReactNode; style?
     return <View testID="academic-panel" style={[{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
         borderRadius: 8, padding: 14, gap: 12, shadowColor: colors.border, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0 },style]}>{children}</View>;
 }
-export function AcademicEmpty({ children }: { children: ReactNode }) {
-    return <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 8 }}><PixelGlyph name="book" size={32} /><View style={{ flex: 1 }}>{children}</View></View>;
+export function AcademicEmpty({ children, glyph = 'book' }: { children: ReactNode; glyph?: AcademicGlyph }) {
+    return <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 8 }}><PixelGlyph name={glyph} size={32} /><View style={{ flex: 1 }}>{children}</View></View>;
 }
 export function PixelProgress({ value, max = 100, label }: { value: number; max?: number; label: string }) {
     const { theme: { colors }, reduceMotion } = useAppearance();

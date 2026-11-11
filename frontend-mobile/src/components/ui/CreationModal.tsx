@@ -1,3 +1,4 @@
+import { PixelGlyph } from '../academic/Academic';
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,11 +46,12 @@ export function CreationModal({ visible, title, busy = false, onClose, onBack, o
     {visible ? <FlowContext.Provider value={context}>
       <SafeAreaView accessibilityViewIsModal style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8,
-          minHeight: 56, backgroundColor: theme.colors.surface }}>
+          minHeight: 56, borderBottomWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}>
           {showBack ? <NavigationPressable accessibilityRole="button" accessibilityLabel="Back" disabled={locked} onPress={back}
             style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>
             <AppIcon name="back" color={theme.colors.text} />
           </NavigationPressable> : null}
+          <PixelGlyph name="note" size={20} />
           <Text accessibilityRole="header" style={{ flex: 1, color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>{title}</Text>
           <NavigationPressable accessibilityRole="button" accessibilityLabel={cancelLabel} disabled={locked}
             onPress={onClose} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>

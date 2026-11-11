@@ -9,7 +9,7 @@ export function ProfileIdentity({ name, username, bio, avatarUrl, bannerUrl, pre
     showPresenceDot?: boolean; emphasizePresence?: boolean; onAvatarClick?: () => void; children?: ReactNode;
 }) {
     const avatar = <><ProfileAvatar name={name} src={avatarUrl} className="size-24 text-3xl sm:size-28" />{showPresenceDot && <PresenceDot presence={presence} />}</>;
-    return <section aria-label="Profile identity" className="overflow-hidden rounded-panel border border-outline bg-surface">
+    return <section aria-label="Profile identity" className="academic-profile-cover overflow-hidden rounded-panel border border-outline bg-surface">
         <div className="relative h-36 bg-linear-to-br from-accent-soft via-surface-hover to-surface sm:h-48">
             {bannerUrl && <img src={bannerUrl} alt="Profile banner" className="size-full object-cover" />}{bannerAction}
         </div>

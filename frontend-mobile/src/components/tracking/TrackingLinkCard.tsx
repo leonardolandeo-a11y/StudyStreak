@@ -57,7 +57,7 @@ export function TrackingLinkCard({ link, currentUserId, mode, busy, onRespond, o
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
-  card: { padding: 12, borderRadius: 14, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, gap: 10 },
+  card: { padding: 12, borderRadius: 8, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, gap: 10 },
   heading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   user: { color: palette.text, fontWeight: '700', fontSize: 17 },
   status: { fontWeight: '600', fontSize: 12, color: palette.muted },

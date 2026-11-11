@@ -57,6 +57,10 @@ test('Chrome: protected avatars in history, Validations and room participants pr
   await page.wait('document.querySelectorAll("[data-room-participant]").length===3');
   assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-room-participant]")).some(a=>a.textContent.includes("Host · Online")&&a.textContent.includes("Studying"))'));
   assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-room-participant]")).filter(a=>!a.textContent.includes("Avatar partner")).every(a=>!a.querySelector("img")&&!!a.querySelector("[aria-hidden=true]")?.textContent)'));
+  // The protected-image queue has concurrency two. Wait for the third initial
+  // request before taking the baseline; its placeholder is visible while queued.
+  for(let attempt=0;[77,78,79].some(id=>(avatarReads.get(id)??0)<3)&&attempt<100;attempt++)await new Promise(resolve=>setTimeout(resolve,20));
+  assert.ok([77,78,79].every(id=>(avatarReads.get(id)??0)>=3),'All initial participant avatar requests started');
   const counts=Array.from(avatarReads);await page.evaluate('window.__roomTicks.forEach(fn=>fn())');await page.evaluate('new Promise(r=>setTimeout(r,150))');assert.deepEqual(Array.from(avatarReads),counts,'Room refresh must not download avatars again');
   for(const path of ['/study-rooms','/validations','/tracking-links']){
    if(path!=='/study-rooms'){await page.evaluate(`history.pushState({},"",${JSON.stringify(path)});window.dispatchEvent(new PopStateEvent("popstate"))`);await page.wait('!!document.querySelector("main h1")');}

@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -113,8 +114,7 @@ export default function Notifications() {
 
   return (
     <Screen themed compact>
-      <Text style={styles.title}>Notifications</Text>
-      <Text style={styles.subtitle}>Stay informed about your goals and study partners.</Text>
+      <AcademicHeading title="Notifications" eyebrow="STUDY UPDATES" glyph="bell" description="Stay informed about your goals and study partners." />
       <ScrollView horizontal showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filters} style={styles.filterBar}>
         <FilterChip label="All" active={filter === 'all'} onPress={() => selectFilter('all')} />
@@ -143,7 +143,7 @@ export default function Notifications() {
       {!loading && !error && data ? (
         <>
           <Text style={styles.count}>{data.totalElements} notifications</Text>
-          {data.content.length === 0 ? <Text style={styles.empty}>No notifications in this category.</Text> : null}
+          {data.content.length === 0 ? <AcademicEmpty><Text style={styles.empty}>No notifications in this category.</Text></AcademicEmpty> : null}
           {data.content.map((notification) => (
             <NotificationCard key={notification.id} notification={notification}
               busy={busyId === notification.id}

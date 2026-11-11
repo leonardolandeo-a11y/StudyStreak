@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { RoomCollaboration } from "../components/study/RoomCollaboration";
@@ -227,14 +228,8 @@ export default function StudyRoomsPage() {
     const studyingCount = room?.members.filter(member => member.online && member.studying).length ?? 0;
 
     return (
-        <TrackingAvatarProvider revision={0}><div className="space-y-7 pb-12">
-            <header>
-                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-emerald-400">
-                    <Users size={16} /> STUDY TOGETHER
-                </p>
-                <h1 className="mt-3 text-4xl font-black tracking-tight text-content">Study Rooms<span className="text-emerald-400">.</span></h1>
-                <p className="mt-2 text-sm text-slate-400">A shared clock. A little accountability. A private place to make progress together.</p>
-            </header>
+        <TrackingAvatarProvider revision={0}><div className="academic-page academic-module space-y-6 pb-12">
+            <AcademicHeading title="Study Rooms" eyebrow="Study together" glyph="clock" description="A shared clock. A little accountability. A private place to make progress together." />
 
             {room && <p role="status" className="inline-flex rounded-lg border border-outline-strong bg-slate-900 px-3 py-2 text-sm text-slate-300">{offline ? "Offline · controls unavailable" : busy ? "Action pending · waiting for server" : error ? "Connection or action needs attention · see details below" : stale ? "Reconnecting · waiting for a fresh room state" : refreshingView ? "Updating room…" : "Synced · server confirmed"}</p>}
             {error && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-950/20 px-4 py-3 text-sm text-rose-300">{error}</div>}

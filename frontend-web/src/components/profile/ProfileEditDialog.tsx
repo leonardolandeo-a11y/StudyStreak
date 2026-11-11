@@ -64,7 +64,7 @@ export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
             if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
             else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-panel border border-outline-strong bg-surface p-5 text-content shadow-2xl backdrop:bg-black/60">
+        className="academic-page academic-module fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-panel border border-outline-strong bg-surface p-5 text-content shadow-2xl backdrop:bg-black/60">
         <form onSubmit={event => { event.preventDefault(); void save(); }} aria-busy={saving}>
             <div className="flex items-center justify-between gap-3"><h2 id={titleId} className="text-xl font-semibold">Edit profile</h2>
                 <button type="button" className="study-button size-11 p-0" aria-label="Close edit profile" disabled={saving} onClick={close}><X size={18} aria-hidden="true" /></button></div>

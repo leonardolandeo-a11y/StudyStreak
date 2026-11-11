@@ -1,3 +1,4 @@
+import { reviewNativeModule, reviewNativeSettings } from './helpers/academicModuleReview.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
@@ -45,7 +46,7 @@ async function openMember(){await browser.click('View profile of partner');await
 try{
   await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await browser.navigate('/');await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture-student');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');await browser.wait(has('Open menu'));
-  assert.equal(beats.length,0);await browser.click('Tracking');await browser.wait(has('View profile of partner'));await openMember();
+  assert.equal(beats.length,0);await browser.click('Tracking');await browser.wait(has('View profile of partner'));await reviewNativeModule(browser,'tracking');await openMember();await reviewNativeModule(browser,'member');
   assert.equal(await browser.evaluate(text('Online')),true);assert.equal(await browser.evaluate(text('Verified focus time')),true);assert.equal(await browser.evaluate(has('Edit Profile')),false);
   member={...member,statistics:{verifiedMinutes:12.5},presence:{...member.presence,status:'OFFLINE',lastSeenAt:'2026-11-08T11:00:00Z'}};
   await browser.click('Refresh member profile');await browser.wait(text('Offline'));assert.equal(await browser.evaluate(text('Last seen')),true);assert.equal(await browser.evaluate(text('Verified sessions')),false);
@@ -55,7 +56,7 @@ try{
   await browser.click('Refresh member profile');await browser.wait(text('Shared algebra biography'));await backToMenu();
   await browser.click('Send a tracking request');await browser.wait(has('Search study partners'));await browser.fill('[aria-label="Search study partners"]','partner');await browser.wait(has('Select tracking partner unapproved'));
   assert.equal(images.some(path=>path.includes('/4/')),false);await browser.click('Cancel creation');
-  await browser.click('Validations');await browser.wait(has('View profile of partner'));await openMember();await backToMenu();await browser.wait(has('Review goals from partner'));
+  await browser.click('Validations');await browser.wait(has('View profile of partner'));await browser.wait(text('Review study records from your connected partners.'));await reviewNativeModule(browser,'validations');await openMember();await backToMenu();await browser.wait(has('Review goals from partner'));
   await browser.click('Start a validation');await browser.wait(has('Cancel creation'));await openMember();await browser.wait(`!document.querySelector('[aria-label="Cancel creation"]')`);await backToMenu();await browser.wait(has('Cancel creation'));await browser.click('Review goals from partner');await browser.wait(text('Study goals · partner'));await browser.click('Back');await browser.wait(has('Review goals from partner'));await browser.click('Cancel creation');
   await browser.click('Study Rooms');await browser.wait(has('Open study room Fixture room'));await browser.click('Open study room Fixture room');await browser.wait(has('View profile of partner'));assert.equal(await browser.evaluate(has('View profile of unapproved')),false);
   await openMember();await backToMenu();await browser.wait(text('Participants'));assert.equal(images.some(path=>path.includes('/4/')),false);
@@ -64,6 +65,7 @@ try{
   denyPrivacy=false;await toggle('Show online status');await browser.wait(checked('Show online status'));await browser.wait(text('Social privacy saved.'));assert.ok(beats.length>=1);assert.ok(beats.every(beat=>/^[\da-f-]{36}$/.test(beat.sessionId)));
   assert.equal(privacy.shareVerifiedMinutes,false);assert.equal(privacy.shareVerifiedSessions,false);
   await toggle('Show online status');await browser.wait(`!(${checked('Show online status')})`);
+  await reviewNativeSettings(browser);
   await browser.click('Light');await browser.click('Orange');await toggle('Reduce motion');
   await browser.evaluate(`document.querySelector('[aria-label="Show online status"]').scrollIntoView({block:'center'})`);
   let shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/social-settings.png',Buffer.from(shot.data,'base64'));

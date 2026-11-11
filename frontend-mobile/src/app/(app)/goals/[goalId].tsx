@@ -1,3 +1,4 @@
+import { AcademicHeading } from '../../../components/academic/Academic';
 import { RecordedSummary } from "../../../components/study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -211,7 +212,7 @@ export default function GoalDetails() {
       {goal && !goalLoading ? (
         <>
           <View style={styles.card}>
-            <Text style={styles.title}>{goal.topic}</Text>
+            <AcademicHeading title={goal.topic} eyebrow="GOAL DETAILS" glyph="book" />
             <Text style={styles.muted}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
             <Text style={goal.completed ? styles.completed : styles.active}>
               {goal.completed ? 'Completed' : 'Active'}
@@ -276,7 +277,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   section: { color: palette.text, fontSize: 21, fontWeight: '700' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 17, gap: 13 },
+  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 17, gap: 13 },
   muted: { color: palette.muted, fontSize: 14, lineHeight: 21 },
   recordDate: { color: palette.text, fontSize: 17, fontWeight: '700' },
   active: { color: palette.primary, fontWeight: '700' },

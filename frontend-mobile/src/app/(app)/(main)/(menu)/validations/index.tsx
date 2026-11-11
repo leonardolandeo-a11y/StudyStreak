@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { SocialAvatar, MemberProfileLink } from '../../../../../components/social/MemberReference';
@@ -68,7 +69,7 @@ function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string })
           <ActionButton compact title="Retry" secondary onPress={state.reload} />
         </>
       ) : null}
-      {!state.loading && !state.error && state.data?.empty ? <Text style={styles.empty}>{empty}</Text> : null}
+      {!state.loading && !state.error && state.data?.empty ? <AcademicEmpty><Text style={styles.empty}>{empty}</Text></AcademicEmpty> : null}
     </>
   );
 }
@@ -289,8 +290,7 @@ export default function Validations() {
       {selectedPartner ? <PartnerGoals key={selectedPartner.id} partner={selectedPartner} /> : partnersList}
     </CreationModal>
     <Screen themed scrollRef={menuScroll}>
-      <Text style={styles.title}>Validations</Text>
-      <Text style={styles.subtitle}>Review study records from your connected partners.</Text>
+      <AcademicHeading title="Validations" eyebrow="REVIEW PROGRESS" glyph="note" description="Review study records from your connected partners." />
       {notice ? <StatusMessage variant="success" message={notice} /> : null}
       {!(starting || selectedPartner) ? partnersList : null}
     </Screen>

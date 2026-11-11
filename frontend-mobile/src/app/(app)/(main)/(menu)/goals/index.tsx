@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
@@ -59,8 +60,7 @@ export default function Goals() {
       {formError ? <StatusMessage message={formError} error /> : null}
     </CreationModal>
     <Screen themed compact scrollRef={menuScroll}>
-      <Text style={styles.title}>My Goals</Text>
-      <Text style={styles.subtitle}>Create study goals and manage your daily records.</Text>
+      <AcademicHeading title="My Goals" eyebrow="YOUR STUDY GOALS" glyph="book" description="Create study goals and manage your daily records." />
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>
@@ -68,7 +68,7 @@ export default function Goals() {
       </View>
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? <StatusMessage error message={error} /> : null}
-      {!loading && data?.empty ? <Text style={styles.empty}>No goals yet. Create your first goal.</Text> : null}
+      {!loading && data?.empty ? <AcademicEmpty><Text style={styles.empty}>No goals yet. Create your first goal.</Text></AcademicEmpty> : null}
       {!loading && data ? (
         <>
           <Text style={styles.count}>{data.totalElements} goals</Text>

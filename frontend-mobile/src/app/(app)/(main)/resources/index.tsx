@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
@@ -103,8 +104,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
 
   return (
     <Screen themed compact>
-      <Text style={styles.title}>Study resources</Text>
-      <Text style={styles.muted}>Find books related to your study goals using Google Books.</Text>
+      <AcademicHeading title="Study resources" eyebrow="YOUR STUDY LIBRARY" glyph="book" description="Find books related to your study goals using Google Books." />
       <View style={styles.searchBox}>
         <FormField variant="subtle" label="Book search topic" value={query} onChangeText={setQuery}
           placeholder="Example: differential equations" maxLength={80} autoCapitalize="sentences"
@@ -119,9 +119,9 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? <StatusMessage error message={error} /> : null}
       {error && request ? <ActionButton compact title="Retry search" secondary onPress={retry} /> : null}
-      {!request && !error ? <Text style={styles.muted}>Enter a topic to find study books.</Text> : null}
+      {!request && !error ? <AcademicEmpty><Text style={styles.muted}>Enter a topic to find study books.</Text></AcademicEmpty> : null}
       {request && !loading && !error && books.length === 0 ? (
-        <Text style={styles.muted}>No books were found. Try a broader topic.</Text>
+        <AcademicEmpty><Text style={styles.muted}>No books were found. Try a broader topic.</Text></AcademicEmpty>
       ) : null}
       {!loading && !error ? books.map((book) => (
         <NavigationPressable key={book.id} accessibilityRole="button"

@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { SocialPrivacySettings } from "../components/social/SocialPrivacySettings";
 import { LogOut, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,8 +12,8 @@ export default function Settings() {
     const reducedMotion = useReducedMotion();
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
-    return <div className="mx-auto max-w-4xl space-y-6">
-        <header><p className="study-kicker">Make space for your study style</p><h1 className="mt-2 text-3xl font-semibold text-content">Settings</h1><p className="mt-2 text-sm text-content-muted">Appearance preferences apply throughout StudyStreak Web.</p></header>
+    return <div className="academic-page academic-module mx-auto max-w-4xl space-y-6">
+        <AcademicHeading title="Settings" eyebrow="Make space for your study style" description="Appearance preferences apply throughout StudyStreak Web." glyph="gear" />
         <section aria-labelledby="appearance-heading" className="study-panel space-y-6">
             <h2 id="appearance-heading" className="text-xl font-semibold">Appearance</h2>
             <AppearanceSelectors />

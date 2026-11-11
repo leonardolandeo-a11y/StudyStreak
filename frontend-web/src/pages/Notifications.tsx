@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { useNavigate } from 'react-router-dom';
 import { notificationDestination } from '../utils/notificationDestination';
 import { fallbackPage } from '../utils/pageBounds';
@@ -285,29 +286,9 @@ function Notifications(){
         return null;
     }
     return (
-    <div className="space-y-8">
+    <div className="academic-page academic-module space-y-6">
 
-        <section>
-            <p className="text-sm font-medium text-sky-400">
-                Activity
-            </p>
-
-            <h1
-                className="
-                    mt-2
-                    text-3xl font-bold
-                    tracking-tight
-                    text-slate-100
-                "
-            >
-                Notifications
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-slate-400">
-                Review updates about your goals, validations,
-                tracking activity, and progress.
-            </p>
-        </section>
+        <AcademicHeading title="Notifications" eyebrow="Activity" description="Review updates about your goals, validations, tracking activity, and progress." glyph="bell" />
 
 
         <section

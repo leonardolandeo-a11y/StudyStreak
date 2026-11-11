@@ -1,3 +1,4 @@
+import { reviewNativeModule } from './helpers/academicModuleReview.mjs';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
@@ -33,11 +34,11 @@ const browser=await mobileBrowser({intercept:async request=>{
 const has=label=>`!!document.querySelector('[aria-label="${label}"]')`;
 const modalGone=()=>browser.wait(`!document.querySelector('[aria-modal="true"]')`);
 async function dialog(){await browser.wait(`!!document.querySelector('[aria-label="Cancel creation"]')&&document.activeElement?.closest('[role="dialog"]')!==null`);}
-async function screenshot(name){await browser.evaluate('document.activeElement?.blur()');const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/parity-${name}.png`,Buffer.from(shot.data,'base64'));}
+async function screenshot(name){await reviewNativeModule(browser,'goals-'+name);await browser.evaluate('document.activeElement?.blur()');const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/parity-${name}.png`,Buffer.from(shot.data,'base64'));}
 try {
  await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  await browser.navigate('/');await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture');await browser.fill('[aria-label="Password"]','fixture-only-password');await browser.click('Sign in');
- await browser.wait(`document.body.innerText.includes('Biology fixture')`);
+ await browser.wait(`document.body.innerText.includes('Biology fixture')`);await reviewNativeModule(browser,'goals');
  await browser.evaluate(`Array.from(document.querySelectorAll('[role="button"]')).find(e=>e.innerText.includes('Biology fixture')).click()`);
  await browser.wait(has('Manage tags')); await browser.wait(`document.body.innerText.includes('Totals unavailable')`);failSummary=false;await browser.click('Refresh recorded totals');await browser.wait(`document.body.innerText.includes('Server-confirmed snapshot')`);await browser.wait(`document.body.innerText.includes('Current streak')`); await browser.click('Edit goal');await dialog();
  await browser.fill('[aria-label="Topic"]','Biology updated');await browser.click('Save changes');await modalGone();await browser.wait(`document.body.innerText.includes('Biology updated')`);

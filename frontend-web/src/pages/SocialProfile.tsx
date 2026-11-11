@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { useEffect, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -43,9 +44,9 @@ function SocialProfileView({ id }: { id: number }) {
         return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', visible); };
     }, [id, revision]);
     const avatarUrl = useObjectUrl(assets.avatar), bannerUrl = useObjectUrl(assets.banner);
-    return <div className="space-y-6" data-social-profile>
-        <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="study-kicker">Tracking partner</p><h1 className="mt-1 text-heading font-bold">Member profile</h1></div>
-            <button type="button" className="study-button" onClick={() => setRevision(r => r + 1)}>Refresh profile</button></header>
+    return <div className="academic-page academic-module space-y-6" data-social-profile>
+        <AcademicHeading title="Member profile" eyebrow="Tracking partner" glyph="people">
+            <button type="button" className="study-button" onClick={() => setRevision(r => r + 1)}>Refresh profile</button></AcademicHeading>
         {error && <p role="alert" className="study-panel text-danger">{error}</p>}
         {!profile && !error && <LoadingState message="Loading member profile…" />}
         {profile && <><ProfileIdentity showPresenceDot={false} emphasizePresence name={profile.presentationName} username={profile.username} bio={profile.bio} avatarUrl={avatarUrl} bannerUrl={bannerUrl} presence={profile.presence} registrationDate={profile.registrationDate}>

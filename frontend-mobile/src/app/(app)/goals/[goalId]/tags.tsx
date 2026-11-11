@@ -1,3 +1,4 @@
+import { AcademicHeading, AcademicEmpty } from '../../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -51,13 +52,12 @@ export default function GoalTags() {
   if (!valid) return <Screen themed compact><StatusMessage error message="Invalid goal or session." /></Screen>;
   return <>
     <Screen themed compact>
-      <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 22, fontWeight: '600' }}>Goal tags</Text>
-      <Text style={{ color: colors.muted, fontSize: 13 }}>Organize this goal with short labels.</Text>
+      <AcademicHeading title="Goal tags" eyebrow="ORGANIZATION" glyph="note" description="Organize this goal with short labels." />
       <ActionButton compact title="Add tag" onPress={() => { setError(null); setEditor('new'); }} />
       {message ? <StatusMessage variant="success" message={message} /> : null}
       {tags.loading ? <StatusMessage message="Loading tags…" /> : null}
       {tags.error ? <><StatusMessage error message={tags.error} /><ActionButton compact title="Retry tags" secondary onPress={tags.reload} /></> : null}
-      {!tags.loading && !tags.error && tags.data?.empty ? <StatusMessage message="No tags for this goal yet." /> : null}
+      {!tags.loading && !tags.error && tags.data?.empty ? <AcademicEmpty><StatusMessage message="No tags for this goal yet." /></AcademicEmpty> : null}
       {!tags.loading && !tags.error ? tags.data?.content.map(tag => <View key={tag.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderColor: colors.border }}>
         <Text numberOfLines={2} style={{ flex: 1, color: colors.text, fontSize: 15 }}>{tag.name}</Text>
         <NavigationPressable accessibilityRole="button" accessibilityLabel={`Edit tag ${tag.name}`} onPress={() => { setError(null); setEditor(tag); }} style={{ minHeight: 48, minWidth: 48, justifyContent: 'center' }}><Text style={{ color: colors.primary }}>Edit</Text></NavigationPressable>

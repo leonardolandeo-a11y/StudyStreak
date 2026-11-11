@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { useState } from "react";
 import { Camera, Pencil, RefreshCw } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
@@ -15,9 +16,9 @@ export default function Profile() {
     const [saved, setSaved] = useState(false);
     const { profile, error, loading, avatarUrl, bannerUrl, imageErrors, refresh } = shared;
     function edit(initialField?: ProfileImageSlot) { setSaved(false); setEditing({ initialField }); }
-    return <div className="space-y-6" data-profile-page>
-        <header className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-accent">Your space</p><h1 className="mt-1 text-heading font-bold">Profile</h1></div>
-            <button className="study-button" type="button" aria-label="Refresh profile" title="Refresh profile" disabled={loading} onClick={() => void refresh()}><RefreshCw size={17} aria-hidden="true" /><span className="sr-only">Refresh profile</span></button></header>
+    return <div className="academic-page academic-module space-y-6" data-profile-page>
+        <AcademicHeading title="Profile" eyebrow="Your space" glyph="book">
+            <button className="study-button" type="button" aria-label="Refresh profile" title="Refresh profile" disabled={loading} onClick={() => void refresh()}><RefreshCw size={17} aria-hidden="true" /><span className="sr-only">Refresh profile</span></button></AcademicHeading>
         {saved && <p role="status" className="rounded-control bg-success-surface p-3 text-sm text-success">Profile saved.</p>}
         {error && <div role="alert" className="rounded-control border border-danger-outline bg-danger-surface p-4 text-sm text-danger"><p>{error}</p><button className="study-button mt-3" type="button" disabled={loading} onClick={() => void refresh()}>Try again</button></div>}
         {!profile && loading && <LoadingState message="Loading your profile…" />}

@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useCallback, useEffect, useState } from "react";
@@ -185,12 +186,8 @@ function TrackingLinks() {
     if (!currentUser) return null;
 
     return (
-        <TrackingAvatarProvider revision={revision}><div className="space-y-8">
-            <header>
-                <p className="text-sm font-medium text-sky-400">Connections</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Tracking Links</h1>
-                <p className="mt-2 max-w-2xl text-slate-400">Send requests, manage invitations and review your study partners.</p>
-            </header>
+        <TrackingAvatarProvider revision={revision}><div className="academic-page academic-module space-y-6">
+            <AcademicHeading title="Tracking Links" eyebrow="Connections" description="Send requests, manage invitations and review your study partners." glyph="people" />
 
             <TrackingLinkForm onSubmit={handleCreate} loading={creating} />
             {loading && <LoadingState message="Loading tracking connections..." />}

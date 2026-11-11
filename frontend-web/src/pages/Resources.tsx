@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import {
     type FormEvent,
     useEffect,
@@ -118,20 +119,8 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
     }
 
     return (
-        <div className="space-y-8">
-            <header>
-                <p className="text-sm font-medium text-sky-400">
-                    Study resources
-                </p>
-
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">
-                    Find study books
-                </h1>
-
-                <p className="mt-2 max-w-2xl text-slate-400">
-                    Search Google Books from StudyStreak and find resources related to your goals.
-                </p>
-            </header>
+        <div className="academic-page academic-module space-y-6">
+            <AcademicHeading title="Find study books" eyebrow="Study resources" description="Search Google Books from StudyStreak and find resources related to your goals." glyph="book" />
 
             <form
                 onSubmit={submitSearch}
