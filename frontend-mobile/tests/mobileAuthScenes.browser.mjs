@@ -39,6 +39,10 @@ try{
  const before=await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-steam"]')).transform`);
  await new Promise(resolve=>setTimeout(resolve,350));
  assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-steam"]')).transform`),before);
+ const exterior=await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-landscape"]')).transform`);
+ await new Promise(resolve=>setTimeout(resolve,350));
+ assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-landscape"]')).transform`),exterior);
+ assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="ambient-running"]')).transform`),'none');
  await browser.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'))`);
  await browser.wait(`!!document.querySelector('[data-testid="ambient-paused"]')`);
  await browser.evaluate(`window.__sceneHidden=false;document.dispatchEvent(new Event('visibilitychange'))`);

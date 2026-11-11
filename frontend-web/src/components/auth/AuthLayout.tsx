@@ -7,8 +7,7 @@ export function AuthLayout({ title, description, children, footer }: { title: st
     const period = useStudyPeriod();
     function parallax(event: PointerEvent<HTMLElement>) {
         if (event.pointerType !== 'mouse' || event.currentTarget.querySelector('[data-ambient="running"]') === null) return;
-        event.currentTarget.style.setProperty('--scene-x', `${(event.clientX / innerWidth - .5) * 4}px`);
-        event.currentTarget.style.setProperty('--scene-y', `${(event.clientY / innerHeight - .5) * 2}px`);
+        event.currentTarget.style.setProperty('--exterior-x', `${(event.clientX / innerWidth - .5) * 1.2}px`);
     }
     return <main className="auth-page" onPointerMove={parallax}>
         <StudyScene period={period} />

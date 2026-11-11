@@ -3,7 +3,7 @@ import { Animated, AppState, Platform, Text, View, type StyleProp, type ViewStyl
 import { useFocusEffect } from 'expo-router';
 import { totalMemory } from 'expo-device';
 import { useAppearance } from '../../hooks/useAppearance';
-import { PixelRule, StudyMark } from '../branding/StudyBrand';
+import { StudyMark } from '../branding/StudyBrand';
 import glyphs from './glyphs';
 export type AcademicGlyph = Exclude<keyof typeof glyphs, 'grid'>;
 export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph; size?: number }) {
@@ -18,8 +18,8 @@ export function AcademicHeading({ title, eyebrow, description, focus = false, gl
     const { theme: { colors } } = useAppearance();
     return <View style={{ gap: 8, paddingVertical: 6, paddingBottom: 14, borderBottomWidth: 1, borderColor: colors.border }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            {focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} />}
-            <Text style={{ color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, letterSpacing: 1, flexShrink: 1 }}>{eyebrow}</Text><PixelRule />
+            {focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}
+            <Text style={{ color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, letterSpacing: .5, flexShrink: 1 }}>{eyebrow}</Text>
         </View>
         <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: -.5 }}>{title}</Text>
         {description ? <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>{description}</Text> : null}
@@ -28,10 +28,10 @@ export function AcademicHeading({ title, eyebrow, description, focus = false, gl
 export function AcademicPanel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
     const { theme: { colors } } = useAppearance();
     return <View testID="academic-panel" style={[{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-        borderRadius: 8, padding: 14, gap: 12, shadowColor: colors.border, shadowOffset: { width: 2, height: 2 }, shadowOpacity: 1, shadowRadius: 0 },style]}>{children}</View>;
+        borderRadius: 10, padding: 14, gap: 12, shadowColor: '#000000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: .06, shadowRadius: 3 },style]}>{children}</View>;
 }
 export function AcademicEmpty({ children, glyph = 'book' }: { children: ReactNode; glyph?: AcademicGlyph }) {
-    return <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', paddingVertical: 8 }}><PixelGlyph name={glyph} size={32} /><View style={{ flex: 1 }}>{children}</View></View>;
+    return <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 6 }}><PixelGlyph name={glyph} size={24} /><View style={{ flex: 1 }}>{children}</View></View>;
 }
 export function PixelProgress({ value, max = 100, label }: { value: number; max?: number; label: string }) {
     const { theme: { colors }, reduceMotion } = useAppearance();

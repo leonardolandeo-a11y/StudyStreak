@@ -12,7 +12,9 @@ for(const x of [0,244,392]){r(x,0,8,156,'woodDark');r(x+1,0,2,155,'wood');}
 r(0,150,400,5,'woodDark');r(0,151,400,1,'woodLight');
 for(let y=161;y<250;y+=15){r(0,y,400,1,'woodDark');for(let x=(y%2)*27;x<399;x+=61)r(x,y,1,Math.min(14,250-y),'woodDark');}
 // Large recessed window and layered landscape; animated clouds stay inside the glass.
-r(22,17,207,120,'outline');r(25,20,201,114,'wood');r(30,24,191,105,'sky');
+r(22,17,207,120,'outline');r(25,20,201,114,'wood');
+const landscapeStart=rects.length;
+r(30,24,191,105,'sky');
 for(let y=66;y<129;y+=7)r(30,y,191,7,y<87?'skyGlow':y<107?'horizon':'distant');
 r(43,43,12,9,'sun','morning');r(46,40,6,15,'sun','morning');
 r(181,35,13,13,'sun','afternoon');r(178,38,19,7,'sun','afternoon');
@@ -25,10 +27,13 @@ for(const [x,y,w]of [[44,42,28],[118,33,32],[170,58,24]]){
 for(let i=0;i<18;i++){const x=30+i*10,y=80+Math.abs(8-i)*2;r(x,y,10,129-y,'horizon');r(x+2,y-3,6,3,'horizon');}
 for(let i=0;i<23;i++){const x=30+i*8,y=105+(i*7)%12;r(x,y,7,129-y,'distant');r(x+2,y-4,3,4,'distant');}
 for(const [x,y]of [[51,108],[93,112],[166,106],[195,113]]){r(x,y,14,17,'frame');r(x-2,y-2,18,2,'woodDark');r(x+3,y+4,3,4,'lampLight');r(x+9,y+4,2,4,'lampLight');}
+// Existing geometry is tagged for window-only motion; the room artwork stays intact.
+const landscapeEnd=rects.length, windowFrameStart=rects.length;
 // Window lattice, carved sill and curtains.
 for(const x of [29,91,155,218]){r(x,23,3,108,'woodDark');r(x+1,24,1,104,'woodLight');}
 r(30,76,191,4,'woodDark');r(30,76,191,1,'woodLight');r(17,133,218,7,'woodDark');r(18,133,216,2,'woodLight');r(22,140,208,3,'wood');
 for(const x of [15,222]){r(x,18,9,107,'bookB');for(let i=0;i<3;i++)r(x+i*3,21,1,101,'frame');r(x-1,112,11,4,'bookC');}
+const windowFrameEnd=rects.length;
 // Detailed built-in bookcase, individual spines, brass labels, shelf shadows.
 r(261,15,115,140,'outline');r(265,18,107,134,'woodDark');
 for(const y of [54,94,134]){
@@ -68,7 +73,7 @@ for(let i=0;i<12;i++)r(297+(i%6)*10,172+Math.floor(i/6)*12,2,2,'foliage');
 for(let i=0;i<11;i++)effects.glow.push([38+i*4,130+i*3,155,3,'lampLight','day']);
 // Coffee reuses the original branded cup, without static steam (animated layer below).
 for(const [x,y]of [[181,142],[187,138],[192,143]])effects.steam.push([x,y,1,4,'page','all'],[x-1,y-2,2,1,'page','all']);
-const room={width:400,height:250,palettes:old.palettes,rects,effects,coffee:{x:174,y:138,size:30}};
+const room={width:400,height:250,palettes:old.palettes,rects,effects,coffee:{x:174,y:138,size:30},window:{clip:[30,24,191,105],landscapeRange:[landscapeStart,landscapeEnd],frameRange:[windowFrameStart,windowFrameEnd]}};
 const compactRows=rows=>'[\n'+rows.map(row=>'    '+JSON.stringify(row)).join(',\n')+'\n  ]';
 let json=JSON.stringify({...room,rects:'__rects__',effects:Object.fromEntries(Object.keys(effects).map(key=>[key,'__'+key+'__']))},null,2).replace('"__rects__"',compactRows(rects));
 for(const [name,rows]of Object.entries(effects))json=json.replace('"__'+name+'__"',compactRows(rows));

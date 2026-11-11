@@ -11,7 +11,7 @@ const {default:data}=await server.ssrLoadModule('/src/components/auth/sceneData.
 test('three original offline scenes share desk/window/books and keep decoration out of the accessibility tree',()=>{
  for(const period of ['morning','afternoon','night']){
   const html=renderToStaticMarkup(h(StudyScene,{period}));assert.match(html,/aria-hidden="true"/);assert.match(html,/crispEdges/);assert.doesNotMatch(html,/https?:/);assert.match(html,/auth-scene-base/);
-  assert.equal(Object.keys(data.effects).length,4);assert.match(html,new RegExp('study-room-'+period));
+  assert.equal(Object.keys(data.effects).length,4);assert.ok(data.window.landscape.length>80);assert.match(html,/<clipPath/);assert.match(html,/data-window-frame/);assert.match(html,new RegExp('study-room-'+period));
  }
  const source=JSON.parse(readFileSync(new URL('../../assets/auth/study-room.json',import.meta.url),'utf8'));assert.equal(source.width,400);assert.ok(source.rects.length>=800);
 });
@@ -41,7 +41,12 @@ test('Chrome: local periods/foreground, responsive themes and unchanged registra
   const before=await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-steam')).transform`);
   await new Promise(resolve=>setTimeout(resolve,350));
   assert.notEqual(await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-steam')).transform`),before);
-  await page.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'));window.__sceneNow=new window.__RealDate(2026,10,10,7).getTime()`);assert.equal(await page.evaluate(`document.querySelector('[data-study-period]').dataset.studyPeriod`),'night');await page.wait(`document.querySelector('[data-ambient]').dataset.ambient==='paused'`);
+  const exterior=await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-landscape')).transform`);
+  await new Promise(resolve=>setTimeout(resolve,350));
+  assert.notEqual(await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-landscape')).transform`),exterior);
+  assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.auth-scene-base')).transform`),'none');
+  assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('[data-window-frame]')).transform`),'none');
+  await page.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'));window.__sceneNow=new window.__RealDate(2026,10,10,7).getTime()`);assert.equal(await page.evaluate(`document.querySelector('[data-study-period]').dataset.studyPeriod`),'night');await page.wait(`document.querySelector('[data-ambient]').dataset.ambient==='paused'`);assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.auth-content')).backdropFilter`),'none');
   await page.evaluate(`window.__sceneHidden=false;document.dispatchEvent(new Event('visibilitychange'))`);await page.wait(`document.querySelector('[data-study-period]').dataset.studyPeriod==='morning'`);
   await page.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   await page.wait(`document.querySelector('[data-ambient]').dataset.ambient==='paused'`);

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StudyMark, PixelRule } from '../branding/StudyBrand';
+import { StudyMark } from '../branding/StudyBrand';
 import glyphs from './glyphs';
 import './academic.css';
 export type AcademicGlyph = Exclude<keyof typeof glyphs, 'grid'>;
@@ -10,12 +10,12 @@ export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph;
 }
 export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book', children }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph; children?: ReactNode }) {
     return <header className="academic-heading"><div className="academic-heading-copy">
-        <div className="academic-heading-kicker">{focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} />}<span>{eyebrow}</span><PixelRule /></div>
+        <div className="academic-heading-kicker">{focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}<span>{eyebrow}</span></div>
         <h1>{title}</h1>{description ? <p>{description}</p> : null}
     </div>{children}</header>;
 }
 export function AcademicEmpty({ children, glyph = 'book' }: { children: ReactNode; glyph?: AcademicGlyph }) {
-    return <div className="academic-empty"><PixelGlyph name={glyph} size={36} /><div>{children}</div></div>;
+    return <div className="academic-empty"><PixelGlyph name={glyph} size={24} /><div>{children}</div></div>;
 }
 export function PixelProgress({ value, max = 100, label }: { value: number; max?: number; label: string }) {
     const percent = Math.max(0, Math.min(100, max > 0 ? value / max * 100 : 0));

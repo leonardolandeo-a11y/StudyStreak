@@ -2,6 +2,8 @@
 
 Rama: `feat/ui-ux-web-mobile`. Base: `3544011`, entrega 7.3a. Se consultaron 7.1, la revisión fullscreen de 7.2 y 7.3a. Git comenzó con los mismos **16 elementos ajenos** (dos modificados y catorce sin seguimiento), sin staging previo. No se descartan ni incorporan a esta entrega.
 
+> El informe inicial de abajo corresponde a `db1f967`, documentado en `d4a09d3`. La revisión **Retro Minimalista** solicitada posteriormente se recoge al final: sustituye las sombras escalonadas y la decoración repetida descritas en el informe inicial y mejora únicamente la presentación del escenario de autenticación existente.
+
 ## Cambios por módulo
 
 | Módulo | Web | React Native |
@@ -103,3 +105,57 @@ Se registra el commit local solicitado mediante staging explícito. Un segundo c
 ## Commit de implementación
 
 `db1f967 feat(ui): extend retro pixel styling across app modules` registra los 55 archivos de implementación, recursos, pruebas e informe inicial. Este añadido se registra por separado, sólo en documentación, para incluir el hash real sin amend. Estado posterior a la implementación: únicamente los 16 elementos preexistentes ajenos, sin archivos de la etapa pendientes.
+
+## Revisión 7.3b — Retro Minimalista
+
+### Recuperación y alcance
+
+Se conservó la integración funcional ya registrada en `db1f967`; no se reconstruyeron los ocho módulos. La revisión partió de `d4a09d3`, en la rama solicitada y sin cambios de esta tarea pendientes. Los mismos 16 elementos ajenos quedaron fuera del alcance. Se consultaron los documentos de 7.1, 7.2 y 7.3a y se extendieron los componentes académicos existentes.
+
+### Refinamiento por módulo
+
+| Módulos | Refinamiento Web/Mobile |
+| --- | --- |
+| Goals, registros y tags | Encabezados con glifos pequeños y sin regla pixelada repetida; superficies existentes con contornos finos y estados vacíos más discretos. Formularios y modales conservan controles, validaciones y separación de listas. |
+| Tracking | Cabecera y estados vacíos compactos; se conservan avatares, estados de relación y acciones. |
+| Validations | Menor peso decorativo en la cabecera; paneles del recorrido coherentes con los demás módulos, sin alterar pasos ni evidencias. |
+| Study Rooms | Mismo refinamiento de cabecera y superficies, conservando temporizador, participantes, chat y fallback multimedia de Expo Go. |
+| Resources | Glifo de biblioteca y estados vacíos más pequeños; resultados y detalle mantienen portadas, metadatos y enlaces existentes. |
+| Notifications | Cabecera y vacío de menor tamaño, con tarjetas y acciones existentes; filtros, contador y destinos permanecen intactos. |
+| Profile / Member Profile | Sombras suaves en paneles y cubierta Web; cabeceras discretas. Banner, avatar, información y estadísticas conservan su composición y reglas. |
+| Settings | Encabezados y paneles coherentes; los controles nativos/Web de apariencia y privacidad mantienen su implementación. |
+
+La aplicación es compartida mediante `AcademicHeading`, `AcademicPanel`, `AcademicEmpty`, `PixelGlyph` y el ámbito CSS académico ya integrado en las rutas. No se duplican estilos por pantalla. Se eliminan las sombras escalonadas duras y el adorno repetido de las métricas Web, se usan radios moderados y se reduce el tamaño de los glifos de cabecera/vacíos a 22/24 px. `StudyBrand` conserva el logo y la firma; `PixelProgress` mantiene su implementación y datos. Dashboard y Focus siguen siendo coherentes al consumir estos mismos componentes, sin cambios en sus métricas ni temporizadores.
+
+### Login/Register: escena preservada y movimiento exterior
+
+- Se conserva el mismo espacio fullscreen, sus tres franjas horarias, la taza original y todos los recursos originales SVG/PNG de 7.2. La comprobación SHA-256 contra la copia previa al refinamiento confirma que sus bytes no cambiaron.
+- Se identifican en la fuente gráfica los rectángulos del exterior y del marco de la ventana. Los generadores producen capas reutilizables; Mobile añade sólo seis PNG locales (exterior y marco por franja), compatibles con Expo Go y sin dependencias nuevas.
+- La habitación y el marco permanecen fijos. El paisaje oscila ±0,7 unidades gráficas en 48 segundos; las nubes atraviesan suavemente el exterior en 34 segundos por tramo. El recorte de ventana y el marco superpuesto evitan movimiento sobre paredes, cortinas y mobiliario. En Web el puntero añade un parallax horizontal mínimo únicamente al exterior.
+- La iluminación varía con menor amplitud y más despacio (18 segundos); se conserva el vapor. Los efectos se detienen al perder foco/entrar en background, con Reduce Motion o en dispositivos limitados, y mantienen el fallback estático existente.
+- La tarjeta flotante tiene radio moderado, borde fino y sombra suave, sin el escalón anterior. Web usa transparencia y desenfoque como mejora; cuando la escena está pausada o no hay soporte de desenfoque, usa una superficie mate. Mobile utiliza una superficie translúcida estable sin bibliotecas de blur. Inputs y mensajes mantienen superficies legibles, etiquetas, foco, teclado y objetivos táctiles.
+
+No se modifica la selección horaria, login/register, restauración, JWT, refresh, aislamiento de cuentas, navegación ni configuración API. Tampoco cambian servicios multimedia, UUID, permisos, reloj versionado, heartbeats o ledger. No hay cambios en backend, PostgreSQL, Docker, AWS, dependencias ni archivos privados.
+
+### Verificación de esta revisión
+
+- ESLint y TypeScript Web/Mobile: aprobados. TypeScript Web se ejecuta también como parte de `npm run build`.
+- Build Web y exportaciones Expo Web/Android: aprobados. Continúa la advertencia conocida del chunk Study Rooms superior a 500 kB; no se introduce una optimización de bundle fuera del alcance.
+- Web: `authScenes`, `academic` y `academicModules`, **6 casos aprobados**. Comprueban las tres franjas, foreground/background, escenas estáticas en equipos limitados, movimiento real del exterior sin transformar la habitación, formularios de autenticación y galería de módulos.
+- Regresiones Web de componentes compartidos: `uiRendering`, `profileRendering`, `socialRendering`, `studyPartnersRendering` y `trackingPolish`, **13 casos aprobados**, incluyendo edición, privacidad, navegación por teclado, polling y limpieza de imágenes al cambiar de cuenta.
+- Mobile: **8 archivos aprobados** (`authScenes`, `academic`, `profileRendering`, `socialRendering`, `goalsParity`, `roomsResourcesNotifications`, `mobileSessionIntegration`, `studyRoomClock`).
+- Cinco recorridos de Chrome sobre React Native Web aprobados: `mobileAuthScenes`, `mobileGoalsParity`, `mobileSocial`, `mobileRoomsResourcesNotifications` y `mobileProfile`. Incluyen errores/confirmaciones, navegación contextual y Back, temas, privacidad y aislamiento, fallback multimedia y estados vacíos. Las pruebas de autenticación comparan transformaciones en fotogramas separados para verificar movimiento efectivo del exterior y habitación fija.
+- Generadores de marca, glifos y escenas con `--check`, integridad SHA-256 de los recursos originales y `git diff --check`: aprobados.
+
+Se inspeccionaron capturas de Login/Register Web y React Native Web y una vista representativa de cada módulo. Las pruebas cubren 320, 390, 768 y 1440 px, Dark/Light/System, las cuatro paletas y Reduce Motion. Las galerías mencionadas en el informe inicial se regeneraron; se añaden `/tmp/minimal-{web,mobile}-review.png`, las capturas `/tmp/studystreak-auth-{morning,afternoon,night}.png` y `.expo/auth72-mobile-{morning,afternoon,night}.png`. Los artefactos temporales no se incluyen en Git.
+
+Todas las escrituras automatizadas usan mocks. No se ejercitó PostgreSQL persistente ni se operó un Android físico. Pendiente en Expo Go: comprobar nitidez/contraste real, teclado/SafeArea y suavidad de las capas en el dispositivo, cambiar tema/paleta/Reduce Motion y comprobar pausa/reanudación al pasar a background. La búsqueda real de Resources en deployment y la recepción multimedia en development build conservan las limitaciones del informe inicial.
+
+### Archivos de esta revisión
+
+- Web: `components/academic/{Academic.tsx,academic.css}`; `components/auth/{AuthLayout.tsx,StudyScene.tsx,auth.css,sceneData.ts}`; `tests/authScenes.test.mjs`.
+- Mobile: `components/academic/Academic.tsx`; `components/auth/{AuthScreen.tsx,StudyScene.tsx,sceneData.ts,sceneImages.ts}`; `tests/mobileAuthScenes.browser.mjs`; seis PNG `assets/auth/{morning,afternoon,night}-{landscape,windowFrame}.png`.
+- Fuente y generación: `assets/auth/study-room.json`, `scripts/create-study-room.mjs`, `scripts/generate-auth-scenes.mjs`.
+- Este documento. No se modifican archivos de lógica de los módulos.
+
+El commit de refinamiento usa `refactor(ui): refine retro minimal styling across web and mobile`. El hash real se incorpora en un seguimiento exclusivamente documental, sin amend, igual que en el informe inicial. Fin de la revisión 7.3b; no se inicia otra etapa.
