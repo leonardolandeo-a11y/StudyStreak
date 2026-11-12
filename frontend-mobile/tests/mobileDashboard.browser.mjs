@@ -60,7 +60,7 @@ try {
   assert.equal(statRequests.length,1);
   await browser.click('Explore study details');await browser.wait(`document.body.innerText.includes('Completion rate')`);
   await browser.click('Hide study details');
-  await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="academic-panel"]')).find(e=>e.textContent.includes('Time well spent.')).scrollIntoView({block:'start'})`);
+  await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="academic-panel"]')).find(e=>e.textContent.includes('Your study journey')).scrollIntoView({block:'start'})`);
   const insightsShot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/74a-dashboard-insights.png',Buffer.from(insightsShot.data,'base64'));
   assert.equal(statRequests.length,1);
   await browser.wait(`document.body.innerText.includes('Algebra from page two') && document.body.innerText.includes('Historical / unverified')`);
@@ -105,7 +105,8 @@ try {
   await browser.click('Light'); await browser.click('Blue');
   await browser.evaluate(`document.querySelector('[aria-label="Reduce motion"]').click()`);
   await browser.evaluate('history.back()'); await browser.wait(chart('Line'));
-  await browser.click('Open menu'); await browser.wait(has('Dismiss menu')); await browser.key('Escape');
+  await browser.click('Open menu'); await browser.wait(has('Dismiss menu')); await browser.command('Page.bringToFront');
+  await browser.evaluate(`new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>{document.querySelector('[aria-label="Dismiss menu"]').focus();resolve()})))`);await browser.key('Escape');
   await browser.wait(`!document.querySelector('[aria-label="Dismiss menu"]')`);
   await academicGallery(browser,'dashboard');
   assert.deepEqual(mutations, []); assert.deepEqual(browser.errors, []);

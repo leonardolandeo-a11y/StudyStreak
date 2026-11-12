@@ -24,7 +24,7 @@ export default function StudyActivityChart({ days, onDaysChange, period, status,
     const Chart = style === "bars" ? BarChart : LineChart;
     return <section className="study-panel min-w-0 p-4 sm:p-5" aria-labelledby="study-activity-heading" aria-busy={status === "loading"}>
         <div className="flex flex-wrap items-start justify-between gap-3">
-            <div><h2 id="study-activity-heading" className="text-xl font-semibold text-content">Study activity</h2><p className="mt-1 text-sm text-content-muted">Daily focus · confirmed minutes</p></div>
+            <div className="activity-chart-title"><h2 id="study-activity-heading" className="text-xl font-semibold text-content">Study activity</h2><p className="mt-1 text-sm text-content-muted">Daily focus · confirmed minutes</p></div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex gap-1 rounded-control border border-outline p-1" role="group" aria-label="Study period">
                 {([7, 30] as const).map(value => <button key={value} type="button" className="study-tab px-3" aria-pressed={days === value} onClick={() => onDaysChange(value)}>{value} days</button>)}
@@ -43,7 +43,7 @@ export default function StudyActivityChart({ days, onDaysChange, period, status,
         : status === "error" || !period ? <div className="space-y-3"><ErrorMessage message={status === "error" ? "Study activity could not be loaded. Your saved sessions are safe." : "Verified statistics are unavailable. The server needs the verifiedPeriod update."}/><button type="button" className="study-button" onClick={onRetry}>Retry study activity</button></div>
         : <>
             {period.sessions === 0 ? <div className="study-empty p-4"><AcademicEmpty><p>No verified sessions completed in these {days} days.</p></AcademicEmpty><Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-accent" to={ROUTES.focusStudio}>Open Focus Studio</Link></div>
-            : <div className="h-64 w-full min-w-0 sm:h-72" role="img" aria-label={`Daily verified focus: ${activityNumber(period.minutes)} minutes in ${period.sessions} sessions. Full daily values in the table below.`}>
+            : <div className="activity-plot-frame h-64 w-full min-w-0 sm:h-72" role="img" aria-label={`Daily verified focus: ${activityNumber(period.minutes)} minutes in ${period.sessions} sessions. Full daily values in the table below.`}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <Chart data={period.daily} margin={{ top: 12, right: 8, bottom: 0, left: -16 }} accessibilityLayer>
                         <CartesianGrid vertical={false} stroke="var(--ss-border)"/>

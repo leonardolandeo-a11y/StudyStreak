@@ -1,3 +1,4 @@
+import { UserRoundPlus } from "lucide-react";
 import { TrackingAvatar } from "./TrackingAvatar";
 import { useEffect, useState, type SubmitEvent } from "react";
 import { searchUsers } from "../../services/userSearchService";
@@ -67,13 +68,11 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-appearance-shadow/10">
-            <p className="text-sm font-medium text-sky-400">Tracking</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-100">Send Tracking Request</h2>
-            <p className="mt-1 text-sm text-slate-400">Find a study partner by username or their exact email address.</p>
+        <form onSubmit={handleSubmit} className="tracking-search">
+            <h2 className="sr-only">Send Tracking Request</h2>
 
-            <div className="mt-5">
-                <label htmlFor="partner-search" className="mb-2 block text-sm font-medium text-slate-300">
+            <div className="min-w-0">
+                <label htmlFor="partner-search" className="sr-only">
                     Study partner
                 </label>
                 <input
@@ -82,7 +81,7 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                     autoComplete="off"
                     value={query}
                     onChange={(event) => handleQueryChange(event.target.value)}
-                    placeholder="Enter a username or email"
+                    placeholder="Search partner by username or email"
                     className="w-full rounded-lg border border-outline-strong bg-slate-950 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
                     required
                     minLength={2}
@@ -120,9 +119,9 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
             <button
                 type="submit"
                 disabled={loading || !selected}
-                className="mt-5 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="study-button tracking-send bg-accent text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? "Sending..." : "Send Request"}
+                <UserRoundPlus size={18} aria-hidden="true"/>{loading ? "Sending..." : "Send Request"}
             </button>
         </form>
     );

@@ -9,10 +9,12 @@ import MobileTopbar from "../layout/MobileTopbar";
 import BackButton from "./BackButton";
 import Breadcrumbs from "./Breadcrumbs";
 import { ROUTES } from "../../routes/paths";
+import "../academic/retro-workspace.css";
 import { StudyPartnersPanel } from "../social/StudyPartnersPanel";
 
 function WorkspaceLayout({ userId }: { userId: number }) {
     const location = useLocation();
+    const retro = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.trackingLinks;
     const immersive = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
     const [open, setOpen] = useState(false), [rendered, setRendered] = useState(false), [generation, setGeneration] = useState(0);
     const trigger = useRef<HTMLButtonElement>(null);
@@ -26,7 +28,7 @@ function WorkspaceLayout({ userId }: { userId: number }) {
     }
     const button = <button type="button" data-partners-toggle aria-label="Study partners" title="Study partners" aria-controls={panelId} aria-expanded={open}
         className="study-button size-11 shrink-0 p-0" onClick={toggle}><Users size={19} aria-hidden="true" /></button>;
-    return <div className="min-h-screen bg-canvas text-content"><div className="flex min-h-screen">
+    return <div className={`min-h-screen bg-canvas text-content ${retro ? "retro-shell" : ""}`}><div className="flex min-h-screen">
         <AppSidebar />
         <div className="min-w-0 flex-1">
             <MobileTopbar actions={button} />

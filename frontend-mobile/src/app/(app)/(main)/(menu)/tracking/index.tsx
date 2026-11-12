@@ -1,8 +1,10 @@
+import { AcademicSprite } from '../../../../../components/academic/AcademicSprite';
+import { workspacePalette } from '../../../../../components/academic/workspacePalette';
 import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
-import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
+import { AcademicHeading, AcademicEmpty, PixelGlyph } from '../../../../../components/academic/Academic';
 import { useCallback, useContext, useState } from 'react';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { PageControls } from '../../../../../components/ui/PageControls';
@@ -14,7 +16,7 @@ import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { trackingLinkService } from '../../../../../services/trackingLinkService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
-import { useThemedStyles } from '../../../../../hooks/useAppearance';
+import { useAppearance } from '../../../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../../../features/appearance/theme';
 import { SocialContext } from '../../../../../contexts/SocialContext';
 import type { PageResponse } from '../../../../../types/page';
@@ -39,19 +41,20 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
   onRespond: (id: number, decision: TrackingDecision) => Promise<boolean>;
   onRemove: (id: number) => Promise<boolean>;
 }) {
-  const styles = useThemedStyles(createStyles);
+  const { theme } = useAppearance();
+  const styles = createStyles(workspacePalette(theme));
   const [expanded, setExpanded] = useState(true);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
         <NavigationPressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(value => !value)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10, minHeight: 48, borderRadius: 6 }}>
-          <Text aria-hidden style={styles.refresh}>{expanded ? '⌄' : '›'}</Text><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.count}>{state.data?.totalElements ?? '—'}</Text>
+          <PixelGlyph name={mode === 'active' ? 'people' : mode === 'pending' ? 'note' : 'book'} size={22}/><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.count}>{state.data?.totalElements ?? '—'}</Text><Text aria-hidden style={styles.refresh}>{expanded ? '⌄' : '›'}</Text>
         </NavigationPressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Refresh ${title}`} onPress={state.reload} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8 }}>
-          <Text style={styles.refresh}>Refresh</Text>
-        </Pressable>
+        <NavigationPressable accessibilityRole="button" accessibilityLabel={`Refresh ${title}`} onPress={state.reload} style={{ minHeight: 48, minWidth: 44, justifyContent: 'center', alignItems: 'center' }}>
+          <Text aria-hidden style={[styles.refresh, { fontSize: 22 }]}>↻</Text>
+        </NavigationPressable>
       </View>
-      <View style={{ gap: 12, display: expanded ? 'flex' : 'none' }} accessibilityElementsHidden={!expanded} importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}>
+      <View style={{ gap: 12, padding: 12, display: expanded ? 'flex' : 'none' }} accessibilityElementsHidden={!expanded} importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}>
       {state.loading ? <ActivityIndicator /> : null}
       {state.error ? (
         <>
@@ -75,6 +78,8 @@ function TrackingSection({ title, emptyMessage, state, mode, currentUserId, busy
 }
 
 export default function Tracking() {
+  const { theme } = useAppearance();
+  const colors = workspacePalette(theme);
   const social = useContext(SocialContext);
   const { currentUser } = useAuth();
   const pendingLoader = useCallback((page: number, signal: AbortSignal) => trackingLinkService.pending(page, signal), []);
@@ -179,11 +184,11 @@ export default function Tracking() {
       <PartnerSearch busy={sending} onSend={sendRequest} />
       {actionError ? <StatusMessage error message={actionError} /> : null}
     </CreationModal>
-    <Screen themed scrollRef={menuScroll}>
-      <AcademicHeading title="Tracking Links" eyebrow="STUDY CONNECTIONS" glyph="people" description="Connect with study partners and validate progress together." />
+    <Screen themed scrollRef={menuScroll} backgroundColor={colors.background}>
+      <AcademicHeading title="Tracking Links" eyebrow="STUDY CONNECTIONS" glyph="people" description="Connect with study partners and validate progress together." art={<AcademicSprite name="companions" width={60}/>} />
       {notice ? <StatusMessage message={notice} /> : null}
       {actionError ? <StatusMessage error message={actionError} /> : null}
-      <ActionButton compact title="Refresh all connections" secondary onPress={refreshAll} />
+      <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh all connections" onPress={refreshAll} style={{ minHeight: 44, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: 8 }}><Text aria-hidden style={{ color: colors.primary, fontSize: 20 }}>↻</Text><Text style={{ color: colors.primary, fontSize: 13 }}>Refresh</Text></NavigationPressable>
       <TrackingSection title="Active partners" emptyMessage="You do not have an active partner yet."
         state={active} mode="active" currentUserId={currentUser.id} busy={busyId !== null}
         onRespond={respond} onRemove={remove} />
@@ -201,10 +206,10 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
   title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },
-  section: { gap: 12, paddingTop: 6 },
-  sectionHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  sectionTitle: { color: palette.text, fontSize: 18, fontWeight: '700', flex: 1 },
+  section: { borderWidth: 1, borderColor: palette.borderStrong, borderRadius: 12, overflow: 'hidden', backgroundColor: palette.surface },
+  sectionHeading: { paddingHorizontal: 8, backgroundColor: palette.surfaceRaised, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  sectionTitle: { color: palette.text, fontSize: 15, fontWeight: '700', flex: 1 },
   refresh: { color: palette.primary, fontSize: 14, fontWeight: '700' },
-  count: { color: palette.muted, fontSize: 12 },
+  count: { color: palette.primary, backgroundColor: palette.primarySoft, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 12, fontSize: 12 },
   empty: { color: palette.muted, fontSize: 14, backgroundColor: palette.surface, padding: 12, borderRadius: 12 },
 });

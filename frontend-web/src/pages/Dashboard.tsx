@@ -1,3 +1,4 @@
+import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { AcademicHeading } from "../components/academic/Academic";
 import { useCallback, useState } from "react";
 import { ArrowRight, Bell, Timer } from "lucide-react";
@@ -21,7 +22,7 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
     const period = stats ? verifiedActivity(stats, days) : null;
     const from = stats?.daily[0]?.date, to = stats?.daily.at(-1)?.date;
     return <>
-        <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] dashboard-overview">
             <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>
             <DashboardMetrics days={days} stats={stats} period={period} loading={state.status === "loading"}/>
         </div>
@@ -36,8 +37,9 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
 function DashboardContent({ userId, username }: { userId: number; username: string }) {
     const [days, setDays] = useState<StudyPeriod>(7);
     const { unreadCount } = useUnreadNotifications();
-    return <div className="academic-page academic-dashboard min-w-0 space-y-4">
-        <AcademicHeading title={`Welcome back, ${username}`} eyebrow="Your study space">
+    return <div className="academic-page academic-dashboard retro-dashboard min-w-0 space-y-4">
+        <AcademicHeading title={`Welcome back, ${username}`} eyebrow="Your workspace" description="Keep your study rhythm. Make room for progress." art={<AcademicSprite name="scholar" width={80}/>} >
+            <AcademicSprite name="nook" width={205} className="welcome-nook"/>
             <Link to={ROUTES.focusStudio} className="study-button w-fit shrink-0 border-accent bg-accent text-on-accent hover:bg-accent-hover"><Timer size={18} aria-hidden="true"/>Start focusing <ArrowRight size={16} aria-hidden="true"/></Link>
         </AcademicHeading>
         <DashboardActivity days={days} onDaysChange={setDays} userId={userId}/>

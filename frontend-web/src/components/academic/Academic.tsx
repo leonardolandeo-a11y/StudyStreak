@@ -8,8 +8,8 @@ export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph;
         {glyphs[name].map(([x,y,width,height,role],index) => <rect key={index} x={x} y={y} width={width} height={height} className={`academic-fill-${role}`} />)}
     </svg>;
 }
-export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book', children }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph; children?: ReactNode }) {
-    return <header className="academic-heading"><div className="academic-heading-copy">
+export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book', art, children }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph; art?: ReactNode; children?: ReactNode }) {
+    return <header className="academic-heading">{art && <div className="academic-heading-art">{art}</div>}<div className="academic-heading-copy">
         <div className="academic-heading-kicker">{focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}<span>{eyebrow}</span></div>
         <h1>{title}</h1>{description ? <p>{description}</p> : null}
     </div>{children}</header>;

@@ -1,3 +1,4 @@
+import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { TrackingGroup } from "../components/trackingLinks/TrackingGroup";
@@ -188,10 +189,10 @@ function TrackingLinks() {
     if (!currentUser) return null;
 
     return (
-        <TrackingAvatarProvider revision={revision}><div className="academic-page academic-module space-y-6">
-            <AcademicHeading title="Tracking Links" eyebrow="Connections" description="Send requests, manage invitations and review your study partners." glyph="people" />
-
-            <TrackingLinkForm onSubmit={handleCreate} loading={creating} />
+        <TrackingAvatarProvider revision={revision}><div className="academic-page academic-module retro-tracking space-y-4">
+            <div className="tracking-toolbar"><AcademicHeading title="Tracking Links" eyebrow="Study connections" description="Send requests, manage invitations and review your study partners." glyph="people" art={<AcademicSprite name="companions" width={76}/>}/>
+                <TrackingLinkForm onSubmit={handleCreate} loading={creating}/>
+            </div>
             {loading && <LoadingState message="Loading tracking connections..." />}
             {error && <ErrorMessage message={error} />}
             {error && (
@@ -204,15 +205,15 @@ function TrackingLinks() {
                 </button>
             )}
 
-            {!loading && !error && activeLinks && <TrackingGroup title="Active Tracking Links" count={activeLinks.totalElements} expanded={expanded.active} onToggle={() => toggle('active')}>
+            {!loading && !error && activeLinks && <TrackingGroup title="Active Tracking Links" glyph="people" count={activeLinks.totalElements} expanded={expanded.active} onToggle={() => toggle('active')}>
                 {activeLinks.empty ? <EmptyState message="No active connections."/> : <div className="grid gap-3 xl:grid-cols-2">
                     {activeLinks.content.map(link => <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id} busy={busyId !== null} onRemove={handleRemove}/>)}
                 </div>}
                 {pagination("activePage", activePageNumber, activeLinks)}
             </TrackingGroup>}
-            {!loading && !error && pendingLinks && <TrackingGroup title="Pending Invitations" count={pendingLinks.totalElements} expanded={expanded.pending} onToggle={() => toggle('pending')}>
+            {!loading && !error && pendingLinks && <TrackingGroup title="Pending Invitations" glyph="note" count={pendingLinks.totalElements} expanded={expanded.pending} onToggle={() => toggle('pending')}>
                 {pendingLinks.empty ? <EmptyState message="No pending invitations."/> : <div className="grid gap-3 xl:grid-cols-2">
-                    {pendingLinks.content.map(link => <article key={link.id} className="rounded-lg border border-outline bg-surface p-3">
+                    {pendingLinks.content.map(link => <article key={link.id} className="min-w-0 rounded-lg border border-outline bg-surface p-3">
                         <div className="flex min-w-0 items-center gap-3"><TrackingAvatar id={link.requesterId} name={link.requesterUsername || "?"} className="size-11"/>
                             <p className="min-w-0 flex-1 truncate font-semibold text-content">@{link.requesterUsername || "Unknown user"}</p><span className="text-xs text-warning">PENDING</span></div>
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -223,7 +224,7 @@ function TrackingLinks() {
                 </div>}
                 {pagination("pendingPage", pendingPageNumber, pendingLinks)}
             </TrackingGroup>}
-            {!loading && !error && allLinks && <TrackingGroup title="All Tracking Links" count={allLinks.totalElements} expanded={expanded.history} onToggle={() => toggle('history')}>
+            {!loading && !error && allLinks && <TrackingGroup title="All Tracking Links" glyph="book" count={allLinks.totalElements} expanded={expanded.history} onToggle={() => toggle('history')}>
                 {allLinks.empty ? <EmptyState message="No tracking links yet."/> : <div className="grid gap-3 xl:grid-cols-2">
                     {allLinks.content.map(link => <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id}/>)}
                 </div>}

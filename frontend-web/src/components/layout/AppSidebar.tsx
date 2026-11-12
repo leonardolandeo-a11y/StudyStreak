@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Bell, BadgeCheck, Headphones, LayoutDashboard, Link2, LogOut, PanelLeftClose, PanelLeftOpen, Target, Users } from "lucide-react";
+import { AcademicSprite } from "../academic/AcademicSprite";
 import { StudyBrand, StudyMark } from "../branding/StudyBrand";
 import { PageTurnBookIcon } from "../icons/PageTurnBookIcon";
 import { UserPanel } from "./UserPanel";
@@ -76,6 +77,7 @@ export default function AppSidebar() {
         <nav id="workspace-navigation" aria-label="Workspace" className="sidebar-destinations">
             {navigation.map(item => <SidebarDestination key={`${item.to}-${collapsed}`} item={item} collapsed={collapsed} count={item.to === ROUTES.notifications ? unreadCount : 0}/>)}
         </nav>
+        <div className="sidebar-landscape" aria-hidden="true"><AcademicSprite name="skyline" width={264}/></div>
         <div className="sidebar-account border-t border-outline">
             {currentUser && <UserPanel user={currentUser} compact={collapsed}/>}
             <button type="button" onClick={() => { logout(); navigate(ROUTES.login); }} aria-label="Sign out" title={collapsed ? 'Sign out' : undefined}

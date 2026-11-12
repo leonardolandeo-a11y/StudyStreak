@@ -1,3 +1,5 @@
+import { AcademicSprite } from '../academic/AcademicSprite';
+import { workspacePalette, metricSurface } from '../academic/workspacePalette';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -5,7 +7,7 @@ import { useAppearance } from '../../hooks/useAppearance';
 import type { ResourceState } from '../../hooks/useFocusedResource';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
 import { activityNumber, verifiedActivity, type StudyPeriod } from '../../features/dashboard/verifiedActivity';
-import { AcademicPanel as Card, AcademicEmpty, PixelGlyph } from '../academic/Academic';
+import { AcademicPanel as Card, AcademicEmpty } from '../academic/Academic';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
 import { ActivityPlot } from './ActivityPlot';
@@ -17,6 +19,7 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
   days: StudyPeriod; onDaysChange(days: StudyPeriod): void; state: ResourceState<FocusStatistics>; retry(): void;
 }) {
   const { theme } = useAppearance();
+  const colors = workspacePalette(theme);
   const [style, setStyle] = useState<'bars' | 'lines'>('bars');
   const stats = state.status === 'success' ? state.data : null;
   const period = stats ? verifiedActivity(stats, days) : null;
@@ -29,18 +32,18 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
       unit: 'days', detail: 'All completed study days, including historical estimates. Independent of the period above.' },
   ];
   return <>
-    <Card style={{ padding: 14, gap: 10 }}>
+    <Card style={{ padding: 14, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 20, fontWeight: '700' }}>Study activity</Text>
-          <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Daily focus · confirmed minutes{stats?.timeZone ? ` · ${stats.timeZone}` : ''}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><AcademicSprite name="growth" width={24}/><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Study activity</Text></View>
+          <Text style={{ color: colors.muted, fontSize: 12 }}>Daily focus · confirmed minutes{stats?.timeZone ? ` · ${stats.timeZone}` : ''}</Text>
         </View>
         <View style={{ flexDirection: 'row', gap: 2 }}>
           {(['bars', 'lines'] as const).map(value => <NavigationPressable key={value} accessibilityRole="button"
             accessibilityLabel={value === 'bars' ? 'Bars' : 'Lines'} accessibilityState={{ selected: style === value }}
             onPress={() => setStyle(value)} style={{ width: 44, height: 44, borderRadius: 10,
-              alignItems: 'center', justifyContent: 'center', backgroundColor: style === value ? theme.colors.primarySoft : 'transparent' }}>
-            <AppIcon name={value} color={style === value ? theme.colors.primary : theme.colors.muted} size={20} />
+              alignItems: 'center', justifyContent: 'center', backgroundColor: style === value ? colors.primarySoft : 'transparent' }}>
+            <AppIcon name={value} color={style === value ? colors.primary : colors.muted} size={20} />
           </NavigationPressable>)}
         </View>
       </View>
@@ -53,14 +56,13 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
         : period.minutes === 0 ? <><AcademicEmpty><StatusMessage message="No verified study time in this period." /></AcademicEmpty>
           <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
         : <ActivityPlot period={period} style={style} />}
-      <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
+      <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
     </Card>
-    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 12, gap: 4 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}><PixelGlyph name={(['chart','spark','lamp','book'] as const)[index]} size={20} /><Text accessibilityRole="header" style={{ color: theme.colors.textSecondary, fontSize: 14, flexShrink: 1 }}>{metric.label}</Text></View>
-        <Text style={{ color: theme.colors.text, fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{metric.unit}</Text></Text>
-      </View>
-      <Text style={{ color: theme.colors.muted, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text>
+    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 14, gap: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: metricSurface(index, theme.mode === 'dark'), borderColor: colors.borderStrong }}>
+      <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[index]} width={42}/>
+      <View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{metric.label}</Text>
+        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.unit}</Text></Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text></View>
     </Card>)}
   </>;
 }

@@ -14,15 +14,17 @@ export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph;
         {glyphs[name].map(([x,y,width,height,role],index) => <View key={index} accessible={false} style={{ position: 'absolute', left: x*unit, top: y*unit, width: width*unit, height: height*unit, backgroundColor: fills[role] }} />)}
     </View>;
 }
-export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book' }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph }) {
+export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book', art }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph; art?: ReactNode }) {
     const { theme: { colors } } = useAppearance();
-    return <View style={{ gap: 8, paddingVertical: 6, paddingBottom: 14, borderBottomWidth: 1, borderColor: colors.border }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            {focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}
+    const copy = <>        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+            {art ? null : focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}
             <Text style={{ color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, letterSpacing: .5, flexShrink: 1 }}>{eyebrow}</Text>
         </View>
         <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: -.5 }}>{title}</Text>
         {description ? <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>{description}</Text> : null}
+</>;
+    return <View style={{ gap: 8, paddingVertical: 6, paddingBottom: 14, borderBottomWidth: 1, borderColor: colors.border }}>
+        {art ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{art}<View style={{ flex: 1, gap: 6 }}>{copy}</View></View> : copy}
     </View>;
 }
 export function AcademicPanel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {

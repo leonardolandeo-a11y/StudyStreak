@@ -7,17 +7,17 @@ import { useAppearance } from '../../hooks/useAppearance';
 import { useCurrentMenuAction } from '../../contexts/MenuActionContext';
 
 // Legacy screens keep their dark canvas until their own fixed text is migrated.
-export function Screen({ children, scroll = true, themed = false, scrollRef, onRefresh, refreshing = false, compact = false }: {
+export function Screen({ children, scroll = true, themed = false, scrollRef, onRefresh, refreshing = false, compact = false, backgroundColor }: {
   children: ReactNode; scroll?: boolean; themed?: boolean; scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   onRefresh?: () => void; refreshing?: boolean;
-  compact?: boolean;
+  compact?: boolean; backgroundColor?: string;
 }) {
   const { theme } = useAppearance();
   const segments = useSegments();
   const action = useCurrentMenuAction();
   const hasTabBar = segments.some(segment => segment === '(menu)') && !action?.hidden;
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: themed ? theme.colors.background : palette.background }]}
+    <SafeAreaView style={[styles.safe, { backgroundColor: backgroundColor ?? (themed ? theme.colors.background : palette.background) }]}
       edges={segments[0] === '(app)' ? hasTabBar ? [] : ['bottom'] : ['top', 'bottom']}>
       {scroll ? (
         <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"

@@ -10,8 +10,8 @@ export default function TrackingLinkCard({ trackingLink, currentUserId, onRemove
     const isRequester = trackingLink.requesterId === currentUserId;
     const partnerId = isRequester ? trackingLink.receiverId : trackingLink.requesterId;
     const name = (isRequester ? trackingLink.receiverUsername : trackingLink.requesterUsername) || "Unknown user";
-    const identity = <><TrackingAvatar id={partnerId} name={name} className="size-11 text-lg"/><span className="min-w-0"><span className="block truncate font-semibold text-content" title={name}>@{name}</span><span className="text-xs text-content-muted">{isRequester ? "Sent" : "Received"}</span></span></>;
-    return <article className="flex min-w-0 items-center gap-3 rounded-lg border border-outline bg-surface p-3">
+    const identity = <><TrackingAvatar id={partnerId} name={name} className="size-12 text-lg"/><span className="min-w-0"><span className="block truncate font-semibold text-content" title={name}>@{name}</span><span className="text-xs text-content-muted">{isRequester ? "Sent" : "Received"}</span></span></>;
+    return <article className="tracking-partner flex min-w-0 items-center gap-3 rounded-lg border border-outline bg-surface p-3">
         {trackingLink.status === 'ACCEPTED'
             ? <Link to={socialProfilePath(partnerId)} aria-label={`View profile of ${name}`} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-control hover:bg-surface-hover">{identity}</Link>
             : <div className="flex min-h-11 min-w-0 flex-1 items-center gap-3">{identity}</div>}

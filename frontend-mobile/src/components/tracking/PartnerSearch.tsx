@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AcademicSprite } from '../academic/AcademicSprite';
+import { workspacePalette } from '../academic/workspacePalette';
 import { SocialAvatar } from '../social/MemberReference';
 import { ActionButton } from '../ui/ActionButton';
 import { PageControls } from '../ui/PageControls';
 import { StatusMessage } from '../ui/StatusMessage';
-import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import { useAppearance } from '../../hooks/useAppearance';
 import type { ThemeColors } from '../../features/appearance/theme';
 import { userSearchService } from '../../services/userSearchService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -16,8 +18,9 @@ export function PartnerSearch({ onSend, busy }: {
   onSend: (userId: number) => Promise<boolean>;
   busy: boolean;
 }) {
-  const styles = useThemedStyles(createStyles);
-  const { theme: { colors: palette } } = useAppearance();
+  const { theme } = useAppearance();
+  const palette = workspacePalette(theme);
+  const styles = createStyles(palette);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<UserSearchResult | null>(null);
   const [page, setPage] = useState(0);
@@ -74,7 +77,7 @@ export function PartnerSearch({ onSend, busy }: {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.heading}>Find a study partner</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><AcademicSprite name="companions" width={48}/><Text style={styles.heading}>Find a study partner</Text></View>
       <Text style={styles.description}>Search by username or exact email. Select a person to send a request.</Text>
       <TextInput
         accessibilityLabel="Search study partners"
