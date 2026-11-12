@@ -1,6 +1,6 @@
 # Etapa 7.4b — Goals y Validations
 
-Rama: `feat/ui-ux-web-mobile`. Base revisada: `4d13504` y `8794498` (7.4 visual). Implementación: HASH_PENDIENTE.
+Rama: `feat/ui-ux-web-mobile`. Base revisada: `4d13504` y `8794498` (7.4 visual). Implementación: `642358c737b2218c538f6caa3e17c5f3be245b13` — `feat(ui): redesign goals and validations workflows`.
 
 ## Cambios visibles
 
