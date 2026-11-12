@@ -1,3 +1,4 @@
+import { GoalWriteUnconfirmedError } from '../../../utils/goalWrite';
 import { GoalTags } from '../../../components/tags/GoalTags';
 import { DifficultyBadge } from '../../../components/goals/GoalDifficulty';
 import { workspacePalette } from '../../../components/academic/workspacePalette';
@@ -43,6 +44,7 @@ export default function GoalDetails() {
   const [focusSummaryError, setFocusSummaryError] = useState(false);
   const [goalRevision, setGoalRevision] = useState(0);
   const latestGoalRevision = useRef(goalRevision);
+  const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [showCreateRecord, setShowCreateRecord] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DailyRecord | null>(null);
@@ -113,6 +115,7 @@ export default function GoalDetails() {
       setMessage('Goal updated successfully.');
       return true;
     } catch (cause) {
+      if (cause instanceof GoalWriteUnconfirmedError) setUnconfirmed(cause);
       setMutationError(getApiErrorMessage(cause, 'Unable to update goal.'));
       return false;
     } finally { setBusy(false); }
@@ -188,7 +191,7 @@ export default function GoalDetails() {
   return (
     <>
     <CreationModal visible={editingGoal} title="Edit goal" busy={busy} onClose={() => setEditingGoal(false)}>
-      {goal ? <GoalForm key={`goal-form-${goal.id}`} initialValues={goal} busy={busy} onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
+      {goal ? <GoalForm blocked={unconfirmed !== null} key={`goal-form-${goal.id}`} initialValues={goal} busy={busy} onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
       {mutationError ? <StatusMessage error message={mutationError} /> : null}
     </CreationModal>
     <CreationModal visible={showCreateRecord || editingRecord !== null} title={editingRecord ? 'Edit daily record' : 'Add daily record'} busy={busy}
@@ -221,7 +224,7 @@ export default function GoalDetails() {
               {goal.completed ? 'Completed' : 'Active'}
             </Text>
             <ActionButton compact secondary title={editingGoal ? 'Close goal editor' : 'Update Goal'}
-              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); }} />
+              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); setUnconfirmed(null); }} />
             {!editingGoal ? (
               <ActionButton compact title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}

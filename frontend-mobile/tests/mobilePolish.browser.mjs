@@ -31,6 +31,7 @@ const browser = await mobileBrowser({ intercept: async request => {
     return { status: 404 };
   }
   if (path === '/api/profile') return { body: { id: 101, username: 'fixture-student', presentationName: 'Fixture Student', bio: 'Fixture biography' } };
+  if (/^\/users\/101\/goals\/\d+$/.test(path)) return { body: goals.find(goal=>goal.id===Number(path.split('/').at(-1))) };
   if (path === '/api/profile/avatar') return { status: 404 };
   if (path === '/users/101/goals') { reads.goals++; return { body: makePage(goals) }; }
   if (path === '/users/3/goals') return { body: makePage([{ id: 4, topic: 'Partner algebra', completed: false, frequency: 2, duration: 25 }]) };

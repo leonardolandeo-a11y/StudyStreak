@@ -14,17 +14,17 @@ function colors(value: GoalDifficulty | null | undefined, dark: boolean) {
     INTERMEDIATE: dark ? ['#f3d08a','#443820'] : ['#854d0e','#fef3c7'],
     HARD: dark ? ['#ffb4b4','#4b2932'] : ['#991b1b','#fee2e2'],
     TRIVIAL: dark ? ['#cbd5e1','#38404d'] : ['#4b5563','#e5e7eb'] };
-  return tones[value ?? 'TRIVIAL'];
+  return tones[value ?? 'TRIVIAL'] ?? tones.TRIVIAL;
 }
 export function DifficultyBadge({ value, strip = false }: { value?: GoalDifficulty | null; strip?: boolean }) {
   const { theme } = useAppearance();
   const [color, backgroundColor] = colors(value, theme.mode === 'dark');
   const level = levels.find(item => item.value === value);
-  return <View accessible accessibilityLabel={level?.label ?? 'Sin dificultad'} style={strip
+  return <View accessible accessibilityLabel={level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')} style={strip
     ? { width: 48, alignSelf: 'stretch', justifyContent: 'center', alignItems: 'center', backgroundColor }
     : { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor, padding: 6, borderRadius: 6, alignSelf: 'flex-start' }}>
     <AcademicSprite name={level?.face ?? 'difficultyNone'} width={strip ? 28 : 24}/>
-    {!strip && <Text style={{ color, fontSize: 12 }}>{level?.label ?? 'Sin dificultad'}</Text>}
+    {!strip && <Text style={{ color, fontSize: 12 }}>{level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')}</Text>}
   </View>;
 }
 export function DifficultySelector({ value, disabled, onChange }: {

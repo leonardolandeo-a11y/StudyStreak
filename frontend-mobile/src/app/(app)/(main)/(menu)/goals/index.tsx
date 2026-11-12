@@ -1,3 +1,4 @@
+import { GoalWriteUnconfirmedError } from '../../../../../utils/goalWrite';
 import { AppIcon } from '../../../../../components/ui/AppIcon';
 import { DifficultyBadge } from '../../../../../components/goals/GoalDifficulty';
 import { AcademicSprite } from '../../../../../components/academic/AcademicSprite';
@@ -34,12 +35,13 @@ export default function Goals() {
     return goalService.list(userId, page, signal);
   }, [userId]);
   const { page, setPage, data, loading, error, reload } = usePagedResource(fetchGoals, userId != null);
+  const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const menuScroll = useMenuAction('Create a goal', () => { setShowCreate(true); setFormError(null); }, showCreate, () => { if (!busy) setShowCreate(false); });
+  const menuScroll = useMenuAction('Create a goal', () => { setShowCreate(true); setFormError(null); setUnconfirmed(null); }, showCreate, () => { if (!busy) setShowCreate(false); });
 
   async function create(request: GoalRequest): Promise<boolean> {
     if (userId == null) return false;
@@ -53,6 +55,7 @@ export default function Goals() {
       else reload();
       return true;
     } catch (cause) {
+      if (cause instanceof GoalWriteUnconfirmedError) setUnconfirmed(cause);
       setFormError(getApiErrorMessage(cause, 'Unable to create goal.'));
       return false;
     } finally {
@@ -62,12 +65,13 @@ export default function Goals() {
 
   return <>
     <CreationModal visible={showCreate} title="New Goal" busy={busy} onClose={() => setShowCreate(false)}>
-      <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
+      <GoalForm blocked={unconfirmed !== null} busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
       {formError ? <StatusMessage message={formError} error /> : null}
+      {unconfirmed?.goalId ? <ActionButton compact secondary title="Review saved goal" onPress={() => { setShowCreate(false); router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(unconfirmed.goalId) } }); }}/> : null}
     </CreationModal>
     <Screen themed compact scrollRef={menuScroll} backgroundColor={palette.background}>
       <AcademicHeading title="My Goals" eyebrow="YOUR STUDY GOALS" glyph="book" description="Create study goals and manage their daily records." art={<AcademicSprite name="books" width={60}/>} />
-      <ActionButton compact title="Create Goal" onPress={() => { setShowCreate(true); setFormError(null); }}/>
+      <ActionButton compact title="Create Goal" onPress={() => { setShowCreate(true); setFormError(null); setUnconfirmed(null); }}/>
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>

@@ -1,3 +1,6 @@
+import { GoalWriteUnconfirmedError } from '../utils/goalWrite';
+import { Link } from 'react-router-dom';
+import { goalDetailsPath } from '../routes/paths';
 import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { WorkflowDialog } from "../components/workflows/WorkflowDialog";
 import { AcademicHeading } from "../components/academic/Academic";
@@ -37,6 +40,7 @@ function Goals(){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string|null>(null);
 
+    const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
     const [showCreate, setShowCreate] = useState(false);
     const [creating, setCreating] = useState(false);
 
@@ -80,6 +84,7 @@ function Goals(){
             showToast("Goal created successfully.", "success");
             return true;
         } catch (cause) {
+            if (cause instanceof GoalWriteUnconfirmedError) setUnconfirmed(cause);
             showToast(getApiErrorMessage(cause, "Could not create goal."), "error");
             return false;
         } finally {
@@ -160,11 +165,12 @@ function Goals(){
 return(
     <div className="academic-page academic-module goal-workflows space-y-6">
 
-        <AcademicHeading title="My Goals" eyebrow="Goals" description="Create study goals, track their progress, and manage their daily records." glyph="book" art={<AcademicSprite name="books" width={72}/>}><button className="study-button bg-accent text-on-accent" type="button" onClick={() => setShowCreate(true)}>Create Goal</button></AcademicHeading>
+        <AcademicHeading title="My Goals" eyebrow="Goals" description="Create study goals, track their progress, and manage their daily records." glyph="book" art={<AcademicSprite name="books" width={72}/>}><button className="study-button bg-accent text-on-accent" type="button" onClick={() => { setUnconfirmed(null); setShowCreate(true); }}>Create Goal</button></AcademicHeading>
 
 
         {showCreate && <WorkflowDialog title="Create Goal" busy={creating} onClose={() => setShowCreate(false)}>
-            <GoalForm onSubmit={async value => { const saved = await handleCreateGoal(value); if (saved) setShowCreate(false); return saved; }} loading={creating} onCancel={() => setShowCreate(false)}/>
+            <GoalForm blocked={unconfirmed !== null} onSubmit={async value => { const saved = await handleCreateGoal(value); if (saved) setShowCreate(false); return saved; }} loading={creating} onCancel={() => setShowCreate(false)}/>
+            {unconfirmed && <div role="alert" className="mt-3 text-sm text-danger"><p>{unconfirmed.message}</p>{unconfirmed.goalId && <Link className="study-button mt-2" to={goalDetailsPath(unconfirmed.goalId)}>Review saved goal</Link>}</div>}
         </WorkflowDialog>}
 
         <section>

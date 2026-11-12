@@ -10,12 +10,14 @@ import type { GoalDifficulty, GoalRequest } from '../../types/goal';
 
 type Props = {
   initialValues?: GoalRequest;
+  blocked?: boolean;
   busy: boolean;
   onSubmit: (request: GoalRequest) => Promise<boolean>;
   onCancel: () => void;
 };
 
-export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
+export function GoalForm({ initialValues, busy, onSubmit, onCancel, blocked = false }: Props) {
+  const locked = busy || blocked;
   const styles = useThemedStyles(createStyles);
   const [difficulty,setDifficulty] = useState<GoalDifficulty | undefined>(initialValues?.difficulty ?? undefined);
   const [topic, setTopic] = useState(initialValues?.topic ?? '');
@@ -25,6 +27,7 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
+    if (locked) return;
     const name = topic.trim();
     const days = Number(frequency);
     const minutes = Number(duration);
@@ -40,22 +43,22 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
     <View style={styles.form}>
       <Text style={styles.heading}>{initialValues ? 'Edit goal' : 'New study goal'}</Text>
       <FormField variant="subtle" label="Topic" placeholder="e.g. Differential equations" value={topic}
-        onChangeText={setTopic} maxLength={150} editable={!busy} />
+        onChangeText={setTopic} maxLength={150} editable={!locked} />
       <Text style={styles.checkLabel}>Study schedule</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}><View style={{ flex: 1, minWidth: 120 }}>
       <FormField variant="subtle" label="Frequency" hint="Study sessions per week" value={frequency}
-        onChangeText={setFrequency} keyboardType="number-pad" editable={!busy} />
+        onChangeText={setFrequency} keyboardType="number-pad" editable={!locked} />
       </View><View style={{ flex: 1, minWidth: 120 }}><FormField variant="subtle" label="Duration" hint="Minutes per session" value={duration}
-        onChangeText={setDuration} keyboardType="number-pad" editable={!busy} />
+        onChangeText={setDuration} keyboardType="number-pad" editable={!locked} />
       </View></View>
-      <DifficultySelector value={difficulty} disabled={busy} onChange={setDifficulty}/>
+      <DifficultySelector value={difficulty} disabled={locked} onChange={setDifficulty}/>
       {initialValues ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
-        disabled={busy} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
+        disabled={locked} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
         <Text style={styles.check}>{completed ? '☑' : '☐'}</Text>
         <Text style={styles.checkLabel}>Completed</Text>
       </Pressable> : null}
       {!initialValues ? <Text style={styles.checkLabel}>New goals start Active.</Text> : null}
       {error ? <StatusMessage error message={error} /> : null}
-      <ActionButton compact title={initialValues ? 'Save changes' : 'Create goal'} busy={busy}
+      <ActionButton compact title={initialValues ? 'Save changes' : 'Create goal'} busy={busy} disabled={blocked}
         onPress={() => { void submit(); }} />
       <ActionButton compact title="Cancel" secondary disabled={busy} onPress={onCancel} />
     </View>

@@ -1,3 +1,4 @@
+import { GoalWriteUnconfirmedError } from '../utils/goalWrite';
 import { DifficultyBadge } from '../components/goals/GoalDifficulty';
 import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { WorkflowDialog } from "../components/workflows/WorkflowDialog";
@@ -55,6 +56,7 @@ function GoalDetails(){
     const [loading, setLoading] = useState(true);
     const [error,setError] = useState<string|null>(null);
 
+    const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
     const [editing, setEditing] = useState(false);
     const [recordCount, setRecordCount] = useState<number | null>(null);
     const [updating,setUpdating] = useState(false);
@@ -83,6 +85,7 @@ function GoalDetails(){
             showToast("Goal updated successfully.", "success");
             return true;
         } catch (cause) {
+            if (cause instanceof GoalWriteUnconfirmedError) setUnconfirmed(cause);
             showToast(getApiErrorMessage(cause, "Could not update goal."), "error");
             return false;
         } finally {
@@ -282,7 +285,7 @@ useEffect(() => {
             <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs text-content-muted">GOAL DETAILS</p><h1 className="mt-1 break-words text-2xl font-bold">{goal.topic}</h1></div><DifficultyBadge value={goal.difficulty}/></div>
             <span className={`goal-status ${goal.completed ? 'text-success bg-success-surface' : 'text-accent bg-accent-soft'}`}>{goal.completed ? 'Completed' : 'Active'}</span>
             <p className="mt-3 text-sm text-content-muted">{goal.frequency} sessions/week · {goal.duration} min/session</p>
-            <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="study-button" onClick={() => setEditing(true)}>Update Goal</button>
+            <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="study-button" onClick={() => { setUnconfirmed(null); setEditing(true); }}>Update Goal</button>
                 {!goal.completed && <Link className="study-button bg-accent text-on-accent" to={`${ROUTES.focusStudio}?goalId=${goal.id}`}>Study this Goal</Link>}
                 <Link className="study-button" to={resourcesPath(goal.topic)}>Find books for this goal</Link><Link className="study-button" to={ROUTES.studyRooms}>Study Rooms</Link>
             </div>
@@ -293,7 +296,7 @@ useEffect(() => {
         <p className="text-xs text-content-muted">Saved focus sessions and Daily Records are tracked separately. Targets are your plan, not a completion percentage.</p>
         <GoalTags key={goal.id} userId={currentUser.id} goalId={goal.id}/>
         {streakLoading && <LoadingState message="Loading streak..."/>}{streakError && <ErrorMessage message={streakError}/>}{!streakLoading && !streakError && streak && <StreakCard streak={streak}/>}
-        {editing && <WorkflowDialog title="Update Goal" busy={updating} onClose={() => setEditing(false)}><GoalForm initialValues={goal} onSubmit={async value => { const saved = await handleUpdateGoal(value); if (saved) setEditing(false); return saved; }} loading={updating} submitLabel="Update Goal" resetAfterSubmit={false} onCancel={() => setEditing(false)}/></WorkflowDialog>}
+        {editing && <WorkflowDialog title="Update Goal" busy={updating} onClose={() => setEditing(false)}><GoalForm blocked={unconfirmed !== null} initialValues={goal} onSubmit={async value => { const saved = await handleUpdateGoal(value); if (saved) setEditing(false); return saved; }} loading={updating} submitLabel="Update Goal" resetAfterSubmit={false} onCancel={() => setEditing(false)}/>{unconfirmed && <p role="alert" className="mt-3 text-sm text-danger">{unconfirmed.message}</p>}</WorkflowDialog>}
         <button type="button" className="study-button text-danger border-danger-outline" disabled={deleting} onClick={handleDeleteGoal}>{deleting ? 'Deleting...' : 'Delete Goal'}</button>
     </div>;
 }

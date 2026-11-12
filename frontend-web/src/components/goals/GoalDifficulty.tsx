@@ -11,14 +11,14 @@ const levels: { value: GoalDifficulty; label: string; face: AcademicSpriteName; 
 export function DifficultyBadge({ value }: { value?: GoalDifficulty | null }) {
     const level = levels.find(item => item.value === value);
     return <span className="goal-difficulty-badge" data-difficulty={value ?? 'NONE'}>
-        <AcademicSprite name={level?.face ?? 'difficultyNone'} width={24}/>{level?.label ?? 'Sin dificultad'}
+        <AcademicSprite name={level?.face ?? 'difficultyNone'} width={24}/>{level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')}
     </span>;
 }
 export function DifficultyFace({ value }: { value?: GoalDifficulty | null }) {
     const level = levels.find(item => item.value === value);
-    return <span className="goal-difficulty-strip" data-difficulty={value ?? 'NONE'} title={level?.label ?? 'Sin dificultad'}>
+    return <span className="goal-difficulty-strip" data-difficulty={value ?? 'NONE'} title={level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')}>
         <AcademicSprite name={level?.face ?? 'difficultyNone'} width={28}/>
-        <span className="sr-only">{level?.label ?? 'Sin dificultad'}</span>
+        <span className="sr-only">{level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')}</span>
     </span>;
 }
 export function DifficultySelector({ value, disabled, required, onChange }: {

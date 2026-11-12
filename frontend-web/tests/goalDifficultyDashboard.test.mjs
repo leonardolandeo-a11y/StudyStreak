@@ -7,12 +7,13 @@ const labels=['Intrascendente','Fácil','Intermedio','Difícil'];
 const paged=content=>({content,number:0,size:10,totalElements:content.length,totalPages:1,first:true,last:true,empty:!content.length});
 test('Chrome: persisted difficulty forms, compact identities and complementary recorded calendar', {timeout:120000}, async()=>{
  let goals=[...levels,null].map((difficulty,i)=>({id:7+i,topic:i===4?'Historical goal':labels[i]+' study goal',frequency:3,duration:25,completed:false,difficulty}));
+ let legacy=false;
  const requests=[],writes=[];
  const browser=await profileBrowser({intercept:async request=>{
   const u=new URL(request.url),p=u.pathname; requests.push(p);
   if(request.method!=='GET'){
    const body=JSON.parse(request.postData||'{}'); writes.push({p,body});
-   if(p==='/users/42/goals'){const goal={...body,id:100+goals.length};goals.push(goal);return {status:201,body:goal};}
+   if(p==='/users/42/goals'){const goal={...body,id:100+goals.length,...(legacy?{difficulty:undefined}:{})};goals.push(goal);return {status:201,body:goal};}
    if(/^\/users\/42\/goals\/\d+$/.test(p)){const goal=goals.find(g=>g.id===Number(p.split('/').at(-1)));Object.assign(goal,body);return{body:goal};}
    return{status:403};
   }
@@ -62,6 +63,9 @@ test('Chrome: persisted difficulty forms, compact identities and complementary r
    await browser.evaluate('document.querySelector("dialog button[type=submit]").click()');await browser.wait('!document.querySelector("dialog")');
    assert.equal(writes.at(-1).body.difficulty,level);
   }
+  legacy=true;const before=writes.length;await browser.click('Create Goal');await browser.wait('!!document.querySelector("dialog[open]")');await browser.fill('#topic','Unconfirmed legacy goal');await browser.evaluate(`document.querySelector('input[value=EASY]').click()`);await browser.evaluate('document.querySelector("dialog button[type=submit]").click()');
+  await browser.wait(`!!document.querySelector('dialog [role="alert"]')`);assert.equal(writes.length,before+1);assert.equal(await browser.evaluate('document.querySelector("dialog button[type=submit]").disabled'),true);assert.equal(await browser.evaluate('document.querySelector("#topic").value'),'Unconfirmed legacy goal');
+  await browser.click('Cancel');legacy=false;
   await browser.reload();await browser.wait(`document.body.textContent.includes('Created Difícil')`);
   await browser.evaluate(`document.querySelector('a[aria-label="Open Fácil study goal"]').click()`);await browser.wait('!!document.querySelector(".goal-detail-hero")');
   await browser.click('Update Goal');await browser.wait(`document.querySelector('input[value=EASY]').checked`);await browser.evaluate(`document.querySelector('input[value=HARD]').click()`);

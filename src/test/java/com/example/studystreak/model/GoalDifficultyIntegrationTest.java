@@ -97,4 +97,58 @@ class GoalDifficultyIntegrationTest {
         assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
                 () -> db.update("update goal set difficulty='INVALID' where id=9000000"));
     }
+    @Test
+    @EnabledIfEnvironmentVariable(named = "STUDYSTREAK_LEGACY_GOAL_JAR", matches = ".+")
+    void reproducesTheActiveLegacyJarWithoutTouchingTheDevelopmentDatabase() throws Exception {
+        assertEquals("studystreak_goal_difficulty_test", db.queryForObject("select current_database()", String.class));
+        db.execute("create schema ss_audit_old_goals");
+        var log = java.nio.file.Files.createTempFile("studystreak-legacy-goals-", ".log");
+        var process = new ProcessBuilder("java", "-jar", System.getenv("STUDYSTREAK_LEGACY_GOAL_JAR"),
+                "--server.address=127.0.0.1", "--server.port=55462",
+                "--spring.datasource.url=jdbc:postgresql://127.0.0.1:55461/studystreak_goal_difficulty_test",
+                "--spring.datasource.hikari.jdbc-url=jdbc:postgresql://127.0.0.1:55461/studystreak_goal_difficulty_test",
+                "--spring.datasource.username=goal_test", "--spring.datasource.password=test-only",
+                "--spring.datasource.hikari.schema=ss_audit_old_goals",
+                "--spring.jpa.properties.hibernate.default_schema=ss_audit_old_goals",
+                "--spring.jpa.hibernate.ddl-auto=update", "--logging.level.root=WARN")
+                .redirectErrorStream(true).redirectOutput(log.toFile()).start();
+        try {
+            var client = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofMillis(500)).build();
+            boolean ready = false;
+            for (int i = 0; i < 120 && process.isAlive(); i++) {
+                try {
+                    var health = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:55462/users/1/goals"))
+                            .timeout(java.time.Duration.ofSeconds(1)).GET().build(), HttpResponse.BodyHandlers.discarding());
+                    if (health.statusCode() == 401) { ready = true; break; }
+                } catch (java.io.IOException ignored) { /* Isolated server is still starting. */ }
+                Thread.sleep(250);
+            }
+            assertTrue(ready, "Legacy fixture did not start; inspect " + log);
+            // The legacy local setup reconciles this sequence separately from JPA.
+            // Reproduce that prerequisite only inside the disposable legacy schema.
+            db.execute("create sequence if not exists ss_audit_old_goals.goal_seq increment by 50");
+            var owner = user();
+            db.update("insert into ss_audit_old_goals.users(id,username,email,password,active,role) values(?,?,?,'unused',true,'USER')",
+                    owner.getId(), owner.getUsername(), owner.getEmail());
+            String token = jwt.generateToken(owner);
+            String base = "http://127.0.0.1:55462/users/" + owner.getId() + "/goals";
+            var created = client.send(HttpRequest.newBuilder(URI.create(base)).header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token).POST(HttpRequest.BodyPublishers.ofString(goalBody("\"EASY\""))).build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(201, created.statusCode(), created.body());
+            var response = json.readTree(created.body());
+            assertFalse(response.has("difficulty"), "The deployed old DTO ignores the new field");
+            var read = client.send(HttpRequest.newBuilder(URI.create(base + "/" + response.path("id").asLong()))
+                    .header("Authorization", "Bearer " + token).GET().build(), HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, read.statusCode());
+            assertFalse(json.readTree(read.body()).has("difficulty"));
+            assertEquals(0, db.queryForObject("select count(*) from information_schema.columns where table_schema='ss_audit_old_goals' and table_name='goal' and column_name='difficulty'", Integer.class));
+            System.out.println("Legacy JAR reproduction: POST EASY -> 201 without difficulty; GET -> 200 without difficulty; disposable schema has no difficulty column.");
+        } finally {
+            process.destroy();
+            if (!process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) process.destroyForcibly().waitFor();
+            java.nio.file.Files.copy(log, java.nio.file.Path.of("/tmp/hotfix-legacy-server.log"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            java.nio.file.Files.deleteIfExists(log);
+        }
+    }
+
 }

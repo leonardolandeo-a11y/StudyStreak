@@ -7,13 +7,13 @@ let goals=[...levels,null].map((difficulty,i)=>({id:i+7,topic:i===4?'Historical 
 const claims={type:'access',userId:101,sub:'fixture',email:'fixture@example.invalid',role:'USER',exp:4102444800};
 const tokens={token:`fixture.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`,refreshToken:'fixture-only'};
 const page=content=>({content,totalElements:content.length,totalPages:content.length?1:0,empty:!content.length,last:true,number:0,size:10});
-const writes=[];
+let legacy=false;const writes=[];
 const browser=await mobileBrowser({intercept:async request=>{
  const p=new URL(request.url).pathname;
  if(p==='/login')return{body:tokens};
  if(request.method!=='GET'){
   const body=JSON.parse(request.postData||'{}');writes.push({p,body});
-  if(p==='/users/101/goals'){const goal={id:100+goals.length,...body};goals.push(goal);return{body:goal};}
+  if(p==='/users/101/goals'){const goal={id:100+goals.length,...body,...(legacy?{difficulty:undefined}:{})};goals.push(goal);return{body:goal};}
   if(/^\/users\/101\/goals\/\d+$/.test(p)){const goal=goals.find(g=>g.id===Number(p.split('/').at(-1)));Object.assign(goal,body);return{body:goal};}
   return{status:403};
  }
@@ -45,10 +45,13 @@ try{
   if(index===3)await capture('selector');
   await browser.click('Create goal');await modalGone();assert.equal(writes.at(-1).body.difficulty,levels[index]);
  }
+ legacy=true;const before=writes.length;await browser.click('Create Goal');await browser.wait(has('Topic'));await browser.fill('[aria-label="Topic"]','Unconfirmed legacy goal');await browser.click('Fácil · Alegre');await browser.click('Create goal');await browser.wait(`document.body.innerText.includes('Difficulty was not confirmed')`);
+ assert.equal(writes.length,before+1);assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Create goal"]').getAttribute('aria-disabled')`),'true');await browser.click('Cancel');await modalGone();legacy=false;
  await browser.click('Open Historical goal');await browser.wait(has('Update Goal'));await browser.click('Update Goal');await browser.wait(has('Topic'));
  await browser.click('Difícil · Enojada');await browser.click('Save changes');await modalGone();assert.equal(goals.find(g=>g.id===11).difficulty,'HARD');
  await browser.wait(`document.body.innerText.includes('Difícil')`);await capture('details');
  await browser.evaluate('history.back()');await browser.wait(has('Open Historical goal'));
+ await browser.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');await browser.wait(has('Focus on Study goal 1'));
  await browser.click('Focus on Study goal 1');await browser.wait('location.pathname.includes("focus-studio")');assert.equal(await browser.evaluate('location.search.includes("goalId=7")'),true);
  assert.deepEqual(browser.errors,[]);
  process.stdout.write('Native difficulty browser passed: four levels, historical fallback, create/edit payloads, independent Focus and responsive capture.\n');
