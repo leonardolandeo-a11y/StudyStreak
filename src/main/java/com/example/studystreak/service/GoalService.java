@@ -138,6 +138,8 @@ public class GoalService {
         goal.setFrequency(goalDTO.getFrequency());
         goal.setDuration(goalDTO.getDuration());
         goal.setCompleted(goalDTO.getCompleted());
+        // Omitted/null from an older client must not erase an existing choice.
+        if (goalDTO.getDifficulty() != null) goal.setDifficulty(goalDTO.getDifficulty());
 
         boolean isCompleted = Boolean.TRUE.equals(
                 goal.getCompleted()

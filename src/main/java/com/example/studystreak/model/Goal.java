@@ -23,6 +23,10 @@ public class Goal {
 
     private Boolean completed = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private GoalDifficulty difficulty;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
