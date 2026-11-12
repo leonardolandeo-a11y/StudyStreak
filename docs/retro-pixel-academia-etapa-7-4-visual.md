@@ -150,3 +150,5 @@ No se operó un dispositivo físico. En Expo Go, con la configuración local hab
 ## Registro
 
 Se registra la implementación mediante staging explícito con `feat(ui): redesign dashboard tracking and sidebar retro style`. El hash real se incorpora en un seguimiento sólo documental para evitar amend y una autorreferencia. Los 16 elementos ajenos se mantienen fuera de ambos commits. No hay push, merge, reset, deployment ni inicio de otra etapa.
+
+**Commit de implementación:** `4d13504 feat(ui): redesign dashboard tracking and sidebar retro style` (66 archivos, incluidas las doce capturas comparativas). Tras registrarlo quedan únicamente los 16 elementos preexistentes ajenos y este añadido documental hasta su registro.
