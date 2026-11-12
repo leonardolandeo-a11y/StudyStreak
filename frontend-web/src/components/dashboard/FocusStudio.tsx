@@ -1,3 +1,4 @@
+import { FocusEnvironment } from '../environment/StudyEnvironment';
 import { AcademicHeading } from "../academic/Academic";
 import { getApiErrorMessage } from "../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../services/studyTracking";
@@ -371,7 +372,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         ))}
                     </div>
 
-                    <div className="academic-dial relative mx-auto mt-3 aspect-square w-full max-w-[360px]">
+                    <FocusEnvironment><div className="academic-dial relative mx-auto mt-3 aspect-square w-full max-w-[360px]">
                         <svg viewBox="0 0 250 250" aria-hidden="true" className="h-full w-full -rotate-90">
                             {Array.from({ length: 12 }, (_,index) => {
                                 const angle = index * Math.PI / 6;
@@ -392,6 +393,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                         </div>
                     </div>
 
+                    </FocusEnvironment>
                     <div className="mx-auto flex max-w-xs items-center justify-center gap-2">
                         <button type="button" onClick={toggleTimer}
                             className={`academic-action flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold ${style.strong}`}>

@@ -112,6 +112,6 @@ test('relocated recorded statistics retain historical labels and share the Dashb
   const html = render(h(MemoryRouter, {}, h(Insights, { data, days: 7 })));
   assert.match(html, /All-time recorded/); assert.match(html, /75 min verified · 20 min historical estimates/);
   assert.match(html, /Recorded in 7 days/); assert.match(html, /All-time completed sessions/);
-  assert.match(html, /Best study streak/); assert.match(html, /Explore study details/);
+  assert.match(html, /Best recorded streak/); assert.match(html, /Explore study details/);
   assert.doesNotMatch(html, /Refresh focus statistics|Study period|Verified focus|Active study days in this period/);
 });

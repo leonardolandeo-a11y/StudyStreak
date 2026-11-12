@@ -1,3 +1,4 @@
+import { FocusEnvironment } from '../environment/StudyEnvironment';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
@@ -31,7 +32,7 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
           <Text style={{ color: mode === item.id ? theme.colors.primary : theme.colors.muted, fontSize: 13 }}>{item.label}</Text>
         </NavigationPressable>)}
     </View>
-    <View onLayout={event => setDiameter(Math.min(230, event.nativeEvent.layout.width))} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+    <FocusEnvironment><View onLayout={event => setDiameter(Math.min(230, event.nativeEvent.layout.width))} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
     <View testID="pomodoro-circle" style={{ width: diameter, height: diameter, flexShrink: 0, borderRadius: diameter / 2, borderWidth: 3,
       backgroundColor: theme.colors.background, borderColor: running ? theme.colors.primary : theme.colors.borderStrong, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
       {Array.from({ length: 12 },(_,index) => {
@@ -45,6 +46,7 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
       <Text style={{ color: theme.colors.primary, fontSize: 13 }}>{!ready ? 'Restoring…' : running ? 'In progress' : paused ? 'Paused' : 'Ready'}</Text>
     </View>
     </View>
+    </FocusEnvironment>
     <PixelProgress value={Math.round(progress * 100)} label="Session progress" />
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1 }}><ActionButton title={running ? 'Pause timer' : paused ? 'Resume session' : mode === 'focus' ? 'Start focus' : 'Start break'}

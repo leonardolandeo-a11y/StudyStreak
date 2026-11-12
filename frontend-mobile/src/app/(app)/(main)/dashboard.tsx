@@ -1,3 +1,4 @@
+import { StudyEnvironment } from '../../../components/environment/StudyEnvironment';
 import { AcademicSprite } from '../../../components/academic/AcademicSprite';
 import { workspacePalette } from '../../../components/academic/workspacePalette';
 import { useAppearance } from '../../../hooks/useAppearance';
@@ -29,6 +30,7 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const period = stats ? verifiedActivity(stats, days) : null;
   return <Screen themed compact backgroundColor={colors.background} onRefresh={retry} refreshing={state.status === 'loading'}>
     <AcademicHeading title={`Welcome back, ${username}`} eyebrow="YOUR WORKSPACE" description="Keep your study rhythm. Make room for progress." art={<AcademicSprite name="scholar" width={64}/>} />
+    <StudyEnvironment />
     <ActionButton compact title="Start focusing" onPress={() => router.navigate('/focus-studio')} />
     <DashboardActivity days={days} onDaysChange={setDays} state={state} retry={retry} />
     {stats ? <FocusInsightsMobile data={stats} days={days}/> : null}

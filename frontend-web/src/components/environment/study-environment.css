@@ -1,0 +1,22 @@
+.cozy-welcome { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,360px); gap: 20px; align-items: center; }
+.cozy-welcome .academic-heading { border: 0; padding-bottom: 0; }
+.study-environment { position: relative; isolation: isolate; overflow: hidden; min-width: 0; border-radius: 14px; border: 1px solid var(--ss-border); background: var(--ss-surface); }
+.study-environment .auth-scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.study-environment--welcome { height: 210px; box-shadow: 0 4px 18px #15112414; }
+.study-environment-caption { position: absolute; right: 8px; bottom: 8px; padding: 4px 8px; border-radius: 6px; background: #222338e8; color: #fff3d7; font-size: 11px; line-height: 1.4; }
+.study-environment-content { position: relative; z-index: 1; }
+.study-environment-shade { position: absolute; inset: 0; z-index: 0; background: color-mix(in srgb,var(--ss-surface) 25%,transparent); }
+.focus-environment { margin: 12px auto; max-width: 680px; }
+.study-ambience-control { display: flex; gap: 8px; align-items: center; min-height: 44px; width: fit-content; margin-left: auto; color: var(--ss-text-secondary); font-size: 12px; cursor: pointer; }
+.study-ambience-control input { width: 17px; height: 17px; accent-color: var(--ss-accent); }
+.study-ambience-control:focus-within { outline: 2px solid var(--ss-accent); outline-offset: 3px; border-radius: 4px; }
+.study-environment--focus { padding: 14px; }
+.study-environment--focus .academic-dial { margin-top: 0; background: color-mix(in srgb,var(--ss-surface) 97%,transparent); box-shadow: 0 4px 24px #17122430; }
+.study-environment[data-enabled="false"] { border-color: transparent; background: transparent; }
+.study-environment[data-visible="false"] .auth-effect { animation-play-state: paused !important; }
+.study-environment[data-visible="true"] .auth-scene[data-ambient="running"] .auth-scene-base { animation: cozy-arrival 600ms ease both; }
+@keyframes cozy-arrival { from { opacity: .65; } to { opacity: 1; } }
+@media (max-width: 1050px) { .cozy-welcome { grid-template-columns: minmax(0,1fr); gap: 12px; } .study-environment--welcome { height: 170px; } }
+@media (max-width: 480px) { .study-environment--welcome { height: 155px; } .study-environment--focus { padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { .study-environment .auth-scene-base { animation: none !important; } }
+:root[data-motion="reduce"] .study-environment .auth-scene-base { animation: none !important; }
