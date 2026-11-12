@@ -15,6 +15,7 @@ type Props = {
 export function ValidationEditor({ initial, busy, onSubmit }: Props) {
   const styles = useThemedStyles(createStyles);
   const [approved, setApproved] = useState<boolean | null>(initial?.approved ?? null);
+  const [confirming,setConfirming] = useState(false);
   const [comment, setComment] = useState(initial?.comment ?? '');
   const [error, setError] = useState<string | null>(null);
 
@@ -23,10 +24,17 @@ export function ValidationEditor({ initial, busy, onSubmit }: Props) {
       setError('Choose Approve or Reject before saving.');
       return;
     }
+    if (busy) return;
     setError(null);
+    if (!confirming) { setConfirming(true); return; }
     await onSubmit({ approved, comment: comment.trim() });
   }
 
+  if (confirming) return <View style={styles.wrap}>
+    <Text style={styles.label}>Confirm your decision</Text><Text style={styles.label}>{approved ? 'Approve' : 'Reject'}</Text><Text style={styles.counter}>{comment || 'No comment'}</Text>
+    <ActionButton compact secondary title="Edit decision" disabled={busy} onPress={() => setConfirming(false)}/>
+    <ActionButton compact title={initial ? 'Update validation' : 'Create validation'} busy={busy} onPress={() => { void submit(); }}/>
+  </View>;
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>Your decision</Text>
@@ -47,7 +55,7 @@ export function ValidationEditor({ initial, busy, onSubmit }: Props) {
         editable={!busy} style={styles.comment} placeholder="Explain your decision" />
       <Text style={styles.counter}>{comment.length}/500</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <ActionButton compact title={initial ? 'Update validation' : 'Create validation'} busy={busy}
+      <ActionButton compact title="Review decision" disabled={approved === null} busy={busy}
         onPress={() => { void submit(); }} />
     </View>
   );

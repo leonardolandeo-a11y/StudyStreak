@@ -23,31 +23,31 @@ function ValidationForm({onSubmit,loading,initialValues,submitLabel= "Submit val
 
     const [approved,setApproved] = useState<string>(initialValues? String(initialValues.approved) : "");
 
+    const [confirming, setConfirming] = useState(false);
     const [comment, setComment] = useState(initialValues?.comment ?? "");
 
     async function handleSubmit(event:SubmitEvent<HTMLFormElement>){
         event.preventDefault();
 
-        if (approved === ""){
-            return;
-        }
+        if (approved === "" || loading) return;
+        if (!confirming) { setConfirming(true); return; }
         const submitted = await onSubmit({approved: approved ==="true",comment});
 
         if (submitted && resetAfterSubmit){
+            setConfirming(false);
             setApproved("");
             setComment("");
         }
     }
+    if (confirming) return <form onSubmit={handleSubmit} className="workflow-form space-y-4" aria-label="Confirm validation decision">
+        <h3 className="text-lg font-bold">Confirm your decision</h3><p className="font-semibold">{approved === 'true' ? 'Approve' : 'Reject'}</p><p className="whitespace-pre-wrap break-words text-content-secondary">{comment || 'No comment'}</p>
+        <p className="text-xs text-content-muted">This decision will be saved for the selected daily record.</p>
+        <div className="flex flex-wrap gap-2"><button type="button" className="study-button" disabled={loading} onClick={() => setConfirming(false)}>Edit decision</button><button className="study-button bg-accent text-on-accent" disabled={loading}>{loading ? 'Saving...' : submitLabel}</button></div>
+    </form>;
     return (
     <form
         onSubmit={handleSubmit}
-        className="
-            rounded-2xl
-            border border-slate-800
-            bg-slate-900/70
-            p-6
-            shadow-lg shadow-appearance-shadow/10
-        "
+        className="workflow-form"
     >
         <div className="mb-6">
             <p className="text-sm font-medium text-sky-400">
@@ -146,7 +146,7 @@ function ValidationForm({onSubmit,loading,initialValues,submitLabel= "Submit val
 
             <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || approved === ""}
                 className="
                     rounded-lg
                     bg-sky-500
@@ -159,7 +159,7 @@ function ValidationForm({onSubmit,loading,initialValues,submitLabel= "Submit val
             >
                 {loading
                     ? "Saving..."
-                    : submitLabel}
+                    : "Review decision"}
             </button>
 
         </div>

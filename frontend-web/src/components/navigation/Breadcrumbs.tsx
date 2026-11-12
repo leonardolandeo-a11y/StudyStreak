@@ -14,10 +14,10 @@ function Breadcrumbs(){
         const previousSegment = segments[index-1];
 
         if( previousSegment==="goals"&& !Number.isNaN(Number(segment))){
-            return `Goal ${segment}`;
+            return "Goal details";
         }
         if (previousSegment==="daily-records" && !Number.isNaN(Number(segment))){
-            return `Record ${segment}`;
+            return "Record details";
         }
         switch(segment){
             case "profile":

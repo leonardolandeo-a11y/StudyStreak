@@ -1,3 +1,6 @@
+import { AcademicSprite } from '../../../../../components/academic/AcademicSprite';
+import { workspacePalette } from '../../../../../components/academic/workspacePalette';
+import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
 import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
@@ -9,7 +12,7 @@ import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../../components/ui/PageControls';
 import { CreationModal } from '../../../../../components/ui/CreationModal';
 import { GoalForm } from '../../../../../components/goals/GoalForm';
-import { useAppearance, useThemedStyles } from '../../../../../hooks/useAppearance';
+import { useAppearance } from '../../../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../../../features/appearance/theme';
 import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
@@ -19,8 +22,9 @@ import type { Goal, GoalRequest } from '../../../../../types/goal';
 import type { PageResponse } from '../../../../../types/page';
 
 export default function Goals() {
-  const styles = useThemedStyles(createStyles);
-  const { theme: { colors: palette } } = useAppearance();
+  const { theme, reduceMotion } = useAppearance();
+  const palette = workspacePalette(theme);
+  const styles = createStyles(palette);
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
   const fetchGoals = useCallback((page: number, signal: AbortSignal): Promise<PageResponse<Goal>> => {
@@ -59,8 +63,9 @@ export default function Goals() {
       <GoalForm busy={busy} onSubmit={create} onCancel={() => setShowCreate(false)} />
       {formError ? <StatusMessage message={formError} error /> : null}
     </CreationModal>
-    <Screen themed compact scrollRef={menuScroll}>
-      <AcademicHeading title="My Goals" eyebrow="YOUR STUDY GOALS" glyph="book" description="Create study goals and manage your daily records." />
+    <Screen themed compact scrollRef={menuScroll} backgroundColor={palette.background}>
+      <AcademicHeading title="My Goals" eyebrow="YOUR STUDY GOALS" glyph="book" description="Create study goals and manage their daily records." art={<AcademicSprite name="books" width={60}/>} />
+      <ActionButton compact title="Create Goal" onPress={() => { setShowCreate(true); setFormError(null); }}/>
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>
@@ -73,16 +78,18 @@ export default function Goals() {
         <>
           <Text style={styles.count}>{data.totalElements} goals</Text>
           {data.content.map((goal) => (
-            <View key={goal.id} style={styles.card}><Pressable accessibilityRole="button"
+            <View key={goal.id} style={styles.card}><NavigationPressable accessibilityRole="button"
               accessibilityLabel={`Open ${goal.topic}`}
-              onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })}>
+              onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })} style={({ pressed }) => ({ padding: 14, gap: 8, borderRadius: 10, opacity: pressed ? .8 : 1, transform: [{ scale: pressed && !reduceMotion ? .98 : 1 }] })}>
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}><AcademicSprite name={goal.completed ? 'notebook' : 'books'} width={44}/><View style={{ flex: 1, gap: 8 }}>
               <View style={styles.row}>
                 <Text style={styles.topic}>{goal.topic}</Text>
                 <Text style={[styles.flag, goal.completed && styles.done]}>{goal.completed ? 'Completed' : 'Active'}</Text>
               </View>
               <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
-              <Text style={styles.link}>View progress and records ›</Text>
-            </Pressable>
+              <Text style={styles.meta}>{goal.completed ? 'Goal completed' : 'Explore progress & daily records →'}</Text>
+              </View></View>
+            </NavigationPressable>
             {!goal.completed && <ActionButton compact secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})} />}
             </View>
           ))}
@@ -102,7 +109,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   section: { color: palette.text, fontSize: 20, fontWeight: '700' },
   link: { color: palette.primary, fontWeight: '700', fontSize: 14 },
   count: { color: palette.muted, fontSize: 12 },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: 15, padding: 17, gap: 12 },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: 12, padding: 0, gap: 0 },
   topic: { color: palette.text, fontSize: 17, fontWeight: '700', flex: 1 },
   flag: { color: palette.primary, fontSize: 12, fontWeight: '700' },
   done: { color: palette.success },

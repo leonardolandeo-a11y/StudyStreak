@@ -1,112 +1,13 @@
-import type { Goal } from "../../types/goal";
-import { Link } from "react-router-dom";
-import {
-    ROUTES, goalDetailsPath
-} from "../../routes/paths";
-interface GoalCardProps{
-    goal:Goal;
+import { Link } from 'react-router-dom';
+import { AcademicSprite } from '../academic/AcademicSprite';
+import type { Goal } from '../../types/goal';
+import { ROUTES, goalDetailsPath } from '../../routes/paths';
+export default function GoalCard({ goal }: { goal: Goal }) {
+    return <article className="goal-workflow-card">
+        <Link to={goalDetailsPath(goal.id)} className="goal-card-main" aria-label={`Open ${goal.topic}`}>
+            <AcademicSprite name={goal.completed ? 'notebook' : 'books'} width={54}/>
+            <div className="min-w-0 flex-1"><h2 className="break-words text-xl font-bold text-content">{goal.topic}</h2><span className={`goal-status ${goal.completed ? 'text-success bg-success-surface' : 'text-accent bg-accent-soft'}`}>{goal.completed ? 'Completed' : 'Active'}</span><p className="mt-2 text-xs text-content-muted">{goal.frequency} sessions/week · {goal.duration} min/session</p><p className="mt-2 text-sm text-content-secondary">{goal.completed ? 'Goal completed' : 'Explore progress & daily records'} <span aria-hidden="true">→</span></p></div>
+        </Link>
+        {!goal.completed && <div className="border-t border-outline px-4 py-2"><Link className="inline-flex min-h-11 items-center text-sm font-semibold text-accent" to={`${ROUTES.focusStudio}?goalId=${goal.id}`}>Focus on this Goal →</Link></div>}
+    </article>;
 }
-function GoalCard({goal}: GoalCardProps){
-    return(
-    <article
-        className="
-            rounded-2xl
-            border border-slate-800
-            bg-slate-900/70
-            p-5
-            shadow-lg shadow-appearance-shadow/10
-            transition
-
-            hover:border-outline-strong
-            hover:bg-slate-900
-        "
-    >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-
-            <div>
-                <h2 className="text-xl font-semibold text-slate-100">
-                    {goal.topic}
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                    Goal #{goal.id}
-                </p>
-            </div>
-
-            <span
-                className={`
-                    rounded-full
-                    px-3 py-1
-                    text-xs font-semibold
-                    ${
-                        goal.completed
-                            ? "bg-emerald-950/60 text-emerald-300"
-                            : "bg-sky-950/60 text-sky-300"
-                    }
-                `}
-            >
-                {goal.completed ? "Completed" : "Active"}
-            </span>
-
-        </div>
-
-
-        <div
-            className="
-                mt-5
-                grid gap-3
-                sm:grid-cols-2
-            "
-        >
-            <div
-                className="
-                    border-l-2 border-emerald-400/40 pl-4 py-2
-                "
-            >
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Frequency
-                </p>
-
-                <p className="mt-1 font-medium text-slate-200">
-                    {goal.frequency} / week
-                </p>
-            </div>
-
-            <div
-                className="
-                    border-l-2 border-emerald-400/40 pl-4 py-2
-                "
-            >
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Duration
-                </p>
-
-                <p className="mt-1 font-medium text-slate-200">
-                    {goal.duration} min
-                </p>
-            </div>
-        </div>
-
-
-        <div className="mt-5 flex flex-wrap gap-3">
-            {!goal.completed && <Link className="study-button" to={`${ROUTES.focusStudio}?goalId=${goal.id}`}>Focus →</Link>}
-            <Link
-                to={goalDetailsPath(goal.id)}
-                className="
-                    inline-flex items-center
-                    rounded-lg
-                    bg-slate-800
-                    px-4 py-2
-                    text-sm font-medium
-                    text-slate-200
-                    hover:bg-surface-hover
-                    hover:text-content
-                "
-            >
-                View details
-            </Link>
-        </div>
-    </article>
-    )
-}
-export default GoalCard;

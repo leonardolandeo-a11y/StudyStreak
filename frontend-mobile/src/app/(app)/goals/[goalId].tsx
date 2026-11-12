@@ -1,3 +1,6 @@
+import { GoalTags } from '../../../components/tags/GoalTags';
+import { AcademicSprite } from '../../../components/academic/AcademicSprite';
+import { workspacePalette } from '../../../components/academic/workspacePalette';
 import { AcademicHeading } from '../../../components/academic/Academic';
 import { RecordedSummary } from "../../../components/study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
@@ -12,7 +15,7 @@ import { DailyRecordForm } from '../../../components/records/DailyRecordForm';
 import { DailyRecordCard } from '../../../components/records/DailyRecordCard';
 import { CreationModal } from '../../../components/ui/CreationModal';
 import { StreakCard } from '../../../components/streaks/StreakCard';
-import { useAppearance, useThemedStyles } from '../../../hooks/useAppearance';
+import { useAppearance } from '../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../features/appearance/theme';
 import { useAuth } from '../../../hooks/useAuth';
 import { usePagedResource } from '../../../hooks/usePagedResource';
@@ -26,8 +29,7 @@ import type { DailyRecord, DailyRecordRequest } from '../../../types/dailyRecord
 import type { PageResponse } from '../../../types/page';
 
 export default function GoalDetails() {
-  const styles = useThemedStyles(createStyles);
-  const { theme: { colors: palette } } = useAppearance();
+  const { theme } = useAppearance(); const palette = workspacePalette(theme); const styles = createStyles(palette);
   const { goalId: goalParam } = useLocalSearchParams<{ goalId: string }>();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
@@ -182,7 +184,7 @@ export default function GoalDetails() {
     } finally { setBusy(false); }
   }
 
-  if (!valid) return <Screen themed compact><StatusMessage error message="Invalid goal or session." /></Screen>;
+  if (!valid) return <Screen themed compact backgroundColor={palette.background}><StatusMessage error message="Invalid goal or session." /></Screen>;
 
   return (
     <>
@@ -205,19 +207,19 @@ export default function GoalDetails() {
         onPress={() => { if (confirmDeleteGoal) void deleteGoal(); else if (confirmDeleteRecord !== null) void deleteRecord(confirmDeleteRecord); }} />
       <ActionButton compact secondary title="Keep" disabled={busy} onPress={() => { setConfirmDeleteGoal(false); setConfirmDeleteRecord(null); }} />
     </CreationModal>
-    <Screen themed compact>
+    <Screen themed compact backgroundColor={palette.background}>
       {goalLoading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {goalError ? <StatusMessage error message={goalError} /> : null}
       {goalError ? <ActionButton compact secondary title="Retry goal" onPress={() => setGoalRevision((value) => value + 1)} /> : null}
       {goal && !goalLoading ? (
         <>
           <View style={styles.card}>
-            <AcademicHeading title={goal.topic} eyebrow="GOAL DETAILS" glyph="book" />
+            <AcademicHeading title={goal.topic} eyebrow="GOAL DETAILS" glyph="book" art={<AcademicSprite name="books" width={64}/>} />
             <Text style={styles.muted}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
             <Text style={goal.completed ? styles.completed : styles.active}>
               {goal.completed ? 'Completed' : 'Active'}
             </Text>
-            <ActionButton compact secondary title={editingGoal ? 'Close goal editor' : 'Edit goal'}
+            <ActionButton compact secondary title={editingGoal ? 'Close goal editor' : 'Update Goal'}
               disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); }} />
             {!editingGoal ? (
               <ActionButton compact title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
@@ -235,14 +237,14 @@ export default function GoalDetails() {
               })} />
             )}
           </View>
-          <ActionButton compact secondary title="Manage tags" onPress={() => router.push({ pathname: '/(app)/goals/[goalId]/tags', params: { goalId: String(goalId) } })} />
+          <GoalTags goalId={goalId} owner={userId!}/>
           <StreakCard key={`streak-${goal.id}`} goalId={goal.id} />
           <ActionButton compact secondary title="Find books for this goal"
             onPress={() => router.push({ pathname: '/resources', params: { topic: goal.topic } })} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>
-            <Text style={styles.section}>Daily records</Text>
+            <Text style={styles.section}>Daily records <Text style={{ fontSize: 30 }}>{records.data?.totalElements ?? '—'}</Text></Text>
             <Pressable accessibilityRole="button" onPress={records.reload}><Text style={styles.back}>Refresh</Text></Pressable>
           </View>
           {!editingRecord ? (

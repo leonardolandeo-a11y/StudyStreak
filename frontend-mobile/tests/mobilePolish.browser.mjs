@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
+import { reviewNativeModule } from './helpers/academicModuleReview.mjs';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
 const claims = { type: 'access', userId: 101, sub: 'fixture-student', email: 'fixture@example.invalid', role: 'USER', exp: Math.floor(Date.now() / 1000) + 3600 };
 const tokens = { token: `fixture.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`, refreshToken: 'fixture-only' };
@@ -7,7 +8,7 @@ const goals = [{ id: 1, topic: 'Existing completed goal', completed: true, frequ
 const partner = { id: 3, username: 'partner' };
 const link = { id: 1, requesterId: 101, receiverId: 3, requesterUsername: 'fixture-student', receiverUsername: 'partner', status: 'ACCEPTED' };
 const makePage = content => ({ content, empty: content.length === 0, totalElements: content.length, totalPages: content.length ? 1 : 0, last: true, number: 0, size: 10 });
-const writes = []; let holdGoal; let finishGoal; let room;
+const writes = []; let holdGoal; let finishGoal; let room; let failValidation = true;
 const reads = { goals: 0, history: 0, partners: 0, rooms: 0 };
 const browser = await mobileBrowser({ intercept: async request => {
   const url = new URL(request.url), path = url.pathname;
@@ -20,7 +21,7 @@ const browser = await mobileBrowser({ intercept: async request => {
       const goal = { ...body, id: 2 }; goals.push(goal); return { body: goal };
     }
     if (path === '/api/tracking-links/3') return { body: { ...link, id: 2, status: 'PENDING' } };
-    if (path.endsWith('/validation')) return { body: { ...body, id: 1 } };
+    if (path.endsWith('/validation')) { if (failValidation) { failValidation = false; return { status: 503 }; } return { body: { ...body, id: 1 } }; }
     if (path === '/api/study-rooms') {
       room = { id: 'fixture-room', name: body.name, inviteCode: 'ABCDEFGHIJ', host: true, ownerId: 101, phase: 'FOCUS', timerStatus: 'PAUSED',
         remainingSeconds: 1500, endsAt: null, serverNow: new Date().toISOString(), version: 1, members: [] };
@@ -66,6 +67,7 @@ async function pressIcon(label, id) {
   return target.before !== after;
 }
 try {
+  await browser.command('Page.addScriptToEvaluateOnNewDocument', { source: `window.addEventListener('error', event => { window.__runtimeFailure = event.error?.stack || event.message; });` });
   await browser.command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await browser.navigate('/'); await browser.wait(has('Username'));
   await browser.fill('[aria-label="Username"]', 'fixture-student'); await browser.fill('[aria-label="Password"]', 'Fixture-password-1');
@@ -87,18 +89,28 @@ try {
   await browser.fill('[aria-label="Search study partners"]', 'partner'); await browser.wait(`document.querySelector('[aria-modal="true"]').innerText.includes('@partner')`);
   await browser.click('Select tracking partner partner'); await browser.click('Send tracking request');
   await browser.wait(`!document.querySelector('[aria-label="Cancel creation"]')`); assert.ok(reads.history >= 2);
-  await browser.click('Validations'); await browser.wait(has('Start a validation')); await browser.click('Start a validation');
-  await browser.wait(has('Cancel creation')); await browser.click('Review goals from partner'); await browser.wait(has('View records for Partner algebra'));
-  await browser.click('View records for Partner algebra'); await browser.wait(has('Review record 2026-11-08'));
-  await browser.click('Review record 2026-11-08'); await browser.wait(has('Create validation'));
-  await browser.click('Back'); await browser.wait(has('Review record 2026-11-08'));
-  assert.equal(await browser.evaluate(inModal(`modal.innerText.includes('Your decision')`)), false);
-  await browser.click('Back'); await browser.wait(has('View records for Partner algebra'));
-  await browser.click('Back'); await browser.wait(has('Review goals from partner')); await cancel();
-  await browser.click('Start a validation'); await browser.wait(has('Cancel creation')); await browser.click('Review goals from partner');
-  await browser.wait(has('View records for Partner algebra')); await browser.click('View records for Partner algebra');
-  await browser.wait(has('Review record 2026-11-08')); await browser.click('Review record 2026-11-08'); await browser.wait(has('Create validation'));
-  await browser.click('Approve'); await browser.click('Create validation'); await browser.wait(`!document.querySelector('[aria-label="Cancel creation"]')`);
+  await browser.click('Validations'); await browser.wait(has('Start a validation')); await reviewNativeModule(browser, '74b-validations-partner'); await browser.click('Start a validation');
+  await browser.wait(has('Cancel creation'));
+  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Continue"]').getAttribute('aria-disabled')`), 'true');
+  await browser.click('Review goals from partner'); await browser.click('Continue');
+  await browser.wait(has('View records for Partner algebra')); await browser.click('View records for Partner algebra'); await browser.click('Continue');
+  await browser.wait(has('Review record 2026-11-08')); await browser.click('Review record 2026-11-08'); await browser.click('Continue');
+  await browser.wait(`document.querySelector('[aria-modal="true"]').innerText.includes('Review evidence')`);
+  assert.equal(await browser.evaluate(`!!document.querySelector('[aria-modal="true"] [aria-label="Approve"]') && getComputedStyle(document.querySelector('[aria-label="Approve"]').parentElement).display !== 'none'`), false);
+  await reviewNativeModule(browser, '74b-validations-evidence');
+  await browser.click('Continue'); await browser.wait(has('Review decision')); await browser.click('Approve');
+  await browser.fill('[aria-label="Comment (optional)"]', 'Retain this review draft');
+  await browser.click('Previous step'); await browser.wait(`document.querySelector('[aria-modal="true"]').innerText.includes('Review evidence')`);
+  await browser.click('Continue'); await browser.wait(has('Review decision'));
+  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Comment (optional)"]').value`), 'Retain this review draft');
+  assert.equal(writes.filter(w => w.path.endsWith('/validation')).length, 0);
+  await browser.click('Review decision'); await browser.wait(has('Create validation'));
+  assert.equal(writes.filter(w => w.path.endsWith('/validation')).length, 0);
+  await reviewNativeModule(browser, '74b-validations-confirm');
+  await browser.click('Create validation'); await browser.wait(`document.body.innerText.includes('The server is temporarily unavailable')`);
+  await browser.click('Edit decision'); assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Comment (optional)"]').value`), 'Retain this review draft');
+  await browser.click('Review decision'); await browser.click('Create validation'); await browser.wait(`!document.querySelector('[aria-label="Cancel creation"]')`);
+  assert.deepEqual(writes.filter(w=>w.path.endsWith('/validation')).map(w=>[w.path,w.body]), Array(2).fill(['/api/goals/4/daily-records/11/validation',{approved:true,comment:'Retain this review draft'}]));
   await browser.click('Study Rooms'); await browser.wait(has('Create a study room')); await browser.click('Create a study room');
   await browser.wait(has('Room name'));
   assert.equal(await browser.evaluate(inModal(`modal.innerText.includes('Join friends') || modal.innerText.includes('Your rooms')`)), false);
@@ -134,5 +146,5 @@ try {
   assert.deepEqual(browser.errors, []);
   process.stdout.write('Polish browser checks passed: dedicated creation, confirmed fixture writes, nested Back, compact UI, page animation, reduced motion and responsive.\n');
 } catch (error) {
-  writeFileSync('.expo/polish-failure.json', JSON.stringify({ text: await browser.evaluate('document.body.innerText'), paths: writes.map(write => write.path), errors: browser.errors })); throw error;
+  writeFileSync('.expo/polish-failure.json', JSON.stringify({ text: await browser.evaluate('document.body.innerText'), paths: writes.map(write => write.path), errors: browser.errors, runtime: await browser.evaluate('window.__runtimeFailure') })); throw error;
 } finally { finishGoal?.(); await browser.close(); }

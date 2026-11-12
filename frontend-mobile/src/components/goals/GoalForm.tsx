@@ -38,15 +38,18 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
       <Text style={styles.heading}>{initialValues ? 'Edit goal' : 'New study goal'}</Text>
       <FormField variant="subtle" label="Topic" placeholder="e.g. Differential equations" value={topic}
         onChangeText={setTopic} maxLength={150} editable={!busy} />
+      <Text style={styles.checkLabel}>Study schedule</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}><View style={{ flex: 1, minWidth: 120 }}>
       <FormField variant="subtle" label="Frequency" hint="Study sessions per week" value={frequency}
         onChangeText={setFrequency} keyboardType="number-pad" editable={!busy} />
-      <FormField variant="subtle" label="Duration" hint="Minutes per session" value={duration}
+      </View><View style={{ flex: 1, minWidth: 120 }}><FormField variant="subtle" label="Duration" hint="Minutes per session" value={duration}
         onChangeText={setDuration} keyboardType="number-pad" editable={!busy} />
+      </View></View>
       {initialValues ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
         disabled={busy} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
         <Text style={styles.check}>{completed ? '☑' : '☐'}</Text>
         <Text style={styles.checkLabel}>Completed</Text>
       </Pressable> : null}
+      {!initialValues ? <Text style={styles.checkLabel}>New goals start Active.</Text> : null}
       {error ? <StatusMessage error message={error} /> : null}
       <ActionButton compact title={initialValues ? 'Save changes' : 'Create goal'} busy={busy}
         onPress={() => { void submit(); }} />

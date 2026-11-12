@@ -1,3 +1,5 @@
+import { AcademicSprite } from "../components/academic/AcademicSprite";
+import { WorkflowDialog } from "../components/workflows/WorkflowDialog";
 import { AcademicHeading } from "../components/academic/Academic";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
@@ -35,6 +37,7 @@ function Goals(){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string|null>(null);
 
+    const [showCreate, setShowCreate] = useState(false);
     const [creating, setCreating] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -155,17 +158,14 @@ function Goals(){
         return null;
     }
 return(
-    <div className="academic-page academic-module space-y-6">
+    <div className="academic-page academic-module goal-workflows space-y-6">
 
-        <AcademicHeading title="My Goals" eyebrow="Goals" description="Create study goals, track their progress, and manage their daily records." glyph="book" />
+        <AcademicHeading title="My Goals" eyebrow="Goals" description="Create study goals, track their progress, and manage their daily records." glyph="book" art={<AcademicSprite name="books" width={72}/>}><button className="study-button bg-accent text-on-accent" type="button" onClick={() => setShowCreate(true)}>Create Goal</button></AcademicHeading>
 
 
-        <section>
-            <GoalForm
-                onSubmit={handleCreateGoal}
-                loading={creating}
-            />
-        </section>
+        {showCreate && <WorkflowDialog title="Create Goal" busy={creating} onClose={() => setShowCreate(false)}>
+            <GoalForm onSubmit={async value => { const saved = await handleCreateGoal(value); if (saved) setShowCreate(false); return saved; }} loading={creating} onCancel={() => setShowCreate(false)}/>
+        </WorkflowDialog>}
 
         <section>
             <div
@@ -206,7 +206,7 @@ return(
 
             {goalPage.empty && (
                 <EmptyState
-                    message="No goals yet. Create your first goal above."
+                    message="No goals yet. Choose Create Goal to begin."
                 />
             )}
 

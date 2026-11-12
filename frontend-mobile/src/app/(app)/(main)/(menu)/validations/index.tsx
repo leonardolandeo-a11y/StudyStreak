@@ -1,3 +1,6 @@
+import { AcademicSprite } from '../../../../../components/academic/AcademicSprite';
+import { workspacePalette } from '../../../../../components/academic/workspacePalette';
+import { ValidationStepper } from '../../../../../components/validations/ValidationStepper';
 import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -5,7 +8,7 @@ import { SocialAvatar, MemberProfileLink } from '../../../../../components/socia
 import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { PageControls } from '../../../../../components/ui/PageControls';
@@ -13,9 +16,9 @@ import { StatusMessage } from '../../../../../components/ui/StatusMessage';
 import { ValidationEditor } from '../../../../../components/validations/ValidationEditor';
 import { RecordPhoto } from '../../../../../components/records/RecordPhoto';
 import { RecordVoice } from '../../../../../components/records/RecordVoice';
-import { useAppearance, useThemedStyles } from '../../../../../hooks/useAppearance';
+import { useAppearance } from '../../../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../../../features/appearance/theme';
-import { CreationModal, useCreationBack, useCreationBusy, useCreationComplete } from '../../../../../components/ui/CreationModal';
+import { CreationModal, useCreationBusy, useCreationComplete } from '../../../../../components/ui/CreationModal';
 import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { trackingLinkService } from '../../../../../services/trackingLinkService';
@@ -47,10 +50,10 @@ function partnerFromLink(link: TrackingLink, currentUserId: number): Partner {
 }
 
 function Section({ step, title, children }: { step: number; title: string; children: ReactNode }) {
-  const styles = useThemedStyles(createStyles);
+  const styles = useWorkflowStyles();
   return (
     <View style={styles.section}>
-      <Text style={styles.step}>Step {step} of 4</Text>
+      <Text style={styles.step}>Step {step} of 5</Text>
       <Text style={styles.heading}>{title}</Text>
       {children}
     </View>
@@ -58,7 +61,7 @@ function Section({ step, title, children }: { step: number; title: string; child
 }
 
 function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string }) {
-  const styles = useThemedStyles(createStyles);
+  const styles = useWorkflowStyles();
   const { theme: { colors: palette } } = useAppearance();
   return (
     <>
@@ -74,8 +77,8 @@ function ListStatus<T>({ state, empty }: { state: PageState<T>; empty: string })
   );
 }
 
-function RecordReview({ goalId, record, partnerName }: { goalId: number; record: DailyRecord; partnerName: string }) {
-  const styles = useThemedStyles(createStyles);
+function RecordReview({ goalId, record, partnerName, step, onBack, onContinue, onBusyChange }: { goalId: number; record: DailyRecord; partnerName: string; step: number; onBack(): void; onContinue(): void; onBusyChange(busy: boolean): void }) {
+  const styles = useWorkflowStyles();
   const { theme: { colors: palette } } = useAppearance();
   const complete = useCreationComplete();
   const [validation, setValidation] = useState<Validation | null>(null);
@@ -84,6 +87,7 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
   const [revision, setRevision] = useState(0);
   const currentRevision = useRef(revision);
   const [saving, setSaving] = useState(false);
+  const [saveError,setSaveError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   useCreationBusy(saving);
 
@@ -116,7 +120,8 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
   async function save(request: ValidationRequest): Promise<boolean> {
     if (saving) return false;
     setSaving(true);
-    setError(null);
+    onBusyChange(true);
+    setSaveError(null);
     setMessage(null);
     try {
       const result = validation
@@ -128,176 +133,72 @@ function RecordReview({ goalId, record, partnerName }: { goalId: number; record:
       return true;
     } catch (cause) {
       if (isAxiosError(cause) && cause.response?.status === 409) {
-        setError('This record may already have a validation. Refresh before trying again.');
+        setSaveError('This record may already have a validation. Refresh before trying again.');
       } else {
-        setError(getApiErrorMessage(cause, 'Could not save the validation.'));
+        setSaveError(getApiErrorMessage(cause, 'Could not save the validation.'));
       }
       return false;
     } finally {
       setSaving(false);
+      onBusyChange(false);
     }
   }
 
-  return (
-    <Section step={4} title="Review and validate">
-      <Text style={styles.meta}>{partnerName} · {record.date}</Text>
-      <Text style={styles.label}>Study note</Text>
-      <Text style={styles.detail}>{record.note || 'No note provided.'}</Text>
-      <Text style={styles.label}>Evidence</Text>
-      <Text style={styles.detail}>{record.evidence || 'No evidence provided.'}</Text>
-      <RecordPhoto goalId={goalId} recordId={record.id} available={record.photoAvailable} readOnly />
-      <RecordVoice goalId={goalId} recordId={record.id} available={record.voiceAvailable} readOnly />
-      {loading ? <ActivityIndicator color={palette.primary} /> : null}
-      {error ? (
-        <>
-          <StatusMessage error message={error} />
-          <ActionButton compact title="Reload validation" secondary onPress={() => setRevision((v) => v + 1)} />
-        </>
-      ) : null}
-      {message ? <StatusMessage message={message} /> : null}
-      {!loading && !error ? (
-        <>
-          {validation ? (
-            <View style={styles.current}>
-              <Text style={styles.detail}>Current decision: {validation.approved ? 'Approved' : 'Rejected'}</Text>
-              {validation.comment ? <Text style={styles.meta}>{validation.comment}</Text> : null}
-            </View>
-          ) : null}
-          <ValidationEditor key={`${validation?.id ?? 'new'}-${validation?.approved ?? 'none'}-${validation?.comment ?? ''}`}
-            initial={validation} busy={saving} onSubmit={save} />
-        </>
-      ) : null}
-    </Section>
-  );
-}
-
-function GoalRecords({ goal, partnerName }: { goal: Goal; partnerName: string }) {
-  const styles = useThemedStyles(createStyles);
-  const [selectedRecord, setSelectedRecord] = useState<DailyRecord | null>(null);
-  const loadRecords = useCallback((page: number, signal: AbortSignal) =>
-    dailyRecordService.list(goal.id, page, signal), [goal.id]);
-  const records = usePagedResource(loadRecords);
-  useCreationBack(() => setSelectedRecord(null), selectedRecord !== null);
-  if (selectedRecord) return <RecordReview key={selectedRecord.id} goalId={goal.id} record={selectedRecord} partnerName={partnerName} />;
-
-  return (
-    <>
-      <Section step={3} title={`Daily records · ${goal.topic}`}>
-        <Text style={styles.meta}>Choose a record to review the note and evidence.</Text>
-        <ActionButton compact secondary title="Refresh records" onPress={records.reload} />
-        <ListStatus state={records} empty="This goal has no daily records." />
-        {!records.loading && !records.error && records.data ? (
-          <>
-            <Text style={styles.count}>{records.data.totalElements} records</Text>
-            {records.data.content.map((record) => (
-              <Pressable key={record.id} accessibilityRole="button" accessibilityLabel={`Review record ${record.date}`}
-                onPress={() => setSelectedRecord(record)}
-                style={styles.item}>
-                <Text style={styles.itemTitle}>{record.date}</Text>
-                <Text numberOfLines={2} style={styles.meta}>{record.note || 'No note provided.'}</Text>
-                <Text style={styles.link}>Review record</Text>
-              </Pressable>
-            ))}
-            <PageControls page={records.page} totalPages={records.data.totalPages} onChange={records.setPage} />
-          </>
-        ) : null}
-      </Section>
-    </>
-  );
-}
-
-function PartnerGoals({ partner }: { partner: Partner }) {
-  const styles = useThemedStyles(createStyles);
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
-  const loadGoals = useCallback((page: number, signal: AbortSignal) =>
-    goalService.list(partner.id, page, signal), [partner.id]);
-  const goals = usePagedResource(loadGoals);
-  useCreationBack(() => setSelectedGoal(null), selectedGoal !== null);
-  if (selectedGoal) return <GoalRecords key={selectedGoal.id} goal={selectedGoal} partnerName={partner.username} />;
-
-  return (
-    <>
-      <Section step={2} title={`Study goals · ${partner.username}`}>
-        <Text style={styles.meta}>Select a goal from your tracking partner.</Text>
-        <ActionButton compact secondary title="Refresh goals" onPress={goals.reload} />
-        <ListStatus state={goals} empty="This partner has no goals." />
-        {!goals.loading && !goals.error && goals.data ? (
-          <>
-            <Text style={styles.count}>{goals.data.totalElements} goals</Text>
-            {goals.data.content.map((goal) => (
-              <Pressable key={goal.id} accessibilityRole="button" accessibilityLabel={`View records for ${goal.topic}`}
-                onPress={() => setSelectedGoal(goal)}
-                style={styles.item}>
-                <Text style={styles.itemTitle}>{goal.topic}</Text>
-                <Text style={styles.meta}>{goal.completed ? 'Completed' : 'Active'} · {goal.frequency} sessions/week</Text>
-                <Text style={styles.link}>View daily records</Text>
-              </Pressable>
-            ))}
-            <PageControls page={goals.page} totalPages={goals.data.totalPages} onChange={goals.setPage} />
-          </>
-        ) : null}
-      </Section>
-    </>
-  );
+  return <View style={{ display: step >= 3 ? 'flex' : 'none', gap: 12 }}>
+    {step === 3 ? <Section step={4} title="Review evidence"><Text style={styles.meta}>{partnerName} · {record.date}</Text><Text style={styles.detail}>{record.note || 'No note provided.'}</Text><Text style={styles.detail}>{record.evidence || 'No evidence provided.'}</Text><RecordPhoto goalId={goalId} recordId={record.id} available={record.photoAvailable} readOnly/><RecordVoice goalId={goalId} recordId={record.id} available={record.voiceAvailable} readOnly/></Section> : null}
+    {loading ? <ActivityIndicator color={palette.primary}/> : null}
+    {error ? <><StatusMessage error message={error}/><ActionButton compact title="Reload validation" secondary onPress={() => setRevision(value => value + 1)}/></> : null}
+    <View style={{ display: step === 4 ? 'flex' : 'none', gap: 12 }}>
+      <Text style={styles.heading}>Confirm validation</Text>{validation ? <Text style={styles.meta}>Current decision: {validation.approved ? 'Approved' : 'Rejected'}</Text> : null}
+      {message ? <StatusMessage message={message}/> : null}{saveError ? <StatusMessage error message={saveError}/> : null}
+      {!loading && !error ? <ValidationEditor key={`${validation?.id ?? 'new'}-${validation?.approved ?? 'none'}-${validation?.comment ?? ''}`} initial={validation} busy={saving} onSubmit={save}/> : null}
+    </View>
+    <View style={styles.buttons}><ActionButton compact title="Previous step" secondary disabled={saving} onPress={onBack}/>{step === 3 ? <ActionButton compact title="Continue" disabled={loading || !!error} onPress={onContinue}/> : null}</View>
+  </View>;
 }
 
 export default function Validations() {
-  const focused = useIsFocused();
-  const styles = useThemedStyles(createStyles);
+  const focused = useIsFocused(),styles = useWorkflowStyles(); const { theme } = useAppearance(); const colors = workspacePalette(theme);
   const { currentUser } = useAuth();
-  const [notice, setNotice] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  const loadPartners = useCallback((page: number, signal: AbortSignal) =>
-    trackingLinkService.active(page, signal), []);
-  const partners = usePagedResource(loadPartners, currentUser !== null);
-
-  const menuScroll = useMenuAction('Start a validation', () => { setSelectedPartner(null); setStarting(true); }, starting || selectedPartner !== null,
-    () => { setStarting(false); setSelectedPartner(null); });
-
+  const [saving, setSaving] = useState(false);
+  const [notice,setNotice] = useState<string | null>(null),[starting,setStarting] = useState(false),[step,setStep] = useState(0);
+  const [partner,setPartner] = useState<Partner | null>(null),[goal,setGoal] = useState<Goal | null>(null),[record,setRecord] = useState<DailyRecord | null>(null);
+  const loadPartners = useCallback((page: number, signal: AbortSignal) => trackingLinkService.active(page,signal),[]);
+  const partners = usePagedResource(loadPartners,currentUser !== null);
+  const loadGoals = useCallback((page: number, signal: AbortSignal) => {
+    if (!partner) throw new Error('Select a partner first.');
+    return goalService.list(partner.id, page, signal);
+  }, [partner]);
+  const goals = usePagedResource(loadGoals,!!partner);
+  const loadRecords = useCallback((page: number, signal: AbortSignal) => {
+    if (!goal) throw new Error('Select a goal first.');
+    return dailyRecordService.list(goal.id, page, signal);
+  }, [goal]);
+  const records = usePagedResource(loadRecords,!!goal);
+  function close() { setStarting(false); setPartner(null); setGoal(null); setRecord(null); setStep(0); }
+  const menuScroll = useMenuAction('Start a validation',() => { close(); setStarting(true); },starting || partner !== null,close);
   if (!currentUser) return null;
 
-  const partnersList = (<Section step={1} title="Tracking partners">
-        <ActionButton compact secondary title="Refresh partners" onPress={partners.reload} />
-        <ListStatus state={partners} empty="No active tracking partners yet." />
-        {!partners.loading && !partners.error && partners.data ? (
-          <>
-            <Text style={styles.count}>{partners.data.totalElements} partners</Text>
-            {partners.data.content.map((link) => {
-              const partner = partnerFromLink(link, currentUser.id);
-              return (
-                <View key={link.id} style={[styles.item, selectedPartner?.id === partner.id && styles.itemSelected, { flexDirection: 'row', gap: 12 }]}>
-                  <SocialAvatar userId={partner.id} name={partner.username} />
-                  <View style={{ flex: 1, minWidth: 0 }}><Text numberOfLines={1} style={styles.itemTitle}>{partner.username}</Text>
-                    <MemberProfileLink userId={partner.id} name={partner.username} />
-                    <Pressable accessibilityRole="button" accessibilityLabel={`Review goals from ${partner.username}`}
-                      onPress={() => setSelectedPartner(partner)} style={{ minHeight: 48, justifyContent: 'center' }}>
-                      <Text style={styles.link}>{selectedPartner?.id === partner.id ? 'Selected' : 'View goals'}</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              );
-            })}
-            <PageControls page={partners.page} totalPages={partners.data.totalPages} onChange={partners.setPage} />
-          </>
-        ) : null}
-      </Section>);
+  const flow = <View style={{ gap: 16 }}>
+    <ValidationStepper step={step} busy={saving} onStep={setStep}/>
+    {step === 0 ? <Section step={1} title="Tracking partners"><ActionButton compact secondary title="Refresh partners" onPress={partners.reload}/><ListStatus state={partners} empty="No active tracking partners yet."/>
+      {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <View key={link.id} style={[styles.item,partner?.id===member.id&&styles.itemSelected,{flexDirection:'row',gap:12}]}><SocialAvatar userId={member.id} name={member.username}/><View style={{flex:1,minWidth:0}}><Text style={styles.itemTitle}>{member.username}</Text><MemberProfileLink userId={member.id} name={member.username}/><ActionButton compact secondary title={`Review goals from ${member.username}`} selected={partner?.id===member.id} onPress={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/></View></View>; }) : null}
+      <PageControls page={partners.page} totalPages={partners.data?.totalPages ?? 0} onChange={partners.setPage}/>
+    </Section> : null}
+    {step === 1 && partner ? <Section step={2} title={`Study goals · ${partner.username}`}><ListStatus state={goals} empty="This partner has no goals."/>{!goals.loading && !goals.error ? goals.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`View records for ${item.topic}`} selected={goal?.id===item.id} onPress={() => { if(goal?.id!==item.id){setGoal(item);setRecord(null);} }}/>) : null}<PageControls page={goals.page} totalPages={goals.data?.totalPages ?? 0} onChange={goals.setPage}/></Section> : null}
+    {step === 2 && goal ? <Section step={3} title={`Daily records · ${goal.topic}`}><ListStatus state={records} empty="This goal has no daily records."/>{!records.loading && !records.error ? records.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`Review record ${item.date}`} selected={record?.id===item.id} onPress={() => setRecord(previous => previous?.id===item.id ? previous : item)}/>) : null}<PageControls page={records.page} totalPages={records.data?.totalPages ?? 0} onChange={records.setPage}/></Section> : null}
+    {goal && record ? <RecordReview key={`${goal.id}-${record.id}`} goalId={goal.id} record={record} partnerName={partner?.username ?? ''} step={step} onBack={() => setStep(value => value-1)} onContinue={() => setStep(4)} onBusyChange={setSaving}/> : null}
+    {step < 3 ? <View style={styles.buttons}><ActionButton compact secondary title="Previous step" disabled={step===0} onPress={() => setStep(value => value-1)}/><ActionButton compact title="Continue" disabled={step===0?!partner:step===1?!goal:!record} onPress={() => setStep(value => value+1)}/></View> : null}
+  </View>;
   return <>
-    <CreationModal visible={focused && (starting || selectedPartner !== null)} title="New Validation"
-      onClose={() => { setStarting(false); setSelectedPartner(null); }}
-      onBack={() => { if (selectedPartner) setSelectedPartner(null); else setStarting(false); }}
-      onComplete={() => { setStarting(false); setSelectedPartner(null); setNotice('Validation saved.'); partners.reload(); }}>
-      {selectedPartner ? <PartnerGoals key={selectedPartner.id} partner={selectedPartner} /> : partnersList}
-    </CreationModal>
-    <Screen themed scrollRef={menuScroll}>
-      <AcademicHeading title="Validations" eyebrow="REVIEW PROGRESS" glyph="note" description="Review study records from your connected partners." />
-      {notice ? <StatusMessage variant="success" message={notice} /> : null}
-      {!(starting || selectedPartner) ? partnersList : null}
-    </Screen>
+    <CreationModal visible={focused && (starting || partner!==null)} title="New Validation" busy={saving} onClose={close} onBack={() => step>0?setStep(value=>value-1):close()} onComplete={() => {close();setNotice('Validation saved.');partners.reload();}}>{flow}</CreationModal>
+    <Screen themed scrollRef={menuScroll} backgroundColor={colors.background}><AcademicHeading title="Validations" eyebrow="REVIEW PROGRESS" glyph="note" description="Review study records from your connected partners." art={<AcademicSprite name="notebook" width={50}/>}/>{notice?<StatusMessage variant="success" message={notice}/>:null}{!starting && !partner ? flow : null}</Screen>
   </>;
 }
+function useWorkflowStyles() { const { theme } = useAppearance(); return createStyles(workspacePalette(theme)); }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' },
   back: { color: palette.primary, fontSize: 16, paddingVertical: 4 },
   title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   subtitle: { color: palette.muted, fontSize: 14, lineHeight: 22 },

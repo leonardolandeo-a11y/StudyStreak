@@ -10,11 +10,12 @@ import BackButton from "./BackButton";
 import Breadcrumbs from "./Breadcrumbs";
 import { ROUTES } from "../../routes/paths";
 import "../academic/retro-workspace.css";
+import "../workflows/workflows.css";
 import { StudyPartnersPanel } from "../social/StudyPartnersPanel";
 
 function WorkspaceLayout({ userId }: { userId: number }) {
     const location = useLocation();
-    const retro = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.trackingLinks;
+    const retro = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.trackingLinks || location.pathname.startsWith(ROUTES.goals) || location.pathname === ROUTES.validations;
     const immersive = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
     const [open, setOpen] = useState(false), [rendered, setRendered] = useState(false), [generation, setGeneration] = useState(0);
     const trigger = useRef<HTMLButtonElement>(null);

@@ -1,3 +1,5 @@
+import { AcademicSprite } from "../components/academic/AcademicSprite";
+import { WorkflowStepper } from "../components/workflows/WorkflowStepper";
 import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
 import { MemberProfileLink } from "../components/social/MemberProfileLink";
@@ -42,7 +44,7 @@ function SectionHeading({ step, title, description }: {
 }) {
     return (
         <div className="mb-5">
-            <p className="text-sm font-medium text-sky-400">Step {step} of 4</p>
+            <p className="text-sm font-medium text-sky-400">Step {step} of 5</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-100">{title}</h2>
             <p className="mt-1 text-sm text-slate-400">{description}</p>
         </div>
@@ -66,6 +68,7 @@ function Validations() {
     const { showToast } = useToast();
     const userId = currentUser?.id;
 
+    const [step, setStep] = useState(0);
     const [partnerPage, setPartnerPage] = useState(0);
     const [partners, setPartners] = useState<PageResponse<TrackingLink> | null>(null);
     const [partnersLoading, setPartnersLoading] = useState(true);
@@ -244,6 +247,7 @@ function Validations() {
             return;
         }
         setSelectedRecord(record);
+        setValidationLoading(true);
         setValidation(null);
         setValidationError(null);
     }
@@ -279,30 +283,12 @@ function Validations() {
     if (!currentUser) return null;
 
     return (
-        <TrackingAvatarProvider revision={partnersRevision}><div className="academic-page academic-module space-y-6">
-            <AcademicHeading title="Validations" eyebrow="Review progress" description="Review a connected partner's progress and approve or reject a daily record." glyph="note" />
+        <TrackingAvatarProvider revision={partnersRevision}><div className="academic-page academic-module validation-workflow space-y-5">
+            <AcademicHeading title="Validations" eyebrow="Review progress" description="Review a connected partner's progress and approve or reject a daily record." glyph="note" art={<AcademicSprite name="notebook" width={56}/>} />
 
-            <nav aria-label="Validation steps" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[
-                    { number: 1, label: "Partner", completed: Boolean(selectedPartner) },
-                    { number: 2, label: "Goal", completed: Boolean(selectedGoal) },
-                    { number: 3, label: "Daily record", completed: Boolean(selectedRecord) },
-                    { number: 4, label: "Validation", completed: Boolean(validation) }
-                ].map(step => (
-                    <div
-                        key={step.number}
-                        className={`rounded-xl border px-3 py-3 text-sm font-medium ${
-                            step.completed
-                                ? "border-sky-500/50 bg-sky-950/30 text-sky-200"
-                                : "border-slate-800 bg-slate-900/50 text-slate-400"
-                        }`}
-                    >
-                        {step.number}. {step.label}
-                    </div>
-                ))}
-            </nav>
+            <WorkflowStepper step={step} available={step} onStep={setStep} busy={validationSaving}/>
 
-            <section aria-label="Select tracking partner" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+            <section hidden={step !== 0} aria-label="Select tracking partner" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
                 <SectionHeading step={1} title="Tracking partners" description="Choose someone you are connected with." />
                 {partnersLoading && <LoadingState message="Loading tracking partners..." />}
                 {partnersError && <><ErrorMessage message={partnersError} /><RetryButton onClick={() => setPartnersRevision(value => value + 1)} /></>}
@@ -340,7 +326,7 @@ function Validations() {
             </section>
 
             {selectedPartner && (
-                <section aria-label="Select goal" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+                <section hidden={step !== 1} aria-label="Select goal" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
                     <SectionHeading step={2} title={`${selectedPartner.username}'s goals`} description="Select the goal you want to review." />
                     {goalsLoading && <LoadingState message="Loading goals..." />}
                     {goalsError && <><ErrorMessage message={goalsError} /><RetryButton onClick={() => setGoalsRevision(value => value + 1)} /></>}
@@ -370,7 +356,7 @@ function Validations() {
             )}
 
             {selectedGoal && (
-                <section aria-label="Select daily record" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+                <section hidden={step !== 2} aria-label="Select daily record" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
                     <SectionHeading step={3} title={`${selectedGoal.topic} · Daily records`} description="Read the evidence and notes before choosing a record." />
                     {recordsLoading && <LoadingState message="Loading daily records..." />}
                     {recordsError && <><ErrorMessage message={recordsError} /><RetryButton onClick={() => setRecordsRevision(value => value + 1)} /></>}
@@ -399,31 +385,19 @@ function Validations() {
                 </section>
             )}
 
+            {selectedRecord && selectedGoal && step === 3 && <section aria-label="Review evidence" className="study-panel p-5">
+                <SectionHeading step={4} title="Review evidence" description={`${selectedPartner?.username} · ${selectedRecord.date}`}/>
+                <p className="whitespace-pre-wrap break-words">{selectedRecord.note || 'No note'}</p><p className="mt-2 whitespace-pre-wrap break-words text-content-secondary">{selectedRecord.evidence || 'No evidence'}</p>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2"><RecordPhoto goalId={selectedGoal.id} recordId={selectedRecord.id} available={selectedRecord.photoAvailable} readOnly/><RecordVoice goalId={selectedGoal.id} recordId={selectedRecord.id} available={selectedRecord.voiceAvailable} readOnly/></div>
+                {validationLoading && <LoadingState message="Loading validation..."/>}{validationError && <><ErrorMessage message={validationError}/><RetryButton onClick={() => setValidationRevision(value => value + 1)}/></>}
+            </section>}
             {selectedRecord && (
-                <section aria-label="Validate record" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
-                    <SectionHeading step={4} title="Validation" description={`Review for ${selectedPartner?.username} · ${selectedRecord.date}`} />
+                <section hidden={step !== 4} aria-label="Validate record" className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+                    <SectionHeading step={5} title="Confirm validation" description={`Review for ${selectedPartner?.username} · ${selectedRecord.date}`} />
                     {validationLoading && <LoadingState message="Loading validation..." />}
                     {validationError && <><ErrorMessage message={validationError} /><RetryButton onClick={() => setValidationRevision(value => value + 1)} /></>}
                     {!validationLoading && !validationError && (
                         <>
-                            {selectedGoal && (
-                                <div className="mb-5 grid gap-4 lg:grid-cols-2">
-                                    <RecordPhoto
-                                        goalId={selectedGoal.id}
-                                        recordId={selectedRecord.id}
-                                        available={selectedRecord.photoAvailable}
-                                        readOnly
-                                    />
-
-                                    <RecordVoice
-                                        goalId={selectedGoal.id}
-                                        recordId={selectedRecord.id}
-                                        available={selectedRecord.voiceAvailable}
-                                        readOnly
-                                    />
-                                </div>
-                            )}
-
                             {validation && (
                                 <p className="mb-4 rounded-lg border border-outline-strong bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
                                     Current decision: <span className="font-semibold text-slate-100">{validation.approved ? "Approved" : "Rejected"}</span>
@@ -442,6 +416,11 @@ function Validations() {
                     )}
                 </section>
             )}
+            <div className="flex items-center justify-between gap-3 border-t border-outline pt-4" aria-label="Wizard controls">
+                <button type="button" className="study-button" disabled={step === 0 || validationSaving} onClick={() => setStep(value => value - 1)}>Back</button>
+                <span className="text-xs text-content-muted" aria-live="polite">Step {step + 1} of 5</span>
+                {step < 4 && <button type="button" className="study-button bg-accent text-on-accent" disabled={step === 0 ? !selectedPartner : step === 1 ? !selectedGoal : step === 2 ? !selectedRecord : validationLoading || Boolean(validationError)} onClick={() => setStep(value => value + 1)}>Continue</button>}
+            </div>
         </div></TrackingAvatarProvider>
     );
 }
