@@ -41,7 +41,7 @@ test('empty and zero charts expose accessible data without artificial bar height
   assert.match(render(h(BarChart, { label: 'Daily', items: [] })), /No recorded time/);
   const html = render(h(BarChart, { label: 'Daily', items: [{ label: '2026-11-05', value: 0 }] }));
   assert.match(html, /aria-label="2026-11-05: 0.0 min"/);
-  assert.match(html, /height:0%/);
+  assert.match(html, /width:0%/);
   assert.doesNotMatch(html, /NaN|Infinity/);
 });
 

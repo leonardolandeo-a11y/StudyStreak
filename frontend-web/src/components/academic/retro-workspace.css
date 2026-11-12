@@ -79,3 +79,6 @@
 }
 @media (prefers-reduced-motion: reduce) { .retro-tracking .tracking-partner { transition: none; transform: none !important; } }
 :root[data-motion="reduce"] .retro-tracking .tracking-partner { transition: none; transform: none; }
+
+/* Shared inner surfaces across Activity, Goals, Together and History. */
+.retro-shell .study-analytics .study-panel,.retro-shell .study-analytics .academic-metric { background: var(--ss-surface-hover); border: 1px solid var(--ss-border); border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px #0000000a; }

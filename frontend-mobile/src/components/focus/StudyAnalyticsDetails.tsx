@@ -4,7 +4,8 @@ import { Text, View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { apiClient } from '../../services/apiClient';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
-import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import { useAppearance } from '../../hooks/useAppearance';
+import { workspacePalette } from '../academic/workspacePalette';
 import type { ThemeColors } from '../../features/appearance/theme';
 import { BarChart } from '../study/BarChart';
 import { MetricCard } from '../study/MetricCard';
@@ -13,8 +14,9 @@ import { barPercent, sessionDate } from '../study/chartPresentation';
 interface Entry { id:string;goal_name:string;source:string;state:string;confirmed_seconds:number;planned_seconds:number;verified:boolean;started_at:string; }
 const sections=['Activity','Goals','Together','History'] as const;
 export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
- const styles = useThemedStyles(createStyles);
- const { theme: { colors: palette } } = useAppearance();
+ const { theme } = useAppearance();
+ const palette = workspacePalette(theme);
+ const styles = createStyles(palette);
  const [trends,setTrends] = useState(false);
  const [section,setSection]=useState<typeof sections[number]>('Activity');
  const [scale,setScale]=useState<'Weekly'|'Monthly'>('Weekly');
@@ -61,5 +63,5 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
  </View>;
 }
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
- stack:{gap:20},panel:{padding:16,borderRadius:16,backgroundColor:palette.surface,borderWidth:1,borderColor:palette.border,gap:14},row:{flexDirection:'row',flexWrap:'wrap',gap:8,alignItems:'center'},metrics:{flexDirection:'row',flexWrap:'wrap',gap:10},heading:{color:palette.text,fontSize:18,fontWeight:'700'},caption:{color:palette.muted,fontSize:13,lineHeight:20},large:{color:palette.text,fontSize:30,fontWeight:'700',fontVariant:['tabular-nums']},tab:{minHeight:48,paddingHorizontal:14,paddingVertical:14,borderRadius:12,backgroundColor:palette.surfaceRaised},selected:{backgroundColor:palette.primary},tabText:{color:palette.text,fontWeight:'600',fontSize:14},selectedText:{color:palette.primaryText},track:{height:10,borderRadius:8,overflow:'hidden',backgroundColor:palette.surfaceRaised},fill:{height:10,backgroundColor:palette.primary,borderRadius:8},badge:{color:palette.primary,fontSize:13,fontWeight:'600'},
+ stack:{gap:14},panel:{padding:14,borderRadius:10,backgroundColor:palette.surfaceRaised,borderWidth:1,borderColor:palette.border,gap:14},row:{flexDirection:'row',flexWrap:'wrap',gap:8,alignItems:'center'},metrics:{flexDirection:'row',flexWrap:'wrap',gap:10},heading:{color:palette.text,fontSize:18,fontWeight:'700'},caption:{color:palette.muted,fontSize:13,lineHeight:20},large:{color:palette.text,fontSize:30,fontWeight:'700',fontVariant:['tabular-nums']},tab:{minHeight:48,paddingHorizontal:14,paddingVertical:14,borderRadius:12,backgroundColor:palette.surfaceRaised},selected:{backgroundColor:palette.primary},tabText:{color:palette.text,fontWeight:'600',fontSize:14},selectedText:{color:palette.primaryText},track:{height:10,borderRadius:8,overflow:'hidden',backgroundColor:palette.surfaceRaised},fill:{height:10,backgroundColor:palette.primary,borderRadius:8},badge:{color:palette.primary,fontSize:13,fontWeight:'600'},
 });
