@@ -75,7 +75,7 @@ try {
   await browser.click('Create a goal'); await browser.wait(inModal(`modal.innerText.includes('New Goal')`));
   assert.equal(await browser.evaluate(inModal(`modal.innerText.includes('Completed') || modal.innerText.includes('Your goals') || modal.innerText.includes('Existing completed goal')`)), false);
   assert.equal(writes.length, 0);
-  await browser.fill('[aria-label="Topic"]', 'Created fixture goal');
+  await browser.fill('[aria-label="Topic"]', 'Created fixture goal');await browser.click('Fácil · Alegre');
   holdGoal = true; await browser.click('Create goal');
   for (let index = 0; !finishGoal && index < 100; index++) await new Promise(resolve => setTimeout(resolve, 20));
   assert.ok(finishGoal); assert.equal(writes[0].body.completed, false);

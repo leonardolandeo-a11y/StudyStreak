@@ -5,7 +5,8 @@ import { FormField } from '../ui/FormField';
 import { StatusMessage } from '../ui/StatusMessage';
 import { useThemedStyles } from '../../hooks/useAppearance';
 import type { ThemeColors } from '../../features/appearance/theme';
-import type { GoalRequest } from '../../types/goal';
+import { DifficultySelector } from './GoalDifficulty';
+import type { GoalDifficulty, GoalRequest } from '../../types/goal';
 
 type Props = {
   initialValues?: GoalRequest;
@@ -16,6 +17,7 @@ type Props = {
 
 export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
   const styles = useThemedStyles(createStyles);
+  const [difficulty,setDifficulty] = useState<GoalDifficulty | undefined>(initialValues?.difficulty ?? undefined);
   const [topic, setTopic] = useState(initialValues?.topic ?? '');
   const [frequency, setFrequency] = useState(String(initialValues?.frequency ?? 1));
   const [duration, setDuration] = useState(String(initialValues?.duration ?? 30));
@@ -29,8 +31,9 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
     if (!name) { setError('Topic is required.'); return; }
     if (!Number.isSafeInteger(days) || days <= 0) { setError('Frequency must be a positive integer.'); return; }
     if (!Number.isSafeInteger(minutes) || minutes <= 0) { setError('Duration must be a positive integer.'); return; }
+    if (!initialValues && !difficulty) { setError('Select a difficulty.'); return; }
     setError(null);
-    await onSubmit({ topic: name, frequency: days, duration: minutes, completed: initialValues ? completed : false });
+    await onSubmit({ topic: name, frequency: days, duration: minutes, completed: initialValues ? completed : false, ...(difficulty ? { difficulty } : {}) });
   }
 
   return (
@@ -44,6 +47,7 @@ export function GoalForm({ initialValues, busy, onSubmit, onCancel }: Props) {
       </View><View style={{ flex: 1, minWidth: 120 }}><FormField variant="subtle" label="Duration" hint="Minutes per session" value={duration}
         onChangeText={setDuration} keyboardType="number-pad" editable={!busy} />
       </View></View>
+      <DifficultySelector value={difficulty} disabled={busy} onChange={setDifficulty}/>
       {initialValues ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: completed }}
         disabled={busy} onPress={() => setCompleted((value) => !value)} style={styles.checkbox}>
         <Text style={styles.check}>{completed ? '☑' : '☐'}</Text>

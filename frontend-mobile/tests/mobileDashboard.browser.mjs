@@ -13,7 +13,7 @@ function stats(days) {
   const daily = Array.from({ length: days }, (_, index) => ({ date: new Date(Date.UTC(2026, 10, 31 - days + index)).toISOString().slice(0, 10),
     minutes: mode === 'empty' ? 0 : index === 0 ? 35 : index === days - 1 && days === 30 ? 25 : 0,
     sessions: mode === 'empty' ? 0 : index === 0 ? 2 : index === days - 1 && days === 30 ? 1 : 0 }));
-  return { days, timeZone: 'America/Lima', studyStreak: 4, totalMinutes: 95, verifiedMinutes: 75, estimatedMinutes: 20, completedSessions: 4, weekMinutes: 45, periodMinutes: 45, periodSessions: 2, activeDays: 1, bestStudyStreak: 5, completionPercent: 75, previousMinutes: 25, changePercent: 80, individualMinutes: 25, groupMinutes: 20, groupSessions: 1, activity: daily, hourly: [], weekly: [], monthly: [], byGoal: [], daily,
+  return { days, timeZone: 'America/Lima', studyStreak: 4, totalMinutes: 95, verifiedMinutes: 75, estimatedMinutes: 20, completedSessions: 4, weekMinutes: 45, periodMinutes: 45, periodSessions: 2, activeDays: 1, bestStudyStreak: 5, completionPercent: 75, previousMinutes: 25, changePercent: 80, individualMinutes: 25, groupMinutes: 20, groupSessions: 1, activity: Array.from({length:365},(_,i)=>({date:new Date(Date.UTC(2025,11,1+i)).toISOString().slice(0,10),minutes:i===364?35:0,sessions:i===364?2:0})), hourly: [], weekly: [], monthly: [], byGoal: [], daily,
     verifiedPeriod: mode === 'missing' ? undefined : { minutes: mode === 'empty' ? 0 : days === 7 ? 35 : 60,
       sessions: mode === 'empty' ? 0 : days === 7 ? 2 : 3, daily } };
 }
@@ -59,6 +59,18 @@ try {
   await browser.wait(`document.body.innerText.includes('All-time recorded')`);
   assert.equal(statRequests.length,1);
   await browser.click('Explore study details');await browser.wait(`document.body.innerText.includes('Completion rate')`);
+  await browser.wait(`!!document.querySelector('[data-testid="recorded-activity-calendar"]')`);
+  await browser.click('Recorded trends · weekly / monthly');await browser.wait(`document.body.innerText.includes('Weekly study time')`);await browser.click('Monthly');await browser.wait(`document.body.innerText.includes('Monthly study time')`);await browser.click('Hide recorded trends');
+  await browser.click('Previous activity month');await browser.wait(`document.body.innerText.includes('October 2026')`);
+  await browser.click('Next activity month');await browser.wait(`document.body.innerText.includes('November 2026')`);
+  assert.equal(await browser.evaluate(`Array.from(document.querySelectorAll('[role="button"]')).some(b=>b.innerText==='Daily')`),false);
+  for(const width of [320,390,768,1440]){
+   await browser.command('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<768});
+   await browser.wait('document.documentElement.scrollWidth<=innerWidth');
+   await browser.evaluate(`document.querySelector('[data-testid="recorded-activity-calendar"]').scrollIntoView({block:'center'})`);
+   const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/741-journey-${width}.png`,Buffer.from(shot.data,'base64'));
+  }
+  await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await browser.click('Hide study details');
   await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="academic-panel"]')).find(e=>e.textContent.includes('Your study journey')).scrollIntoView({block:'start'})`);
   const insightsShot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/74a-dashboard-insights.png',Buffer.from(insightsShot.data,'base64'));

@@ -35,5 +35,25 @@ export default {
   "nook": {
     "width": 132,
     "height": 64
+  },
+  "difficultyNone": {
+    "width": 20,
+    "height": 20
+  },
+  "difficultyTrivial": {
+    "width": 20,
+    "height": 20
+  },
+  "difficultyEasy": {
+    "width": 20,
+    "height": 20
+  },
+  "difficultyIntermediate": {
+    "width": 20,
+    "height": 20
+  },
+  "difficultyHard": {
+    "width": 20,
+    "height": 20
   }
 } as const;

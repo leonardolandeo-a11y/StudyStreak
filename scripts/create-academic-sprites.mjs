@@ -64,6 +64,17 @@ art('nook',132,64,r=>{
  r(113,26,5,1,'lilac');r(116,27,1,1,'lilac');r(115,28,1,1,'lilac');r(114,29,1,1,'lilac');r(113,30,5,1,'lilac');r(120,18,4,1,'lilac');r(122,19,1,2,'lilac');r(120,21,4,1,'lilac');
  r(1,56,130,2,'shadow');
 });
+// Tiny semantic faces: neutral, cheerful, serious and angry. Never completion checkboxes.
+for (const [name, color] of [['difficultyNone','slate'],['difficultyTrivial','slate'],['difficultyEasy','green'],['difficultyIntermediate','gold'],['difficultyHard','rose']]) {
+ art(name,20,20,r=>{
+  r(5,1,10,18,'ink');r(2,4,16,12,'ink');r(4,3,12,14,color);r(3,5,14,10,color);
+  r(5,4,10,2,'paper');r(6,8,2,2,'ink');r(12,8,2,2,'ink');
+  if(name==='difficultyEasy'){r(6,12,2,2,'ink');r(12,12,2,2,'ink');r(8,14,4,1,'ink');}
+  else if(name==='difficultyHard'){r(5,6,2,1,'ink');r(7,7,2,1,'ink');r(13,6,2,1,'ink');r(11,7,2,1,'ink');r(7,14,2,1,'ink');r(9,13,2,1,'ink');r(11,14,2,1,'ink');}
+  else if(name==='difficultyIntermediate'){r(5,7,4,1,'ink');r(11,7,4,1,'ink');r(7,13,6,1,'ink');}
+  else r(7,13,6,1,'ink');
+ });
+}
 const data={palette,sprites};
 const target=new URL('../assets/academic/sprites.json',import.meta.url);
 const json=JSON.stringify(data,null,2)+'\n';

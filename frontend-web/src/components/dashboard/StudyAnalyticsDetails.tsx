@@ -1,3 +1,4 @@
+import { RecordedCalendar } from '../dashboard/RecordedCalendar';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../services/apiClient';
@@ -5,13 +6,12 @@ import type { FocusStatistics } from '../../services/focusStatisticsService';
 import { goalDetailsPath } from '../../routes/paths';
 import { BarChart } from '../study/BarChart';
 import { MetricCard } from '../study/MetricCard';
-import { activityColor, barPercent, calendarPadding, sessionDate } from '../study/chartPresentation';
+import { barPercent, sessionDate } from '../study/chartPresentation';
 interface Entry { id: string; goal_name: string; source: string; state: string; confirmed_seconds: number; planned_seconds: number; verified: boolean; started_at: string; completed_at: string | null; }
 const sections = ['Activity', 'Goals', 'Together', 'History'] as const;
 export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics }) {
  const [section,setSection]=useState<typeof sections[number]>('Activity');
- const [scale,setScale]=useState<'Daily'|'Weekly'|'Monthly'>('Daily');
- const [day,setDay]=useState<number|null>(null);
+ const [scale,setScale]=useState<'Weekly'|'Monthly'>('Weekly');
  const [page,setPage]=useState(0);
  const [revision,setRevision]=useState(0);
  const [history,setHistory]=useState<{content:Entry[];totalPages:number}|null>(null);
@@ -23,31 +23,24 @@ export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics 
    void apiClient.get('/api/study/history',{params:{from,to,page},signal:controller.signal}).then(response=>{if(!controller.signal.aborted){setHistory(response.data);setError(false);}}).catch(()=>{if(!controller.signal.aborted)setError(true);});
    return ()=>controller.abort();
  },[from,to,page,data,section,revision]);
- const bars=scale==='Daily'?data.daily.map(item=>({label:item.date,value:item.minutes})):data[scale==='Weekly'?'weekly':'monthly'].map(item=>({label:item.date,value:item.hours*60}));
+ const bars=data[scale==='Weekly'?'weekly':'monthly'].map(item=>({label:item.date,value:item.hours*60}));
  const maxGoal=Math.max(0,...data.byGoal.map(item=>item.minutes));
- const selected=day===null?null:data.activity[day];
  return <div className="mt-6 space-y-6">
   <nav aria-label="Statistics sections" className="study-tabs">{sections.map(item=><button type="button" key={item} className="study-tab" aria-pressed={section===item} onClick={()=>setSection(item)}>{item}</button>)}</nav>
   {section==='Activity'&&<div className="space-y-6">
    <div className="grid gap-3 sm:grid-cols-3">
-    <MetricCard label="Active days" value={data.activeDays} detail={`In the last ${data.days} days`}/>
-    <MetricCard label="Best study streak" value={`${data.bestStudyStreak} days`} detail="All completed study days · personal best"/>
+    <MetricCard label="Recorded active days" value={data.activeDays} detail={`In the last ${data.days} days`}/>
+    <MetricCard label="Best recorded streak" value={`${data.bestStudyStreak} days`} detail="All completed study days · personal best"/>
     <MetricCard label="Completion rate" value={data.completionPercent===null?'—':`${data.completionPercent.toFixed(0)}%`} detail="Completed / verified attempts started in this period"/>
    </div>
-   <div className="study-panel space-y-5">
-    <div className="flex flex-wrap gap-2" aria-label="Chart grouping">{(['Daily','Weekly','Monthly'] as const).map(item=><button type="button" key={item} className="study-tab" aria-pressed={scale===item} onClick={()=>setScale(item)}>{item}</button>)}</div>
+   <details className="study-panel space-y-3"><summary className="min-h-11 cursor-pointer py-2 font-semibold text-accent">Recorded trends · weekly / monthly</summary>
+    <p className="text-xs text-content-muted">Includes historical estimates. Daily verified activity is above; recorded daily values remain in the calendar below.</p>
+    <div className="flex flex-wrap gap-2" aria-label="Chart grouping">{(['Weekly','Monthly'] as const).map(item=><button type="button" key={item} className="study-tab" aria-pressed={scale===item} onClick={()=>setScale(item)}>{item}</button>)}</div>
     <BarChart key={scale} items={bars} label={`${scale} study time`}/>
     <p className="text-xs leading-relaxed text-slate-400">Buckets include only the selected {data.days}-day period; boundary weeks and months may be partial. Time is attributed to completion in {data.timeZone}.</p>
-   </div>
-   <section className="study-panel">
-    <h3 className="text-lg font-semibold text-content">A year of showing up</h3><p className="mt-1 text-sm text-slate-400">Last 365 days · Monday at the top · scroll to explore</p>
-    <div className="mt-5 overflow-x-auto pb-3"><div className="grid w-max grid-flow-col grid-rows-7 gap-1">
-     {Array.from({length:calendarPadding(data.activity[0]?.date)},(_,i)=><span key={`pad-${i}`}/>)}
-     {data.activity.map((item,index)=><button type="button" key={item.date} title={`${item.date}: ${item.minutes} min`} aria-label={`${item.date}: ${item.minutes} minutes, ${item.sessions} sessions`} onFocus={()=>setDay(index)} onClick={()=>setDay(index)} className="h-5 w-5 rounded-sm border border-white/5 focus-visible:z-10" style={{backgroundColor:activityColor(item.minutes)}}/>)}
-    </div></div>
-    <div className="mt-2 flex flex-wrap justify-between gap-3 text-sm text-slate-400"><p aria-live="polite">{selected?`${selected.date} · ${selected.minutes} min · ${selected.sessions} sessions`:'Select a day for details.'}</p><span>Intensity: 0 · 1–29 · 30–59 · 60+ min</span></div>
-   </section>
-   <div className="study-panel"><BarChart items={data.hourly.map(item=>({label:`${item.hour}:00`,value:item.hours*60}))} label="When sessions finish"/><p className="text-xs text-slate-400">Local completion hour, not minute-by-minute attendance.</p></div>
+   </details>
+   <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2"><RecordedCalendar activity={data.activity}/>
+   <div className="study-panel"><BarChart items={data.hourly.map(item=>({label:`${item.hour}:00`,value:item.hours*60}))} label="When sessions finish"/><p className="text-xs text-slate-400">Selected period · recorded time, including historical estimates. Local completion hour, not minute-by-minute attendance.</p></div></div>
   </div>}
   {section==='Goals'&&<section className="study-panel space-y-5"><div><h3 className="text-lg font-semibold text-content">Where your time goes</h3><p className="mt-1 text-sm text-slate-400">All-time recorded time by Goal · includes labelled historical estimates</p></div>
    {data.byGoal.length===0?<p className="study-empty">Your first completed linked session will appear here.</p>:data.byGoal.map((goal,index)=><div key={`${goal.goalId}-${goal.topic}-${index}`}>

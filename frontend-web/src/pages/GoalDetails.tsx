@@ -1,8 +1,8 @@
+import { DifficultyBadge } from '../components/goals/GoalDifficulty';
 import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { WorkflowDialog } from "../components/workflows/WorkflowDialog";
 import { GoalTags } from "../components/goals/GoalTags";
 import { getDailyRecords } from "../services/dailyRecordService";
-import { AcademicHeading } from "../components/academic/Academic";
 import { RecordedSummary } from "../components/study/RecordedSummary";
 import { useState,useEffect } from "react";
 import { Link,useParams, useNavigate } from "react-router-dom";
@@ -279,7 +279,7 @@ useEffect(() => {
     }
     return <div className="academic-page academic-module goal-workflows space-y-5">
         <section className="study-panel goal-detail-hero">
-            <AcademicHeading title={goal.topic} eyebrow="Goal details" art={<AcademicSprite name="books" width={72}/>} />
+            <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs text-content-muted">GOAL DETAILS</p><h1 className="mt-1 break-words text-2xl font-bold">{goal.topic}</h1></div><DifficultyBadge value={goal.difficulty}/></div>
             <span className={`goal-status ${goal.completed ? 'text-success bg-success-surface' : 'text-accent bg-accent-soft'}`}>{goal.completed ? 'Completed' : 'Active'}</span>
             <p className="mt-3 text-sm text-content-muted">{goal.frequency} sessions/week · {goal.duration} min/session</p>
             <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="study-button" onClick={() => setEditing(true)}>Update Goal</button>
@@ -287,8 +287,8 @@ useEffect(() => {
                 <Link className="study-button" to={resourcesPath(goal.topic)}>Find books for this goal</Link><Link className="study-button" to={ROUTES.studyRooms}>Study Rooms</Link>
             </div>
         </section>
-        <div className="grid gap-4 lg:grid-cols-2"><RecordedSummary minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined} sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined} error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)}/>
-            <Link to={dailyRecordsPath(goal.id)} className="study-panel flex items-center gap-5 p-5"><AcademicSprite name="notebook" width={48}/><div><p className="text-4xl font-bold tabular-nums">{recordCount ?? '—'}</p><h2 className="mt-1 font-semibold">Daily Records</h2><p className="text-sm text-content-muted">Explore notes & evidence →</p></div></Link>
+        <div className="grid gap-4 lg:grid-cols-2"><RecordedSummary compact minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined} sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined} error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)}/>
+            <Link to={dailyRecordsPath(goal.id)} className="study-panel flex items-center gap-4 p-4"><AcademicSprite name="notebook" width={36}/><div><p className="text-5xl font-bold tabular-nums">{recordCount ?? '—'}</p><h2 className="mt-1 font-semibold">Daily Records</h2><p className="text-sm text-content-muted">Explore notes & evidence →</p></div></Link>
         </div>
         <p className="text-xs text-content-muted">Saved focus sessions and Daily Records are tracked separately. Targets are your plan, not a completion percentage.</p>
         <GoalTags key={goal.id} userId={currentUser.id} goalId={goal.id}/>

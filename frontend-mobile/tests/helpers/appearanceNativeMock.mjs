@@ -11,7 +11,7 @@ function propsFor(props) {
     'aria-valuemin': props['aria-valuemin'], 'aria-valuemax': props['aria-valuemax'], 'aria-valuenow': props['aria-valuenow'],
     'data-testid': props.testID, 'aria-modal': props.accessibilityViewIsModal || undefined,
     'aria-label': props.accessibilityLabel, 'aria-selected': props.accessibilityState?.selected,
-    'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };
+    'aria-checked': props.accessibilityState?.checked, 'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };
 }
 export function View(props) { return React.createElement('div', { ...propsFor(props), 'data-edges': props.edges?.join(',') }, props.children); }
 export const SafeAreaView = View;

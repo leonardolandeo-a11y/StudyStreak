@@ -1,3 +1,5 @@
+import { AppIcon } from '../../../../../components/ui/AppIcon';
+import { DifficultyBadge } from '../../../../../components/goals/GoalDifficulty';
 import { AcademicSprite } from '../../../../../components/academic/AcademicSprite';
 import { workspacePalette } from '../../../../../components/academic/workspacePalette';
 import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
@@ -18,7 +20,7 @@ import { useAuth } from '../../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../../hooks/usePagedResource';
 import { goalService } from '../../../../../services/goalService';
 import { getApiErrorMessage } from '../../../../../utils/apiError';
-import type { Goal, GoalRequest } from '../../../../../types/goal';
+import { GOAL_DIFFICULTY_LABELS, type Goal, type GoalRequest } from '../../../../../types/goal';
 import type { PageResponse } from '../../../../../types/page';
 
 export default function Goals() {
@@ -78,19 +80,23 @@ export default function Goals() {
         <>
           <Text style={styles.count}>{data.totalElements} goals</Text>
           {data.content.map((goal) => (
-            <View key={goal.id} style={styles.card}><NavigationPressable accessibilityRole="button"
-              accessibilityLabel={`Open ${goal.topic}`}
-              onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })} style={({ pressed }) => ({ padding: 14, gap: 8, borderRadius: 10, opacity: pressed ? .8 : 1, transform: [{ scale: pressed && !reduceMotion ? .98 : 1 }] })}>
-              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}><AcademicSprite name={goal.completed ? 'notebook' : 'books'} width={44}/><View style={{ flex: 1, gap: 8 }}>
-              <View style={styles.row}>
-                <Text style={styles.topic}>{goal.topic}</Text>
-                <Text style={[styles.flag, goal.completed && styles.done]}>{goal.completed ? 'Completed' : 'Active'}</Text>
-              </View>
-              <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
-              <Text style={styles.meta}>{goal.completed ? 'Goal completed' : 'Explore progress & daily records →'}</Text>
-              </View></View>
-            </NavigationPressable>
-            {!goal.completed && <ActionButton compact secondary title="Focus on this Goal" onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})} />}
+            <View key={goal.id} style={styles.card}>
+              <NavigationPressable accessibilityRole="button" accessibilityLabel={`Open ${goal.topic}`}
+                onPress={() => router.push({ pathname: '/(app)/goals/[goalId]', params: { goalId: String(goal.id) } })}
+                style={({ pressed }) => ({ flex: 1, flexDirection: 'row', opacity: pressed ? .8 : 1, transform: [{ scale: pressed && !reduceMotion ? .98 : 1 }] })}>
+                <DifficultyBadge value={goal.difficulty} strip/>
+                <View style={{ flex: 1, gap: 5, padding: 12 }}>
+                  <Text style={styles.topic}>{goal.topic}</Text>
+                  <Text style={styles.meta}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
+                  <Text style={[styles.flag, goal.completed && styles.done]}>{goal.completed ? 'Completed' : 'Active'} · {goal.difficulty ? GOAL_DIFFICULTY_LABELS[goal.difficulty] : 'Sin dificultad'}</Text>
+                </View>
+                <Text style={{ color: palette.muted, alignSelf: 'center', paddingRight: 6 }}>›</Text>
+              </NavigationPressable>
+              {!goal.completed && <NavigationPressable accessibilityRole="button" accessibilityLabel={`Focus on ${goal.topic}`}
+                onPress={() => router.push({pathname:'/focus-studio',params:{goalId:String(goal.id)}})}
+                style={{ minWidth: 44, alignItems: 'center', justifyContent: 'center', borderLeftWidth: 1, borderColor: palette.border }}>
+                <AppIcon name="focus" color={palette.primary} size={20}/>
+              </NavigationPressable>}
             </View>
           ))}
           <PageControls page={page} totalPages={data.totalPages} onChange={setPage} />
@@ -109,7 +115,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   section: { color: palette.text, fontSize: 20, fontWeight: '700' },
   link: { color: palette.primary, fontWeight: '700', fontSize: 14 },
   count: { color: palette.muted, fontSize: 12 },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: 12, padding: 0, gap: 0 },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: 9, padding: 0, gap: 0, flexDirection: 'row', overflow: 'hidden' },
   topic: { color: palette.text, fontSize: 17, fontWeight: '700', flex: 1 },
   flag: { color: palette.primary, fontSize: 12, fontWeight: '700' },
   done: { color: palette.success },

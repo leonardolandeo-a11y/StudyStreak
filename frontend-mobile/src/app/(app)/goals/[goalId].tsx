@@ -1,7 +1,6 @@
 import { GoalTags } from '../../../components/tags/GoalTags';
-import { AcademicSprite } from '../../../components/academic/AcademicSprite';
+import { DifficultyBadge } from '../../../components/goals/GoalDifficulty';
 import { workspacePalette } from '../../../components/academic/workspacePalette';
-import { AcademicHeading } from '../../../components/academic/Academic';
 import { RecordedSummary } from "../../../components/study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -214,7 +213,9 @@ export default function GoalDetails() {
       {goal && !goalLoading ? (
         <>
           <View style={styles.card}>
-            <AcademicHeading title={goal.topic} eyebrow="GOAL DETAILS" glyph="book" art={<AcademicSprite name="books" width={64}/>} />
+            <Text style={{ color: palette.muted, fontSize: 12 }}>GOAL DETAILS</Text>
+            <Text accessibilityRole="header" style={styles.title}>{goal.topic}</Text>
+            <DifficultyBadge value={goal.difficulty}/>
             <Text style={styles.muted}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
             <Text style={goal.completed ? styles.completed : styles.active}>
               {goal.completed ? 'Completed' : 'Active'}
@@ -225,10 +226,14 @@ export default function GoalDetails() {
               <ActionButton compact title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}
           </View>
-          <View style={styles.focusCard}>
-            <RecordedSummary minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
+          <View style={styles.card}>
+            <Text style={{ color: palette.muted }}>Daily Records</Text>
+            <Text style={{ color: palette.text, fontSize: 38, fontWeight: '700' }}>{records.data?.totalElements ?? '—'}</Text>
+            <RecordedSummary embedded minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
               sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined}
               error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
+          </View>
+          <View style={styles.focusCard}>
             <Text style={styles.focusNote}>Saved individual and group sessions. Daily Records and their streaks are tracked separately.</Text>
             <ActionButton compact secondary title="Study Rooms" onPress={() => router.push('/study-rooms')} />
             {!goal.completed && (
@@ -244,7 +249,7 @@ export default function GoalDetails() {
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>
-            <Text style={styles.section}>Daily records <Text style={{ fontSize: 30 }}>{records.data?.totalElements ?? '—'}</Text></Text>
+            <Text style={styles.section}>Daily records <Text style={{ fontSize: 22 }}>{records.data?.totalElements ?? '—'}</Text></Text>
             <Pressable accessibilityRole="button" onPress={records.reload}><Text style={styles.back}>Refresh</Text></Pressable>
           </View>
           {!editingRecord ? (
