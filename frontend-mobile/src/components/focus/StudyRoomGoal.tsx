@@ -1,3 +1,4 @@
+import { workspacePalette } from '../academic/workspacePalette';
 import { RecordedSummary } from "../study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -9,7 +10,8 @@ import { NavigationPressable } from '../navigation/NavigationPressable';
 import { useAuth } from '../../hooks/useAuth';
 import type { Goal } from '../../types/goal';
 export function StudyRoomGoal({roomId}:{roomId:string}) {
- const {theme:{colors:palette}}=useAppearance();
+ const {theme}=useAppearance();
+ const palette=workspacePalette(theme);
  const {currentUser}=useAuth();
  const [goals,setGoals]=useState<Goal[]>([]);
  const [goal,setGoal]=useState<number|null>(null);
