@@ -1,8 +1,8 @@
 import { AcademicSprite } from '../academic/AcademicSprite';
-import { workspacePalette, metricSurface } from '../academic/workspacePalette';
+import { dashboardPalette } from '../academic/workspacePalette';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import type { ResourceState } from '../../hooks/useFocusedResource';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
@@ -19,7 +19,8 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
   days: StudyPeriod; onDaysChange(days: StudyPeriod): void; state: ResourceState<FocusStatistics>; retry(): void;
 }) {
   const { theme } = useAppearance();
-  const colors = workspacePalette(theme);
+  const { width } = useWindowDimensions();
+  const colors = dashboardPalette(theme);
   const [style, setStyle] = useState<'bars' | 'lines'>('bars');
   const stats = state.status === 'success' ? state.data : null;
   const period = stats ? verifiedActivity(stats, days) : null;
@@ -32,6 +33,14 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
       unit: 'days', detail: 'All completed study days, including historical estimates. Independent of the period above.' },
   ];
   return <>
+    <View testID="dashboard-metrics" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 12, backgroundColor: colors.surface, borderColor: colors.border, width: width < 330 ? '100%' : '48%', flexGrow: 1, flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+      <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[index]} width={28}/>
+      <View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{metric.label}</Text>
+        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.unit}</Text></Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text></View>
+    </Card>)}
+    </View>
     <Card style={{ padding: 14, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
@@ -47,22 +56,17 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
           </NavigationPressable>)}
         </View>
       </View>
-      <SegmentedControl options={[{ value: 7 as const, label: '7 days' }, { value: 30 as const, label: '30 days' }]}
+      <SegmentedControl colors={colors} options={[{ value: 7 as const, label: '7 days' }, { value: 30 as const, label: '30 days' }]}
         value={days} onChange={onDaysChange} />
-      {state.status === 'loading' ? <StatusMessage message="Loading verified activity…" />
-        : state.status === 'error' || !period ? <><StatusMessage error message={state.status === 'error'
+      {state.status === 'loading' ? <StatusMessage colors={colors} message="Loading verified activity…" />
+        : state.status === 'error' || !period ? <><StatusMessage colors={colors} error message={state.status === 'error'
           ? 'Your study activity could not be loaded.' : 'Verified activity is unavailable or inconsistent. Historical estimates have not been substituted.'} />
-          <ActionButton title="Retry activity" onPress={retry} /></>
-        : period.minutes === 0 ? <><AcademicEmpty><StatusMessage message="No verified study time in this period." /></AcademicEmpty>
-          <ActionButton title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
-        : <ActivityPlot period={period} style={style} />}
+          <ActionButton colors={colors} title="Retry activity" onPress={retry} /></>
+        : period.minutes === 0 ? <><AcademicEmpty><StatusMessage colors={colors} message="No verified study time in this period." /></AcademicEmpty>
+          <ActionButton colors={colors} title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
+        : <ActivityPlot period={period} style={style} colors={colors} />}
       <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
     </Card>
-    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 14, gap: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: metricSurface(index, theme.mode === 'dark'), borderColor: colors.borderStrong }}>
-      <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[index]} width={42}/>
-      <View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{metric.label}</Text>
-        <Text style={{ color: colors.text, fontSize: 26, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.unit}</Text></Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text></View>
-    </Card>)}
+
   </>;
 }

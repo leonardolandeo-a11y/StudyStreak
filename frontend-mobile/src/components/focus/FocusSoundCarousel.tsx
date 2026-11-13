@@ -1,3 +1,4 @@
+import type { ThemeColors } from '../../features/appearance/theme';
 import { useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
@@ -7,10 +8,11 @@ import type { Soundscape } from '../../features/focus/pomodoroState';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { FocusArtwork } from './FocusArtwork';
 
-export function FocusSoundCarousel({ selected, playing, loading, ready, onChoose }: {
-  selected: Soundscape; playing: boolean; loading: boolean; ready: boolean; onChoose(sound: Soundscape): void;
+export function FocusSoundCarousel({ selected, playing, loading, ready, onChoose, colors }: {
+  selected: Soundscape; playing: boolean; loading: boolean; ready: boolean; onChoose(sound: Soundscape): void; colors?: ThemeColors;
 }) {
-  const { theme, reduceMotion } = useAppearance();
+  const { theme: globalTheme, reduceMotion } = useAppearance();
+  const theme = { ...globalTheme, colors: colors ?? globalTheme.colors };
   const [category, setCategory] = useState<SoundCategory | 'all'>('all');
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const sounds = SOUNDSCAPES.filter(item => category === 'all' || item.category === category);

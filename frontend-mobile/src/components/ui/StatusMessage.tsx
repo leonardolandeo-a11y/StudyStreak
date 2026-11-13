@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { useThemedStyles } from '../../hooks/useAppearance';
+import { useAppearance } from '../../hooks/useAppearance';
 import type { ThemeColors } from '../../features/appearance/theme';
 
-export function StatusMessage({ message, error = false, variant = 'info' }: {
-  message: string; error?: boolean; variant?: 'info' | 'success';
+export function StatusMessage({ message, error = false, variant = 'info', colors }: {
+  message: string; error?: boolean; variant?: 'info' | 'success'; colors?: ThemeColors;
 }) {
-  const styles = useThemedStyles(createStyles);
+  const { theme } = useAppearance();
+  const styles = createStyles(colors ?? theme.colors);
   return (
     <View accessibilityRole={error ? 'alert' : undefined} accessibilityLiveRegion={error ? 'assertive' : 'polite'}
       style={[styles.box, variant === 'success' && styles.success, error && styles.error]}>

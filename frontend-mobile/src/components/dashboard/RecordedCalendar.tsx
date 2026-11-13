@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
-import { workspacePalette } from '../academic/workspacePalette';
+import { dashboardPalette } from '../academic/workspacePalette';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import type { DailyFocus } from '../../features/focus/focusStatisticsService';
 import { activityColor, calendarPadding } from '../study/chartPresentation';
 export function RecordedCalendar({ activity }: { activity: DailyFocus[] }) {
-  const { theme } = useAppearance(); const colors = workspacePalette(theme);
+  const { theme } = useAppearance(); const colors = dashboardPalette(theme);
   const months = [...new Set(activity.map(item => item.date.slice(0,7)))];
   const [chosen, setChosen] = useState(months.at(-1));
   const [selected, setSelected] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function RecordedCalendar({ activity }: { activity: DailyFocus[] }) {
   const day = activity.find(item => item.date === selected);
   const caption = { color: colors.muted, fontSize: 12 };
   return <View testID="recorded-activity-calendar" style={{ gap: 12, padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface }}>
-    <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 18, fontWeight: '600' }}>A year of showing up</Text>
+    <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 18, fontWeight: '600' }}>Activity calendar</Text>
     <Text style={caption}>{activity[0]?.date} – {activity.at(-1)?.date} · recorded time, including historical estimates.</Text>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <NavigationPressable accessibilityRole="button" accessibilityLabel="Previous activity month" disabled={index <= 0}

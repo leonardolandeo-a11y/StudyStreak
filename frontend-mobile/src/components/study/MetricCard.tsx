@@ -2,9 +2,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import { workspacePalette } from '../academic/workspacePalette';
 import type { ThemeColors } from '../../features/appearance/theme';
-export function MetricCard({ label, value, detail }: { label: string; value: string | number; detail: string }) {
+export function MetricCard({ label, value, detail, colors }: { label: string; value: string | number; detail: string; colors?: ThemeColors }) {
   const { theme } = useAppearance();
-  const styles = createStyles(workspacePalette(theme));
+  const styles = createStyles(colors ?? workspacePalette(theme));
   return <View style={styles.card}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value}</Text><Text style={styles.detail}>{detail}</Text></View>;
 }
 const createStyles = (palette: ThemeColors) => StyleSheet.create({

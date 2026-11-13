@@ -1,3 +1,4 @@
+import type { ThemeColors } from '../../features/appearance/theme';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
@@ -5,8 +6,8 @@ import { workspacePalette } from '../academic/workspacePalette';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { barPercent } from './chartPresentation';
 type Bar = { label: string; value: number };
-export function BarChart({ items, unit = 'min', label }: { items: Bar[]; unit?: string; label: string }) {
-    const { theme } = useAppearance(); const colors = workspacePalette(theme);
+export function BarChart({ items, unit = 'min', label, colors: override }: { items: Bar[]; unit?: string; label: string; colors?: ThemeColors }) {
+    const { theme } = useAppearance(); const colors = override ?? workspacePalette(theme);
     const [selected, setSelected] = useState<number | null>(null);
     const active = selected === null ? undefined : items[selected];
     const [expanded, setExpanded] = useState(false);

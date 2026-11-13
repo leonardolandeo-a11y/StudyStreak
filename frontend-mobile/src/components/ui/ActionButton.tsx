@@ -1,9 +1,9 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useState } from 'react';
-import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import { useAppearance } from '../../hooks/useAppearance';
 import type { ThemeColors } from '../../features/appearance/theme';
 
-export function ActionButton({ title, onPress, busy = false, disabled = false, secondary = false, selected, compact = false }: {
+export function ActionButton({ title, onPress, busy = false, disabled = false, secondary = false, selected, compact = false, colors }: {
   title: string;
   onPress: () => void;
   busy?: boolean;
@@ -11,11 +11,12 @@ export function ActionButton({ title, onPress, busy = false, disabled = false, s
   secondary?: boolean;
   selected?: boolean;
   compact?: boolean;
+  colors?: ThemeColors;
 }) {
   const [focused, setFocused] = useState(false);
   const { theme } = useAppearance();
-  const palette = theme.colors;
-  const styles = useThemedStyles(createStyles);
+  const palette = colors ?? theme.colors;
+  const styles = createStyles(palette);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={title}
       accessibilityState={{ disabled: disabled || busy, busy, selected }}

@@ -1,5 +1,5 @@
-import { FocusEnvironment } from '../environment/StudyEnvironment';
 import { useState } from 'react';
+import { workspacePalette } from '../academic/workspacePalette';
 import { Text, View } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 import type { PomodoroMode } from '../../features/focus/pomodoroState';
@@ -13,9 +13,10 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
   busy: boolean;
   onMode(mode: PomodoroMode): void; onToggle(): void; onReset(): void; onSettings(): void;
 }) {
-  const { theme } = useAppearance();
+  const { theme: globalTheme } = useAppearance();
+  const theme = { ...globalTheme, colors: workspacePalette(globalTheme) };
   const [diameter, setDiameter] = useState(230);
-  return <Card style={{ padding: 16, gap: 14 }}>
+  return <Card style={{ padding: 16, gap: 14, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
       <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 18, fontWeight: '600' }}>Pomodoro</Text>
       <NavigationPressable accessibilityRole="button" accessibilityLabel="Focus settings" disabled={!ready} onPress={onSettings}
@@ -32,9 +33,9 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
           <Text style={{ color: mode === item.id ? theme.colors.primary : theme.colors.muted, fontSize: 13 }}>{item.label}</Text>
         </NavigationPressable>)}
     </View>
-    <FocusEnvironment><View onLayout={event => setDiameter(Math.min(230, event.nativeEvent.layout.width))} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+    <View onLayout={event => setDiameter(Math.min(230, event.nativeEvent.layout.width))} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
     <View testID="pomodoro-circle" style={{ width: diameter, height: diameter, flexShrink: 0, borderRadius: diameter / 2, borderWidth: 3,
-      backgroundColor: theme.colors.background, borderColor: running ? theme.colors.primary : theme.colors.borderStrong, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+      backgroundColor: theme.colors.surfaceRaised, borderColor: running ? theme.colors.primary : theme.colors.borderStrong, alignSelf: 'center', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
       {Array.from({ length: 12 },(_,index) => {
         const angle = index * Math.PI / 6;
         return <View key={index} accessible={false} style={{ position: 'absolute', width: 3, height: 3,
@@ -46,7 +47,6 @@ export function FocusTimerPanel({ mode, time, progress, running, paused, ready, 
       <Text style={{ color: theme.colors.primary, fontSize: 13 }}>{!ready ? 'Restoring…' : running ? 'In progress' : paused ? 'Paused' : 'Ready'}</Text>
     </View>
     </View>
-    </FocusEnvironment>
     <PixelProgress value={Math.round(progress * 100)} label="Session progress" />
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <View style={{ flex: 1 }}><ActionButton title={running ? 'Pause timer' : paused ? 'Resume session' : mode === 'focus' ? 'Start focus' : 'Start break'}

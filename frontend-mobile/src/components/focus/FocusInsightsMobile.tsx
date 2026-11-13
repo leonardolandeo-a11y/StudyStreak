@@ -4,7 +4,7 @@ import type { FocusStatistics } from '../../features/focus/focusStatisticsServic
 import { activityNumber } from '../../features/dashboard/verifiedActivity';
 import { useAppearance } from '../../hooks/useAppearance';
 import { AcademicSprite } from '../academic/AcademicSprite';
-import { workspacePalette } from '../academic/workspacePalette';
+import { dashboardPalette } from '../academic/workspacePalette';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { AcademicPanel } from '../academic/Academic';
 import { StudyAnalyticsDetails } from './StudyAnalyticsDetails';
@@ -12,7 +12,7 @@ import { StudyAnalyticsDetails } from './StudyAnalyticsDetails';
 /** Presentation only: shares the Dashboard request, period and refresh. */
 export function FocusInsightsMobile({ data, days }: { data: FocusStatistics; days: 7 | 30 }) {
   const { theme } = useAppearance();
-  const colors = workspacePalette(theme);
+  const colors = dashboardPalette(theme);
   const [expanded, setExpanded] = useState(false);
   const metrics = [
     { label: 'All-time recorded', value: `${activityNumber(data.totalMinutes)} min`, detail: `${activityNumber(data.verifiedMinutes)} min verified · ${activityNumber(data.estimatedMinutes)} min historical estimates` },

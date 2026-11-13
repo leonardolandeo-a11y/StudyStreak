@@ -21,6 +21,8 @@ test('timer, carousel and settings render in all eight global appearances withou
     const timer = render(h(FocusTimerPanel, props)); assert.match(timer, /Time remaining 25:00/); assert.match(timer, /Session progress/);
     const carousel = render(h(FocusSoundCarousel, { selected: 'dream', playing: false, loading: false, ready: true, onChoose() {} }));
     for (const track of SOUNDSCAPES) assert.ok(carousel.includes(track.title));
+    assert.doesNotMatch(timer, /study-environment|Study ambience|study-scene/);
+    assert.match(timer, /pomodoro-circle/);
     assert.equal(SOUNDSCAPES.length, 12); assert.ok(timer.includes(appearance.getSnapshot().theme.colors.primary));
   }
 });

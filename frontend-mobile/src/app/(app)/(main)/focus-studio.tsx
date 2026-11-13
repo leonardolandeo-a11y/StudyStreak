@@ -1,3 +1,4 @@
+import { workspacePalette } from '../../../components/academic/workspacePalette';
 import { getApiErrorMessage } from "../../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../../services/studyTracking";
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -39,7 +40,8 @@ export default function FocusStudioMobile() {
   const validRequestedGoal = requestedGoalId !== null &&
     Number.isSafeInteger(requestedGoalId) && requestedGoalId > 0;
   const { currentUser } = useAuth();
-  const { theme } = useAppearance();
+  const { theme: globalTheme } = useAppearance();
+  const theme = { ...globalTheme, colors: workspacePalette(globalTheme) };
   const [timerBusy, setTimerBusy] = useState(false);
   const timerAction = useRef(false);
   const userId = currentUser?.id;
@@ -352,7 +354,7 @@ export default function FocusStudioMobile() {
 
   if (!currentUser) return null;
   return <>
-    <Screen themed compact>
+    <Screen themed compact backgroundColor={theme.colors.background}>
       <AcademicHeading title="Focus Studio" eyebrow="YOUR FOCUS SPACE" description="One task. Your pace. Your sound." focus />
       <FocusTimerPanel mode={timer.mode} time={formatPomodoroTime(remaining)} progress={progress} running={running}
         paused={!running && (goalLocked || remaining < total)} ready={ready} locked={goalLocked} busy={timerBusy}
@@ -361,7 +363,7 @@ export default function FocusStudioMobile() {
         onSettings={() => { if (!loadingAudio && !timerBusy) setSettingsOpen(true); }} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         <View style={{ flexGrow: 1, flexBasis: 280 }}>
-          <Card style={{ padding: 16, flex: 1 }}>
+          <Card style={{ padding: 16, flex: 1, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}>
             <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600' }}>Now Playing</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <FocusArtwork sound={timer.preferences.soundscape} />
@@ -377,7 +379,7 @@ export default function FocusStudioMobile() {
           </Card>
         </View>
         <View style={{ flexGrow: 1, flexBasis: 280 }}>
-          <Card style={{ padding: 16, flex: 1 }}>
+          <Card style={{ padding: 16, flex: 1, backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}>
             <Text accessibilityRole="header" style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600' }}>Study toward a Goal</Text>
             <NavigationPressable accessibilityRole="button" accessibilityLabel="Choose study Goal"
               accessibilityState={{ disabled: goalLocked || goalsLoading || !selectionReady || timerBusy }}
@@ -406,7 +408,7 @@ export default function FocusStudioMobile() {
       </View>
       {pendingSync > 0 ? <StatusMessage message={`${pendingSync} completed sessions pending sync · excluded from confirmed totals`} /> : null}
       {saveError ? <><StatusMessage error message={saveError} /><ActionButton title="Retry sync" secondary onPress={retrySync} /></> : null}
-      <FocusSoundCarousel selected={timer.preferences.soundscape} playing={playing} loading={loadingAudio} ready={ready}
+      <FocusSoundCarousel colors={theme.colors} selected={timer.preferences.soundscape} playing={playing} loading={loadingAudio} ready={ready}
         onChoose={sound => { void chooseSound(sound); }} />
       <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{timer.focusSessions} local focus cycles on this device · not server-verified session totals</Text>
       <NavigationPressable accessibilityRole="button" accessibilityLabel="Open Study Rooms" onPress={() => router.navigate('/study-rooms')}

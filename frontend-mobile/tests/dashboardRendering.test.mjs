@@ -29,6 +29,8 @@ test('Dashboard metrics preserve Web meanings and never render legacy totals as 
   const html = render(h(DashboardActivity, { days: 7, onDaysChange() {}, retry() {}, state: { status: 'success', data: stats } }));
   for (const label of ['Verified focus', 'Completed sessions', 'Daily average', 'Current study streak']) assert.ok(html.includes(label));
   assert.match(html, /All completed study days, including historical estimates/);
+  assert.ok(html.indexOf('Current study streak') < html.indexOf('Study activity'), 'Metrics precede the chart, matching Web.');
+  assert.match(html, /dashboard-metrics/);
   assert.match(html, /Across all 7 days, including days without activity/);
   assert.doesNotMatch(html, /9999/);
 });
