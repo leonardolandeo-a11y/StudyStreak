@@ -1,3 +1,5 @@
+import { StudyEnvironmentSettings } from '../../components/environment/StudyEnvironmentSettings';
+import { useAuth } from '../../hooks/useAuth';
 import { AcademicHeading, AcademicPanel as Card } from '../../components/academic/Academic';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { SocialPrivacySettings } from '../../components/social/SocialPrivacySettings';
@@ -10,6 +12,7 @@ import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
 import { accentNames, appearanceModes, createTheme, defaultAppearance, type ThemeColors } from '../../features/appearance/theme';
 
 export default function Settings() {
+  const { currentUser } = useAuth();
   const { preferences, theme, systemMotion, persistenceError, setPreferences, retryPersistence } = useAppearance();
   const styles = useThemedStyles(createStyles);
   return <Screen themed compact>
@@ -32,6 +35,7 @@ export default function Settings() {
           onPress={() => { void setPreferences({ accent }); }} />)}
       </View>
     </Card>
+    {currentUser ? <StudyEnvironmentSettings key={currentUser.id} userId={currentUser.id}/> : null}
     <Card style={styles.section}>
       <View style={styles.motionRow}>
         <Text style={styles.motionLabel}>Reduce motion</Text>

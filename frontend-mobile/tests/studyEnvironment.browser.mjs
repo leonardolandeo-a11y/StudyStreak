@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
 import { environmentFixture } from '../../scripts/tests/studyEnvironmentFixture.mjs';
-const root = resolve('../docs/images/academia-pixel-viva-8-1d');
+const root = resolve('../.local/stage83b/environment-regression');
 mkdirSync(root, { recursive: true });
 const requests = [];
 const browser = await mobileBrowser({ intercept: request => {
@@ -46,15 +46,15 @@ try {
     await browser.wait(`Array.from(document.querySelectorAll('${scene} img')).every(i=>i.complete&&i.naturalWidth>0)`);
     await capture(`dashboard-${period}`);
   }
-  await browser.wait(`!!document.querySelector('[data-testid="ambient-running"]')`);
-  const steam = `getComputedStyle(document.querySelector('[data-testid="panorama-steam"]')).transform`;
+  await browser.wait(`!!document.querySelector('${scene} [data-testid="ambient-running"]')`);
+  const steam = `getComputedStyle(document.querySelector('${scene} [data-testid="environment-steam"]')).transform`;
   const before=await browser.evaluate(steam); await new Promise(r=>setTimeout(r,500));assert.notEqual(await browser.evaluate(steam),before);
   await browser.evaluate(`window.__environmentHidden=true;document.dispatchEvent(new Event('visibilitychange'))`);
-  await browser.wait(`!!document.querySelector('[data-testid="ambient-paused"]')`);
+  await browser.wait(`!!document.querySelector('${scene} [data-testid="ambient-paused"]')`);
   await browser.evaluate(`window.__environmentHidden=false;document.dispatchEvent(new Event('visibilitychange'))`);
-  await browser.wait(`!!document.querySelector('[data-testid="ambient-running"]')`);
+  await browser.wait(`!!document.querySelector('${scene} [data-testid="ambient-running"]')`);
   await browser.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
-  await browser.wait(`!!document.querySelector('[data-testid="ambient-paused"]')`);
+  await browser.wait(`!!document.querySelector('${scene} [data-testid="ambient-paused"]')`);
   await browser.click('Lines');await browser.wait(`!!document.querySelector('[aria-label^="Line chart"]')`);
   await browser.click('30 days');await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days"]')`);
   await browser.click('Bars');await browser.wait(`!!document.querySelector('[aria-label^="Bar chart, 30 days"]')`);
@@ -76,7 +76,8 @@ try {
   await browser.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   await browser.click('Open menu');await browser.click('Settings');
   await browser.evaluate(`document.querySelector('[aria-label="Reduce motion"]').click()`);
-  await browser.evaluate('history.back()');await browser.wait(`!!document.querySelector('[data-testid="ambient-paused"]')`);
+  await browser.evaluate('history.back()');await browser.wait(`!!document.querySelector('${scene} [data-testid="ambient-paused"]')`);
+  await browser.wait(`!!document.querySelector('${scene} [data-testid="environment-steam"]')`);
   const still=await browser.evaluate(steam);await new Promise(r=>setTimeout(r,150));assert.equal(await browser.evaluate(steam),still);
   await navigate('Focus Studio');
   for(const width of [320,390,768]) {
@@ -101,11 +102,11 @@ try {
   // A real image loading failure (not a DOM event) exercises React Native's image loader.
   await browser.command('Network.enable');
   await browser.command('Network.setCacheDisabled',{cacheDisabled:true});
-  await browser.command('Network.setBlockedURLs',{urls:['*academy-pixel-morning.*','*academy-pixel-afternoon.*','*academy-pixel-night.*']});
+  await browser.command('Network.setBlockedURLs',{urls:['*study-v1/campus.*png','*study-v1/library.*png','*study-v1/night.*png','*study-v1/cafe.*png']});
   await browser.reload();await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);
   await browser.fill('[aria-label="Username"]','Scholar');await browser.fill('[aria-label="Password"]','Fixture-password-1');await browser.click('Sign in');
   await browser.wait(`!!document.querySelector('[aria-label="Open menu"]')`);await navigate('Dashboard');
-  await browser.wait(`!!document.querySelector('${scene}')&&!document.querySelector('[data-testid="panorama-steam"]')`);
+  await browser.wait(`!!document.querySelector('${scene}')&&!document.querySelector('${scene} [data-testid="environment-steam"]')`);
   await browser.wait(`Array.from(document.querySelectorAll('${scene} img')).some(i=>i.src.includes('academy-pixel-static')&&i.complete&&i.naturalWidth>0)`);
   await capture('dashboard-static-fallback');
   assert.deepEqual(requests.filter(r=>r.method!=='GET'&&r.path!=='/login'),[]);
