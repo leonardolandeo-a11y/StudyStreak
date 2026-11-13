@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {token} from '../../../scripts/tests/studyEnvironmentFixture.mjs';
 
 export async function reviewPanorama(browser, requests) {
- const root=resolve(process.env.STUDY_ENV_CAPTURES||'../.local/stage82/environment-regression');mkdirSync(root,{recursive:true});
+ const root=resolve(process.env.STUDY_ENV_CAPTURES||'../.local/stage83a/environment-regression');mkdirSync(root,{recursive:true});
  await browser.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)});window.__realDate=Date;window.__now=new Date(2026,10,12,15).getTime();window.Date=class extends Date{constructor(...args){super(...(args.length?args:[window.__now]));}static now(){return window.__realDate.now();}};window.__hidden=false;Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__hidden});`});
  const capture=async name=>{await browser.evaluate('window.scrollTo(0,0)');await browser.evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(resolve(root,name+'.png'),Buffer.from(shot.data,'base64'));};
  const period=async(hour,name)=>{
@@ -37,10 +37,11 @@ export async function reviewPanorama(browser, requests) {
    assert.equal(requests.filter(p=>p==='/api/focus-sessions/stats').length,statsBefore+1);
    for(const [hour,name]of [[9,'morning'],[15,'afternoon'],[22,'night']]){await period(hour,name);await capture(`after-web-dashboard-${name}`);}
    await browser.wait(`document.querySelector('.panorama-art').dataset.ambient==='running'`);
-   const effects=['.panorama-steam','.panorama-clouds','.panorama-landscape'];
-   const transforms=await browser.evaluate(`${JSON.stringify(effects)}.map(s=>getComputedStyle(document.querySelector(s)).transform)`);
+   const effects=[['.panorama-steam','transform'],['.panorama-stars','opacity']];
+   const beforeEffects=[];
+   for(const [selector,property]of effects)beforeEffects.push(await browser.evaluate(`getComputedStyle(document.querySelector('${selector}')).${property}`));
    await new Promise(r=>setTimeout(r,350));
-   for(const [i,selector]of effects.entries())assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('${selector}')).transform`),transforms[i],selector+' moves');
+   for(const [i,[selector,property]]of effects.entries())assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('${selector}')).${property}`),beforeEffects[i],selector+' moves');
    await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:300,deviceScaleFactor:1,mobile:false});
    await browser.evaluate('window.scrollTo(0,document.documentElement.scrollHeight)');await browser.wait(`document.querySelector('.panorama-art').dataset.ambient==='paused'`);
    await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await browser.evaluate('window.scrollTo(0,0)');await browser.wait(`document.querySelector('.panorama-art').dataset.ambient==='running'`);

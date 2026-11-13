@@ -1,3 +1,4 @@
+import { StudyEnvironmentSettings } from '../components/environment/StudyEnvironmentSettings';
 import { AcademicHeading } from "../components/academic/Academic";
 import { SocialPrivacySettings } from "../components/social/SocialPrivacySettings";
 import { LogOut, RotateCcw } from "lucide-react";
@@ -23,6 +24,7 @@ export default function Settings() {
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-hover" role="img" aria-label="Preview progress: 60 percent"><div className="h-full w-3/5 bg-accent"/></div>
                 <p className="mt-3 text-xs text-content-muted">Errors, warnings and success keep their own semantic colors.</p>
             </figure>
+            {currentUser && <StudyEnvironmentSettings key={currentUser.id} userId={currentUser.id}/>}
             <button type="button" className="study-button" onClick={resetAppearance}><RotateCcw size={16} aria-hidden="true"/>Restore default appearance</button>
             <p role="status" className={`text-sm ${storageAvailable ? "text-content-muted" : "text-warning"}`}>{storageAvailable ? "Preferences are local to this browser and do not sync between devices." : "Browser storage is unavailable. Changes apply for this visit and may be lost on reload."}</p>
         </section>

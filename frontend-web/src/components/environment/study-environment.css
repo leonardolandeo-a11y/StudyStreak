@@ -38,3 +38,24 @@
 }
 @media (prefers-reduced-motion: reduce) { .panorama-effect { animation: none !important; } }
 :root[data-motion="reduce"] .panorama-effect { animation: none !important; }
+/* Selected scene effects remain clipped inside that scene's window. */
+.panorama-rain { animation: panorama-rain 3.6s linear infinite; }
+.panorama-stars { animation: panorama-stars 8s ease-in-out infinite alternate; }
+@keyframes panorama-rain { from { transform: translate(2px,-16px); opacity: .15; } to { transform: translate(-6px,24px); opacity: .32; } }
+@keyframes panorama-stars { from { opacity: .15; } to { opacity: .65; } }
+.environment-fallback-note { position: absolute; bottom: 8px; right: 12px; padding: 4px 7px; border-radius: 6px; background: #40234de8; color: #fff0de; font-size: 10px; pointer-events: none; }
+.study-environment:has([data-fallback="true"]) .panorama-caption { display: none; }
+.environment-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.environment-option { min-width: 0; cursor: pointer; }
+.environment-option-surface { display: block; height: 100%; overflow: hidden; border: 1px solid var(--ss-border-strong); border-radius: 10px; background: var(--ss-surface-hover); }
+.environment-option-surface[data-selected="true"] { border-color: var(--ss-accent); box-shadow: 0 0 0 1px var(--ss-accent); }
+.environment-option:has(input:focus-visible) .environment-option-surface { outline: 2px solid var(--ss-focus); outline-offset: 4px; }
+.environment-option img { display: block; width: 100%; height: auto; aspect-ratio: 3/1; object-fit: cover; image-rendering: pixelated; }
+.environment-option-label { display: flex; justify-content: space-between; gap: 8px; padding: 10px; font-size: 13px; font-weight: 600; }
+.environment-preview { position: relative; isolation: isolate; aspect-ratio: 3/1; overflow: hidden; border: 1px solid var(--ss-border); border-radius: 12px; background: #513366; pointer-events: none; }
+.environment-preview .panorama-art { z-index: 0; max-width: none; height: 100%; }
+@media(min-width: 1280px) { .environment-options { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media(max-width: 600px) { .environment-preview .panorama-art { height: 100%; aspect-ratio: auto; } .environment-option-label { font-size: 12px; } }
+@media(min-width: 601px) and (max-width: 1200px) {
+    .study-environment::before { background: linear-gradient(90deg,#32183ff0 0%,#3c214ac9 42%,#3c214a38 72%,transparent 100%); }
+}
