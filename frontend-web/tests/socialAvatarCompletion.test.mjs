@@ -40,10 +40,10 @@ test('Chrome: protected avatars in history, Validations and room participants pr
  try{
   await page.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   await page.navigate('/tracking-links');
-  await page.wait('Array.from(document.querySelectorAll("article")).filter(a=>a.textContent.includes("Tracking connection")).some(a=>a.querySelector("img")?.naturalWidth>0)');
+  await page.wait('Array.from(document.querySelectorAll(".tracking-partner")).some(a=>a.querySelector("img")?.naturalWidth>0)');
   assert.equal(avatarReads.get(77),1,'Active and history rows should share their in-flight avatar request');
-  assert.ok(await page.evaluate('Array.from(document.querySelectorAll("article")).filter(a=>a.textContent.includes("Tracking connection")).every(a=>a.querySelector("img")||a.querySelector("[aria-hidden=true]")?.textContent)'));
-  assert.ok(await page.evaluate('["ACCEPTED","PENDING","REJECTED"].every(s=>Array.from(document.querySelectorAll("article")).some(a=>a.textContent.includes("Tracking connection")&&a.textContent.includes(s)&&a.textContent.includes("You sent this tracking request")))'));
+  assert.ok(await page.evaluate('Array.from(document.querySelectorAll(".tracking-partner")).every(a=>a.querySelector("img")||a.querySelector("[aria-hidden=true]")?.textContent)'));
+  assert.ok(await page.evaluate('["ACCEPTED","PENDING","REJECTED"].every(s=>Array.from(document.querySelectorAll("article")).some(a=>a.classList.contains("tracking-partner")&&a.textContent.includes(s)&&a.textContent.includes("Sent")))'));
   state.validations=true;
   await page.evaluate('history.pushState({},"","/validations");window.dispatchEvent(new PopStateEvent("popstate"))');
   await page.wait('!!document.querySelector("section[aria-label^=Select] article img")');
@@ -55,7 +55,7 @@ test('Chrome: protected avatars in history, Validations and room participants pr
   await page.evaluate('Array.from(document.querySelectorAll("button")).find(b=>b.textContent.includes("Avatar room")).click()');
   await page.wait('!!document.querySelector("[data-room-participant] img")');
   await page.wait('document.querySelectorAll("[data-room-participant]").length===3');
-  assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-room-participant]")).some(a=>a.textContent.includes("Host · Online")&&a.textContent.includes("Studying"))'));
+  assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-room-participant]")).some(a=>a.textContent.includes("Host · Connected to room")&&a.textContent.includes("Studying"))'));
   assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-room-participant]")).filter(a=>!a.textContent.includes("Avatar partner")).every(a=>!a.querySelector("img")&&!!a.querySelector("[aria-hidden=true]")?.textContent)'));
   // The protected-image queue has concurrency two. Wait for the third initial
   // request before taking the baseline; its placeholder is visible while queued.
@@ -72,7 +72,7 @@ test('Chrome: protected avatars in history, Validations and room participants pr
     }
     if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS&&[320,1440].includes(width)){
      await page.evaluate('new Promise(r=>setTimeout(r,200))');
-     await page.evaluate(path==='/study-rooms'?'document.querySelector("[data-room-participant]").scrollIntoView({block:"center"})':path==='/validations'?'document.querySelector("section[aria-label^=Select] article").scrollIntoView({block:"center"})':'Array.from(document.querySelectorAll("article")).find(a=>a.textContent.includes("Tracking connection")).scrollIntoView({block:"center"})');
+     await page.evaluate(path==='/study-rooms'?'document.querySelector("[data-room-participant]").scrollIntoView({block:"center"})':path==='/validations'?'document.querySelector("section[aria-label^=Select] article").scrollIntoView({block:"center"})':'document.querySelector(".tracking-partner").scrollIntoView({block:"center"})');
      const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-complete-${path.slice(1)}-${width}.png`,Buffer.from(shot.data,'base64'));
     }
    }
@@ -97,7 +97,7 @@ test('Chrome: book leaf crosses the spine without moving the book; goal pulse sc
    if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(`/tmp/studystreak-book-frame-${time}.png`,Buffer.from(shot.data,'base64'));}
   }
   assert.ok(frames[0].scale>0.99&&frames[2].scale<-.99&&frames[4].scale>.99);assert.ok(frames[1].opacity>.99 && Math.abs(frames[1].scale)<.9);
-  assert.ok(frames.every(f=>f.bookTransform==='none'&&f.fixed&&f.width===18));
+  assert.ok(frames.every(f=>f.bookTransform==='none'&&f.fixed&&f.width===22));
   await page.command('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});await page.key('Tab');
   for(const label of ['Resources','Goals']){await page.evaluate(`document.querySelector('a[data-nav-icon=${label}]').focus()`);assert.ok(await page.evaluate('document.activeElement.matches(":focus-visible")'));}
   const goalFrames=[];

@@ -52,7 +52,7 @@ test('Chrome: academic modules retain forms, avatars, status labels, local theme
     for(const mode of ['dark','light','system'])for(const accent of ['mint','blue','purple','orange']){
      if(name!=='settings')await page.evaluate(`window.studyStreakAppearance.apply({mode:'${mode}',accent:'${accent}',reduceMotion:true})`);
      await page.wait('document.documentElement.scrollWidth<=innerWidth');
-     assert.equal(await page.evaluate(`!!document.querySelector('[data-pixel-glyph]')`),true,route);
+     assert.equal(await page.evaluate(`!!document.querySelector('.academic-module [data-pixel-glyph], .academic-module [data-academic-sprite]')`),true,route);
     }
     if(name==='settings'){
      await page.evaluate(`document.querySelector('input[name="display-mode"][value="dark"]').click()`);
