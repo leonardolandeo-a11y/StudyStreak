@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {token} from '../../../scripts/tests/studyEnvironmentFixture.mjs';
 
 export async function reviewPanorama(browser, requests) {
- const root=resolve(process.env.STUDY_ENV_CAPTURES||'../docs/images/academia-pixel-viva-8-1c');mkdirSync(root,{recursive:true});
+ const root=resolve(process.env.STUDY_ENV_CAPTURES||'../.local/stage82/environment-regression');mkdirSync(root,{recursive:true});
  await browser.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)});window.__realDate=Date;window.__now=new Date(2026,10,12,15).getTime();window.Date=class extends Date{constructor(...args){super(...(args.length?args:[window.__now]));}static now(){return window.__realDate.now();}};window.__hidden=false;Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__hidden});`});
  const capture=async name=>{await browser.evaluate('window.scrollTo(0,0)');await browser.evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(resolve(root,name+'.png'),Buffer.from(shot.data,'base64'));};
  const period=async(hour,name)=>{
@@ -28,10 +28,8 @@ export async function reviewPanorama(browser, requests) {
    await capture(`after-web-${module}-${width}`);
    if(module==='dashboard'&&width===1920){const {cssContentSize}=await browser.command('Page.getLayoutMetrics');const shot=await browser.command('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:1920,height:Math.ceil(cssContentSize.height),scale:1}});writeFileSync(resolve(root,'after-web-dashboard-1920-full.png'),Buffer.from(shot.data,'base64'));}
    if(module==='dashboard'){
-    const boxes=await browser.evaluate(`(()=>{const box=s=>{const r=document.querySelector(s).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,width:r.width};};return {hero:box('.study-environment'),metrics:box('.dashboard-metrics'),grid:box('.dashboard-widgets'),bottom:box('.dashboard-bottom'),cards:[...document.querySelectorAll('.dashboard-metrics article')].map(e=>e.getBoundingClientRect().top)};})()`);
-    assert.ok(boxes.hero.bottom<=boxes.metrics.top&&boxes.metrics.bottom<=boxes.grid.top&&boxes.grid.bottom<=boxes.bottom.top,'Hero, metrics, grid and journey stay separate');
-    if(width>=1440)assert.equal(new Set(boxes.cards).size,1,'Four metrics in one row');
-    assert.equal(await browser.evaluate(`document.querySelectorAll('[aria-label="Recorded activity calendar"]').length`),1,'No duplicate calendar in Study Journey');
+    assert.equal(await browser.evaluate(`(()=>{const hero=document.querySelector('.study-environment').getBoundingClientRect();const grid=document.querySelector('.custom-widget-grid').getBoundingClientRect();return hero.bottom<=grid.top;})()`),true,'Fixed hero remains above customizable widgets');
+    assert.equal(await browser.evaluate(`document.querySelectorAll('[aria-label="Recorded activity calendar"]').length`),1,'No duplicate calendar');
    }else assert.equal(await browser.evaluate(`(()=>{const r=document.querySelector('.academic-dial').getBoundingClientRect();return r.width>0&&Math.abs(r.width-r.height)<1})()`),true);
   }
   await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});

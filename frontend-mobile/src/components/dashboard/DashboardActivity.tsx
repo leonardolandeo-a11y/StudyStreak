@@ -15,8 +15,8 @@ import { NavigationPressable } from '../navigation/NavigationPressable';
 import { AppIcon } from '../ui/AppIcon';
 import { SegmentedControl } from '../ui/SegmentedControl';
 
-export function DashboardActivity({ days, onDaysChange, state, retry }: {
-  days: StudyPeriod; onDaysChange(days: StudyPeriod): void; state: ResourceState<FocusStatistics>; retry(): void;
+export function DashboardActivity({ days, onDaysChange, state, retry, part = 'all' }: {
+  days: StudyPeriod; onDaysChange(days: StudyPeriod): void; state: ResourceState<FocusStatistics>; retry(): void; part?: 'all' | 'activity' | 'focus' | 'streak';
 }) {
   const { theme } = useAppearance();
   const { width } = useWindowDimensions();
@@ -33,15 +33,15 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
       unit: 'days', detail: 'All completed study days, including historical estimates. Independent of the period above.' },
   ];
   return <>
-    <View testID="dashboard-metrics" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-    {metrics.map((metric,index) => <Card key={metric.label} style={{ padding: 12, backgroundColor: colors.surface, borderColor: colors.border, width: width < 330 ? '100%' : '48%', flexGrow: 1, flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-      <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[index]} width={28}/>
+    {part !== 'activity' && <View testID="dashboard-metrics" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+    {metrics.filter((_,index) => part === 'streak' ? index === 3 : part === 'focus' ? index < 3 : true).map((metric,index) => <Card key={metric.label} style={{ padding: 12, backgroundColor: colors.surface, borderColor: colors.border, width: part === 'streak' || width < 330 ? '100%' : '48%', flexGrow: 1, flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+      <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[part === 'streak' ? 3 : index]} width={28}/>
       <View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{metric.label}</Text>
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.unit}</Text></Text>
         <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>{metric.detail}</Text></View>
     </Card>)}
-    </View>
-    <Card style={{ padding: 14, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
+    </View>}
+    {(part === 'all' || part === 'activity') && <Card style={{ padding: 14, gap: 10, backgroundColor: colors.surface, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><AcademicSprite name="growth" width={24}/><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Study activity</Text></View>
@@ -66,7 +66,7 @@ export function DashboardActivity({ days, onDaysChange, state, retry }: {
           <ActionButton colors={colors} title="Start focusing" onPress={() => router.navigate('/focus-studio')} /></>
         : <ActivityPlot period={period} style={style} colors={colors} />}
       <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>Only completed, server-verified sessions count here. Historical estimates, breaks and unfinished attempts are excluded. Days follow your account time zone.</Text>
-    </Card>
+    </Card>}
 
   </>;
 }

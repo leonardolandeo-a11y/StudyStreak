@@ -56,3 +56,16 @@ test('recorded insights consume the Dashboard snapshot and keep estimates distin
   assert.doesNotMatch(html, /Retry statistics|Verified focus|Verified sessions/);
   assert.equal(controls.has('7 days'),false); assert.equal(controls.has('30 days'),false);
 });
+
+test('summary and streak widgets keep independent real metrics in every palette', async () => {
+  for (const mode of ['dark','light']) for (const accent of ['mint','blue','purple','orange']) {
+    await appearance.setPreferences({mode,accent});
+    const common={days:7,onDaysChange(){},retry(){},state:{status:'success',data:stats}};
+    const summary=render(h(DashboardActivity,{...common,part:'focus'}));
+    const streak=render(h(DashboardActivity,{...common,part:'streak'}));
+    const activity=render(h(DashboardActivity,{...common,part:'activity'}));
+    assert.match(summary,/Verified focus/);assert.match(summary,/Daily average/);assert.doesNotMatch(summary,/Current study streak|Study activity/);
+    assert.match(streak,/Current study streak/);assert.doesNotMatch(streak,/Verified focus|Study activity/);
+    assert.match(activity,/Study activity/);assert.doesNotMatch(activity,/Current study streak|Completed sessions/);
+  }
+});

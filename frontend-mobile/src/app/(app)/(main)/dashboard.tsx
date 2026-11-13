@@ -1,8 +1,15 @@
+import { Animated, Text, View, useWindowDimensions } from 'react-native';
+import { useDashboardWidgets } from '../../../hooks/useDashboardWidgets';
+import { CustomizeDashboard } from '../../../components/dashboard/CustomizeDashboard';
+import { DashboardPartners } from '../../../components/dashboard/DashboardPartners';
+import { AcademicPanel } from '../../../components/academic/Academic';
+import { ActionButton } from '../../../components/ui/ActionButton';
+import { router } from 'expo-router';
 import { StudyEnvironment } from '../../../components/environment/StudyEnvironment';
-import { workspacePalette } from '../../../components/academic/workspacePalette';
+import { workspacePalette, dashboardPalette } from '../../../components/academic/workspacePalette';
 import { useAppearance } from '../../../hooks/useAppearance';
 import { Screen } from '../../../components/ui/Screen';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFocusedResource } from '../../../hooks/useFocusedResource';
 import { getMobileFocusStatistics } from '../../../features/focus/focusStatisticsService';
@@ -17,7 +24,16 @@ export default function Dashboard() {
   return currentUser ? <DashboardContent key={currentUser.id} userId={currentUser.id} username={currentUser.username} /> : null;
 }
 function DashboardContent({ userId, username }: { userId: number; username: string }) {
-  const { theme } = useAppearance();
+  const { theme, reduceMotion } = useAppearance();
+  const { width } = useWindowDimensions();
+  const layout = useDashboardWidgets(userId);
+  const [fade] = useState(() => new Animated.Value(1));
+  useEffect(() => {
+    if (reduceMotion) { fade.setValue(1); return; }
+    fade.setValue(.7);
+    const animation = Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true, isInteraction: false });
+    animation.start(); return () => { animation.stop(); fade.stopAnimation(); };
+  }, [layout.rows, reduceMotion, fade]);
   const colors = workspacePalette(theme);
   const [days, setDays] = useState<StudyPeriod>(7);
   const load = useCallback((signal: AbortSignal) => getMobileFocusStatistics(days, signal), [days]);
@@ -26,10 +42,19 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const period = stats ? verifiedActivity(stats, days) : null;
   return <Screen themed compact backgroundColor={colors.background} onRefresh={retry} refreshing={state.status === 'loading'}>
     <StudyEnvironment username={username} />
-    <DashboardActivity days={days} onDaysChange={setDays} state={state} retry={retry} />
-    <DashboardGoals userId={userId} />
-    {stats ? <FocusInsightsMobile data={stats} days={days}/> : null}
-    {period && stats ? <DashboardRecent from={period.daily[0].date} to={period.daily.at(-1)!.date} timeZone={stats.timeZone} />
-      : <StatusMessage message={state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'} />}
+    <CustomizeDashboard {...layout}/>
+    <Animated.View style={{ opacity: fade, flexDirection: 'row', flexWrap: 'wrap', gap: 14 }} testID="dashboard-widgets">
+    {(layout.ready ? layout.rows : []).filter(row => row.visible).map(row => <View testID={`widget-${row.id}`} key={row.id} style={{ minWidth: 0, width: width >= 700 && ['goals','partners','quick','streak'].includes(row.id) ? '48%' : '100%', flexGrow: 1 }}>
+      {row.id === 'focus-summary' && <DashboardActivity part="focus" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
+      {row.id === 'streak' && <DashboardActivity part="streak" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
+      {row.id === 'activity' && <DashboardActivity part="activity" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
+      {row.id === 'goals' && <DashboardGoals userId={userId}/>}
+      {row.id === 'journey' && (stats ? <FocusInsightsMobile data={stats} days={days}/> : <StatusMessage message={state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}/>)}
+      {row.id === 'recent' && (period && stats ? <DashboardRecent from={period.daily[0].date} to={period.daily.at(-1)!.date} timeZone={stats.timeZone}/> : <StatusMessage message={state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'}/>)}
+      {row.id === 'partners' && <DashboardPartners userId={userId}/>}
+      {row.id === 'quick' && <AcademicPanel style={{ backgroundColor: dashboardPalette(theme).surface, borderColor: dashboardPalette(theme).border }}><Text accessibilityRole="header" style={{ color: dashboardPalette(theme).text, fontSize: 18, fontWeight: '700' }}>Quick Focus</Text><ActionButton compact title="Open Focus Studio" onPress={() => router.navigate('/focus-studio')}/></AcademicPanel>}
+    </View>)}
+    </Animated.View>
+    {!layout.rows.some(row => row.visible) ? <StatusMessage message="Your Dashboard is clear. Use Customize Dashboard to show widgets."/> : null}
   </Screen>;
 }

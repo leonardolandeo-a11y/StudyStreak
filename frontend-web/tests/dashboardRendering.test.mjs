@@ -69,7 +69,8 @@ test('Dashboard keeps Start focusing and notifications without the redundant nav
   assert.match(html, /Start focusing/);
   assert.match(html, /href="\/focus-studio"/);
   assert.match(html, /Your notifications/);
-  assert.equal((html.match(/aria-label="Refresh progress"/g) || []).length, 1);
+  assert.match(html, /Customize Dashboard/);
+  assert.equal((html.match(/aria-label="Refresh progress"/g) || []).length, 0, "Wait for account preferences before mounting data widgets");
   assert.doesNotMatch(html, /Keep your momentum|Dashboard quick actions|Small steps\. Lasting progress\./);
 });
 

@@ -1,7 +1,10 @@
-import { RecordedCalendar } from '../components/dashboard/RecordedCalendar';
+import { useDashboardWidgets } from '../hooks/useDashboardWidgets';
+import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
+import { DashboardPartners } from '../components/dashboard/DashboardPartners';
+import { useReducedMotion } from '../theme/appearance';
 import '../components/dashboard/cozy-dashboard.css';
 import { StudyEnvironment } from '../components/environment/StudyEnvironment';
-import { useCallback, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, Bell, Timer, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
@@ -22,18 +25,37 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
     const stats = state.status === "success" ? state.data : null;
     const period = stats ? verifiedActivity(stats, days) : null;
     const from = stats?.daily[0]?.date, to = stats?.daily.at(-1)?.date;
-    const hasCalendar = Boolean(stats?.activity?.length);
+    const layout = useDashboardWidgets(userId);
+    const reduced = useReducedMotion();
+    const grid = useRef<HTMLDivElement>(null);
+    const previous = useRef(new Map<string, { x: number; y: number }>());
+    useLayoutEffect(() => {
+        const next = new Map<string, { x: number; y: number }>();
+        grid.current?.querySelectorAll<HTMLElement>('[data-widget]').forEach(element => {
+            const id = element.dataset.widget!, box = element.getBoundingClientRect(), origin = grid.current!.getBoundingClientRect();
+            const rect = { x: box.x-origin.x, y: box.y-origin.y }, before = previous.current.get(id);
+            next.set(id, rect);
+            if (before && !reduced && (before.x !== rect.x || before.y !== rect.y)) element.animate?.([
+                { transform: `translate(${before.x-rect.x}px,${before.y-rect.y}px)` }, { transform: 'translate(0,0)' },
+            ], { duration: 220, easing: 'ease-out' });
+        });
+        previous.current = next;
+    }, [layout.rows, reduced]);
     return <>
-        <DashboardMetrics days={days} stats={stats} period={period} loading={state.status === "loading"}/>
-        <div className="dashboard-widgets" data-calendar={hasCalendar}>
-            <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>
-            <DashboardGoals userId={userId}/>
-            {hasCalendar && stats ? <div id="dashboard-calendar"><RecordedCalendar activity={stats.activity}/></div> : null}
+        <CustomizeDashboard {...layout}/>
+        <div ref={grid} className="custom-widget-grid" aria-label="Dashboard widgets">
+        {(layout.ready ? layout.rows : []).filter(row => row.visible).map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} key={row.id}>
+            {row.id === 'focus-summary' && <DashboardMetrics group="focus" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
+            {row.id === 'streak' && <DashboardMetrics group="streak" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
+            {row.id === 'activity' && <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>}
+            {row.id === 'goals' && <DashboardGoals userId={userId}/>}
+            {row.id === 'journey' && (stats ? <FocusInsights data={stats} days={days}/> : <section className="study-panel p-4">{state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}</section>)}
+            {row.id === 'recent' && (from && to && stats ? <DashboardRecent key={`${from}-${to}`} from={from} to={to} timeZone={stats.timeZone}/> : <section className="study-panel p-4 text-sm" aria-label="Recent study activity">{state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'}</section>)}
+            {row.id === 'partners' && <DashboardPartners userId={userId}/>}
+            {row.id === 'quick' && <section className="study-panel p-4"><h2 className="text-lg font-bold">Quick Focus</h2><p className="my-2 text-sm text-content-secondary">Make room for your next focused session.</p><Link to={ROUTES.focusStudio} className="study-button"><Timer size={18}/>Open Focus Studio</Link></section>}
+        </div>)}
         </div>
-        <div className="dashboard-bottom">
-            {stats ? <FocusInsights data={stats} days={days} calendarOutside={hasCalendar}/> : null}
-            {from && to && stats ? <DashboardRecent key={`${from}-${to}`} from={from} to={to} timeZone={stats.timeZone}/> : <section className="study-panel p-4 text-sm text-content-muted sm:p-5" aria-label="Recent study activity">{state.status === "loading" ? "Loading your study period…" : "Reload study activity to view recent attempts."}</section>}
-        </div>
+        {!layout.rows.some(row => row.visible) && <p role="status" className="study-panel p-4">Your Dashboard is clear. Use Customize Dashboard to show widgets.</p>}
     </>;
 }
 
