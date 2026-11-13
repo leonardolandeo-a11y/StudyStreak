@@ -31,6 +31,14 @@ export function createCollaboration(transport: CollaborationTransport, uuid: () 
     const patch = (value: Partial<typeof state>) => { state = { ...state, ...value }; listeners.forEach(fn => fn()); };
     const valid = (run: number) => run === generation && !!controller && !controller.signal.aborted;
     const unavailable = (error: unknown) => [403,404].includes((error as { response?: { status?: number } })?.response?.status ?? 0);
+    // A denied feed invalidates all work issued under the previous room access.
+    // Keep the same polling timer; the next read can revalidate membership.
+    function invalidateAccess() {
+        generation++; controller?.abort(); controller = new AbortController();
+        nextPage = 1; pages = 0; refreshing = false;
+        patch({ messages: [], presence: [], hasEarlier: false, busy: false, loading: false,
+            loadingEarlier: false, historyError: null, actionError: null });
+    }
     async function refresh() {
         if (!controller || refreshing) return;
         const run = generation, signal = controller.signal; refreshing = true;
@@ -41,8 +49,10 @@ export function createCollaboration(transport: CollaborationTransport, uuid: () 
             patch({ messages: mergeMessages(state.messages, feed.messages), presence: feed.presence, loading: false,
                 hasEarlier: nextPage < pages, loadError: null });
         } catch (error) {
-            if (valid(run)) patch({ loading: false, loadError: 'Chat unavailable. Check connection and room membership.',
-                ...(unavailable(error) ? { messages: [], presence: [], hasEarlier: false } : {}) });
+            if (valid(run)) {
+                if (unavailable(error)) invalidateAccess();
+                patch({ loading: false, loadError: 'Chat unavailable. Check connection and room membership.' });
+            }
         } finally { if (valid(run)) refreshing = false; }
     }
     async function loadEarlier() {
@@ -55,8 +65,10 @@ export function createCollaboration(transport: CollaborationTransport, uuid: () 
             nextPage = page + 1; pages = feed.totalPages;
             patch({ messages: mergeMessages(state.messages, feed.messages), hasEarlier: nextPage < pages });
         } catch (error) {
-            if (valid(run)) patch({ historyError: 'Earlier messages could not be loaded. Scroll up or retry.',
-                ...(unavailable(error) ? { messages: [], presence: [], hasEarlier: false } : {}) });
+            if (valid(run)) {
+                if (unavailable(error)) invalidateAccess();
+                patch({ historyError: 'Earlier messages could not be loaded. Scroll up or retry.' });
+            }
         } finally { if (valid(run)) patch({ loadingEarlier: false }); }
     }
     async function action(path: string, body?: unknown, method: 'post' | 'put' | 'delete' = 'post') {

@@ -3,7 +3,7 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 export async function reviewRoom(browser,platform,fixture){
  const mobile=platform==='mobile',before=process.env.ROOM_REVIEW_BASELINE==='1';
- const root=resolve('../docs/images/retro-pixel-academia-7-4c');mkdirSync(root,{recursive:true});
+ const root=resolve(process.env.ROOM_REVIEW_CAPTURES||'../docs/images/retro-pixel-academia-7-4c');mkdirSync(root,{recursive:true});
  const capture=async name=>{const r=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(resolve(root,`${before?'before':'after'}-${platform}-${name}.png`),Buffer.from(r.data,'base64'));};
  if(mobile){await browser.navigate('/');await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);await browser.fill('[aria-label="Username"]','Scholar');await browser.fill('[aria-label="Password"]','Fixture-password-1');await browser.click('Sign in');await browser.wait(`!!document.querySelector('[aria-label="Open menu"]')`);await browser.click('Open menu');await browser.click('Menu');await browser.waitForDrawerClosed();await browser.click('Study Rooms');await browser.wait(`!!document.querySelector('[aria-label="Open study room Campus study circle"]')`);await browser.click('Open study room Campus study circle');}
  else{await browser.navigate('/study-rooms');await browser.wait(`document.body.innerText.includes('Campus study circle')`);await browser.evaluate(`Array.from(document.querySelectorAll('button')).find(e=>e.textContent.includes('Campus study circle'))?.click()`);}
@@ -51,6 +51,8 @@ export async function reviewRoom(browser,platform,fixture){
  await browser.wait(`(()=>{const box=document.querySelector('${viewport}'),row=Array.from(document.querySelectorAll('${rows}')).find(e=>${mobile?"e.dataset.testid.slice(13)":"e.dataset.message"}===${JSON.stringify(oldestAnchor.id)});return Math.abs(row.getBoundingClientRect().top-box.getBoundingClientRect().top-${oldestAnchor.y})<5;})()`);
  const allIds=await messages();assert.equal(new Set(allIds).size,allIds.length);assert.deepEqual(fixture.requests.filter(r=>r.path.endsWith('/collaboration')&&r.page>0).map(r=>r.page),[1,2]);
  await browser.evaluate(`(()=>{const e=document.querySelector('${viewport}');e.scrollTop=e.scrollHeight;e.dispatchEvent(new Event('scroll'));})()`);
+ // Let Native's throttled scroll callback finish before the next typing gesture.
+ if(mobile)await new Promise(resolve=>setTimeout(resolve,120));
  const prior=sends().length;
  if(!mobile){
   await browser.fill(area,'Keyboard submission');await browser.command('Page.bringToFront');await browser.evaluate(`document.querySelector('${area}').focus()`);

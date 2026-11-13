@@ -65,7 +65,7 @@
 .room-participant-list [data-room-participant] { padding:10px 0; border:0; border-bottom:1px solid var(--ss-border); border-radius:0; }
 .room-participant-list h3 { font-size:16px; }
 @media(max-width:1000px) { .room-layout { grid-template-columns:minmax(0,1fr); } .room-chat-scroll { height:350px; } }
-@media(hover:none) { .room-message-delete { opacity:1; width:40px; height:44px; } .room-message { grid-template-columns:32px minmax(0,1fr) 40px; } }
+@media(hover:none) { .room-composer-tools .room-send { min-width:44px; } .room-message-delete { opacity:1; width:44px; height:44px; } .room-message { grid-template-columns:32px minmax(0,1fr) 44px; } }
 @media(prefers-reduced-motion:reduce) { .room-message-delete { transition:none; } }
 [data-motion="reduce"] .room-message-delete { transition:none; }
 

@@ -57,6 +57,8 @@ export function RoomCollaboration({ room, userId, children }: { room: StudyRoom;
         else { revision.current++; if (frame.current !== null) cancelAnimationFrame(frame.current); restoring.current = false; }
     }, [chat.messages, tab, scheduleRestore]);
     useEffect(() => () => { revision.current++; if (frame.current !== null) cancelAnimationFrame(frame.current); }, []);
+    const canRemove = room.host && removing !== null && chat.messages.some(message => message.id === removing && !message.removed);
+    if (removing !== null && !canRemove) setRemoving(null);
     return <View testID="room-collaboration" style={{ borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, borderRadius: 12, overflow: 'hidden' }}>
         <View accessibilityRole="tablist" style={{ flexDirection: 'row', padding: 4, gap: 4, borderBottomWidth: 1, borderColor: palette.border }}>
             {(['chat','participants'] as const).map(item => <NavigationPressable key={item} accessibilityRole="tab" aria-selected={tab === item} accessibilityLabel={item === 'chat' ? 'Chat' : `Participants (${room.members.length})`} accessibilityState={{ selected: tab === item }} onPress={() => setTab(item)}
@@ -101,13 +103,15 @@ export function RoomCollaboration({ room, userId, children }: { room: StudyRoom;
                 <Text style={{ color: palette.muted, fontSize: 10 }}>30-day history · Reactions last 10 seconds. Chat does not credit study time.</Text>
             </View>
         </View>
-        <View style={{ display: tab === 'participants' ? 'flex' : 'none', padding: 12, gap: 12 }}>{children}</View>
-        <Modal visible={removing !== null} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => setRemoving(null)}>
+        <View style={{ display: tab === 'participants' ? 'flex' : 'none' }}>
+            <ScrollView testID="room-participants-scroll" accessibilityLabel="Room participants" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: 540 }} contentContainerStyle={{ padding: 12, gap: 12 }}>{children}</ScrollView>
+        </View>
+        <Modal visible={canRemove} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => setRemoving(null)}>
             <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: '#150e22aa', justifyContent: 'center', padding: 24 }}>
                 <View style={{ backgroundColor: palette.surface, borderRadius: 12, padding: 18, gap: 12, width: '100%', maxWidth: 440, alignSelf: 'center' }}>
                     <Text accessibilityRole="header" style={{ color: palette.text, fontSize: 18, fontWeight: '600' }}>Delete this message?</Text>
                     <Text style={{ color: palette.muted }}>The message will be removed for everyone.</Text>
-                    <ActionButton compact title="Confirm delete message" disabled={chat.busy} onPress={() => { if (removing) void chat.action(`/messages/${removing}`, undefined, 'delete'); setRemoving(null); }}/>
+                    <ActionButton compact title="Confirm delete message" disabled={chat.busy || !canRemove} onPress={() => { if (canRemove && removing) void chat.action(`/messages/${removing}`, undefined, 'delete'); setRemoving(null); }}/>
                     <ActionButton compact secondary title="Keep message" onPress={() => setRemoving(null)}/>
                 </View>
             </View>
