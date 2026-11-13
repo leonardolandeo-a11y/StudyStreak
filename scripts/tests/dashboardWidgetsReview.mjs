@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 const labels={'focus-summary':'Focus Summary',streak:'Study Streak',activity:'Study Activity',goals:'Active Goals',journey:'Study Journey',recent:'Recent Activity',partners:'Study Partners',quick:'Quick Focus'};
 export async function reviewDashboardWidgets(browser,platform,{account,statsRequests,tokenFor}) {
- const mobile=platform==='mobile',root=resolve('../docs/images/academia-pixel-viva-8-2');mkdirSync(root,{recursive:true});
+ const mobile=platform==='mobile',root=resolve(process.env.STUDY_ENV_CAPTURES||'../docs/images/academia-pixel-viva-8-2');mkdirSync(root,{recursive:true});
  const visibleWidgets=mobile?`Array.from(document.querySelectorAll('[data-testid^="widget-"]')).filter(e=>!e.closest('[aria-hidden="true"]')).map(e=>e.dataset.testid.slice(7))`:`Array.from(document.querySelectorAll('[data-widget]')).map(e=>e.dataset.widget)`;
  const attr=mobile?'data-testid':'data-widget';
  const widget=id=>`document.querySelector('[${attr}="${mobile?'widget-':''}${id}"]')`;

@@ -235,13 +235,13 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await key('ArrowRight');
     await wait('document.documentElement.dataset.accent === "blue"');
     await choose('display-mode', 'light'); await choose('accent-palette', 'blue');
-    await evaluate('document.querySelector("input[type=checkbox]").click()');
+    await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").click()');
     await wait('document.documentElement.dataset.motion === "reduce"');
     await navigate('/settings');
-    assert.equal(await evaluate('document.querySelector("input[type=checkbox]").checked'), true);
+    assert.equal(await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").checked'), true);
     assert.equal(await evaluate('document.querySelector("input[value=blue]").checked'), true);
     assert.equal(await evaluate('getComputedStyle(document.querySelector("button")).transitionDuration'), '0s');
-    await evaluate('document.querySelector("input[type=checkbox]").click()');
+    await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").click()');
     await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
     await wait('document.body.textContent.includes("Reduced motion is active.")');
     await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
@@ -287,10 +287,10 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       console.log(`Appearance route: ${route}`);
       await navigate(route);
       // Auth uses the fullscreen illustration from 7.2; its form remains theme-aware.
-      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(248, 250, 252)', route);
+      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`document.querySelector('.retro-shell') ? 'rgb(244, 241, 248)' : 'rgb(248, 250, 252)'`), route);
       else assert.ok(await evaluate('!!document.querySelector(".auth-content")'));
       assert.equal(await evaluate('document.documentElement.dataset.accent'), 'blue', route);
-      assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), 'rgb(15, 23, 42)', route);
+      assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), route === '/dashboard' ? 'rgb(255, 249, 239)' : 'rgb(15, 23, 42)', route);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `${route} desktop overflow`);
       if (route === '/dashboard') {
         await wait('!!document.querySelector(".recharts-bar-rectangle path")');
@@ -299,7 +299,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       if (route === '/focus-studio') {
         await evaluate(`document.querySelector('[aria-label="Pomodoro settings"]').click()`);
         await wait('document.querySelector("dialog")?.open');
-        assert.equal(await evaluate('getComputedStyle(document.querySelector("dialog")).backgroundColor'), 'rgb(255, 255, 255)');
+        assert.equal(await evaluate('getComputedStyle(document.querySelector("dialog")).backgroundColor'), 'rgb(255, 250, 255)');
         assert.equal(await evaluate(`getComputedStyle(document.querySelector('svg[viewBox="0 0 250 250"] circle:last-child')).stroke`), 'rgb(29, 78, 216)');
         await key('Escape');
       }
@@ -310,11 +310,11 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     assert.equal(await evaluate('document.documentElement.dataset.theme'), 'light');
     await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Restore default appearance')).click()`);
     await wait('document.documentElement.dataset.theme === "dark" && document.documentElement.dataset.accent === "mint"');
-    assert.equal(await evaluate('document.querySelector("input[type=checkbox]").checked'), false);
+    assert.equal(await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").checked'), false);
     for (const path of ['/login', '/dashboard', '/focus-studio']) {
       await navigate(path);
       if (path === '/login') assert.equal(await evaluate('getComputedStyle(document.querySelector(".auth-content h1")).color'), 'rgb(241, 245, 249)');
-      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), 'rgb(11, 16, 20)');
+      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`document.querySelector('.retro-shell') ? 'rgb(33, 27, 48)' : 'rgb(11, 16, 20)'`), path);
     }
     await navigate('/settings');
     // Storage denial is reported truthfully while preferences still apply.
@@ -322,7 +322,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await choose('accent-palette', 'purple');
     await wait('document.body.textContent.includes("Browser storage is unavailable")');
     assert.equal(await evaluate('document.documentElement.dataset.accent'), 'purple');
-    await evaluate(`document.querySelector('aside button').click()`);
+    await evaluate(`Array.from(document.querySelectorAll('aside button')).find(e=>e.textContent.trim()==='Sign out').click()`);
     await wait('location.pathname === "/login" && !!document.querySelector("form")');
     assert.equal(await evaluate('sessionStorage.getItem("accessToken")'), null, 'Sidebar uses the existing sign-out mechanism');
     assert.deepEqual(runtimeErrors, []);

@@ -5,7 +5,7 @@ import {mobileBrowser} from './helpers/mobileBrowser.mjs';
 import {environmentFixture} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 let owner=101;const writes=[];
 const tokenFor=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Fixture Student',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
-const root=resolve('../docs/images/academia-pixel-viva-8-3b');mkdirSync(root,{recursive:true});
+const root=resolve(process.env.STUDY_ENV_CAPTURES||'../docs/images/academia-pixel-viva-8-3b');mkdirSync(root,{recursive:true});
 const browser=await mobileBrowser({intercept:request=>{
  const path=new URL(request.url).pathname;
  if(path==='/login')return {body:{token:tokenFor(owner),refreshToken:'fixture-only'}};

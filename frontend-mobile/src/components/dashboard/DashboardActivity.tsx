@@ -34,7 +34,7 @@ export function DashboardActivity({ days, onDaysChange, state, retry, part = 'al
   ];
   return <>
     {part !== 'activity' && <View testID="dashboard-metrics" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-    {metrics.filter((_,index) => part === 'streak' ? index === 3 : part === 'focus' ? index < 3 : true).map((metric,index) => <Card key={metric.label} style={{ padding: 12, backgroundColor: colors.surface, borderColor: colors.border, width: part === 'streak' || width < 330 ? '100%' : '48%', flexGrow: 1, flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+    {metrics.filter((_,index) => part === 'streak' ? index === 3 : part === 'focus' ? index < 3 : true).map((metric,index) => <Card key={metric.label} style={{ padding: 12, backgroundColor: colors.surface, borderColor: colors.border, width: part === 'streak' || width < 330 ? '100%' : part === 'focus' && width >= 700 ? '31%' : '48%', flexGrow: 1, flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
       <AcademicSprite name={(['stopwatch','notebook','growth','flame'] as const)[part === 'streak' ? 3 : index]} width={28}/>
       <View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>{metric.label}</Text>
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value} <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.unit}</Text></Text>

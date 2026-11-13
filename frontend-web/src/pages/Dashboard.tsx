@@ -26,25 +26,35 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
     const period = stats ? verifiedActivity(stats, days) : null;
     const from = stats?.daily[0]?.date, to = stats?.daily.at(-1)?.date;
     const layout = useDashboardWidgets(userId);
+    const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
+    const retryWithoutChart = state.status === 'error' &&
+        !visibleWidgets.some(row => row.id === 'activity') &&
+        visibleWidgets.some(row => ['focus-summary', 'streak', 'journey', 'recent'].includes(row.id));
     const reduced = useReducedMotion();
     const grid = useRef<HTMLDivElement>(null);
     const previous = useRef(new Map<string, { x: number; y: number }>());
     useLayoutEffect(() => {
+        const animations: Animation[] = [];
         const next = new Map<string, { x: number; y: number }>();
         grid.current?.querySelectorAll<HTMLElement>('[data-widget]').forEach(element => {
             const id = element.dataset.widget!, box = element.getBoundingClientRect(), origin = grid.current!.getBoundingClientRect();
             const rect = { x: box.x-origin.x, y: box.y-origin.y }, before = previous.current.get(id);
             next.set(id, rect);
-            if (before && !reduced && (before.x !== rect.x || before.y !== rect.y)) element.animate?.([
+            if (before && !reduced && element.animate && (before.x !== rect.x || before.y !== rect.y)) animations.push(element.animate([
                 { transform: `translate(${before.x-rect.x}px,${before.y-rect.y}px)` }, { transform: 'translate(0,0)' },
-            ], { duration: 220, easing: 'ease-out' });
+            ], { duration: 220, easing: 'ease-out' }));
         });
         previous.current = next;
+        return () => animations.forEach(animation => animation.cancel());
     }, [layout.rows, reduced]);
     return <>
         <CustomizeDashboard {...layout}/>
-        <div ref={grid} className="custom-widget-grid" aria-label="Dashboard widgets">
-        {(layout.ready ? layout.rows : []).filter(row => row.visible).map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} key={row.id}>
+        {retryWithoutChart && <section className="study-panel flex flex-wrap items-center justify-between gap-3 p-4" aria-label="Study statistics error">
+            <p role="alert" className="text-sm text-content-secondary">Study statistics could not be loaded. Your saved data has not changed.</p>
+            <button type="button" className="study-button" aria-label="Retry study statistics" onClick={retry}>Retry study statistics</button>
+        </section>}
+        <div ref={grid} className="custom-widget-grid" data-widget-count={visibleWidgets.length} aria-label="Dashboard widgets">
+        {visibleWidgets.map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} key={row.id}>
             {row.id === 'focus-summary' && <DashboardMetrics group="focus" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
             {row.id === 'streak' && <DashboardMetrics group="streak" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
             {row.id === 'activity' && <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>}

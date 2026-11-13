@@ -39,12 +39,19 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const load = useCallback((signal: AbortSignal) => getMobileFocusStatistics(days, signal), [days]);
   const { state, retry } = useFocusedResource(load);
   const stats = state.status === 'success' ? state.data : null;
+  const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
+  const retryWithoutChart = state.status === 'error' && !visibleWidgets.some(row => row.id === 'activity') &&
+    visibleWidgets.some(row => ['focus-summary','streak','journey','recent'].includes(row.id));
   const period = stats ? verifiedActivity(stats, days) : null;
   return <Screen themed compact backgroundColor={colors.background} onRefresh={retry} refreshing={state.status === 'loading'}>
     <StudyEnvironment username={username} />
     <CustomizeDashboard {...layout}/>
+    {retryWithoutChart ? <AcademicPanel style={{ backgroundColor: dashboardPalette(theme).surface, borderColor: dashboardPalette(theme).border }}>
+      <StatusMessage colors={dashboardPalette(theme)} error message="Study statistics could not be loaded. Your saved data has not changed."/>
+      <ActionButton colors={dashboardPalette(theme)} compact title="Retry study statistics" onPress={retry}/>
+    </AcademicPanel> : null}
     <Animated.View style={{ opacity: fade, flexDirection: 'row', flexWrap: 'wrap', gap: 14 }} testID="dashboard-widgets">
-    {(layout.ready ? layout.rows : []).filter(row => row.visible).map(row => <View testID={`widget-${row.id}`} key={row.id} style={{ minWidth: 0, width: width >= 700 && ['goals','partners','quick','streak'].includes(row.id) ? '48%' : '100%', flexGrow: 1 }}>
+    {visibleWidgets.map(row => <View testID={`widget-${row.id}`} key={row.id} style={{ minWidth: 0, width: width >= 700 && ['goals','partners','quick','streak'].includes(row.id) ? '48%' : '100%', flexGrow: 1 }}>
       {row.id === 'focus-summary' && <DashboardActivity part="focus" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'streak' && <DashboardActivity part="streak" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'activity' && <DashboardActivity part="activity" days={days} onDaysChange={setDays} state={state} retry={retry}/>}

@@ -35,14 +35,13 @@ export function createEnvironmentStore(storage: EnvironmentStorage) {
         cancelHydration() { hydration++; },
         async hydrate() {
             const read = ++hydration, edit = revision;
-            state = { ...state, ready: false }; publish();
             try {
                 const raw = await storage.read();
                 if (read !== hydration || edit !== revision) return;
                 state = { preferences: parseEnvironment(raw), ready: true, error: null };
             } catch {
                 if (read !== hydration || edit !== revision) return;
-                state = { ...state, ready: true, error: 'Environment could not be loaded. Defaults are shown.' };
+                state = { ...state, ready: true, error: 'Environment could not be loaded. Using the last available selection.' };
             }
             publish();
         },

@@ -28,3 +28,13 @@ test('read/write failures remain explicit and retry preserves preview',async()=>
  await store.update({selection:'night'});assert.equal(store.getSnapshot().preferences.selection,'night');assert.match(store.getSnapshot().error,/could not be saved/);
  fail=false;await store.update({});assert.equal(store.getSnapshot().error,null);assert.equal(JSON.parse(saved).selection,'night');
 });
+
+test('Back retains a loaded panorama while a fresh read is pending or fails',async()=>{
+ let finish,reads=0,fail=false;
+ const store=createEnvironmentStore({read:()=>{if(fail)return Promise.reject(Error('disk'));if(reads++===0)return Promise.resolve('{"selection":"campus","motion":true}');return new Promise(r=>finish=r);},write:async()=>{}});
+ await store.hydrate();const refresh=store.hydrate();
+ const retained=store.getSnapshot();finish('{"selection":"library","motion":false}');await refresh;
+ assert.equal(retained.ready,true,'A returning screen must not unmount the loaded panorama');
+ assert.equal(retained.preferences.selection,'campus');assert.equal(store.getSnapshot().preferences.selection,'library');
+ fail=true;await store.hydrate();assert.equal(store.getSnapshot().preferences.selection,'library');assert.match(store.getSnapshot().error,/last available selection/);
+});

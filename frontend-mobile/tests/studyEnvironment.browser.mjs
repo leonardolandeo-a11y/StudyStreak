@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
 import { environmentFixture } from '../../scripts/tests/studyEnvironmentFixture.mjs';
-const root = resolve('../.local/stage83b/environment-regression');
+const root = resolve(process.env.STUDY_ENV_CAPTURES||'../.local/stage83b/environment-regression');
 mkdirSync(root, { recursive: true });
 const requests = [];
 const browser = await mobileBrowser({ intercept: request => {

@@ -104,3 +104,12 @@
 @media(max-width: 600px) { .custom-widget-grid,.widget-controls { grid-template-columns: minmax(0,1fr); } .dashboard-widget { grid-column: auto; } .cozy-dashboard .metrics-focus { grid-template-columns: minmax(0,1fr); } }
 @media(prefers-reduced-motion: reduce) { .dashboard-widget { animation: none; } }
 [data-motion="reduce"] .dashboard-widget { animation: none; }
+
+/* Sparse layouts use the whole row without changing reading or keyboard order. */
+.custom-widget-grid[data-widget-count="1"] { grid-template-columns: minmax(0,1fr); }
+.custom-widget-grid[data-widget-count="1"] > .dashboard-widget { grid-column: auto; }
+.custom-widget-grid[data-widget-count="2"] > .dashboard-widget { grid-column: 1/-1; }
+@media(min-width: 1200px) {
+    .custom-widget-grid[data-widget-count="2"] { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .custom-widget-grid[data-widget-count="2"] > .dashboard-widget { grid-column: auto; }
+}
