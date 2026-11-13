@@ -1,0 +1,90 @@
+/* Bright lavender widgets scoped to Dashboard. Accent hue comes from the user's palette. */
+.retro-shell main:has(> .cozy-dashboard) { max-width: 1680px; }
+.cozy-dashboard { --cozy-accent: var(--ss-accent); }
+.retro-shell .retro-dashboard.cozy-dashboard .study-panel {
+    --ss-surface: light-dark(#fcf1ff,#d8c0e8);
+    --ss-surface-hover: light-dark(#f0dff6,#c9addc);
+    --ss-background: light-dark(#faf0ff,#d8c0e8);
+    --ss-border: light-dark(#d1afdf,#ae86c1);
+    --ss-border-strong: light-dark(#9874ad,#83599a);
+    --ss-text: #2c193c;
+    --ss-text-secondary: #4f355e;
+    --ss-text-muted: #644873;
+    --ss-accent: light-dark(var(--cozy-accent),color-mix(in srgb,var(--cozy-accent) 28%,#172a30));
+    --ss-accent-soft: color-mix(in srgb,var(--cozy-accent) 22%,#f7effb);
+    --ss-on-accent: #ffffff;
+    --ss-focus: var(--ss-accent);
+    --ss-chart-empty: var(--ss-surface-hover);
+    --ss-chart-low: color-mix(in srgb,var(--ss-accent) 35%,var(--ss-surface));
+    --ss-chart-medium: color-mix(in srgb,var(--ss-accent) 85%,var(--ss-surface));
+    background: var(--ss-surface); color: var(--ss-text); border: 1px solid var(--ss-border); border-radius: 12px;
+    box-shadow: 0 3px 9px #2b133b20;
+}
+.cozy-dashboard .dashboard-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.retro-shell .cozy-dashboard.retro-dashboard .retro-stat { gap: 10px; padding: 12px; align-items: center; }
+.cozy-dashboard .retro-stat > img { width: 40px; height: auto; }
+.cozy-dashboard .retro-stat h3 { font-size: 13px; line-height: 1.35; }
+.cozy-dashboard .retro-stat p:nth-child(2) { font-size: 27px; line-height: 1.15; }
+.cozy-dashboard .retro-stat p:last-child { margin-top: 5px; font-size: 11px; line-height: 1.4; }
+.retro-shell .retro-dashboard.cozy-dashboard .retro-stat-notebook { background: color-mix(in srgb,#b9c9ff 22%,var(--ss-surface)); }
+.retro-shell .retro-dashboard.cozy-dashboard .retro-stat-growth { background: color-mix(in srgb,#b4e5ce 22%,var(--ss-surface)); }
+.retro-shell .retro-dashboard.cozy-dashboard .retro-stat-flame { background: color-mix(in srgb,#f5b9d8 22%,var(--ss-surface)); }
+.dashboard-widgets { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); gap: 12px; align-items: start; }
+.dashboard-widgets[data-calendar="false"] { grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); }
+.dashboard-widgets > *, .dashboard-bottom > * { min-width: 0; }
+.dashboard-widgets > .study-panel { padding: 14px; }
+.cozy-dashboard .activity-chart-title h2 { font-size: 17px; }
+.cozy-dashboard .activity-chart-title h2::before { width: 20px; height: 22px; margin-right: 7px; }
+.cozy-dashboard .activity-chart-title p { font-size: 11px; }
+.cozy-dashboard .activity-plot-frame { height: 160px; }
+.cozy-dashboard .dashboard-widgets .study-tab { padding: 7px 8px; font-size: 11px; }
+.cozy-dashboard .dashboard-widgets section > p:last-child { font-size: 11px; line-height: 1.5; }
+.cozy-dashboard .dashboard-goals h2 { font-size: 17px; }
+.cozy-dashboard .dashboard-goals > div { margin-bottom: 10px; gap: 6px; }
+.cozy-dashboard .dashboard-goals > div .study-button { font-size: 11px; min-height: 36px; padding: 6px 9px; }
+.cozy-dashboard .dashboard-goals ul { display: grid; gap: 8px; }
+.cozy-dashboard .dashboard-goals ul > li { margin: 0; padding: 9px; background: color-mix(in srgb,var(--ss-surface-hover) 40%,var(--ss-surface)); }
+.cozy-dashboard .dashboard-goals li > a { font-size: 13px; }
+.dashboard-goal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dashboard-goal-actions p { min-width: 0; flex: 1 1 110px; font-size: 11px; }
+.dashboard-goal-actions > a { margin-top: 0; flex-shrink: 0; min-height: 40px; font-size: 11px; }
+.cozy-dashboard .dashboard-calendar { padding: 14px; }
+.cozy-dashboard .dashboard-calendar h3 { font-size: 17px; }
+.cozy-dashboard .dashboard-calendar p { font-size: 11px; line-height: 1.5; }
+.cozy-dashboard .dashboard-calendar [aria-label="Recorded days"] button { border-radius: 5px; font-size: 11px; }
+.cozy-dashboard .dashboard-calendar select { font-size: 11px; }
+.dashboard-bottom { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap: 12px; align-items: start; }
+.dashboard-bottom:has(.journey-details[open]) { grid-template-columns: minmax(0,1fr); }
+.retro-shell .cozy-dashboard .dashboard-bottom .journey-panel { display: block; padding: 16px; }
+.dashboard-bottom .journey-books { float: left; width: 48px; height: auto; margin: 0 12px 8px 0; }
+.dashboard-bottom .journey-heading h2 { font-size: 18px; }
+.dashboard-bottom .journey-heading p { font-size: 11px; line-height: 1.5; }
+.dashboard-bottom .journey-summary { clear: both; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding-top: 8px; }
+.retro-shell .cozy-dashboard .journey-summary .academic-metric { padding: 0 10px; border: 0; border-left: 1px solid var(--ss-border); background: transparent; border-radius: 0; box-shadow: none; }
+.dashboard-bottom .journey-summary .academic-metric > p:first-child { font-size: 11px; }
+.dashboard-bottom .journey-summary .academic-metric > p:nth-child(2) { font-size: 22px; }
+.dashboard-bottom .journey-summary .academic-metric > p:last-child { font-size: 11px; }
+.dashboard-bottom #dashboard-recent-heading { font-size: 18px; }
+/* Focus returns to quiet native controls; no continuous environmental animation. */
+.academic-focus { --ss-background: light-dark(#f6effb,#281e38); --ss-surface: light-dark(#fffaff,#3b2d4d); --ss-surface-hover: light-dark(#eee2f5,#503c63); --ss-border: light-dark(#d3bfdf,#79608d); --ss-border-strong: light-dark(#8e73a0,#b699c8); }
+@media (max-width: 1199px) {
+    .cozy-dashboard .dashboard-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .dashboard-widgets { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .dashboard-widgets > :first-child { grid-column: 1/-1; }
+    .dashboard-bottom { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 600px) {
+    .cozy-dashboard .dashboard-metrics { gap: 8px; }
+    .retro-shell .cozy-dashboard.retro-dashboard .retro-stat { padding: 10px; gap: 7px; align-items: flex-start; }
+    .cozy-dashboard .retro-stat > img { width: 27px; }
+    .cozy-dashboard .retro-stat h3 { font-size: 11px; }
+    .cozy-dashboard .retro-stat p:nth-child(2) { font-size: 23px; }
+    .cozy-dashboard .retro-stat p:nth-child(2) > span { font-size: 11px; }
+    .dashboard-widgets, .dashboard-widgets[data-calendar="false"] { grid-template-columns: minmax(0,1fr); }
+    .cozy-dashboard .activity-plot-frame { height: 180px; }
+}
+/* Keep detail views one lavender step above their parent, without dark legacy blocks. */
+.retro-shell .retro-dashboard.cozy-dashboard .study-analytics .study-panel,
+.retro-shell .retro-dashboard.cozy-dashboard .study-analytics .academic-metric {
+    background: color-mix(in srgb,var(--ss-surface-hover) 58%,var(--ss-surface));
+}

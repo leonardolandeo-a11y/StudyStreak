@@ -1,22 +1,40 @@
-.cozy-welcome { display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,360px); gap: 20px; align-items: center; }
-.cozy-welcome .academic-heading { border: 0; padding-bottom: 0; }
-.study-environment { position: relative; isolation: isolate; overflow: hidden; min-width: 0; border-radius: 14px; border: 1px solid var(--ss-border); background: var(--ss-surface); }
-.study-environment .auth-scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
-.study-environment--welcome { height: 210px; box-shadow: 0 4px 18px #15112414; }
-.study-environment-caption { position: absolute; right: 8px; bottom: 8px; padding: 4px 8px; border-radius: 6px; background: #222338e8; color: #fff3d7; font-size: 11px; line-height: 1.4; }
-.study-environment-content { position: relative; z-index: 1; }
-.study-environment-shade { position: absolute; inset: 0; z-index: 0; background: color-mix(in srgb,var(--ss-surface) 25%,transparent); }
-.focus-environment { margin: 12px auto; max-width: 680px; }
-.study-ambience-control { display: flex; gap: 8px; align-items: center; min-height: 44px; width: fit-content; margin-left: auto; color: var(--ss-text-secondary); font-size: 12px; cursor: pointer; }
-.study-ambience-control input { width: 17px; height: 17px; accent-color: var(--ss-accent); }
-.study-ambience-control:focus-within { outline: 2px solid var(--ss-accent); outline-offset: 3px; border-radius: 4px; }
-.study-environment--focus { padding: 14px; }
-.study-environment--focus .academic-dial { margin-top: 0; background: color-mix(in srgb,var(--ss-surface) 97%,transparent); box-shadow: 0 4px 24px #17122430; }
-.study-environment[data-enabled="false"] { border-color: transparent; background: transparent; }
-.study-environment[data-visible="false"] .auth-effect { animation-play-state: paused !important; }
-.study-environment[data-visible="true"] .auth-scene[data-ambient="running"] .auth-scene-base { animation: cozy-arrival 600ms ease both; }
-@keyframes cozy-arrival { from { opacity: .65; } to { opacity: 1; } }
-@media (max-width: 1050px) { .cozy-welcome { grid-template-columns: minmax(0,1fr); gap: 12px; } .study-environment--welcome { height: 170px; } }
-@media (max-width: 480px) { .study-environment--welcome { height: 155px; } .study-environment--focus { padding: 8px; } }
-@media (prefers-reduced-motion: reduce) { .study-environment .auth-scene-base { animation: none !important; } }
-:root[data-motion="reduce"] .study-environment .auth-scene-base { animation: none !important; }
+/* The illustrated environment is Dashboard-only. */
+.study-environment { position: relative; isolation: isolate; overflow: hidden; min-width: 0; border-radius: 14px; background: #76458b; color: #fff6ee; }
+.panorama-art { position: absolute; top: 0; right: 0; z-index: -2; width: 100%; max-width: 1260px; height: 100%; pointer-events: none; image-rendering: pixelated; }
+.study-environment::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg,#40214ee0 0%,#482550b0 22%,#48255020 46%,transparent 66%); }
+.study-environment--welcome { min-height: 300px; box-shadow: 0 4px 18px #21102d16; }
+.study-environment-content { position: relative; min-height: inherit; display: flex; align-items: center; padding: 28px; }
+.cozy-hero-copy { width: min(100%,390px); }
+.cozy-hero-greeting { display: inline-flex; gap: 7px; align-items: center; max-width: 100%; border: 1px solid #e7b5f19e; border-radius: 20px; padding: 5px 10px; color: #fff0fa; background: #60397099; font-size: 11px; overflow-wrap: anywhere; }
+.cozy-hero-greeting > span { color: #ffdc79; }
+.cozy-hero-copy h1 { margin: 12px 0 10px; max-width: 15ch; font-size: clamp(28px,2.4vw,36px); line-height: 1.12; font-weight: 750; letter-spacing: -.7px; color: #fff9ef; }
+.cozy-hero-copy h1 span { color: light-dark(color-mix(in srgb,var(--ss-accent) 35%,#f2ffea),var(--ss-accent)); }
+.cozy-hero-description { max-width: 31ch; color: #f0deed; font-size: 13px; line-height: 1.5; }
+.cozy-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.cozy-hero-actions .study-button { min-height: 44px; font-size: 12px; padding: 9px 12px; }
+.cozy-hero-actions .cozy-room-link { background: #583263ba; border-color: #e6b7f2a1; color: #fff2fc; }
+.cozy-hero-actions .cozy-room-link:hover { background: #724481; }
+.panorama-caption { position: absolute; bottom: 8px; right: 12px; border-radius: 6px; padding: 4px 7px; background: #40234d80; color: #fff0de; font-size: 10px; pointer-events: none; }
+.panorama-effect { animation-play-state: paused !important; }
+.panorama-clouds { animation: panorama-clouds 42s ease-in-out infinite alternate; }
+.panorama-landscape { animation: panorama-landscape 56s ease-in-out infinite alternate; }
+.panorama-steam { animation: panorama-steam 7s ease-in-out infinite; }
+.panorama-light { animation: panorama-light 18s ease-in-out infinite alternate; }
+.panorama-art[data-ambient="running"] .panorama-effect { animation-play-state: running !important; }
+@keyframes panorama-clouds { from { transform: translateX(-2px); } to { transform: translateX(4px); } }
+@keyframes panorama-landscape { from { transform: translateX(-.7px); } to { transform: translateX(.7px); } }
+@keyframes panorama-steam { 0% { transform: translateY(2px); opacity: .08; } 45% { opacity: .3; } 100% { transform: translate(3px,-24px); opacity: 0; } }
+@keyframes panorama-light { from { opacity: .06; } to { opacity: .16; } }
+@media (min-width: 1700px) { .study-environment--welcome { min-height: 330px; } .study-environment-content { padding-left: 36px; } }
+@media (max-width: 600px) {
+    .study-environment--welcome { padding-top: clamp(95px,32vw,134px); }
+    .panorama-art { height: auto; aspect-ratio: 3/1; }
+    .study-environment::before { background: linear-gradient(180deg,transparent 29vw,#543366 34vw); }
+    .study-environment-content { min-height: 0; padding: 18px 20px 22px; }
+    .cozy-hero-copy h1 { font-size: 27px; }
+    .cozy-hero-greeting { font-size: 10px; }
+    .cozy-hero-actions .study-button { flex: 1 1 130px; justify-content: center; }
+    .panorama-caption { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .panorama-effect { animation: none !important; } }
+:root[data-motion="reduce"] .panorama-effect { animation: none !important; }

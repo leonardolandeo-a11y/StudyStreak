@@ -4,7 +4,7 @@ import { MetricCard } from "../study/MetricCard";
 import { focusDuration, type FocusStatistics } from "../../services/focusStatisticsService";
 
 /** Uses the Dashboard snapshot and period; never fetches a second statistics copy. */
-export default function FocusInsights({ data, days }: { data: FocusStatistics; days: 7 | 30 }) {
+export default function FocusInsights({ data, days, calendarOutside = false }: { data: FocusStatistics; days: 7 | 30; calendarOutside?: boolean }) {
     return <section aria-label="Recorded study statistics" className="study-panel journey-panel p-4 sm:p-5">
         <AcademicSprite name="books" width={94} className="journey-books"/>
         <div className="journey-heading"><h2 className="text-xl font-bold text-content">Your study journey</h2>
@@ -17,7 +17,7 @@ export default function FocusInsights({ data, days }: { data: FocusStatistics; d
         </div>
         <details className="journey-details" aria-label="Detailed study statistics">
             <summary className="min-h-11 cursor-pointer rounded-control py-3 font-semibold text-accent">Explore study details</summary>
-            <StudyAnalyticsDetails key={days} data={data}/>
+            <StudyAnalyticsDetails key={days} data={data} calendarOutside={calendarOutside}/>
         </details>
     </section>;
 }

@@ -11,7 +11,7 @@ function DashboardMetric({ label, value, unit, detail, icon }: { label: string; 
 
 export default function DashboardMetrics({ days, stats, period, loading }: { days: StudyPeriod; stats: FocusStatistics | null; period: VerifiedFocusPeriod | null; loading: boolean }) {
     const missing = loading ? "…" : "—";
-    return <section aria-label="Study statistics" aria-busy={loading} className="grid min-w-0 gap-3 sm:grid-cols-2">
+    return <section aria-label="Study statistics" aria-busy={loading} className="dashboard-metrics grid min-w-0 gap-3 sm:grid-cols-2">
         <DashboardMetric label="Verified focus" value={period ? activityNumber(period.minutes) : missing} unit="min" detail={`Confirmed time · last ${days} days`} icon="stopwatch"/>
         <DashboardMetric label="Completed sessions" value={period ? activityNumber(period.sessions) : missing} unit="sessions" detail={`Verified individual & group · ${days} days`} icon="notebook"/>
         <DashboardMetric label="Daily average" value={period ? activityNumber(period.minutes / days) : missing} unit="min / day" detail={`Across all ${days} days, including days without activity`} icon="growth"/>

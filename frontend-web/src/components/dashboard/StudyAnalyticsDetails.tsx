@@ -9,7 +9,7 @@ import { MetricCard } from '../study/MetricCard';
 import { barPercent, sessionDate } from '../study/chartPresentation';
 interface Entry { id: string; goal_name: string; source: string; state: string; confirmed_seconds: number; planned_seconds: number; verified: boolean; started_at: string; completed_at: string | null; }
 const sections = ['Activity', 'Goals', 'Together', 'History'] as const;
-export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics }) {
+export default function StudyAnalyticsDetails({ data, calendarOutside = false }: { data: FocusStatistics; calendarOutside?: boolean }) {
  const [section,setSection]=useState<typeof sections[number]>('Activity');
  const [scale,setScale]=useState<'Weekly'|'Monthly'>('Weekly');
  const [page,setPage]=useState(0);
@@ -34,12 +34,12 @@ export default function StudyAnalyticsDetails({ data }: { data: FocusStatistics 
     <MetricCard label="Completion rate" value={data.completionPercent===null?'—':`${data.completionPercent.toFixed(0)}%`} detail="Completed / verified attempts started in this period"/>
    </div>
    <details className="study-panel space-y-3"><summary className="min-h-11 cursor-pointer py-2 font-semibold text-accent">Recorded trends · weekly / monthly</summary>
-    <p className="text-xs text-content-muted">Includes historical estimates. Daily verified activity is above; recorded daily values remain in the calendar below.</p>
+    <p className="text-xs text-content-muted">Includes historical estimates. Daily verified activity is above; recorded daily values remain in the activity calendar.</p>
     <div className="flex flex-wrap gap-2" aria-label="Chart grouping">{(['Weekly','Monthly'] as const).map(item=><button type="button" key={item} className="study-tab" aria-pressed={scale===item} onClick={()=>setScale(item)}>{item}</button>)}</div>
     <BarChart key={scale} items={bars} label={`${scale} study time`}/>
     <p className="text-xs leading-relaxed text-content-muted">Buckets include only the selected {data.days}-day period; boundary weeks and months may be partial. Time is attributed to completion in {data.timeZone}.</p>
    </details>
-   <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2"><RecordedCalendar activity={data.activity}/>
+   <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2"><>{calendarOutside ? <a className="study-panel text-sm text-accent underline" href="#dashboard-calendar">Browse recorded days in the activity calendar above ↑</a> : <RecordedCalendar activity={data.activity}/>}</>
    <div className="study-panel"><BarChart items={data.hourly.map(item=>({label:`${item.hour}:00`,value:item.hours*60}))} label="When sessions finish"/><p className="text-xs text-content-muted">Selected period · recorded time, including historical estimates. Local completion hour, not minute-by-minute attendance.</p></div></div>
   </div>}
   {section==='Goals'&&<section className="study-panel space-y-5"><div><h3 className="text-lg font-semibold text-content">Where your time goes</h3><p className="mt-1 text-sm text-content-muted">All-time recorded time by Goal · includes labelled historical estimates</p></div>

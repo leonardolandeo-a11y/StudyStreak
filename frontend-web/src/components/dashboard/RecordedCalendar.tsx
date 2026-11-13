@@ -11,8 +11,8 @@ export function RecordedCalendar({ activity }: { activity: DailyFocus[] }) {
     const index = months.indexOf(month ?? '');
     const days = activity.filter(item => item.date.startsWith(month ?? '!'));
     const day = activity.find(item => item.date === selected);
-    return <section className="study-panel min-w-0 space-y-3" aria-label="Recorded activity calendar">
-        <h3 className="text-lg font-semibold text-content">A year of showing up</h3>
+    return <section className="dashboard-calendar study-panel min-w-0 space-y-3" aria-label="Recorded activity calendar">
+        <h3 className="text-lg font-semibold text-content">Activity calendar</h3>
         <p className="text-xs text-content-muted">{activity[0]?.date} – {activity.at(-1)?.date} · recorded time, including historical estimates.</p>
         <div className="flex flex-wrap items-center gap-2">
             <button type="button" className="study-button" aria-label="Previous activity month" disabled={index <= 0} onClick={() => { setChosen(months[index - 1]); setSelected(null); }}>←</button>
