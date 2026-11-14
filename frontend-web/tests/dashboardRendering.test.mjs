@@ -12,6 +12,8 @@ const { default: Metrics } = await server.ssrLoadModule('/src/components/dashboa
 const { DashboardRecentContent } = await server.ssrLoadModule('/src/components/dashboard/DashboardContext.tsx');
 const { default: Dashboard } = await server.ssrLoadModule('/src/pages/Dashboard.tsx');
 const { AuthContext } = await server.ssrLoadModule('/src/contexts/AuthContext.ts');
+const { RecordedCalendar } = await server.ssrLoadModule('/src/components/dashboard/RecordedCalendar.tsx');
+const { placeWidget } = await server.ssrLoadModule('/src/hooks/useWidgetReorder.ts');
 const { UnreadNotificationContext } = await server.ssrLoadModule('/src/contexts/UnreadNotificationContext.ts');
 const daily = Array.from({ length: 7 }, (_, i) => ({ date: `2026-11-0${i + 1}`, minutes: i === 0 ? 25 : 0, sessions: i === 0 ? 1 : 0 }));
 const period = { minutes: 25, sessions: 1, daily };
@@ -62,13 +64,13 @@ test('metrics use the period daily average and preserve the distinct historical 
   assert.doesNotMatch(missing, />0 /);
 });
 
-test('Dashboard keeps Start focusing and notifications without the redundant navigation section', () => {
+test('Dashboard keeps Start focusing and removes the redundant notifications bar', () => {
   const html = render(h(MemoryRouter, {},
     h(AuthContext.Provider, { value: { currentUser: { id: 1, username: 'Student' } } },
       h(UnreadNotificationContext.Provider, { value: { unreadCount: 2 } }, h(Dashboard)))));
   assert.match(html, /Start focusing/);
   assert.match(html, /href="\/focus-studio"/);
-  assert.match(html, /Your notifications/);
+  assert.doesNotMatch(html, /Your notifications/);
   assert.match(html, /Customize Dashboard/);
   assert.equal((html.match(/aria-label="Refresh progress"/g) || []).length, 0, "Wait for account preferences before mounting data widgets");
   assert.doesNotMatch(html, /Keep your momentum|Dashboard quick actions|Small steps\. Lasting progress\./);
@@ -115,4 +117,22 @@ test('relocated recorded statistics retain historical labels and share the Dashb
   assert.match(html, /Recorded in 7 days/); assert.match(html, /All-time completed sessions/);
   assert.match(html, /Best recorded streak/); assert.match(html, /Explore study details/);
   assert.doesNotMatch(html, /Refresh focus statistics|Study period|Verified focus|Active study days in this period/);
+});
+
+test('drag placement preserves visibility, supports both edges and ignores missing IDs',()=>{
+ const rows=[{id:'activity',visible:true},{id:'goals',visible:false},{id:'quick',visible:true}];
+ assert.deepEqual(placeWidget(rows,'quick','activity').map(r=>r.id),['quick','activity','goals']);
+ assert.deepEqual(placeWidget(rows,'activity','quick',true).map(r=>r.id),['goals','quick','activity']);
+ assert.equal(placeWidget(rows,'quick','activity')[2].visible,false);
+ assert.equal(placeWidget(rows,'quick','quick'),rows);
+ assert.equal(placeWidget(rows,'calendar','quick'),rows);
+ assert.equal(rows[0].id,'activity');
+});
+test('calendar reuses recorded values and reports empty data without inventing dates',()=>{
+ const html=render(h(RecordedCalendar,{activity:daily}));
+ assert.match(html,/2026-11-01: 25 minutes, 1 sessions/);
+ assert.match(html,/recorded time, including historical estimates/);
+ const empty=render(h(RecordedCalendar,{activity:[]}));
+ assert.match(empty,/No recorded activity dates available/);
+ assert.doesNotMatch(empty,/aria-label="2026-/);
 });

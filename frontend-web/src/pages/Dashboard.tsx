@@ -1,3 +1,5 @@
+import { RecordedCalendar } from '../components/dashboard/RecordedCalendar';
+import { useWidgetReorder } from '../hooks/useWidgetReorder';
 import { useDashboardWidgets } from '../hooks/useDashboardWidgets';
 import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
 import { DashboardPartners } from '../components/dashboard/DashboardPartners';
@@ -5,10 +7,9 @@ import { useReducedMotion } from '../theme/appearance';
 import '../components/dashboard/cozy-dashboard.css';
 import { StudyEnvironment } from '../components/environment/StudyEnvironment';
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { ArrowRight, Bell, Timer, Users } from "lucide-react";
+import { ArrowRight, GripVertical, Timer, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { useUnreadNotifications } from "../hooks/useUnreadNotifications";
 import { useDashboardResource } from "../hooks/useDashboardResource";
 import { ROUTES } from "../routes/paths";
 import { fetchFocusStatistics } from "../services/focusStatisticsService";
@@ -26,10 +27,12 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
     const period = stats ? verifiedActivity(stats, days) : null;
     const from = stats?.daily[0]?.date, to = stats?.daily.at(-1)?.date;
     const layout = useDashboardWidgets(userId);
+    const reorder = useWidgetReorder(layout.rows,layout.save);
+    const calendarVisible = layout.rows.some(row => row.id === 'calendar' && row.visible);
     const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
     const retryWithoutChart = state.status === 'error' &&
         !visibleWidgets.some(row => row.id === 'activity') &&
-        visibleWidgets.some(row => ['focus-summary', 'streak', 'journey', 'recent'].includes(row.id));
+        visibleWidgets.some(row => ['focus-summary', 'streak', 'journey', 'recent', 'calendar'].includes(row.id));
     const reduced = useReducedMotion();
     const grid = useRef<HTMLDivElement>(null);
     const previous = useRef(new Map<string, { x: number; y: number }>());
@@ -53,25 +56,28 @@ function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; 
             <p role="alert" className="text-sm text-content-secondary">Study statistics could not be loaded. Your saved data has not changed.</p>
             <button type="button" className="study-button" aria-label="Retry study statistics" onClick={retry}>Retry study statistics</button>
         </section>}
+        <p id="dashboard-reorder-help" className="sr-only">Drag a handle to reorder widgets. Keyboard: Arrow Up, Arrow Down, Home or End.</p>
         <div ref={grid} className="custom-widget-grid" data-widget-count={visibleWidgets.length} aria-label="Dashboard widgets">
-        {visibleWidgets.map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} key={row.id}>
+        {visibleWidgets.map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} data-reorder-item={row.id} id={row.id === 'calendar' ? 'dashboard-calendar' : undefined} key={row.id} {...reorder.targetProps(row.id)}>
+            <button type="button" className="study-button widget-drag-handle widget-grid-handle" aria-describedby="dashboard-reorder-help" {...reorder.handleProps(row.id)}><GripVertical size={17} aria-hidden="true"/></button>
             {row.id === 'focus-summary' && <DashboardMetrics group="focus" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
             {row.id === 'streak' && <DashboardMetrics group="streak" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
             {row.id === 'activity' && <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>}
             {row.id === 'goals' && <DashboardGoals userId={userId}/>}
-            {row.id === 'journey' && (stats ? <FocusInsights data={stats} days={days}/> : <section className="study-panel p-4">{state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}</section>)}
+            {row.id === 'journey' && (stats ? <FocusInsights data={stats} days={days} calendarOutside={calendarVisible}/> : <section className="study-panel p-4">{state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}</section>)}
             {row.id === 'recent' && (from && to && stats ? <DashboardRecent key={`${from}-${to}`} from={from} to={to} timeZone={stats.timeZone}/> : <section className="study-panel p-4 text-sm" aria-label="Recent study activity">{state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'}</section>)}
+            {row.id === 'calendar' && (stats ? <RecordedCalendar activity={stats.activity}/> : <section className="study-panel p-4" aria-label="Recorded activity calendar">{state.status === 'loading' ? 'Loading activity calendar…' : 'Reload study activity to view recorded dates.'}</section>)}
             {row.id === 'partners' && <DashboardPartners userId={userId}/>}
             {row.id === 'quick' && <section className="study-panel p-4"><h2 className="text-lg font-bold">Quick Focus</h2><p className="my-2 text-sm text-content-secondary">Make room for your next focused session.</p><Link to={ROUTES.focusStudio} className="study-button"><Timer size={18}/>Open Focus Studio</Link></section>}
         </div>)}
         </div>
+        <p role="status" aria-live="polite" className="sr-only">{reorder.announcement}</p>
         {!layout.rows.some(row => row.visible) && <p role="status" className="study-panel p-4">Your Dashboard is clear. Use Customize Dashboard to show widgets.</p>}
     </>;
 }
 
 function DashboardContent({ userId, username }: { userId: number; username: string }) {
     const [days, setDays] = useState<StudyPeriod>(7);
-    const { unreadCount } = useUnreadNotifications();
     return <div className="academic-page academic-dashboard retro-dashboard cozy-dashboard min-w-0 space-y-4">
         <StudyEnvironment username={username}>
             <h1>Welcome back to <span>StudyStreak!</span></h1>
@@ -82,7 +88,6 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
             </div>
         </StudyEnvironment>
         <DashboardActivity days={days} onDaysChange={setDays} userId={userId}/>
-        <Link to={ROUTES.notifications} className="flex min-h-11 flex-wrap items-center justify-between gap-3 rounded-control border border-outline px-4 py-3 text-sm text-content-secondary hover:bg-surface-hover"><span className="flex items-center gap-2"><Bell size={16} className="text-accent" aria-hidden="true"/>Your notifications</span><span className="text-content-muted">{unreadCount} unread <span aria-hidden="true">→</span></span></Link>
     </div>;
 }
 

@@ -59,3 +59,13 @@
 @media(min-width: 601px) and (max-width: 1200px) {
     .study-environment::before { background: linear-gradient(90deg,#32183ff0 0%,#3c214ac9 42%,#3c214a38 72%,transparent 100%); }
 }
+
+/* F3: a little more motion in existing Dashboard layers only; policy is unchanged. */
+.study-environment--welcome .panorama-clouds { animation-name: dashboard-clouds; }
+.study-environment--welcome .panorama-steam { animation-name: dashboard-steam; }
+.study-environment--welcome .panorama-light { animation-name: dashboard-light; }
+@keyframes dashboard-clouds { from { transform: translateX(-5px); } to { transform: translateX(9px); } }
+@keyframes dashboard-steam { 0% { transform: translateY(2px); opacity: .08; } 45% { opacity: .3; } 100% { transform: translate(5px,-30px); opacity: 0; } }
+@keyframes dashboard-light { from { opacity: .07; } to { opacity: .20; } }
+@media(prefers-reduced-motion: reduce) { .study-environment--welcome .panorama-effect { animation: none !important; } }
+:root[data-motion="reduce"] .study-environment--welcome .panorama-effect { animation: none !important; }

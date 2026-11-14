@@ -78,7 +78,7 @@
 .cozy-dashboard .custom-widget-grid .journey-panel { display: block; padding: 16px; }
 .cozy-dashboard .custom-widget-grid .journey-books { float: left; width: 48px; height: auto; margin: 0 12px 8px 0; }
 .cozy-dashboard .custom-widget-grid .journey-summary { clear: both; grid-template-columns: repeat(2,minmax(0,1fr)); }
-.widget-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 24px; }
+.widget-controls { display: grid; gap: 6px; margin-block: 16px; }
 .widget-controls input { width: 20px; height: 20px; accent-color: var(--ss-accent); flex-shrink: 0; }
 @keyframes widget-appear { from { opacity: .65; } to { opacity: 1; } }
 @media(max-width: 1100px) { .custom-widget-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .widget-focus-summary,.widget-journey { grid-column: span 2; } }
@@ -94,3 +94,18 @@
     .custom-widget-grid[data-widget-count="2"] { grid-template-columns: repeat(2,minmax(0,1fr)); }
     .custom-widget-grid[data-widget-count="2"] > .dashboard-widget { grid-column: auto; }
 }
+
+/* F3: handles own drag gestures; widget content keeps its native controls. */
+.dashboard-widget { position: relative; padding-top: 34px; }
+.widget-drag-handle { cursor: grab; width: 44px; height: 44px; padding: 0; flex-shrink: 0; touch-action: auto; }
+.widget-drag-handle:active { cursor: grabbing; }
+.widget-grid-handle { position: absolute; top: 0; right: 4px; height: 30px; min-height: 30px; border-color: transparent; color: var(--ss-text-muted); }
+.widget-controls > li { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px; border: 1px solid var(--ss-border); border-radius: 8px; background: var(--ss-surface-raised); }
+[data-reorder-item][data-dragging="true"] { opacity: .65; }
+[data-reorder-item][data-drop] { outline: 2px solid var(--ss-accent); outline-offset: 3px; }
+[data-reorder-item][data-drop]::after { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 3px; background: var(--ss-accent); pointer-events: none; z-index: 1; }
+[data-reorder-item][data-drop="before"]::after { top: -8px; }
+[data-reorder-item][data-drop="after"]::after { bottom: -8px; }
+.widget-reorder-status { min-height: 24px; font-size: 12px; color: var(--ss-text-muted); margin-bottom: 10px; }
+.widget-drag-handle { user-select: none; }
+.widget-drag-handle > svg { pointer-events: none; }
