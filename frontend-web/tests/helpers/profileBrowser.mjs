@@ -7,8 +7,8 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 export const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium', 'chromium-browser'].filter(Boolean).find(bin => spawnSync(bin, ['--version'], { timeout: 2000 }).status === 0);
-export async function profileBrowser({ api = 'https://profile.invalid', port = 0, intercept, desktopPointer = false } = {}) {
-  const vite = await createServer({ define: { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify(api) }, server: { host: '127.0.0.1', port, strictPort: !!port, hmr: false, watch: null } });
+export async function profileBrowser({ api = 'https://profile.invalid', port = 0, intercept, desktopPointer = false, aliases = {}, cacheDir } = {}) {
+  const vite = await createServer({ cacheDir, resolve: { alias: aliases }, define: { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify(api) }, server: { host: '127.0.0.1', port, strictPort: !!port, hmr: false, watch: null } });
   await vite.listen();
   const origin = `http://127.0.0.1:${vite.httpServer.address().port}`;
   const folder = mkdtempSync(join(tmpdir(), 'studystreak-profile-'));
