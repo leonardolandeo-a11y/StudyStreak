@@ -6,7 +6,7 @@
 .retro-dashboard .academic-heading-copy { flex-basis: 280px; }
 .retro-dashboard .academic-heading h1 { margin-top: 4px; font-size: clamp(25px,2.2vw,32px); }
 .retro-dashboard .academic-heading-kicker > svg { display: none; }
-.retro-dashboard .academic-heading-kicker { color: light-dark(#765488,#dab2ef); }
+.retro-dashboard .academic-heading-kicker { color: var(--ss-accent); }
 .retro-dashboard .academic-heading p { max-width: 44ch; }
 .academic-sprite { object-fit: contain; pointer-events: none; user-select: none; }
 .welcome-nook { align-self: flex-end; margin-bottom: -10px; }
@@ -15,11 +15,8 @@
 .retro-dashboard .activity-plot-frame { height: 190px; }
 .retro-dashboard .dashboard-overview > section:first-child > p:last-child { font-size: 11px; line-height: 16px; }
 .retro-shell .retro-dashboard .retro-stat { display: flex; align-items: center; gap: 14px; padding: 16px; position: relative; }
+.retro-shell .retro-dashboard .retro-stat { background: var(--ss-surface-raised); border-color: var(--ss-border); }
 .retro-stat::after { content: '✧'; position: absolute; right: 9px; top: 7px; color: var(--ss-accent); opacity: .65; font-size: 12px; }
-.retro-shell .retro-dashboard .retro-stat-stopwatch { background: color-mix(in srgb, light-dark(#e9d9f5,#67487b) 38%,var(--ss-surface)); border-color: light-dark(#cbb3dc,#8a6aa4); }
-.retro-shell .retro-dashboard .retro-stat-notebook { background: color-mix(in srgb,light-dark(#dfecfa,#354d68) 38%,var(--ss-surface)); border-color: light-dark(#b9cde1,#657e9d); }
-.retro-shell .retro-dashboard .retro-stat-growth { background: color-mix(in srgb,light-dark(#e2efe9,#345652) 38%,var(--ss-surface)); border-color: light-dark(#b4d2c5,#66877f); }
-.retro-shell .retro-dashboard .retro-stat-flame { background: color-mix(in srgb,light-dark(#f6dfe9,#65405c) 38%,var(--ss-surface)); border-color: light-dark(#ddbbcb,#a36c8e); }
 .retro-shell .retro-dashboard .journey-panel { position: relative; display: grid; grid-template-columns: 94px minmax(0,1fr); column-gap: 18px; padding: 16px 20px 8px; overflow: hidden; }
 .journey-books { grid-row: 1/3; align-self: center; }
 .journey-heading p { margin-top: 4px; font-size: 12px; max-width: 100%; }

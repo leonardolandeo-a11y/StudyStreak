@@ -7,12 +7,12 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 export const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium', 'chromium-browser'].filter(Boolean).find(bin => spawnSync(bin, ['--version'], { timeout: 2000 }).status === 0);
-export async function profileBrowser({ api = 'https://profile.invalid', port = 0, intercept } = {}) {
+export async function profileBrowser({ api = 'https://profile.invalid', port = 0, intercept, desktopPointer = false } = {}) {
   const vite = await createServer({ define: { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify(api) }, server: { host: '127.0.0.1', port, strictPort: !!port, hmr: false, watch: null } });
   await vite.listen();
   const origin = `http://127.0.0.1:${vite.httpServer.address().port}`;
   const folder = mkdtempSync(join(tmpdir(), 'studystreak-profile-'));
-  const browser = spawn(chrome, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--disable-background-networking', '--disable-sync', '--no-first-run', `--user-data-dir=${folder}`, '--remote-debugging-pipe', 'about:blank'], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] });
+  const browser = spawn(chrome, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', ...(desktopPointer ? ['--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'] : []), '--disable-background-networking', '--disable-sync', '--no-first-run', `--user-data-dir=${folder}`, '--remote-debugging-pipe', 'about:blank'], { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] });
   let closing = false;
   const pending = new Map(), errors = []; let nextId = 0, buffer = '', loaded;
   const send = (method, params = {}, sessionId) => new Promise((resolve, reject) => {

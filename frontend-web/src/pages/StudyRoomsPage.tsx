@@ -257,22 +257,22 @@ export default function StudyRoomsPage() {
                             onChange={event => setInvite(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,""))}
                             placeholder="ABCDEFGHIJ" className="mt-2 w-full rounded-xl border border-outline-strong bg-slate-950 px-4 py-3 font-mono tracking-widest text-content"/>
                         <button type="button" disabled={busy || invite.length !== 10} onClick={() => void join()}
-                            className="mt-4 w-full rounded-full border border-emerald-400/60 px-5 py-3 font-bold text-emerald-300 hover:bg-emerald-950/30 disabled:opacity-40">Join room</button>
+                            className="mt-4 w-full rounded-full border border-accent px-5 py-3 font-bold text-accent hover:bg-accent-soft disabled:opacity-40">Join room</button>
                     </section>
                     <section className="study-panel lg:col-span-2">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <h2 className="text-xl font-extrabold text-content">Your rooms <span className="text-sm font-normal text-slate-400">{rooms.length}</span></h2>
-                            <button type="button" onClick={() => void refreshLobby().catch(() => setError("Unable to load rooms."))} className="flex items-center gap-2 text-xs text-emerald-300"><RefreshCw size={15}/> Refresh</button>
+                            <button type="button" onClick={() => void refreshLobby().catch(() => setError("Unable to load rooms."))} className="flex items-center gap-2 text-xs text-accent"><RefreshCw size={15}/> Refresh</button>
                         </div>
                         {loading ? <p className="mt-4 text-slate-400">Loading rooms…</p> : rooms.length === 0 ?
                             <p className="mt-4 text-sm text-slate-400">No rooms yet. Create one or join with a code.</p> :
                             <div className="mt-5 grid gap-3 md:grid-cols-2">
                                 {rooms.map(item => (
                                     <button type="button" key={item.id} onClick={() => showRoom(item)}
-                                        className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/50 p-4 text-left hover:border-emerald-400/40">
+                                        className="flex items-center justify-between gap-3 rounded-xl border border-outline-strong bg-surface-raised p-4 text-left hover:border-accent">
                                         <div className="min-w-0"><p className="break-words text-lg font-semibold text-content">{item.name}</p>
                                             <p className="mt-1 text-xs text-slate-400">{item.members.length}/12 members · {item.members.filter(m=>m.online).length} online</p><p className="mt-2 text-xs text-slate-400">Host: {item.members.find(m=>m.host)?.username ?? "—"} · {item.phase} / {item.timerStatus}</p></div>
-                                        <span className="shrink-0 text-sm text-emerald-200">Open →</span>
+                                        <span className="shrink-0 text-sm text-accent">Open →</span>
                                     </button>
                                 ))}
                             </div>}
@@ -301,8 +301,8 @@ export default function StudyRoomsPage() {
                         <StudyRoomGoal key={room.id} roomId={room.id}/>
                     </div><RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}>
                     <section className="room-participant-list">
-                        {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-emerald-300">Regenerate invitation code</button>}
-                        <h3 className="flex items-center gap-2 text-xl font-extrabold text-content"><Users className="text-emerald-400" size={20}/> Studying together</h3>
+                        {room.host && <button type="button" disabled={busy || stale} onClick={() => { if (window.confirm("Replace the invitation code? The previous code will stop working.")) void manageRoom(); }} className="mb-4 text-sm text-accent">Regenerate invitation code</button>}
+                        <h3 className="flex items-center gap-2 text-xl font-extrabold text-content"><Users className="text-accent" size={20}/> Studying together</h3>
                         <div className="mt-3 grid gap-2">
                             {room.members.map(member => (
                                 <ParticipantCard avatar={<TrackingAvatar id={member.userId} name={member.username} className="size-11 text-lg" />} key={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>

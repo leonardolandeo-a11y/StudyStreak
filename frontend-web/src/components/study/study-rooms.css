@@ -1,6 +1,6 @@
 /* Scoped collaboration workspace: keep clock/media behavior and global themes intact. */
-.cozy-rooms { --ss-background:light-dark(#f4f1f8,#211b30); --ss-surface:light-dark(#fffaff,#342a47); --ss-surface-hover:light-dark(#eee8f5,#453653); --ss-border:light-dark(#d8cce4,#79638b); --ss-border-strong:light-dark(#887099,#aa90be); }
-.cozy-rooms .study-panel { padding:16px; border:1px solid var(--ss-border); border-radius:12px; background:var(--ss-surface); box-shadow:0 3px 10px #20102c12; }
+/* Surfaces and controls inherit the selected global background family. */
+.cozy-rooms .study-panel { padding:16px; border:1px solid var(--ss-border); border-radius:12px; background:var(--ss-surface); box-shadow:0 3px 10px color-mix(in srgb,var(--ss-shadow-color) 7%,transparent); }
 .cozy-rooms input,.cozy-rooms textarea,.cozy-rooms select { background:var(--ss-surface-hover); color:var(--ss-text); border:1px solid var(--ss-border-strong); }
 .room-workspace,.room-main { display:grid; gap:14px; min-width:0; }
 .room-back { justify-self:start; color:var(--ss-accent); min-height:44px; font-size:13px; }
@@ -69,5 +69,4 @@
 @media(prefers-reduced-motion:reduce) { .room-message-delete { transition:none; } }
 [data-motion="reduce"] .room-message-delete { transition:none; }
 
-.min-h-screen:has(.cozy-rooms) { background:light-dark(#f4f1f8,#211b30); }
 .cozy-rooms [aria-label="Shared screens"] p.aspect-video { aspect-ratio:auto; height:190px; min-height:160px; }
