@@ -1,3 +1,5 @@
+import { useLocalMusic } from '../../hooks/useLocalMusic';
+import { ImportMusicButton, LocalMusicLibrary } from '../focus/LocalMusicLibrary';
 import "./cozy-dashboard.css";
 import { AcademicHeading } from "../academic/Academic";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -98,6 +100,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
     const inFlight = useRef(new Set<string>());
     const failed = useRef(new Set<string>());
     const audio = useRef<PomodoroAudio | null>(null);
+    const audioRequest = useRef(0);
+    const localMusic = useLocalMusic(timer.preferences.volume, () => { audioRequest.current++; audio.current?.stop(); setPlaying(false); });
     const notifiedAt = useRef<number | null>(timer.lastCompletedAt);
 
     function getAudio(): PomodoroAudio {
@@ -301,6 +305,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
     }
 
     async function toggleAudio() {
+        const request = ++audioRequest.current;
+        localMusic.pause(true);
         if (playing) {
             getAudio().stop();
             setPlaying(false);
@@ -308,11 +314,14 @@ export default function FocusStudio({ userId }: { userId: number }) {
         }
         setAudioError(null);
         const started = await getAudio().start(timer.preferences.soundscape, timer.preferences.volume);
+        if (request !== audioRequest.current) return;
         setPlaying(started);
         if (!started) setAudioError("Audio playback is unavailable. Check your browser audio settings.");
     }
 
     async function chooseTrack(selected: Soundscape) {
+        const request = ++audioRequest.current;
+        localMusic.pause(true);
         if (selected === timer.preferences.soundscape && playing) {
             getAudio().stop();
             setPlaying(false);
@@ -322,6 +331,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
         setAudioError(null);
         // Selecting a track is a direct click, so it can start browser audio.
         const started = await getAudio().start(selected, timer.preferences.volume);
+        if (request !== audioRequest.current) return;
         setPlaying(started);
         if (!started) setAudioError("Audio playback is unavailable. Check your browser audio settings.");
     }
@@ -420,12 +430,12 @@ export default function FocusStudio({ userId }: { userId: number }) {
                 </section>
             <div role="group" aria-label="Session tools" className="grid min-w-0 items-stretch gap-4 md:grid-cols-2">
                     <section aria-label="Now playing" className="study-panel min-w-0 p-4 sm:p-5">
-                        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-semibold text-content"><Music2 size={18} className={style.accent} aria-hidden="true"/>Now playing</h2><span className="text-xs text-content-muted">{playing ? "Playing" : "Paused"}</span></div>
+                        <div className="mb-3 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-semibold text-content"><Music2 size={18} className={style.accent} aria-hidden="true"/>Now playing</h2><span className="text-xs text-content-muted">{(localMusic.current ? localMusic.playing : playing) ? "Playing" : "Paused"}</span></div>
                         <div className="flex items-center gap-3">
-                            <TrackArtwork track={timer.preferences.soundscape} compact/>
-                            <div className="min-w-0 flex-1"><h3 className="truncate font-semibold text-content">{track.title}</h3><p className="mt-1 truncate text-xs text-content-muted">{track.kind} · StudyStreak Originals</p></div>
-                            <button type="button" onClick={() => void toggleAudio()} aria-label={playing ? "Pause soundscape" : "Play soundscape"} className={`flex size-11 shrink-0 items-center justify-center rounded-full ${style.strong}`}>
-                                {playing ? <Pause size={20} fill="currentColor" aria-hidden="true"/> : <Play size={20} fill="currentColor" aria-hidden="true"/>}
+                            {localMusic.current ? <Music2 size={28} className="m-3 shrink-0 text-accent" aria-hidden="true"/> : <TrackArtwork track={timer.preferences.soundscape} compact/>}
+                            <div className="min-w-0 flex-1"><h3 className="truncate font-semibold text-content">{localMusic.current?.name ?? track.title}</h3><p className="mt-1 truncate text-xs text-content-muted">{localMusic.current ? "Local session audio · not uploaded" : `${track.kind} · StudyStreak Originals`}</p></div>
+                            <button type="button" onClick={() => void (localMusic.current ? localMusic.play(localMusic.current.id) : toggleAudio())} aria-label={localMusic.current ? localMusic.playing ? "Pause local music" : "Play local music" : playing ? "Pause soundscape" : "Play soundscape"} className={`flex size-11 shrink-0 items-center justify-center rounded-full ${style.strong}`}>
+                                {(localMusic.current ? localMusic.playing : playing) ? <Pause size={20} fill="currentColor" aria-hidden="true"/> : <Play size={20} fill="currentColor" aria-hidden="true"/>}
                             </button>
                         </div>
                         <div className="mt-2 flex items-center gap-3">
@@ -492,7 +502,7 @@ export default function FocusStudio({ userId }: { userId: number }) {
                             <div role="alert" className="mt-3 flex flex-wrap items-center gap-3">
                                 <span className="text-xs text-danger">{saveError}</span>
                                 <button type="button" onClick={retryPending}
-                                    className="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 hover:bg-amber-950/40">
+                                    className="rounded-lg border border-outline-strong px-3 py-1.5 text-xs text-content-secondary hover:bg-surface-hover">
                                     Retry sync
                                 </button>
                             </div>
@@ -502,7 +512,8 @@ export default function FocusStudio({ userId }: { userId: number }) {
             <p className="flex items-center justify-center gap-2 text-xs text-content-muted"><Sparkles size={14} aria-hidden="true"/>{timer.focusSessions} focus cycles on this device · confirmed totals are in your study statistics</p>
             {settingsOpen && <FocusDurationDialog onClose={() => setSettingsOpen(false)} preferences={timer.preferences}
                 locked={running || goalLocked} onSave={saveSettings} />}
-            <SoundscapeCarousel tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
+            <SoundscapeCarousel importControl={<ImportMusicButton onFiles={localMusic.importFiles}/>} tracks={visibleTracks} category={soundCategory} onCategoryChange={setSoundCategory} selected={timer.preferences.soundscape} playing={playing} onChooseTrack={chooseTrack}/>
+            <LocalMusicLibrary tracks={localMusic.tracks} selected={localMusic.selected} playing={localMusic.playing} error={localMusic.error} onPlay={localMusic.play} onRemove={localMusic.remove}/>
             <p className="border-t border-outline pt-4 text-xs leading-relaxed text-content-muted">Original audio generated locally. Timer and preferences stay saved in this browser. Only server-confirmed study time appears in your recorded totals.</p>
         </div>
     );
