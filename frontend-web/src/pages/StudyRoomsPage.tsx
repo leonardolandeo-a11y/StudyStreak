@@ -304,9 +304,13 @@ export default function StudyRoomsPage() {
                         <section className="study-panel room-timer" aria-label="Shared Pomodoro">
                             <h2 className="room-timer-heading"><Clock3 size={18} aria-hidden="true"/>Shared Pomodoro</h2>
                             <div className="room-timer-body">
-                            <div className="room-dial">
-                                <svg viewBox="0 0 250 250" aria-hidden="true"><circle cx="125" cy="125" r="116" className="room-dial-track"/><circle cx="125" cy="125" r="116" className="room-dial-progress" strokeDasharray={2*Math.PI*116} strokeDashoffset={2*Math.PI*116*(1-roomProgress(seconds,room.phase))}/></svg>
-                                <div><p className="room-eyebrow">{room.phase === 'FOCUS' ? 'SHARED FOCUS' : 'GROUP BREAK'}</p><p role="timer" className="room-time">{displayRoomTime(seconds)}</p><p className="room-timer-status">{stale ? 'Last known timer · reconnecting' : room.timerStatus === 'PAUSED' ? 'Timer paused' : room.timerStatus === 'COMPLETE' ? 'Session finished · server confirmed' : room.timerStatus === 'RUNNING' && seconds === 0 ? 'Awaiting server confirmation' : room.timerStatus === 'RUNNING' ? 'Timer running' : 'Waiting for host'}</p></div>
+                            <div className="academic-dial room-dial">
+                                <svg viewBox="0 0 250 250" aria-hidden="true">
+                                    {Array.from({length:12},(_,index)=>{const angle=index*Math.PI/6;return <rect key={index} x={123.5+Math.cos(angle)*119} y={123.5+Math.sin(angle)*119} width="3" height="3" fill="var(--ss-text-muted)"/>;})}
+                                    <circle cx="125" cy="125" r="110" className="room-dial-track"/>
+                                    <circle cx="125" cy="125" r="110" className="room-dial-progress" strokeDasharray={2*Math.PI*110} strokeDashoffset={2*Math.PI*110*(1-roomProgress(seconds,room.phase))}/>
+                                </svg>
+                                <div><p className="room-eyebrow">{room.phase === 'FOCUS' ? 'SHARED FOCUS' : 'GROUP BREAK'}</p><p role="timer" aria-live="off" aria-label={`${displayRoomTime(seconds)} remaining`} className="room-time">{displayRoomTime(seconds)}</p><p className="room-timer-status">{stale ? 'Last known timer · reconnecting' : room.timerStatus === 'PAUSED' ? 'Timer paused' : room.timerStatus === 'COMPLETE' ? 'Session finished · server confirmed' : room.timerStatus === 'RUNNING' && seconds === 0 ? 'Awaiting server confirmation' : room.timerStatus === 'RUNNING' ? 'Timer running' : 'Waiting for host'}</p></div>
                             </div>
                             <div className="room-timer-controls">
                             {room.host ? <div className="room-host-controls" aria-label="Host controls">

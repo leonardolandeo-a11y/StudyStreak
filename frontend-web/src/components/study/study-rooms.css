@@ -34,12 +34,13 @@
 .room-host-controls .room-primary { min-width:116px; }
 .room-dial { position:relative; width:min(100%,320px); aspect-ratio:1; }
 .room-dial svg { display:block; width:100%; height:100%; transform:rotate(-90deg); }
-.room-dial circle { fill:none; stroke-width:6; }
-.room-dial-track { stroke:var(--ss-border); }
-.room-dial-progress { stroke:var(--ss-accent); stroke-linecap:round; }
-.room-dial > div { position:absolute; inset:14%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:9px; }
-.room-time { font:600 clamp(44px,6vw,64px)/1.1 ui-monospace,monospace; font-variant-numeric:tabular-nums; }
-.room-timer-status { font-size:11px; line-height:1.4; color:var(--ss-text-muted); }
+.room-dial circle { fill:none; }
+.room-dial-track { stroke:var(--ss-border-strong); stroke-width:5; }
+.room-dial-progress { stroke:var(--ss-accent); stroke-width:8; stroke-linecap:round; }
+.room-dial > div { position:absolute; inset:14%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:9px; border-radius:50%; box-shadow:inset 0 1px 12px color-mix(in srgb,var(--ss-shadow-color) 8%,transparent); }
+.room-dial .room-eyebrow { font-size:11px; letter-spacing:.28em; }
+.room-time { font:700 clamp(52px,16vw,64px)/1 ui-monospace,monospace; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
+.room-timer-status { font-size:12px; font-weight:500; line-height:1.4; color:var(--ss-text-muted); }
 .room-host-controls,.room-session-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
 .room-session-actions { padding-top:10px; border-top:1px solid var(--ss-border); width:100%; }
 .room-primary { background:var(--ss-accent); color:var(--ss-on-accent); border-color:var(--ss-accent); }
