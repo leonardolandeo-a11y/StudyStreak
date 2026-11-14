@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react';
 import type{
     Notification
 } from "../../types/notification";
@@ -23,8 +24,8 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
             transition
             ${
                 notification.read
-                    ? "border-slate-800 bg-slate-900/60"
-                    : "border-sky-900/60 bg-sky-950/20"
+                    ? "border-outline bg-surface"
+                    : "border-accent/50 bg-surface-raised"
             }
         `}
     >
@@ -48,7 +49,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                     }
                 }}
                 aria-label={`${notificationActionLabel(notification)}: ${notification.message}`}
-                className="min-w-0 flex-1 cursor-pointer rounded-lg text-left focus-visible:outline-2 focus-visible:outline-sky-400"
+                className="min-w-0 flex-1 cursor-pointer rounded-lg text-left focus-visible:outline-2 focus-visible:outline-accent"
             >
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -60,8 +61,8 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                             text-xs font-semibold
                             ${
                                 notification.read
-                                    ? "bg-slate-800 text-slate-400"
-                                    : "bg-sky-950/70 text-sky-300"
+                                    ? "bg-surface-hover text-content-muted"
+                                    : "bg-accent-soft text-accent"
                             }
                         `}
                     >
@@ -74,10 +75,10 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                         className="
                             rounded-full
                             border border-outline-strong
-                            bg-slate-950
+                            bg-surface-hover
                             px-3 py-1
                             text-xs font-medium
-                            text-slate-400
+                            text-content-muted
                         "
                     >
                         {notification.type}
@@ -91,14 +92,14 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                         mt-4
                         text-base font-medium
                         leading-6
-                        text-slate-100
+                        text-content
                     "
                 >
                     {notification.message}
                 </p>
 
 
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-3 text-xs text-content-muted">
                     {new Date(
                         notification.createdAt
                     ).toLocaleString()}
@@ -113,7 +114,7 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                 type="button"
                 disabled={loading}
                 onClick={() => void onOpen(notification)}
-                className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400 disabled:opacity-50"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-50"
             >
                 {notificationActionLabel(notification)}
             </button>
@@ -129,11 +130,11 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
                     }
                     className="
                         rounded-lg
-                        bg-sky-500
+                        bg-accent
                         px-4 py-2
                         text-sm font-semibold
                         text-on-accent
-                        hover:bg-sky-400
+                        hover:bg-accent-hover
                         disabled:opacity-50
                     "
                 >
@@ -144,29 +145,9 @@ function NotificationCard({notification,onMarkAsRead,onDelete,onOpen,loading}:No
             )}
 
 
-            <button
-                type="button"
-                disabled={loading}
-                onClick={() =>
-                    void onDelete(
-                        notification.id
-                    )
-                }
-                className="
-                    rounded-lg
-                    border border-red-900
-                    bg-red-950/30
-                    px-4 py-2
-                    text-sm font-medium
-                    text-red-300
-                    hover:bg-red-950/60
-                    disabled:opacity-50
-                "
-            >
-                {loading
-                    ? "Processing..."
-                    : "Delete"}
-            </button>
+            <button type="button" disabled={loading} onClick={() => void onDelete(notification.id)}
+                className="study-button size-11 p-0 text-danger hover:bg-danger-surface disabled:opacity-50"
+                aria-label="Delete notification" title="Delete notification"><Trash2 size={18} aria-hidden="true"/></button>
 
         </div>
     </article>

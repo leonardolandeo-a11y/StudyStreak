@@ -1,0 +1,8 @@
+.notification-popups { position:fixed; right:16px; bottom:76px; z-index:40; display:grid; gap:8px; width:min(340px,calc(100vw - 32px)); max-height:45dvh; overflow-y:auto; pointer-events:none; }
+.notification-popup { pointer-events:auto; padding:12px; border:1px solid var(--ss-border-strong); border-radius:12px; background:var(--ss-surface-raised); color:var(--ss-text); box-shadow:0 6px 20px color-mix(in srgb,var(--ss-shadow-color) 18%,transparent); animation:notification-arrive 220ms ease-out; }
+.notification-popup-summary { font-size:12px; line-height:1.5; color:var(--ss-text-secondary); overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+@keyframes notification-arrive { from {opacity:0;transform:translateY(8px)} to {opacity:1;transform:translateY(0)} }
+@media(prefers-reduced-motion:reduce) { .notification-popup { animation:none; } }
+[data-motion="reduce"] .notification-popup { animation:none; }
+/* Keep the mobile stack shallow so the main timer actions remain available. */
+@media(max-width:600px) { .notification-popups { max-height:min(160px,30dvh); bottom:max(16px,env(safe-area-inset-bottom)); } }

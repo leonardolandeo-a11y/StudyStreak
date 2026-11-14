@@ -320,7 +320,7 @@ function Notifications(){
                                 ${
                                     filter === "all" &&
                                     !selectedType
-                                        ? "bg-sky-500 text-on-accent"
+                                        ? "bg-accent text-on-accent"
                                         : "border border-outline-strong bg-surface-raised text-content-secondary hover:bg-surface-hover"
                                 }
                             `}
@@ -340,7 +340,7 @@ function Notifications(){
                                 ${
                                     filter === "unread" &&
                                     !selectedType
-                                        ? "bg-sky-500 text-on-accent"
+                                        ? "bg-accent text-on-accent"
                                         : "border border-outline-strong bg-surface-raised text-content-secondary hover:bg-surface-hover"
                                 }
                             `}

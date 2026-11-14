@@ -1,3 +1,4 @@
+import { NotificationPopups } from '../notifications/NotificationPopups';
 import { useCallback, useId, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Users } from "lucide-react";
@@ -41,6 +42,7 @@ function WorkspaceLayout({ userId }: { userId: number }) {
             </header>
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><Outlet /></main>
         </div>
+        <NotificationPopups/>
         <StudyPartnersPanel id={panelId} userId={userId} open={open} rendered={rendered} generation={generation} trigger={trigger} onClose={close} onExited={exited} />
     </div></div>;
 }

@@ -1,3 +1,4 @@
+import type { Notification } from '../types/notification';
 import {
     createContext
 } from "react";
@@ -6,6 +7,8 @@ import {
 export interface UnreadNotificationContextValue {
 
     unreadCount: number;
+    notices?: Notification[];
+    dismissNotice?: (id: number) => void;
 
     refreshUnreadCount:
         () => Promise<void>;
