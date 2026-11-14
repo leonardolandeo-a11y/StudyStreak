@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { profileBrowser } from './helpers/profileBrowser.mjs';
 import { environmentFixture } from '../../scripts/tests/studyEnvironmentFixture.mjs';
-const root=resolve('../docs/images/academia-pixel-viva-8-3a');mkdirSync(root,{recursive:true});
+const root=resolve(process.env.ENVIRONMENT_CAPTURES || '../docs/images/dashboard-environment-refresh');mkdirSync(root,{recursive:true});
 let owner=101;const paths=[];
 const tokenFor=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Fixture Student',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 const browser=await profileBrowser({intercept:request=>{
@@ -21,7 +21,7 @@ const capture=async name=>{
 };
 const loaded=async id=>{
  await browser.wait(`document.querySelector('.study-environment .panorama-art')?.dataset.environment==='${id}'`);
- await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src='/environments/study-v1/${id}.webp';})`);
+ await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src='/environments/study-v2/${id}.webp';})`);
 };
 const pick=async choice=>{
  await browser.wait(`!!document.querySelector('.environment-settings input[value="${choice}"]:not(:disabled)')`);
@@ -56,12 +56,20 @@ try{
     const shot=await browser.command('Page.captureScreenshot',{format:'png',clip:box});writeFileSync(resolve(root,`${id}-hero.png`),Buffer.from(shot.data,'base64'));
    }
   }
+  for(const [family,mode,accent] of (id==='campus'||id==='night' ? [['sage','dark','mint'],['neutral','light','blue']] : [['lavender','dark','purple'],['amber','light','orange']])){
+   await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceScaleFactor:1,mobile:false});
+   await browser.evaluate(`window.studyStreakAppearance.apply({background:'${family}',mode:'${mode}',accent:'${accent}'})`);
+   await browser.evaluate('new Promise(r=>setTimeout(r,250))');
+   const surface=await browser.evaluate(`(()=>{const hero=document.querySelector('.study-environment'),s=getComputedStyle(hero),art=getComputedStyle(hero.querySelector('.panorama-art'));return {background:s.backgroundColor,border:s.borderTopWidth,shadow:s.boxShadow,mask:art.maskImage,pseudo:getComputedStyle(hero,'::before').content};})()`);
+   assert.equal(surface.background,'rgba(0, 0, 0, 0)');assert.equal(surface.border,'0px');assert.equal(surface.shadow,'none');assert.match(surface.mask,/linear-gradient/);assert.ok(surface.pseudo==='none'||surface.pseudo==='normal');
+   await capture(`${id}-${family}-${mode}-${accent}`);
+  }
   await browser.reload();await loaded(id);
   await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1050,deviceScaleFactor:1,mobile:false});
   await browser.evaluate('window.scrollTo(0,0)');await browser.wait(`document.querySelector('.panorama-art').dataset.ambient==='running'`);
-  const effect=id==='library'?'.panorama-rain':id==='night'?'.panorama-stars':'.panorama-clouds';
-  const value=await browser.evaluate(`getComputedStyle(document.querySelector('${effect}')).${id==='night'?'opacity':'transform'}`);
-  await new Promise(r=>setTimeout(r,400));assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('${effect}')).${id==='night'?'opacity':'transform'}`),value,'Actual ambient effect changes');
+  const effect=(id==='library'||id==='night')?'.panorama-rain':'.panorama-clouds';
+  const value=await browser.evaluate(`getComputedStyle(document.querySelector('${effect}')).transform`);
+  await new Promise(r=>setTimeout(r,400));assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('${effect}')).transform`),value,'Actual ambient effect changes');
  }
  // Native radios support keyboard selection and retain focus without a custom navigation system.
  await browser.navigate('/settings');await browser.command('Page.bringToFront');
@@ -102,9 +110,9 @@ try{
  assert.equal(await browser.evaluate(`localStorage.getItem('studystreak-dashboard-v1-101')`),widgetLayout);
  await browser.navigate('/focus-studio');await browser.wait(`document.body.innerText.includes('DEEP WORK')`);assert.equal(await browser.evaluate(`!!document.querySelector('.panorama-art')`),false);
  // A real failed image request uses the independent static local fallback.
- await browser.navigate('/settings');await pick('library');await browser.command('Network.enable');await browser.command('Network.setCacheDisabled',{cacheDisabled:true});await browser.command('Network.setBlockedURLs',{urls:['*/environments/study-v1/library.webp']});
+ await browser.navigate('/settings');await pick('library');await browser.command('Network.enable');await browser.command('Network.setCacheDisabled',{cacheDisabled:true});await browser.command('Network.setBlockedURLs',{urls:['*/environments/study-v2/library.webp']});
  await browser.navigate('/dashboard');await browser.wait(`document.querySelector('.panorama-art')?.dataset.fallback==='true'`);assert.equal(await browser.evaluate(`document.querySelector('.panorama-art').dataset.ambient`),'paused');
- await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src='/environments/academy-pixel-static.png';})`);await capture('fallback');
+ await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src='/environments/study-v2/campus-thumb.webp';})`);await capture('fallback');
  assert.deepEqual(browser.errors,[]);
  console.log('Four environments, preview/selection/reload/account isolation, automatic periods, widgets, 12 appearances, reduced motion, background/viewport pause, actual effects and fallback passed.');
 }catch(error){writeFileSync(resolve(root,'failure.json'),JSON.stringify({text:await browser.evaluate('document.body.innerText'),errors:browser.errors,paths}));throw error;}finally{await browser.close();}

@@ -1,20 +1,20 @@
 /* The illustrated environment is Dashboard-only. */
-.study-environment { position: relative; isolation: isolate; overflow: hidden; min-width: 0; border-radius: 14px; background: #76458b; color: #fff6ee; }
+.study-environment { position: relative; isolation: isolate; overflow: hidden; min-width: 0; border: 0; border-radius: 0; background: transparent; color: var(--ss-text); }
 .panorama-art { position: absolute; top: 0; right: 0; z-index: -2; width: 100%; max-width: 1260px; height: 100%; pointer-events: none; image-rendering: pixelated; }
-.study-environment::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg,#40214ee0 0%,#482550b0 22%,#48255020 46%,transparent 66%); }
-.study-environment--welcome { min-height: 300px; box-shadow: 0 4px 18px #21102d16; }
+.study-environment--welcome .panorama-art { mask-image: linear-gradient(90deg,transparent 26%,#000 61%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 12%,#000 83%,transparent); mask-composite: intersect; }
+.study-environment--welcome { min-height: 300px; box-shadow: none; }
 .study-environment-content { position: relative; min-height: inherit; display: flex; align-items: center; padding: 28px; }
 .cozy-hero-copy { width: min(100%,390px); }
-.cozy-hero-greeting { display: inline-flex; gap: 7px; align-items: center; max-width: 100%; border: 1px solid #e7b5f19e; border-radius: 20px; padding: 5px 10px; color: #fff0fa; background: #60397099; font-size: 11px; overflow-wrap: anywhere; }
+.cozy-hero-greeting { display: inline-flex; gap: 7px; align-items: center; max-width: 100%; border: 1px solid var(--ss-border-strong); border-radius: 20px; padding: 5px 10px; color: var(--ss-text); background: var(--ss-surface); font-size: 11px; overflow-wrap: anywhere; }
 .cozy-hero-greeting > span { color: #ffdc79; }
-.cozy-hero-copy h1 { margin: 12px 0 10px; max-width: 15ch; font-size: clamp(28px,2.4vw,36px); line-height: 1.12; font-weight: 750; letter-spacing: -.7px; color: #fff9ef; }
-.cozy-hero-copy h1 span { color: light-dark(color-mix(in srgb,var(--ss-accent) 35%,#f2ffea),var(--ss-accent)); }
-.cozy-hero-description { max-width: 31ch; color: #f0deed; font-size: 13px; line-height: 1.5; }
+.cozy-hero-copy h1 { margin: 12px 0 10px; max-width: 15ch; font-size: clamp(28px,2.4vw,36px); line-height: 1.12; font-weight: 750; letter-spacing: -.7px; color: var(--ss-text); }
+.cozy-hero-copy h1 span { color: var(--ss-accent); }
+.cozy-hero-description { max-width: 31ch; color: var(--ss-text-secondary); font-size: 13px; line-height: 1.5; }
 .cozy-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .cozy-hero-actions .study-button { min-height: 44px; font-size: 12px; padding: 9px 12px; }
-.cozy-hero-actions .cozy-room-link { background: #583263ba; border-color: #e6b7f2a1; color: #fff2fc; }
-.cozy-hero-actions .cozy-room-link:hover { background: #724481; }
-.panorama-caption { position: absolute; bottom: 8px; right: 12px; border-radius: 6px; padding: 4px 7px; background: #40234d80; color: #fff0de; font-size: 10px; pointer-events: none; }
+.cozy-hero-actions .cozy-room-link { background: var(--ss-surface); border-color: var(--ss-border-strong); color: var(--ss-text); }
+.cozy-hero-actions .cozy-room-link:hover { background: var(--ss-surface-hover); }
+.panorama-caption { position: absolute; bottom: 8px; right: 12px; border-radius: 6px; padding: 4px 7px; background: var(--ss-surface); color: var(--ss-text-secondary); font-size: 10px; pointer-events: none; }
 .panorama-effect { animation-play-state: paused !important; }
 .panorama-clouds { animation: panorama-clouds 42s ease-in-out infinite alternate; }
 .panorama-landscape { animation: panorama-landscape 56s ease-in-out infinite alternate; }
@@ -29,7 +29,7 @@
 @media (max-width: 600px) {
     .study-environment--welcome { padding-top: clamp(95px,32vw,134px); }
     .panorama-art { height: auto; aspect-ratio: 3/1; }
-    .study-environment::before { background: linear-gradient(180deg,transparent 29vw,#543366 34vw); }
+    .study-environment--welcome .panorama-art { mask-image: linear-gradient(90deg,transparent 30%,#000 62%,#000 94%,transparent),linear-gradient(180deg,transparent,#000 12%,#000 83%,transparent); }
     .study-environment-content { min-height: 0; padding: 18px 20px 22px; }
     .cozy-hero-copy h1 { font-size: 27px; }
     .cozy-hero-greeting { font-size: 10px; }
@@ -43,7 +43,7 @@
 .panorama-stars { animation: panorama-stars 8s ease-in-out infinite alternate; }
 @keyframes panorama-rain { from { transform: translate(2px,-16px); opacity: .15; } to { transform: translate(-6px,24px); opacity: .32; } }
 @keyframes panorama-stars { from { opacity: .15; } to { opacity: .65; } }
-.environment-fallback-note { position: absolute; bottom: 8px; right: 12px; padding: 4px 7px; border-radius: 6px; background: #40234de8; color: #fff0de; font-size: 10px; pointer-events: none; }
+.environment-fallback-note { position: absolute; bottom: 8px; right: 12px; padding: 4px 7px; border-radius: 6px; background: var(--ss-surface); color: var(--ss-text-secondary); font-size: 10px; pointer-events: none; }
 .study-environment:has([data-fallback="true"]) .panorama-caption { display: none; }
 .environment-options { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .environment-option { min-width: 0; cursor: pointer; }
@@ -52,12 +52,12 @@
 .environment-option:has(input:focus-visible) .environment-option-surface { outline: 2px solid var(--ss-focus); outline-offset: 4px; }
 .environment-option img { display: block; width: 100%; height: auto; aspect-ratio: 3/1; object-fit: cover; image-rendering: pixelated; }
 .environment-option-label { display: flex; justify-content: space-between; gap: 8px; padding: 10px; font-size: 13px; font-weight: 600; }
-.environment-preview { position: relative; isolation: isolate; aspect-ratio: 3/1; overflow: hidden; border: 1px solid var(--ss-border); border-radius: 12px; background: #513366; pointer-events: none; }
+.environment-preview { position: relative; isolation: isolate; aspect-ratio: 3/1; overflow: hidden; border: 1px solid var(--ss-border); border-radius: 12px; background: var(--ss-surface); pointer-events: none; }
 .environment-preview .panorama-art { z-index: 0; max-width: none; height: 100%; }
 @media(min-width: 1280px) { .environment-options { grid-template-columns: repeat(4,minmax(0,1fr)); } }
 @media(max-width: 600px) { .environment-preview .panorama-art { height: 100%; aspect-ratio: auto; } .environment-option-label { font-size: 12px; } }
 @media(min-width: 601px) and (max-width: 1200px) {
-    .study-environment::before { background: linear-gradient(90deg,#32183ff0 0%,#3c214ac9 42%,#3c214a38 72%,transparent 100%); }
+    .study-environment--welcome .panorama-art { opacity: .48; mask-image: linear-gradient(90deg,transparent 38%,#000 72%,transparent),linear-gradient(180deg,transparent,#000 12%,#000 83%,transparent); }
 }
 
 /* F3: a little more motion in existing Dashboard layers only; policy is unchanged. */

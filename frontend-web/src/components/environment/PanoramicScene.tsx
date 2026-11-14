@@ -7,7 +7,7 @@ export function PanoramicScene({ period, moving, sceneId }: { period: StudyPerio
     const id = useId();
     const [failed, setFailed] = useState(false);
     const { panes, steam, lamp, effect } = scenes[sceneId];
-    const source = failed ? '/environments/academy-pixel-static.png' : sceneSource(sceneId);
+    const source = failed ? '/environments/study-v2/campus-thumb.webp' : sceneSource(sceneId);
     return <>
         <svg className="panorama-art" viewBox="0 0 2172 724" preserveAspectRatio={scenes[sceneId].align ?? "xMaxYMax slice"} aria-hidden="true" focusable="false"
             data-environment-period={period} data-environment={sceneId} data-ambient={moving && !failed ? 'running' : 'paused'} data-fallback={failed}>

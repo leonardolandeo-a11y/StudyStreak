@@ -10,7 +10,7 @@ export async function reviewPanorama(browser, requests) {
  const period=async(hour,name)=>{
   await browser.evaluate(`window.__hidden=true;document.dispatchEvent(new Event('visibilitychange'));window.__now=new window.__realDate(2026,10,12,${hour}).getTime();window.__hidden=false;document.dispatchEvent(new Event('visibilitychange'));`);
   await browser.wait(`document.querySelector('.panorama-art')?.dataset.environmentPeriod==='${name}'`);
-  await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src='/environments/academy-pixel-${name}.webp';})`);
+  await browser.wait(`new Promise(r=>{const i=new Image();i.onload=()=>r(true);i.onerror=()=>r(false);i.src=document.querySelector('.panorama-base').href.baseVal;})`);
  };
  for(const module of ['dashboard','focus-studio']){
   await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
@@ -37,7 +37,7 @@ export async function reviewPanorama(browser, requests) {
    assert.equal(requests.filter(p=>p==='/api/focus-sessions/stats').length,statsBefore+1);
    for(const [hour,name]of [[9,'morning'],[15,'afternoon'],[22,'night']]){await period(hour,name);await capture(`after-web-dashboard-${name}`);}
    await browser.wait(`document.querySelector('.panorama-art').dataset.ambient==='running'`);
-   const effects=[['.panorama-steam','transform'],['.panorama-stars','opacity']];
+   const effects=[['.panorama-steam','transform'],['.panorama-rain','transform']];
    const beforeEffects=[];
    for(const [selector,property]of effects)beforeEffects.push(await browser.evaluate(`getComputedStyle(document.querySelector('${selector}')).${property}`));
    await new Promise(r=>setTimeout(r,350));
