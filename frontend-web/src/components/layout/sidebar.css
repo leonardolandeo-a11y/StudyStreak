@@ -35,7 +35,6 @@
 .sidebar-landscape { --sidebar-city-building: color-mix(in srgb,var(--ss-border-strong) 70%,var(--ss-surface-hover)); }
 .sidebar-landscape svg { max-width: none; flex-shrink: 0; }
 .workspace-sidebar[data-collapsed="true"] .sidebar-landscape { height: 46px; }
-.workspace-sidebar[data-collapsed="true"] .sidebar-landscape svg { width: 128px; height: 46px; transform: translateX(-10px); }
 @media (max-height: 760px) { .sidebar-landscape { display: none; } }
 
 /* Stack the slightly larger cup and title inside the existing 76px brand band. */

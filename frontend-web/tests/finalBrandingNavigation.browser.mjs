@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.F5_BEFORE==='1';
-const output=new URL('../../docs/images/final-ui-f5/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.F5_CAPTURES || '../../docs/images/final-ui-f5/',import.meta.url);mkdirSync(output,{recursive:true});
 const page=content=>({content,totalPages:1,totalElements:content.length,first:true,last:true,empty:!content.length});
 const goal={id:7,topic:'Fixture study goal',frequency:3,duration:25,completed:false,difficulty:'EASY'};
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f5/vite-cache/',import.meta.url)),intercept:request=>{
@@ -30,7 +30,7 @@ try{
   for(const path of ['/login','/register']){
    await browser.navigate(path);await browser.wait('!!document.querySelector("#username")');
    for(const [hour,period] of [[8,'morning'],[15,'afternoon'],[22,'night']]){
-    await browser.evaluate(`window.__F5Now=new window.__F5Date(2026,10,14,${hour}).getTime();window.dispatchEvent(new Event('focus'))`);await browser.wait(`document.querySelector('.auth-scene').dataset.studyPeriod==='${period}'`);await browser.evaluate(`document.querySelector('.auth-scene-base').decode()`);assert.equal(await browser.evaluate(`!!document.querySelector('[data-auth-campus] [data-barranco-part="terraced-campus"]')`),true);await capture(path.slice(1)+'-'+period);
+    await browser.evaluate(`window.__F5Now=new window.__F5Date(2026,10,14,${hour}).getTime();window.dispatchEvent(new Event('focus'))`);await browser.wait(`document.querySelector('.auth-scene').dataset.studyPeriod==='${period}'`);await browser.evaluate(`document.querySelector('.auth-scene-base').decode()`);assert.equal(await browser.evaluate(`!!document.querySelector('[data-static-exterior]')`),true);await capture(path.slice(1)+'-'+period);
    }
   }
   await browser.evaluate(`window.studyStreakAppearance.apply({background:'lavender',mode:'dark',accent:'mint',reduceMotion:false})`);await browser.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});await browser.wait(`document.querySelector('.auth-scene').dataset.ambient==='running'`);

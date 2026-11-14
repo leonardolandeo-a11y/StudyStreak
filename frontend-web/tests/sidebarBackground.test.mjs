@@ -33,10 +33,10 @@ test('sidebar and pixel skyline follow all background families independently of 
    const rows=reports.filter(r=>r.background===family&&r.scheme===scheme);assert.equal(new Set(rows.map(r=>r.bg)).size,1);assert.equal(new Set(rows.map(r=>r.building)).size,1,'accent must not recolor buildings');
   }
   for(const scheme of ['light','dark'])assert.equal(new Set(reports.filter(r=>r.mode===scheme&&r.accent==='mint').map(r=>r.building)).size,5);
-  // F5 intentionally replaces the generic skyline, preserving its size and theme roles.
+  // Original pre-F5 skyline geometry, with F1 semantic theme colors retained.
   assert.equal(await browser.evaluate(`document.querySelector('.sidebar-landscape svg').getAttribute('viewBox')`),'0 0 128 46');
-  assert.equal(await browser.evaluate(`document.querySelectorAll('.sidebar-landscape [data-barranco-part]').length`),3);
-  assert.equal(await browser.evaluate(`(()=>{const r=document.querySelector('.sidebar-landscape [data-barranco-silhouette]').getBBox();return r.x>=0&&r.y>=0&&r.x+r.width<=128&&r.y+r.height<=46})()`),true);
+  assert.equal(await browser.evaluate(`document.querySelectorAll('.sidebar-landscape [data-barranco-part]').length`),0);
+  assert.equal(await browser.evaluate(`(()=>{const r=document.querySelector('.sidebar-landscape svg').getBBox();return r.x>=0&&r.y>=0&&r.x+r.width<=128&&r.y+r.height<=46})()`),true);
   await browser.navigate('/settings');await browser.wait('!!document.querySelector("input[name=background-theme]")');
   for(const [background,mode,accent]of [['sage','dark','mint'],['lavender','dark','purple'],['neutral','light','blue'],['amber','light','orange']]){await apply(background,mode,accent);
    const point=await browser.evaluate(`(()=>{const r=document.querySelector('[data-nav-icon=Resources]').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);

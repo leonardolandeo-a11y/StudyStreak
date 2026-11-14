@@ -1,5 +1,4 @@
 import { PixelClouds } from './PixelClouds';
-import { BarrancoSilhouette } from '../branding/BarrancoSilhouette';
 import { useId, useState } from 'react';
 import scene from './sceneData';
 import type { StudyPeriod } from './studyPeriod';
@@ -19,12 +18,7 @@ export function StudyScene({ period }: { period: StudyPeriod | null }) {
         {!failed ? <svg viewBox={`0 0 ${scene.width} ${scene.height}`} shapeRendering="crispEdges" preserveAspectRatio="xMidYMid slice" focusable="false">
             <defs><clipPath id={clipId}><rect x={x} y={y} width={width} height={height} /></clipPath><clipPath id={skyClipId}><rect x={x} y={y} width={width} height={55}/></clipPath></defs>
             <g clipPath={`url(#${clipId})`}>
-                <g className="auth-effect-landscape" data-static-exterior>
-                    <rect x={x} y={y} width={width} height={height} fill={scene.palettes[current].sky}/>
-                    <rect x={x} y={80} width={width} height={height-56} fill={scene.palettes[current].skyGlow}/>
-                    {paint(scene.window.landscape.filter(row=>row[5] !== 'all'))}
-                    <g data-auth-campus transform="translate(30 76) scale(1.492 1.15)"><BarrancoSilhouette building={current === 'night' ? scene.palettes[current].distant : scene.palettes[current].page} shade={current === 'night' ? scene.palettes[current].horizon : scene.palettes[current].distant} detail={scene.palettes[current].sky} lights={scene.palettes[current].lampLight} ground={scene.palettes[current].foliage} bridge={scene.palettes[current].woodLight} water={scene.palettes[current].bookA}/></g>
-                </g>
+                <g className="auth-effect-landscape" data-static-exterior>{paint(scene.window.landscape)}</g>
                 <g clipPath={`url(#${skyClipId})`}><PixelClouds color={current === 'night' ? scene.palettes[current].horizon : scene.palettes[current].page}/></g>
                 <g className="auth-effect auth-effect-stars">{paint(scene.effects.stars)}</g>
             </g>
