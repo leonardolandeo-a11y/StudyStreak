@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.PIXEL_BEFORE==='1';
-const output=new URL('../../docs/images/f5-pixel-hotfix/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.PIXEL_CAPTURES || '../../docs/images/f5-art-final/',import.meta.url);mkdirSync(output,{recursive:true});
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f5-pixel/vite-cache/',import.meta.url)),intercept:environmentFixture});
 const capture=async name=>{const r=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(new URL((before?'before-':'after-')+name+'.png',output),Buffer.from(r.data,'base64'));};
 try{
@@ -15,6 +15,8 @@ try{
 
   await browser.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});await browser.evaluate(`window.studyStreakAppearance.apply({background:'lavender',mode:'dark',accent:'mint',reduceMotion:false})`);await browser.wait(`document.querySelector('.auth-scene').dataset.ambient==='running'`);
   assert.equal(await browser.evaluate(`document.querySelectorAll('[data-cloud-track]').length`),3);
+  assert.equal(await browser.evaluate(`document.querySelector('[data-auth-campus] [data-campus-form]')?.dataset.campusForm`),'inclined-facade');
+  assert.equal(await browser.evaluate(`!!document.querySelector('[data-auth-campus] [data-coastal-city]')&&!!document.querySelector('[data-auth-campus] [data-coastal-water]')`),true);
   const read=()=>browser.evaluate(`(()=>{const fixed=s=>getComputedStyle(document.querySelector(s)).transform;return{time:performance.now(),clouds:Array.from(document.querySelectorAll('[data-cloud-track]'),g=>new DOMMatrix(getComputedStyle(g).transform).m41),landscape:fixed('[data-static-exterior]'),campus:fixed('[data-auth-campus]'),frame:fixed('[data-window-frame]'),image:fixed('.auth-scene-base')}})()`);
   const timing=await browser.evaluate(`Array.from(document.querySelectorAll('[data-cloud-track]'),g=>({duration:getComputedStyle(g).animationDuration,direction:getComputedStyle(g).animationDirection,copies:g.querySelectorAll('[data-cloud-copy]').length}))`);assert.deepEqual(timing.map(t=>t.duration),['60s','75s','90s']);assert.ok(timing.every(t=>t.direction==='normal'&&t.copies===2));
   await browser.evaluate(`new Promise(r=>setTimeout(r,350))`);
