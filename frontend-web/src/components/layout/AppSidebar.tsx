@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Bell, BadgeCheck, Headphones, LayoutDashboard, Link2, LogOut, PanelLeftClose, PanelLeftOpen, Target, Users } from "lucide-react";
+import { Bell, BadgeCheck, Headphones, LayoutDashboard, Link2, LogOut, ChevronLeft, Target, Users } from "lucide-react";
 import { SidebarSkyline } from "./SidebarSkyline";
 import { StudyBrand, StudyMark } from "../branding/StudyBrand";
 import { PageTurnBookIcon } from "../icons/PageTurnBookIcon";
@@ -68,12 +68,13 @@ export default function AppSidebar() {
     const { unreadCount } = useUnreadNotifications();
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
+    const collapseControl = useRef<HTMLButtonElement>(null);
+    function toggleSidebar(next: boolean) {
+        setCollapsed(next);
+        requestAnimationFrame(() => collapseControl.current?.focus());
+    }
     return <aside aria-label="Workspace sidebar" data-collapsed={collapsed} className="workspace-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-outline bg-canvas lg:flex">
-        <div className="sidebar-brand">{collapsed ? <StudyMark size={44}/> : <StudyBrand interactive/>}</div>
-        <button type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} aria-controls="workspace-navigation"
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="sidebar-collapse study-button" onClick={() => setCollapsed(value => !value)}>
-            {collapsed ? <PanelLeftOpen size={21} aria-hidden="true"/> : <><PanelLeftClose size={21} aria-hidden="true"/><span>Collapse sidebar</span></>}
-        </button>
+        <div className="sidebar-brand">{collapsed ? <button type="button" ref={collapseControl} className="sidebar-cup-expand" aria-label="Expand sidebar" title="Expand sidebar" aria-expanded={false} aria-controls="workspace-navigation" onClick={() => toggleSidebar(false)}><StudyMark size={44} decorative/></button> : <><StudyBrand interactive/><button ref={collapseControl} type="button" aria-label="Collapse sidebar" aria-expanded={true} aria-controls="workspace-navigation" title="Collapse sidebar" className="sidebar-collapse study-button" onClick={() => toggleSidebar(true)}><ChevronLeft size={18} aria-hidden="true"/></button></>}</div>
         <nav id="workspace-navigation" aria-label="Workspace" className="sidebar-destinations">
             {navigation.map(item => <SidebarDestination key={`${item.to}-${collapsed}`} item={item} collapsed={collapsed} count={item.to === ROUTES.notifications ? unreadCount : 0}/>)}
         </nav>

@@ -7,14 +7,12 @@
 .auth-content .study-brand-name { font-size: 22px; }
 .auth-content .study-brand-rule { display: none; }
 .auth-effect { animation-play-state: paused !important; }
-.auth-effect-clouds { animation: auth-clouds 34s linear infinite alternate; opacity: .65; }
-.auth-effect-landscape { animation: auth-outside 48s ease-in-out infinite alternate; }
+.auth-effect-clouds { animation: auth-cloud-cycle 60s linear infinite; opacity: .65; }
+.auth-effect-landscape { animation: none; transform: none; }
 .auth-effect-steam { animation: auth-steam 4.5s ease-in-out infinite; opacity: .55; }
 .auth-effect-stars { animation: auth-stars 8s ease-in-out infinite; }
 .auth-effect-glow { animation: auth-glow 18s ease-in-out infinite alternate; opacity: .1; }
 .auth-scene[data-ambient="running"] .auth-effect { animation-play-state: running !important; }
-@keyframes auth-clouds { from { transform: translateX(-5px); } to { transform: translateX(10px); } }
-@keyframes auth-outside { from { transform: translateX(calc(var(--exterior-x, 0px) - .7px)); } to { transform: translateX(calc(var(--exterior-x, 0px) + .7px)); } }
 @keyframes auth-steam { 0% { transform: translateY(1px); opacity: 0; } 35% { opacity: .55; } 100% { transform: translate(2px,-7px); opacity: 0; } }
 @keyframes auth-stars { 0%,30%,65%,100% { opacity: .55; } 45% { opacity: .85; } 80% { opacity: .65; } }
 @keyframes auth-glow { from { opacity: .08; } to { opacity: .13; } }
@@ -48,7 +46,6 @@
 
 .auth-content .study-brand-interactive > [data-study-mark] { width: 48px; height: 48px; }
 .auth-scene[data-study-period="afternoon"] .auth-effect-glow { animation-name: auth-afternoon-light; animation-duration: 22s; }
-.auth-effect-clouds { animation-duration: 48s; }
 .auth-effect-stars { animation-duration: 10s; }
 .auth-effect-stars rect:nth-child(even) { animation: auth-star-glint 11s ease-in-out infinite alternate; animation-play-state: inherit; }
 @keyframes auth-afternoon-light { from { opacity: .07; } to { opacity: .17; } }
@@ -58,3 +55,7 @@
 
 .auth-content .study-brand-interactive .study-brand-tagline { display: block; }
 @media(max-height:600px) { .auth-content .study-brand-interactive > [data-study-mark] { width:32px; height:32px; } }
+
+/* Only independent cloud silhouettes move. Buildings, frame and original room stay fixed. */
+@keyframes auth-cloud-cycle { from { transform: translateX(0); } to { transform: translateX(-240px); } }
+.auth-scene[data-study-period="night"] .auth-effect-clouds { opacity: .35; }

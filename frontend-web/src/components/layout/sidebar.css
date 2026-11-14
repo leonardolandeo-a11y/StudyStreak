@@ -40,3 +40,12 @@
 /* Stack the slightly larger cup and title inside the existing 76px brand band. */
 .sidebar-brand { padding: 4px 12px; }
 .sidebar-brand .study-brand-navigation { flex-direction: column; gap: 3px; text-align: center; }
+
+/* Hotfix: chevron beside the cup; the collapsed cup itself is the expand control. */
+.sidebar-brand { position: relative; }
+.sidebar-brand .sidebar-collapse { position:absolute; left:calc(50% + 34px); right:auto; top:8px; margin:0; width:36px; min-height:36px; height:36px; padding:0; }
+.sidebar-cup-expand { display:flex; align-items:center; justify-content:center; width:52px; min-height:52px; border-radius:8px; }
+.sidebar-cup-expand:is(:hover,:focus-visible) { background:var(--ss-surface-hover); }
+.sidebar-cup-expand:is(:hover,:focus-visible) [data-study-mark] { animation:brand-cup-nod 320ms ease-out; }
+@media(prefers-reduced-motion:reduce) { .sidebar-cup-expand [data-study-mark] { animation:none!important; } }
+[data-motion="reduce"] .sidebar-cup-expand [data-study-mark] { animation:none!important; }

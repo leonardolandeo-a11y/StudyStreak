@@ -42,8 +42,10 @@ test('Chrome: local periods/foreground, responsive themes and unchanged registra
   await new Promise(resolve=>setTimeout(resolve,350));
   assert.notEqual(await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-steam')).transform`),before);
   const exterior=await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-landscape')).transform`);
+  const clouds=await page.evaluate(`Array.from(document.querySelectorAll('[data-cloud-track]'),g=>getComputedStyle(g).transform)`);
   await new Promise(resolve=>setTimeout(resolve,350));
-  assert.notEqual(await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-landscape')).transform`),exterior);
+  assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.auth-effect-landscape')).transform`),exterior);
+  assert.notDeepEqual(await page.evaluate(`Array.from(document.querySelectorAll('[data-cloud-track]'),g=>getComputedStyle(g).transform)`),clouds);
   assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.auth-scene-base')).transform`),'none');
   assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('[data-window-frame]')).transform`),'none');
   await page.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'));window.__sceneNow=new window.__RealDate(2026,10,10,7).getTime()`);assert.equal(await page.evaluate(`document.querySelector('[data-study-period]').dataset.studyPeriod`),'night');await page.wait(`document.querySelector('[data-ambient]').dataset.ambient==='paused'`);assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.auth-content')).backdropFilter`),'none');

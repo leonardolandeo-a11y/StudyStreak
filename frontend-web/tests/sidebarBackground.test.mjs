@@ -44,7 +44,7 @@ test('sidebar and pixel skyline follow all background families independently of 
    assert.equal(await browser.evaluate(`(()=>{const link=document.querySelector('[data-nav-icon=Resources]'),probe=document.createElement('span');probe.style.background='var(--ss-surface-hover)';probe.style.color='var(--ss-text)';link.append(probe);const correct=getComputedStyle(link).backgroundColor===getComputedStyle(probe).backgroundColor&&getComputedStyle(link).color===getComputedStyle(probe).color;probe.remove();return correct})()`),true,'hover inherits family surfaces and readable text');
    await browser.command('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});await browser.wait('!document.querySelector("[role=tooltip]")');await capture(`${background}-${mode}-${accent}`);
   }
-  await browser.click('Collapse sidebar');await browser.wait('document.querySelector(".workspace-sidebar").getBoundingClientRect().width===84');
+  await browser.evaluate(`document.querySelector('[aria-label="Collapse sidebar"]').click()`);await browser.wait('document.querySelector(".workspace-sidebar").getBoundingClientRect().width===84');
   await browser.key('Tab');await browser.evaluate(`document.querySelector('[data-nav-icon="Resources"]').focus()`);await browser.wait(`document.querySelector('[role=tooltip]')?.textContent.includes('Find books')`);
   assert.equal(await browser.evaluate(`document.activeElement.getAttribute('aria-describedby')===document.querySelector('[role=tooltip]').id`),true);
   assert.notEqual(await browser.evaluate('getComputedStyle(document.activeElement).outlineStyle'),'none');
