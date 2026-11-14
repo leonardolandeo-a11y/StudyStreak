@@ -69,7 +69,7 @@ export default function AppSidebar() {
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
     return <aside aria-label="Workspace sidebar" data-collapsed={collapsed} className="workspace-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-outline bg-canvas lg:flex">
-        <div className="sidebar-brand">{collapsed ? <StudyMark size={36}/> : <StudyBrand/>}</div>
+        <div className="sidebar-brand">{collapsed ? <StudyMark size={44}/> : <StudyBrand interactive/>}</div>
         <button type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} aria-controls="workspace-navigation"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="sidebar-collapse study-button" onClick={() => setCollapsed(value => !value)}>
             {collapsed ? <PanelLeftOpen size={21} aria-hidden="true"/> : <><PanelLeftClose size={21} aria-hidden="true"/><span>Collapse sidebar</span></>}

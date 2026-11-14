@@ -1,3 +1,4 @@
+import { BarrancoSilhouette } from '../branding/BarrancoSilhouette';
 import { useId, useState } from 'react';
 import scene from './sceneData';
 import type { StudyPeriod } from './studyPeriod';
@@ -17,6 +18,7 @@ export function StudyScene({ period }: { period: StudyPeriod | null }) {
             <defs><clipPath id={clipId}><rect x={x} y={y} width={width} height={height} /></clipPath></defs>
             <g clipPath={`url(#${clipId})`}>
                 <g className="auth-effect auth-effect-landscape">{paint(scene.window.landscape)}</g>
+                <g data-auth-campus transform="translate(58 90) scale(.72)" opacity=".5"><BarrancoSilhouette building={scene.palettes[current].distant} shade={scene.palettes[current].horizon} detail={scene.palettes[current].sky} lights={scene.palettes[current].sun}/></g>
                 <g className="auth-effect auth-effect-clouds">{paint(scene.effects.clouds)}</g>
                 <g className="auth-effect auth-effect-stars">{paint(scene.effects.stars)}</g>
             </g>

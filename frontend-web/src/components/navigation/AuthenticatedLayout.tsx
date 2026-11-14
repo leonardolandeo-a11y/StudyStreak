@@ -1,3 +1,4 @@
+import { headerNavigation } from './headerNavigation';
 import { NotificationPopups } from '../notifications/NotificationPopups';
 import { useCallback, useId, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -17,6 +18,7 @@ import { StudyPartnersPanel } from "../social/StudyPartnersPanel";
 function WorkspaceLayout({ userId }: { userId: number }) {
     const location = useLocation();
     const retro = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.trackingLinks || location.pathname.startsWith(ROUTES.goals) || location.pathname === ROUTES.validations;
+    const header = headerNavigation(location.pathname);
     const immersive = location.pathname === ROUTES.dashboard || location.pathname === ROUTES.focusStudio;
     const [open, setOpen] = useState(false), [rendered, setRendered] = useState(false), [generation, setGeneration] = useState(0);
     const trigger = useRef<HTMLButtonElement>(null);
@@ -36,7 +38,7 @@ function WorkspaceLayout({ userId }: { userId: number }) {
             <MobileTopbar actions={button} />
             <header className={`border-b border-outline bg-surface/95 backdrop-blur ${immersive ? "hidden lg:block" : ""}`}>
                 <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-                    {immersive ? <p className="study-kicker">Your workspace</p> : <><BackButton /><div className="min-w-0 flex-1"><Breadcrumbs /></div></>}
+                    {immersive ? <p className="study-kicker">Your workspace</p> : <>{header.detail && <BackButton fallback={header.fallback}/>}<div className="min-w-0 flex-1"><Breadcrumbs /></div></>}
                     <div className="ml-auto hidden lg:block">{button}</div>
                 </div>
             </header>

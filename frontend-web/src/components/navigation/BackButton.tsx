@@ -5,14 +5,14 @@ import {
 import {
     ROUTES
 } from "../../routes/paths";
-function BackButton(){
+function BackButton({ fallback = ROUTES.dashboard }: { fallback?: string }){
 
     const navigate = useNavigate();
     const location = useLocation();
 
     function handleBack(){
         if (location.key === "default"){
-            navigate(ROUTES.dashboard);
+            navigate(fallback);
             return;
         }
         navigate(-1);
@@ -25,12 +25,12 @@ function BackButton(){
                 w-fit
                 rounded-lg
                 border border-outline-strong
-                bg-slate-900
+                bg-surface
                 px-3 py-2
                 text-sm font-medium
-                text-slate-200
+                text-content-secondary
                 hover:border-outline-strong
-                hover:bg-slate-800
+                hover:bg-surface-hover
             "
         >
             Back

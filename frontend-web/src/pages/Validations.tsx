@@ -2,7 +2,6 @@ import { AcademicSprite } from "../components/academic/AcademicSprite";
 import { WorkflowStepper } from "../components/workflows/WorkflowStepper";
 import { AcademicHeading } from "../components/academic/Academic";
 import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
-import { MemberProfileLink } from "../components/social/MemberProfileLink";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
@@ -305,7 +304,6 @@ function Validations() {
                                     <div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-wide text-slate-500">Tracking partner</p>
                                     <h3 title={partner.username} className="mt-1 truncate font-semibold text-slate-100">{partner.username}</h3>
                                     <div className="flex flex-wrap items-center gap-2">
-                                    <MemberProfileLink id={partner.id} name={partner.username} />
                                     <button
                                         type="button"
                                         aria-pressed={selected}

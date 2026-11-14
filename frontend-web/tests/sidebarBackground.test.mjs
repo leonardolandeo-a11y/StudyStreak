@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 const before=process.env.F1_SIDEBAR_BEFORE==='1';
-const output=new URL('../../docs/images/final-ui-f1-sidebar/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.SIDEBAR_CAPTURES||'../../docs/images/final-ui-f1-sidebar/',import.meta.url);mkdirSync(output,{recursive:true});
 const token='fixture.'+Buffer.from(JSON.stringify({type:'access',userId:42,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 test('sidebar and pixel skyline follow all background families independently of accents',{timeout:120000},async()=>{
  const browser=await profileBrowser({intercept:async req=>{
@@ -33,9 +33,10 @@ test('sidebar and pixel skyline follow all background families independently of 
    const rows=reports.filter(r=>r.background===family&&r.scheme===scheme);assert.equal(new Set(rows.map(r=>r.bg)).size,1);assert.equal(new Set(rows.map(r=>r.building)).size,1,'accent must not recolor buildings');
   }
   for(const scheme of ['light','dark'])assert.equal(new Set(reports.filter(r=>r.mode===scheme&&r.accent==='mint').map(r=>r.building)).size,5);
-  // Geometry remains the approved original artwork, only the paint is contextual.
-  const original=[...readFileSync(new URL('../public/academic/skyline.svg',import.meta.url),'utf8').matchAll(/<rect x="([^"]+)" y="([^"]+)" width="([^"]+)" height="([^"]+)"/g)].map(m=>m.slice(1).map(Number));
-  assert.deepEqual(await browser.evaluate(`Array.from(document.querySelectorAll('.sidebar-landscape rect')).map(r=>['x','y','width','height'].map(n=>Number(r.getAttribute(n))))`),original);
+  // F5 intentionally replaces the generic skyline, preserving its size and theme roles.
+  assert.equal(await browser.evaluate(`document.querySelector('.sidebar-landscape svg').getAttribute('viewBox')`),'0 0 128 46');
+  assert.equal(await browser.evaluate(`document.querySelectorAll('.sidebar-landscape [data-barranco-part]').length`),3);
+  assert.equal(await browser.evaluate(`(()=>{const r=document.querySelector('.sidebar-landscape [data-barranco-silhouette]').getBBox();return r.x>=0&&r.y>=0&&r.x+r.width<=128&&r.y+r.height<=46})()`),true);
   await browser.navigate('/settings');await browser.wait('!!document.querySelector("input[name=background-theme]")');
   for(const [background,mode,accent]of [['sage','dark','mint'],['lavender','dark','purple'],['neutral','light','blue'],['amber','light','orange']]){await apply(background,mode,accent);
    const point=await browser.evaluate(`(()=>{const r=document.querySelector('[data-nav-icon=Resources]').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);

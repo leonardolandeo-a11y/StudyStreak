@@ -12,7 +12,7 @@ export function AuthLayout({ title, description, children, footer }: { title: st
     return <main className="auth-page" onPointerMove={parallax}>
         <StudyScene period={period} />
         <section className="auth-content" aria-labelledby="auth-heading">
-            <StudyBrand variant="signature" />
+            <StudyBrand variant="signature" interactive />
             <header><h1 id="auth-heading">{title}</h1><p>{description}</p></header>
             {children}
             <p className="auth-footer">{footer}</p>
