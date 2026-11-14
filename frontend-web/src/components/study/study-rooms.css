@@ -29,8 +29,8 @@
 .room-timer { grid-column:1/-1; display:grid; gap:16px; }
 .room-timer-heading { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; }
 .room-timer-heading svg { color:var(--ss-accent); }
-.room-timer-body { display:grid; grid-template-columns:minmax(0,320px) minmax(0,340px); align-items:center; justify-content:center; gap:32px; width:100%; max-width:760px; margin-inline:auto; }
-.room-timer-controls { display:grid; gap:16px; min-width:0; }
+.room-timer-body { display:grid; grid-template-columns:minmax(0,1fr); align-items:center; justify-items:center; gap:20px; width:100%; max-width:760px; margin-inline:auto; }
+.room-timer-controls { display:grid; gap:16px; min-width:0; width:100%; max-width:480px; }
 .room-host-controls .room-primary { min-width:116px; }
 .room-dial { position:relative; width:min(100%,320px); aspect-ratio:1; }
 .room-dial svg { display:block; width:100%; height:100%; transform:rotate(-90deg); }
@@ -104,9 +104,7 @@ a.room-participant-profile:is(:hover,:focus-visible) { background:var(--ss-surfa
  .room-layout > .room-collaboration { height:clamp(520px,70dvh,660px); }
 }
 @media(max-width:640px) {
- .room-timer-body { grid-template-columns:minmax(0,1fr); justify-items:center; gap:20px; }
  .room-dial { width:min(100%,300px); }
- .room-timer-controls { width:100%; }
  .room-make-host span { display:none; }
  .room-make-host { width:44px; padding:0; }
 }

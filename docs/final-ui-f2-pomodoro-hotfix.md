@@ -28,3 +28,15 @@ Las interacciones usan API simulada en Chrome headless. No se escribieron datos 
 Archivos: `frontend-web/src/pages/StudyRoomsPage.tsx`, `frontend-web/src/components/study/study-rooms.css`, `frontend-web/tests/sharedPomodoro.browser.mjs`, este informe y ocho capturas en `docs/images/final-ui-f2-pomodoro/`.
 
 Commit local: `style(web): align shared pomodoro with focus studio`. Consultar hash con `git log -1 --format='%h %s' -- docs/final-ui-f2-pomodoro-hotfix.md`. Cambios ajenos preservados y excluidos del commit; sin push ni siguiente etapa.
+
+## Hotfix de distribución — controles debajo
+
+El cuerpo del Shared Pomodoro ahora utiliza una sola columna a todos los anchos: círculo centrado, acciones principales debajo y acciones secundarias en una fila inferior que se adapta al espacio. El panel conserva todo el ancho y la meta privada/métricas continúan debajo. Solo cambió CSS; no se modificaron componentes, lógica, permisos, reloj ni Mobile.
+
+Se amplió `tests/sharedPomodoro.browser.mjs` para comprobar geométricamente a 390/768/1440 px que los controles estén debajo del círculo, que este esté centrado, que el panel ocupe su fila y que la meta permanezca después. Las capturas pueden dirigirse a otra carpeta mediante `ROOM_POMODORO_CAPTURES` para conservar las evidencias anteriores.
+
+Verificación aprobada: ESLint, TypeScript, build Web, los tres archivos dirigidos de reloj/collaboration/polish y Chrome con API simulada (layout, estados, progreso, reconexión, permisos y 80 combinaciones de apariencia con Reduce Motion). Permanece el aviso previo de chunk multimedia >500 kB. Sin escrituras en datos persistentes.
+
+Capturas inspeccionadas: [390 px](images/final-ui-f2-stacked/shared-390.png), [768 px](images/final-ui-f2-stacked/shared-768.png), [1440 px](images/final-ui-f2-stacked/shared-1440.png).
+
+Archivos de este ajuste: `study-rooms.css`, `sharedPomodoro.browser.mjs`, este informe y las tres capturas. Commit: `fix(web): stack shared pomodoro controls below timer`.
