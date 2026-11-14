@@ -59,3 +59,6 @@
 /* Only independent cloud silhouettes move. Buildings, frame and original room stay fixed. */
 @keyframes auth-cloud-cycle { from { transform: translateX(0); } to { transform: translateX(-240px); } }
 .auth-scene[data-study-period="night"] .auth-effect-clouds { opacity: .35; }
+
+.auth-scene-preview { position: fixed; left: 12px; bottom: 12px; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ss-border-strong); border-radius: 6px; background: var(--ss-surface); color: var(--ss-text); font-size: 12px; }
+.auth-scene-preview select { min-height: 36px; padding: 4px 6px; color: var(--ss-text); background: var(--ss-background); border: 1px solid var(--ss-border-strong); border-radius: 4px; }

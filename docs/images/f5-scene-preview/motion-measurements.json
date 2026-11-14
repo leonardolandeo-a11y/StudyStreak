@@ -1,0 +1,158 @@
+[
+  {
+    "route": "login",
+    "period": "morning",
+    "before": {
+      "time": 1286.9000000003725,
+      "clouds": [
+        0,
+        0,
+        0
+      ],
+      "stars": "0.55",
+      "glow": "0.08",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 5850.0999999996275,
+      "clouds": [
+        -18.1992,
+        -14.5594,
+        -12.1328
+      ],
+      "stars": "0.849645",
+      "glow": "0.0866055",
+      "landscape": "none"
+    }
+  },
+  {
+    "route": "login",
+    "period": "afternoon",
+    "before": {
+      "time": 467.90000000037253,
+      "clouds": [
+        -0.066932,
+        -0.0535456,
+        -0.0446213
+      ],
+      "stars": "0.55",
+      "glow": "0.0700001",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 5001.299999998882,
+      "clouds": [
+        -18.1992,
+        -14.5594,
+        -12.1328
+      ],
+      "stars": "0.849645",
+      "glow": "0.0787481",
+      "landscape": "none"
+    }
+  },
+  {
+    "route": "login",
+    "period": "night",
+    "before": {
+      "time": 392.69999999925494,
+      "clouds": [
+        0,
+        0,
+        0
+      ],
+      "stars": "0.55",
+      "glow": "0.08",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 4916,
+      "clouds": [
+        -18.0659,
+        -14.4527,
+        -12.0439
+      ],
+      "stars": "0.849961",
+      "glow": "0.0865067",
+      "landscape": "none"
+    }
+  },
+  {
+    "route": "register",
+    "period": "morning",
+    "before": {
+      "time": 385.59999999962747,
+      "clouds": [
+        0,
+        0,
+        0
+      ],
+      "stars": "0.55",
+      "glow": "0.08",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 4925.5,
+      "clouds": [
+        -18.1324,
+        -14.5059,
+        -12.0883
+      ],
+      "stars": "0.849844",
+      "glow": "0.0865559",
+      "landscape": "none"
+    }
+  },
+  {
+    "route": "register",
+    "period": "afternoon",
+    "before": {
+      "time": 426,
+      "clouds": [
+        0,
+        0,
+        0
+      ],
+      "stars": "0.55",
+      "glow": "0.07",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 4948.799999998882,
+      "clouds": [
+        -17.9991,
+        -14.3993,
+        -11.9994
+      ],
+      "stars": "0.85",
+      "glow": "0.0785514",
+      "landscape": "none"
+    }
+  },
+  {
+    "route": "register",
+    "period": "night",
+    "before": {
+      "time": 420.2000000011176,
+      "clouds": [
+        0,
+        0,
+        0
+      ],
+      "stars": "0.55",
+      "glow": "0.08",
+      "landscape": "none"
+    },
+    "after": {
+      "time": 4955,
+      "clouds": [
+        -18.1327,
+        -14.5062,
+        -12.0885
+      ],
+      "stars": "0.849843",
+      "glow": "0.0865561",
+      "landscape": "none"
+    }
+  }
+]
