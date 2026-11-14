@@ -22,7 +22,7 @@ El único ThemeProvider queda dentro del AuthProvider existente para conocer la 
 
 ## Superficies corregidas
 
-Se eliminaron las redefiniciones locales de tokens en `retro-shell`, las tarjetas Cozy Dashboard y `academic-focus`: impedían que los alias globales y las superficies internas compartieran colores. El cambio de Dashboard es exclusivamente esa herencia de tokens; no se tocaron distribución, widgets, datos, arte ni controles. El sidebar, Study Rooms y Login/Register mantienen sus componentes y estilos específicos; reciben únicamente los tokens globales indispensables. La banda lavanda intencional del sidebar se conserva.
+Se eliminaron las redefiniciones locales de tokens en `retro-shell`, las tarjetas Cozy Dashboard y `academic-focus`: impedían que los alias globales y las superficies internas compartieran colores. El cambio de Dashboard es exclusivamente esa herencia de tokens; no se tocaron distribución, widgets, datos, arte ni controles. El sidebar, Study Rooms y Login/Register mantienen sus componentes y estilos específicos; reciben únicamente los tokens globales indispensables. La excepción lavanda inicial del sidebar se corrigió posteriormente en el [hotfix de coherencia del sidebar](final-ui-f1-sidebar-hotfix.md).
 
 - **Goal Details:** resumen Recorded for this Goal, registros y Streak heredan la misma familia; RecordedSummary usa una superficie semántica también en su variante no compacta. Sin cambios de cálculos ni de dificultad.
 - **Focus:** Now Playing, Goals, formulario de duración y controles secundarios heredan el fondo elegido. Pomodoro circular, temporizador, catálogo y audio intactos.
