@@ -1,13 +1,5 @@
 /* The illustrated workspace is opt-in. Other routes and all authentication scenes keep their tokens. */
-.retro-shell {
-    --ss-background: light-dark(#f4f1f8, #211b30);
-    --ss-surface: light-dark(#ffffff, #342a47);
-    --ss-surface-hover: light-dark(#eee8f5, #453653);
-    --ss-border: light-dark(#d8cce4, #655078);
-    --ss-border-strong: light-dark(#887099, #9d85b4);
-    --ss-text-muted: light-dark(#61536e, #c1b2cf);
-    --ss-text-secondary: light-dark(#4b3e5c, #dfd4e9);
-}
+/* Background families are defined globally, never per route. */
 .retro-shell main { padding-top: 20px; }
 .retro-shell .retro-dashboard .study-panel { border-radius: 12px; border: 1px solid var(--ss-border); background: var(--ss-surface); box-shadow: 0 3px 0 color-mix(in srgb,var(--ss-background) 50%,transparent); }
 .retro-dashboard .academic-heading { gap: 16px; padding-bottom: 16px; }

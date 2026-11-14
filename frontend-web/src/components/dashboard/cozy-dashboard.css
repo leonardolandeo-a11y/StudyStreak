@@ -1,22 +1,6 @@
-/* Bright lavender widgets scoped to Dashboard. Accent hue comes from the user's palette. */
+/* Dashboard composition is unchanged; semantic colors come from the global theme. */
 .retro-shell main:has(> .cozy-dashboard) { max-width: 1680px; }
-.cozy-dashboard { --cozy-accent: var(--ss-accent); }
 .retro-shell .retro-dashboard.cozy-dashboard .study-panel {
-    --ss-surface: light-dark(#fcf1ff,#d8c0e8);
-    --ss-surface-hover: light-dark(#f0dff6,#c9addc);
-    --ss-background: light-dark(#faf0ff,#d8c0e8);
-    --ss-border: light-dark(#d1afdf,#ae86c1);
-    --ss-border-strong: light-dark(#9874ad,#83599a);
-    --ss-text: #2c193c;
-    --ss-text-secondary: #4f355e;
-    --ss-text-muted: #644873;
-    --ss-accent: light-dark(var(--cozy-accent),color-mix(in srgb,var(--cozy-accent) 28%,#172a30));
-    --ss-accent-soft: color-mix(in srgb,var(--cozy-accent) 22%,#f7effb);
-    --ss-on-accent: #ffffff;
-    --ss-focus: var(--ss-accent);
-    --ss-chart-empty: var(--ss-surface-hover);
-    --ss-chart-low: color-mix(in srgb,var(--ss-accent) 35%,var(--ss-surface));
-    --ss-chart-medium: color-mix(in srgb,var(--ss-accent) 85%,var(--ss-surface));
     background: var(--ss-surface); color: var(--ss-text); border: 1px solid var(--ss-border); border-radius: 12px;
     box-shadow: 0 3px 9px #2b133b20;
 }
@@ -66,7 +50,7 @@
 .dashboard-bottom .journey-summary .academic-metric > p:last-child { font-size: 11px; }
 .dashboard-bottom #dashboard-recent-heading { font-size: 18px; }
 /* Focus returns to quiet native controls; no continuous environmental animation. */
-.academic-focus { --ss-background: light-dark(#f6effb,#281e38); --ss-surface: light-dark(#fffaff,#3b2d4d); --ss-surface-hover: light-dark(#eee2f5,#503c63); --ss-border: light-dark(#d3bfdf,#79608d); --ss-border-strong: light-dark(#8e73a0,#b699c8); }
+/* Focus consumes the same global surface family as its secondary controls. */
 @media (max-width: 1199px) {
     .cozy-dashboard .dashboard-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
     .dashboard-widgets { grid-template-columns: repeat(2,minmax(0,1fr)); }

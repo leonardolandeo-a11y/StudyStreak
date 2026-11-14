@@ -11,7 +11,7 @@ interface RecordedSummaryProps {
 }
 
 export function RecordedSummary({ minutes, sessions, error = false, pending, onRefresh, updatedAt, compact = false }: RecordedSummaryProps) {
-    return <section aria-label="Recorded for this Goal" className={compact ? "rounded-control border border-outline bg-surface-hover p-3" : "rounded-xl border border-emerald-400/30 bg-slate-950 p-4"}>
+    return <section aria-label="Recorded for this Goal" className={compact ? "rounded-control border border-outline bg-surface-hover p-3" : "rounded-xl border border-outline bg-surface-raised p-4"}>
         <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="study-kicker">Recorded for this Goal</h3>
             {onRefresh && (compact

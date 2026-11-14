@@ -62,7 +62,7 @@ export function FocusDurationDialog({ onClose, preferences, locked, onSave }: Fo
                 </p>
                 <div className="mt-4 space-y-3">
                     {FIELDS.map(({ field, label, min, max }) => (
-                        <label key={field} className="flex items-center justify-between gap-3 rounded-control border border-outline bg-canvas px-3 py-2">
+                        <label key={field} className="flex items-center justify-between gap-3 rounded-control border border-outline bg-surface-raised px-3 py-2">
                             <span className="text-sm text-content-secondary">{label}</span>
                             <span className="flex items-center gap-2">
                                 <input type="number" inputMode="numeric" aria-label={`${label} minutes`} min={min} max={max} step={1} required

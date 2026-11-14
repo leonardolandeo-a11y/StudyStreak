@@ -2,9 +2,10 @@ import { createContext, useContext, useSyncExternalStore } from "react";
 
 export type ThemeMode = "dark" | "light" | "system";
 export type AccentPalette = "mint" | "blue" | "purple" | "orange";
-export interface AppearancePreferences { mode: ThemeMode; accent: AccentPalette; reduceMotion: boolean; }
-export const DEFAULT_APPEARANCE: AppearancePreferences = { mode: "dark", accent: "mint", reduceMotion: false };
-export const APPEARANCE_KEY = "studystreak:appearance:v1";
+export type BackgroundTheme = "neutral" | "lavender" | "sage" | "amber" | "sky";
+export interface AppearancePreferences { mode: ThemeMode; background: BackgroundTheme; accent: AccentPalette; reduceMotion: boolean; }
+export const DEFAULT_APPEARANCE: AppearancePreferences = { mode: "system", background: "neutral", accent: "mint", reduceMotion: false };
+export const APPEARANCE_KEY = "studystreak:appearance:v2";
 
 declare global {
     interface Window {
@@ -12,9 +13,11 @@ declare global {
             key: string;
             defaults: AppearancePreferences;
             normalize: (value: unknown) => AppearancePreferences;
-            read: () => AppearancePreferences;
+            accountKey: (userId: number | null) => string | null;
+            activate: (userId: number | null) => void;
+            read: (userId?: number | null) => AppearancePreferences;
             apply: (value: AppearancePreferences) => void;
-            save: (value: AppearancePreferences) => boolean;
+            save: (value: AppearancePreferences, userId?: number | null) => boolean;
         };
     }
 }

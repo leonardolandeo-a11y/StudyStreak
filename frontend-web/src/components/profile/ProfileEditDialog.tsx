@@ -84,11 +84,11 @@ export function ProfileEditDialog({ profile, initialField, onClose, onSaved }: {
                     onUndo={() => setDraft(previous => ({ ...previous, [slot]: null }))} />)}
                 <div><label htmlFor={nameId} className="text-sm font-medium">Display name</label>
                     <input id={nameId} autoComplete="nickname" value={displayName} onChange={event => setDisplayName(event.target.value)}
-                        aria-describedby={`${nameId}-help`} className="mt-2 min-h-11 w-full rounded-control border border-outline-strong bg-canvas px-3 text-content" />
+                        aria-describedby={`${nameId}-help`} className="mt-2 min-h-11 w-full rounded-control border border-outline-strong bg-surface-raised px-3 text-content" />
                     <p id={`${nameId}-help`} className="mt-1 text-xs text-content-muted">{unicodeLength(normalizeProfileName(displayName))}/60 characters · leave empty to use {profile.username}.</p></div>
                 <div><label htmlFor={bioId} className="text-sm font-medium">Bio</label>
                     <textarea id={bioId} rows={3} value={bio} onChange={event => setBio(event.target.value)} aria-describedby={`${bioId}-help`}
-                        className="mt-2 w-full resize-y rounded-control border border-outline-strong bg-canvas p-3 text-content" />
+                        className="mt-2 w-full resize-y rounded-control border border-outline-strong bg-surface-raised p-3 text-content" />
                     <p id={`${bioId}-help`} className="mt-1 text-xs text-content-muted">{unicodeLength(bio)}/300 characters · plain text.</p></div>
             </fieldset>
             {(error || validation) && <p role="alert" className="mt-4 rounded-control border border-danger-outline bg-danger-surface p-3 text-sm text-danger">{error || validation}</p>}

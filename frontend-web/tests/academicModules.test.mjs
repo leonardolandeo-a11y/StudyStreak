@@ -55,6 +55,8 @@ test('Chrome: academic modules retain forms, avatars, status labels, local theme
      assert.equal(await page.evaluate(`!!document.querySelector('.academic-module [data-pixel-glyph], .academic-module [data-academic-sprite]')`),true,route);
     }
     if(name==='settings'){
+     await page.evaluate(`(()=>{const toggle=document.querySelector('[role="switch"]');if(toggle.getAttribute('aria-checked')==='true')toggle.click()})()`);
+     await page.wait(`!document.querySelector('input[name="display-mode"][value="dark"]').disabled`);
      await page.evaluate(`document.querySelector('input[name="display-mode"][value="dark"]').click()`);
      await page.wait(`document.querySelector('input[name="display-mode"][value="dark"]').checked`);
      await page.evaluate(`document.querySelector('input[name="display-mode"][value="light"]').click()`);

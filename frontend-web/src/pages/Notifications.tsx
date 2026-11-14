@@ -294,15 +294,15 @@ function Notifications(){
         <section
             className="
                 rounded-2xl
-                border border-slate-800
-                bg-slate-900/70
+                border border-outline
+                bg-surface
                 p-5
             "
         >
             <div className="flex flex-wrap items-end gap-4">
 
                 <div>
-                    <p className="mb-2 text-sm font-medium text-slate-300">
+                    <p className="mb-2 text-sm font-medium text-content-secondary">
                         Status
                     </p>
 
@@ -321,7 +321,7 @@ function Notifications(){
                                     filter === "all" &&
                                     !selectedType
                                         ? "bg-sky-500 text-on-accent"
-                                        : "border border-outline-strong bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                        : "border border-outline-strong bg-surface-raised text-content-secondary hover:bg-surface-hover"
                                 }
                             `}
                         >
@@ -341,7 +341,7 @@ function Notifications(){
                                     filter === "unread" &&
                                     !selectedType
                                         ? "bg-sky-500 text-on-accent"
-                                        : "border border-outline-strong bg-slate-950 text-slate-300 hover:bg-slate-800"
+                                        : "border border-outline-strong bg-surface-raised text-content-secondary hover:bg-surface-hover"
                                 }
                             `}
                         >
@@ -355,7 +355,7 @@ function Notifications(){
                 <div className="min-w-60 flex-1 sm:max-w-sm">
                     <label
                         htmlFor="notificationType"
-                        className="mb-2 block text-sm font-medium text-slate-300"
+                        className="mb-2 block text-sm font-medium text-content-secondary"
                     >
                         Notification Type
                     </label>
@@ -373,9 +373,9 @@ function Notifications(){
                             w-full
                             rounded-lg
                             border border-outline-strong
-                            bg-slate-950
+                            bg-surface-raised
                             px-3 py-2.5
-                            text-slate-100
+                            text-content
                             hover:border-outline-strong
                         "
                     >
@@ -438,11 +438,11 @@ function Notifications(){
                         "
                     >
                         <div>
-                            <h2 className="text-xl font-semibold text-slate-100">
+                            <h2 className="text-xl font-semibold text-content">
                                 Your notifications
                             </h2>
 
-                            <p className="mt-1 text-sm text-slate-400">
+                            <p className="mt-1 text-sm text-content-muted">
                                 Recent activity for your StudyStreak account.
                             </p>
                         </div>
@@ -450,11 +450,11 @@ function Notifications(){
                         <span
                             className="
                                 rounded-full
-                                border border-slate-800
-                                bg-slate-900
+                                border border-outline
+                                bg-surface
                                 px-3 py-1
                                 text-xs font-medium
-                                text-slate-400
+                                text-content-muted
                             "
                         >
                             {notificationPage.totalElements} total

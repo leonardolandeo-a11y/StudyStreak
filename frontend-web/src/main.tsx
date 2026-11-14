@@ -13,9 +13,9 @@ import UnreadNotificationProvider from "./contexts/UnreadNotificationProvider";
 createRoot(
     document.getElementById("root")!
 ).render(
-    <ThemeProvider>
     <ErrorBoundary>
     <AuthProvider>
+    <ThemeProvider>
 
         <UnreadNotificationProvider>
 
@@ -29,7 +29,7 @@ createRoot(
 
         </UnreadNotificationProvider>
 
+    </ThemeProvider>
     </AuthProvider>
     </ErrorBoundary>
-    </ThemeProvider>
 );

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { Switch } from "../ui/switch";
 import { useAppearance, useResolvedTheme } from "../../theme/appearance";
-import type { AccentPalette } from "../../theme/appearance";
+import type { AccentPalette, BackgroundTheme } from "../../theme/appearance";
 
 function AppearanceOption({ name, value, label, selected, disabled = false, onSelect, children, size }: {
     name: string;
@@ -13,7 +13,7 @@ function AppearanceOption({ name, value, label, selected, disabled = false, onSe
     disabled?: boolean;
     onSelect: () => void;
     children: ReactNode;
-    size: "size-20" | "size-12";
+    size: "size-20" | "size-12" | "h-12 w-16";
 }) {
     return <label className={`relative flex shrink-0 flex-col items-center gap-2 ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
         <input type="radio" name={name} value={value} checked={selected} disabled={disabled} onChange={onSelect} className="peer sr-only" />
@@ -51,6 +51,17 @@ export function AppearanceSelectors() {
             <Switch id={deviceSwitch} checked={deviceTheme} labelledBy={deviceLabel} onCheckedChange={enabled => setPreferences({ mode: enabled ? "system" : resolvedTheme })}/>
         </div>
         <p className="text-xs text-content-muted" role="status">Currently using {resolvedTheme} appearance{deviceTheme ? " from your system" : ""}.</p>
+        <fieldset><legend className="mb-3 text-sm font-semibold">Background theme</legend>
+            <div className="flex flex-wrap gap-4">
+                {(["neutral", "lavender", "sage", "amber", "sky"] as BackgroundTheme[]).map(background => <AppearanceOption key={background} name="background-theme" value={background} label={background}
+                    selected={preferences.background === background} onSelect={() => setPreferences({ background })} size="h-12 w-16">
+                    <span aria-hidden="true" data-background={background} className="background-swatch flex size-full overflow-hidden rounded-md">
+                        <span className="w-1/2 bg-canvas" style={{ colorScheme: "light" }}/>
+                        <span className="w-1/2 bg-canvas" style={{ colorScheme: "dark" }}/>
+                    </span>
+                </AppearanceOption>)}
+            </div>
+        </fieldset>
         <fieldset><legend className="mb-3 text-sm font-semibold">Accent palette</legend><div className="flex flex-wrap gap-4">
             {(["mint", "blue", "purple", "orange"] as AccentPalette[]).map(accent => <AppearanceOption key={accent} name="accent-palette" value={accent} label={accent}
                 selected={preferences.accent === accent} onSelect={() => setPreferences({ accent })} size="size-12">

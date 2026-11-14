@@ -17,28 +17,28 @@ function boot(saved, denied = false) {
 }
 const plain = value => JSON.parse(JSON.stringify(value));
 
-test('appearance defaults to dark/mint before React and leaves other preferences intact', () => {
+test('fresh appearance defaults to Neutral/System before React and leaves other preferences intact', () => {
   const { api, root, values } = boot();
-  assert.deepEqual(plain(api.read()), { mode: 'dark', accent: 'mint', reduceMotion: false });
-  assert.deepEqual(root, { theme: 'dark', accent: 'mint', motion: 'system' });
+  assert.deepEqual(plain(api.read()), { mode: 'system', background: 'neutral', accent: 'mint', reduceMotion: false });
+  assert.deepEqual(root, { theme: 'system', background: 'neutral', accent: 'mint', motion: 'system' });
   assert.equal(values.get('pomodoro-existing'), 'unchanged');
 });
 
 test('malformed, old and invalid preferences safely use known values', () => {
   for (const raw of ['broken', 'null', '[]', '3', '{"theme":"sunset","mode":"retro","accent":"red","reduceMotion":"false"}']) {
     const { api } = boot(raw);
-    assert.deepEqual(plain(api.read()), { mode: 'dark', accent: 'mint', reduceMotion: false });
+    assert.deepEqual(plain(api.read()), { mode: 'system', background: 'neutral', accent: 'mint', reduceMotion: false });
   }
 });
 
 test('all modes and accents round-trip without saving arbitrary fields', () => {
   for (const mode of ['dark', 'light', 'system']) for (const accent of ['mint', 'blue', 'purple', 'orange']) {
     const { api, root } = boot();
-    const preferences = { mode, accent, reduceMotion: true };
+    const preferences = { mode, background: 'sage', accent, reduceMotion: true };
     assert.equal(api.save({ ...preferences, unrelated: 'discard' }), true);
     api.apply(api.read());
     assert.deepEqual(plain(api.read()), preferences);
-    assert.deepEqual(root, { theme: mode, accent, motion: 'reduce' });
+    assert.deepEqual(root, { theme: mode, background: 'sage', accent, motion: 'reduce' });
   }
 });
 
@@ -46,7 +46,7 @@ test('unavailable storage never prevents appearance changes for the current visi
   const { api, root } = boot(undefined, true);
   assert.equal(api.save({ mode: 'light', accent: 'blue' }), false);
   api.apply({ mode: 'light', accent: 'blue' });
-  assert.deepEqual(root, { theme: 'light', accent: 'blue', motion: 'system' });
+  assert.deepEqual(root, { theme: 'light', background: 'neutral', accent: 'blue', motion: 'system' });
 });
 
 test('bootstrap and blocking CSS are loaded before the application entry', () => {
@@ -170,7 +170,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await command('Page.addScriptToEvaluateOnNewDocument', { source: `sessionStorage.setItem('accessToken', ${JSON.stringify(fixtureToken)}); if (!localStorage.getItem('${KEY}')) localStorage.setItem('${KEY}', JSON.stringify({mode:'light',accent:'blue',reduceMotion:false}));` });
     const firstLoaded = pageLoaded();
     await command('Page.navigate', { url: origin + '/settings' });
-    await wait(`!!document.getElementById('root') && document.documentElement?.dataset.theme === 'light' && getComputedStyle(document.documentElement).backgroundColor === 'rgb(248, 250, 252)'`);
+    await wait(`!!document.getElementById('root') && document.documentElement?.dataset.theme === 'light' && getComputedStyle(document.documentElement).backgroundColor === 'rgb(244, 241, 248)'`);
     assert.equal(await evaluate('document.getElementById("root").children.length'), 0, 'Appearance must apply before React loads');
     holdEntry = false;
     assert.ok(heldEntry, 'Entry should still be blocked for the first-paint check');
@@ -187,7 +187,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       return { mode: input.value, width: r.width, height: r.height, background: getComputedStyle(sample).backgroundColor };
     }))`);
     assert.deepEqual(samples.map(s => [s.width, s.height]), [[80,80],[80,80]]);
-    assert.deepEqual(samples.map(s => s.background), ['rgb(11, 16, 20)','rgb(248, 250, 252)'], 'Both previews represent their own mode');
+    assert.deepEqual(samples.map(s => s.background), ['rgb(33, 27, 48)','rgb(244, 241, 248)'], 'Both previews represent their own mode');
     const swatches = await evaluate(`([...document.querySelectorAll('input[name="accent-palette"]')].map(input => {
       const frame = input.nextElementSibling, r = frame.getBoundingClientRect();
       return { color: getComputedStyle(frame.firstElementChild).backgroundColor, width:r.width, height:r.height };
@@ -287,7 +287,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       console.log(`Appearance route: ${route}`);
       await navigate(route);
       // Auth uses the fullscreen illustration from 7.2; its form remains theme-aware.
-      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`document.querySelector('.retro-shell') ? 'rgb(244, 241, 248)' : 'rgb(248, 250, 252)'`), route);
+      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(244, 241, 248)'`), route);
       else assert.ok(await evaluate('!!document.querySelector(".auth-content")'));
       assert.equal(await evaluate('document.documentElement.dataset.accent'), 'blue', route);
       assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), route === '/dashboard' ? 'rgb(255, 249, 239)' : 'rgb(15, 23, 42)', route);
@@ -299,7 +299,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       if (route === '/focus-studio') {
         await evaluate(`document.querySelector('[aria-label="Pomodoro settings"]').click()`);
         await wait('document.querySelector("dialog")?.open');
-        assert.equal(await evaluate('getComputedStyle(document.querySelector("dialog")).backgroundColor'), 'rgb(255, 250, 255)');
+        assert.equal(await evaluate('getComputedStyle(document.querySelector("dialog")).backgroundColor'), 'rgb(255, 255, 255)');
         assert.equal(await evaluate(`getComputedStyle(document.querySelector('svg[viewBox="0 0 250 250"] circle:last-child')).stroke`), 'rgb(29, 78, 216)');
         await key('Escape');
       }
@@ -308,13 +308,14 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     await evaluate(`document.querySelector('a[href="/settings"]').click()`);
     await wait('!!document.querySelector("input[name=display-mode]")');
     assert.equal(await evaluate('document.documentElement.dataset.theme'), 'light');
+    await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }, { name: 'prefers-reduced-motion', value: 'no-preference' }] });
     await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Restore default appearance')).click()`);
-    await wait('document.documentElement.dataset.theme === "dark" && document.documentElement.dataset.accent === "mint"');
+    await wait('document.documentElement.dataset.theme === "system" && document.documentElement.dataset.background === "neutral" && document.documentElement.dataset.accent === "mint"');
     assert.equal(await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").checked'), false);
     for (const path of ['/login', '/dashboard', '/focus-studio']) {
       await navigate(path);
       if (path === '/login') assert.equal(await evaluate('getComputedStyle(document.querySelector(".auth-content h1")).color'), 'rgb(241, 245, 249)');
-      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`document.querySelector('.retro-shell') ? 'rgb(33, 27, 48)' : 'rgb(11, 16, 20)'`), path);
+      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(32, 36, 42)'`), path);
     }
     await navigate('/settings');
     // Storage denial is reported truthfully while preferences still apply.

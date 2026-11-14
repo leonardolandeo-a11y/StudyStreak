@@ -124,11 +124,11 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
 
             <form
                 onSubmit={submitSearch}
-                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+                className="rounded-2xl border border-outline bg-surface p-5"
             >
                 <label
                     htmlFor="book-search"
-                    className="text-sm font-medium text-slate-300"
+                    className="text-sm font-medium text-content-secondary"
                 >
                     Topic
                 </label>
@@ -140,7 +140,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                         onChange={event => setQuery(event.target.value)}
                         maxLength={80}
                         placeholder="Example: differential equations"
-                        className="min-w-0 flex-1 rounded-lg border border-outline-strong bg-slate-950 px-4 py-2.5 text-slate-100 outline-none placeholder:text-slate-600 focus:border-sky-500"
+                        className="min-w-0 flex-1 rounded-lg border border-outline-strong bg-surface-raised px-4 py-2.5 text-content outline-none placeholder:text-content-muted focus:border-sky-500"
                     />
 
                     <button
@@ -174,15 +174,15 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                 <section>
                     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
                         <div>
-                            <h2 className="text-xl font-semibold text-slate-100">
+                            <h2 className="text-xl font-semibold text-content">
                                 Search results
                             </h2>
-                            <p className="mt-1 text-sm text-slate-400">
+                            <p className="mt-1 text-sm text-content-muted">
                                 Select a book to view more details.
                             </p>
                         </div>
 
-                        <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-400">
+                        <span className="rounded-full border border-outline bg-surface px-3 py-1 text-xs font-medium text-content-muted">
                             {books.length} results
                         </span>
                     </div>
@@ -193,26 +193,26 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 key={book.id}
                                 type="button"
                                 onClick={() => setSelectedBook(book)}
-                                className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-left transition hover:-translate-y-0.5 hover:border-outline-strong hover:bg-slate-900"
+                                className="rounded-2xl border border-outline bg-surface p-5 text-left transition hover:-translate-y-0.5 hover:border-outline-strong hover:bg-surface"
                             >
                                 <div className="flex gap-4">
                                     {book.thumbnailUrl ? (
                                         <img
                                             src={book.thumbnailUrl}
                                             alt=""
-                                            className="h-32 w-24 shrink-0 rounded-lg bg-slate-950 object-contain"
+                                            className="h-32 w-24 shrink-0 rounded-lg bg-surface-raised object-contain"
                                         />
                                     ) : (
-                                        <div className="flex h-32 w-24 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-slate-600">
+                                        <div className="flex h-32 w-24 shrink-0 items-center justify-center rounded-lg bg-surface-raised text-content-muted">
                                             <BookOpen size={28} />
                                         </div>
                                     )}
 
                                     <div className="min-w-0">
-                                        <h3 className="line-clamp-3 font-semibold text-slate-100">
+                                        <h3 className="line-clamp-3 font-semibold text-content">
                                             {book.title}
                                         </h3>
-                                        <p className="mt-2 line-clamp-2 text-sm text-slate-400">
+                                        <p className="mt-2 line-clamp-2 text-sm text-content-muted">
                                             {book.authors.length
                                                 ? book.authors.join(", ")
                                                 : "Unknown author"}
@@ -239,7 +239,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="book-details-title"
-                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-strong bg-slate-950 p-6 shadow-2xl"
+                        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-strong bg-surface-raised p-6 shadow-2xl"
                         onClick={event => event.stopPropagation()}
                     >
                         <div className="flex items-start justify-between gap-4">
@@ -249,7 +249,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 </p>
                                 <h2
                                     id="book-details-title"
-                                    className="mt-2 text-2xl font-bold text-slate-100"
+                                    className="mt-2 text-2xl font-bold text-content"
                                 >
                                     {selectedBook.title}
                                 </h2>
@@ -259,7 +259,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 type="button"
                                 aria-label="Close book details"
                                 onClick={() => setSelectedBook(null)}
-                                className="rounded-lg border border-outline-strong p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                                className="rounded-lg border border-outline-strong p-2 text-content-muted hover:bg-surface-hover hover:text-content"
                             >
                                 <X size={18} />
                             </button>
@@ -270,15 +270,15 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 <img
                                     src={selectedBook.thumbnailUrl}
                                     alt=""
-                                    className="w-full rounded-xl bg-slate-900 object-contain"
+                                    className="w-full rounded-xl bg-surface object-contain"
                                 />
                             ) : (
-                                <div className="flex h-48 items-center justify-center rounded-xl bg-slate-900 text-slate-600">
+                                <div className="flex h-48 items-center justify-center rounded-xl bg-surface text-content-muted">
                                     <BookOpen size={36} />
                                 </div>
                             )}
 
-                            <div className="space-y-3 text-sm text-slate-300">
+                            <div className="space-y-3 text-sm text-content-secondary">
                                 <p>
                                     <span className="font-medium text-slate-500">Authors:</span>{" "}
                                     {selectedBook.authors.length
@@ -316,7 +316,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                             </div>
                         </div>
 
-                        <p className="mt-6 whitespace-pre-wrap leading-7 text-slate-300">
+                        <p className="mt-6 whitespace-pre-wrap leading-7 text-content-secondary">
                             {selectedBook.description ??
                                 "No description is available for this book."}
                         </p>
@@ -339,7 +339,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                     href={selectedBook.infoLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-outline-strong px-4 py-2 text-sm font-medium text-content-secondary hover:bg-surface-hover"
                                 >
                                     Open on Google Books
                                     <ExternalLink size={16} />

@@ -192,7 +192,7 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
     };
     await command('Page.enable');
     await command('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
-    await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }, { name: 'prefers-reduced-motion', value: 'reduce' }] });
     await command('Page.addScriptToEvaluateOnNewDocument', { source: `if (!localStorage.getItem('studystreak:focus-studio:v1:999999')) localStorage.setItem('studystreak:focus-studio:v1:999999', ${JSON.stringify(JSON.stringify({ ...newPomodoro(), preferences: { ...newPomodoro().preferences, theme: 'sunset', soundEffects: false } }))})` });
     await command('Page.navigate', { url: origin + '/probe' });
     await command('Page.bringToFront');

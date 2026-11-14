@@ -1,6 +1,6 @@
-/* Global semantic theme. Dark/mint is the default, including first paint. */
+/* Global semantic theme. Fresh installs use Neutral/System; accent is independent. */
 :root {
-    color-scheme: dark;
+    color-scheme: light dark;
 
     /* Private shared values; components consume semantic tokens below. */
     --ss-palette-ink: #0b1014;
@@ -14,14 +14,15 @@
     --ss-palette-mint: #94e8c3;
     --ss-palette-mint-hover: #75dab0;
 
-    --ss-background: light-dark(#f8fafc, var(--ss-palette-ink));
-    --ss-surface: light-dark(var(--ss-palette-paper), var(--ss-palette-surface-dark));
-    --ss-surface-hover: light-dark(var(--ss-palette-slate-200), var(--ss-palette-raised-dark));
-    --ss-border: light-dark(var(--ss-palette-slate-300), var(--ss-palette-raised-dark));
-    --ss-border-strong: light-dark(#64748b, #657783);
+    --ss-background: light-dark(#f8fafc, #20242a);
+    --ss-surface: light-dark(#ffffff, #2b3038);
+    --ss-surface-raised: light-dark(#f9fafb, #303741);
+    --ss-surface-hover: light-dark(#e8ebf0, #353c46);
+    --ss-border: light-dark(#cbd5e1, #4a5360);
+    --ss-border-strong: light-dark(#64748b, #929dac);
     --ss-text: light-dark(#0f172a, #f1f5f9);
-    --ss-text-secondary: light-dark(#334155, var(--ss-palette-slate-300));
-    --ss-text-muted: light-dark(#475569, #94a3b8);
+    --ss-text-secondary: light-dark(#334155, #d2dae6);
+    --ss-text-muted: light-dark(#475569, #c0c8d4);
     --ss-accent-mint: light-dark(#126449, var(--ss-palette-mint));
     --ss-accent-blue: light-dark(#1d4ed8, #93c5fd);
     --ss-accent-purple: light-dark(#6d28d9, #d8b4fe);
@@ -77,6 +78,63 @@
     --ss-chart-medium: color-mix(in srgb, var(--ss-accent) 82%, var(--ss-surface));
 }
 
+/* Families change surfaces/text only. Samples use the very same tokens. */
+:root[data-background="neutral"], .background-swatch[data-background="neutral"] {
+    --ss-background: light-dark(#f8fafc, #20242a);
+    --ss-surface: light-dark(#ffffff, #2b3038);
+    --ss-surface-raised: light-dark(#f9fafb, #303741);
+    --ss-surface-hover: light-dark(#e8ebf0, #353c46);
+    --ss-border: light-dark(#cbd5e1, #4a5360);
+    --ss-border-strong: light-dark(#64748b, #929dac);
+    --ss-text: light-dark(#0f172a, #f1f5f9);
+    --ss-text-secondary: light-dark(#334155, #d2dae6);
+    --ss-text-muted: light-dark(#475569, #c0c8d4);
+}
+:root[data-background="lavender"], .background-swatch[data-background="lavender"] {
+    --ss-background: light-dark(#f4f1f8, #211b30);
+    --ss-surface: light-dark(#ffffff, #342a47);
+    --ss-surface-raised: light-dark(#f9f6fc, #3b304d);
+    --ss-surface-hover: light-dark(#eee8f5, #453653);
+    --ss-border: light-dark(#d8cce4, #655078);
+    --ss-border-strong: light-dark(#887099, #9d85b4);
+    --ss-text: light-dark(#0f172a, #f1f5f9);
+    --ss-text-secondary: light-dark(#4b3e5c, #dfd4e9);
+    --ss-text-muted: light-dark(#61536e, #c1b2cf);
+}
+:root[data-background="sage"], .background-swatch[data-background="sage"] {
+    --ss-background: light-dark(#f0f5ef, #1d2a26);
+    --ss-surface: light-dark(#fbfdf9, #293b33);
+    --ss-surface-raised: light-dark(#f5f9f2, #304338);
+    --ss-surface-hover: light-dark(#e1ebe0, #354b40);
+    --ss-border: light-dark(#c0d2bf, #526c5c);
+    --ss-border-strong: light-dark(#647d66, #9ab5a2);
+    --ss-text: light-dark(#192a20, #f0f7f1);
+    --ss-text-secondary: light-dark(#344e3c, #d6e4d9);
+    --ss-text-muted: light-dark(#506657, #b7cebf);
+}
+:root[data-background="amber"], .background-swatch[data-background="amber"] {
+    --ss-background: light-dark(#fff7ed, #30241d);
+    --ss-surface: light-dark(#fffcf7, #403127);
+    --ss-surface-raised: light-dark(#fff9f0, #49382c);
+    --ss-surface-hover: light-dark(#f6e9d7, #4f3e31);
+    --ss-border: light-dark(#ddc9ae, #755b45);
+    --ss-border-strong: light-dark(#967750, #c4a889);
+    --ss-text: light-dark(#302317, #fff4e8);
+    --ss-text-secondary: light-dark(#58412d, #f0ddc8);
+    --ss-text-muted: light-dark(#73583c, #dec5aa);
+}
+:root[data-background="sky"], .background-swatch[data-background="sky"] {
+    --ss-background: light-dark(#eef5fb, #1e2937);
+    --ss-surface: light-dark(#fbfdff, #2a3a4e);
+    --ss-surface-raised: light-dark(#f5faff, #304159);
+    --ss-surface-hover: light-dark(#dfebf7, #34485f);
+    --ss-border: light-dark(#bfd0e3, #536c89);
+    --ss-border-strong: light-dark(#647f9e, #a0b7d2);
+    --ss-text: light-dark(#172b44, #f2f7ff);
+    --ss-text-secondary: light-dark(#354e6b, #d9e7f7);
+    --ss-text-muted: light-dark(#496079, #bed0e6);
+}
+
 :root[data-theme="dark"] { color-scheme: dark; }
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="system"] { color-scheme: light dark; }
@@ -114,6 +172,7 @@
     --font-weight-bold: var(--ss-weight-bold);
     --color-canvas: var(--ss-background);
     --color-surface: var(--ss-surface);
+    --color-surface-raised: var(--ss-surface-raised);
     --color-surface-hover: var(--ss-surface-hover);
     --color-outline: var(--ss-border);
     --color-outline-strong: var(--ss-border-strong);
