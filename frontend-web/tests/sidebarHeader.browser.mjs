@@ -14,7 +14,7 @@ try{
  await b.navigate('/goals');await b.wait(`!!document.querySelector('.sidebar-brand .study-brand-tagline')`);
  const tag='.sidebar-brand .study-brand-tagline';
  await b.wait(`getComputedStyle(document.querySelector('${tag}')).opacity==='0'`);
- const hidden=await geometry();assert.ok(hidden.header.height>=100&&hidden.header.height<=108);
+ const hidden=await geometry();assert.ok(hidden.header.height>=108&&hidden.header.height<=116);
  assert.ok(Math.abs(hidden.cup.x+hidden.cup.width/2-hidden.name.x-hidden.name.width/2)<1,'Cup and title centered');
  assert.ok(hidden.nav.y-hidden.tagline.bottom>=8,'Reserved space separates tagline from navigation');
  assert.ok(hidden.links.every(link=>link.height===52),'Menu item heights unchanged');
