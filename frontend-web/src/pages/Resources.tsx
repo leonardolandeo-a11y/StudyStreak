@@ -2,6 +2,7 @@ import { AcademicHeading } from "../components/academic/Academic";
 import {
     type FormEvent,
     useEffect,
+    useRef,
     useState
 } from "react";
 
@@ -52,6 +53,21 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
     const [loading, setLoading] = useState(initialTopic.length >= 2);
     const [error, setError] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<StudyBook | null>(null);
+    const details = useRef<HTMLDialogElement>(null);
+
+    useEffect(() => {
+        if (!selectedBook) return;
+        const trigger = document.activeElement as HTMLElement | null;
+        const dialog = details.current;
+        const overflow = document.body.style.overflow;
+        dialog?.showModal();
+        document.body.style.overflow = "hidden";
+        return () => {
+            dialog?.close();
+            document.body.style.overflow = overflow;
+            if (trigger?.isConnected) trigger.focus();
+        };
+    }, [selectedBook]);
 
     useEffect(() => {
         if (!request) {
@@ -231,14 +247,16 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
             )}
 
             {selectedBook && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-                    onClick={() => setSelectedBook(null)}
+                <dialog
+                    ref={details}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="book-details-title"
+                    className="book-details-dialog m-auto max-h-[90dvh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto rounded-2xl border-0 bg-surface-raised p-0 text-content backdrop:bg-black/70"
+                    onCancel={event => { event.preventDefault(); setSelectedBook(null); }}
+                    onClick={event => { if (event.target === event.currentTarget) setSelectedBook(null); }}
                 >
                     <article
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="book-details-title"
                         className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-strong bg-surface-raised p-6 shadow-2xl"
                         onClick={event => event.stopPropagation()}
                     >
@@ -259,7 +277,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                                 type="button"
                                 aria-label="Close book details"
                                 onClick={() => setSelectedBook(null)}
-                                className="rounded-lg border border-outline-strong p-2 text-content-muted hover:bg-surface-hover hover:text-content"
+                                className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-outline-strong text-content-muted hover:bg-surface-hover hover:text-content"
                             >
                                 <X size={18} />
                             </button>
@@ -347,7 +365,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
                             )}
                         </div>
                     </article>
-                </div>
+                </dialog>
             )}
         </div>
     );
