@@ -76,7 +76,7 @@ try{
  await browser.click('Create account');await browser.wait(text('conflicts'));rejectRegistration=false;await browser.click('Create account');await browser.wait(text('Account created. Sign in to continue.'));
  await fill('Username','fixture');await fill('Password','Fixture-pass-1');await browser.click('Sign in');await browser.wait(text('credentials are incorrect'));rejectLogin=false;await browser.click('Sign in');await browser.wait(has('Create a goal'));
  await browser.click('Open menu');await browser.click('Settings');await browser.wait(has('Light'));await browser.click('Light');await browser.click('Orange');
- await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.click('Open your profile, Fixture Student');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));
+ await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));
  const lightLogin=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/fullscreen-light-login.png',Buffer.from(lightLogin.data,'base64'));
  await browser.evaluate(`Array.from(document.querySelectorAll('a')).find(a=>a.textContent==='Create an account'&&a.getClientRects().length).click()`);await browser.wait(has('Email'));
  const lightRegister=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/fullscreen-light-register.png',Buffer.from(lightRegister.data,'base64'));

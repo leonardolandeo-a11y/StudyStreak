@@ -36,7 +36,7 @@ try{
  await browser.evaluate(`window.__hidden=true;document.dispatchEvent(new Event('visibilitychange'))`);const before=polls;add(7);await new Promise(r=>setTimeout(r,600));assert.equal(polls,before);assert.equal(await browser.evaluate(popup(7)),false);
  await browser.evaluate(`window.__hidden=false;document.dispatchEvent(new Event('visibilitychange'))`);await browser.wait(popup(7));
  hold=true;await browser.click('Open notification 7');await new Promise(r=>setTimeout(r,100));
- await browser.click('Open menu');await browser.click('Open your profile, Scholar');await browser.wait(`!!document.querySelector('[aria-label="Sign out"]')`);await browser.click('Sign out');await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);
+ await browser.click('Open menu');await browser.click('Sign out');await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);
  actor=202;await login();hold=false;release?.();await new Promise(r=>setTimeout(r,500));
  assert.equal(await browser.evaluate(`!!document.querySelector('[data-testid="notification-popups"]')`),false);assert.equal(await browser.evaluate(`location.pathname.includes('tracking')`),false,'late open from account A cannot navigate account B');
  assert.deepEqual(browser.errors,[]);console.log('M4 notifications passed: silent history, polling, max three, dismiss/dedupe, contextual read/open, confirmed delete, background and late account isolation.');

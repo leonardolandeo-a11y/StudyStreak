@@ -92,7 +92,7 @@ try{
   await browser.wait(text('You do not have an active partner yet.'));assert.equal(accepted,false);assert.deepEqual(trackingWrites,['DELETE']);
   await browser.evaluate('history.forward()');await browser.wait(has('Refresh member profile'));await browser.click('Refresh member profile');await browser.wait(text('Profile unavailable'));assert.equal(await browser.evaluate(text('Shared algebra biography')),false);
   await backToMenu();await browser.click('Refresh all connections');await browser.wait(`!document.querySelector('[aria-label="View profile of partner"]')`);
-  await browser.click('Open menu');await browser.click('Open your profile, Fixture Student');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));
+  await browser.click('Open menu');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));
   owner=102;privacy={showPresence:false,showLastSeen:false,shareVerifiedMinutes:false,shareVerifiedSessions:false};await browser.fill('[aria-label="Username"]','next-student');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');await browser.wait(has('Open menu'));await browser.click('Tracking');await browser.wait(text('You do not have an active partner yet.'));
   assert.equal(await browser.evaluate(text('Shared algebra biography')),false);assert.deepEqual(browser.errors,[]);
   process.stdout.write('Social browser passed: Tracking/search/Validations/modal/Rooms navigation, private fallback, ONLINE/OFFLINE/HIDDEN/unknown, consent, 403/404, revocation, privacy save/errors, account isolation, themes and 320–1440px.\n');

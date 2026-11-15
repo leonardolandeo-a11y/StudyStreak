@@ -19,7 +19,7 @@ const has=label=>`!!document.querySelector('[aria-label="${label}"]')`;
 const selected=(name,attr='aria-selected')=>`document.querySelector('[aria-label="${name}"]').getAttribute('${attr}')==='true'`;
 const login=async()=>{await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture');await browser.fill('[aria-label="Password"]','Fixture-pass-1');await browser.click('Sign in');await browser.wait(has('Create a goal'));};
 const settings=async()=>{await browser.click('Open menu');await browser.click('Settings');await browser.wait(has('Neutral background'));};
-const logout=async()=>{await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.click('Open your profile, Fixture Student');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));};
+const logout=async()=>{await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.wait(has('Sign out'));await browser.click('Sign out');await browser.wait(has('Username'));};
 const css=readFileSync(new URL('../../frontend-web/src/styles/tokens.css',import.meta.url),'utf8');
 const rgb=hex=>`rgb(${hex.slice(1).match(/../g).map(x=>parseInt(x,16)).join(', ')})`;
 try{

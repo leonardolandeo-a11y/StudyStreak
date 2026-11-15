@@ -86,10 +86,10 @@ test('header navigates to Settings once, marks the active route and retains nati
   assert.equal(screenOptions.at(-1).animation, 'none');
   assert.equal(screenOptions.at(-1).headerBackButtonDisplayMode, 'minimal');
   router.back(); assert.equal(history.at(-1), '/(app)/home');
-  // A direct link with no previous screen still has a working Home escape.
+  // The main stack anchors direct links; no transient Home header overrides native Back.
   history.splice(0, history.length, '/(app)/settings'); router.replace('/(app)/settings');
-  render(h(Layout), appearance); controls.get('Home').onPress();
-  assert.equal(history.at(-1), '/(app)/home');
+  const direct=render(h(Layout), appearance);assert.doesNotMatch(direct,/aria-label="Home"/);
+  assert.equal((await import('../src/app/(app)/_layout.tsx')).unstable_settings.anchor,'(main)');
 });
 
 test('Login/Register keep their theme and fields; the old Home deep link now opens Menu', async () => {

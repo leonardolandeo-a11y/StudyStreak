@@ -1,10 +1,9 @@
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useAppearance } from '../../hooks/useAppearance';
-import { ActionButton } from '../../components/ui/ActionButton';
 import { NavigationDataProvider } from '../../contexts/NavigationDataContext';
 import { SocialProvider } from '../../contexts/SocialContext';
 import { useAuth } from '../../hooks/useAuth';
-export const unstable_settings = { initialRouteName: '(main)' };
+export const unstable_settings = { anchor: '(main)' };
 
 export default function AuthenticatedLayout() {
   const { theme, reduceMotion } = useAppearance();
@@ -18,9 +17,7 @@ export default function AuthenticatedLayout() {
     <Stack.Screen name="home" options={{ headerShown: false }} />
     <Stack.Screen name="profile" options={{ title: 'My profile' }} />
     <Stack.Screen name="users/[userId]/profile" options={{ title: 'Member profile' }} />
-    <Stack.Screen name="settings" options={({ navigation }) => ({ title: 'Settings',
-      headerLeft: navigation.canGoBack() ? undefined : () =>
-        <ActionButton title="Home" secondary onPress={() => router.replace('/(app)/home')} /> })} />
+    <Stack.Screen name="settings" options={{title:'Settings'}} />
     <Stack.Screen name="goals/[goalId]" options={{ title: 'Goal details' }} />
     <Stack.Screen name="goals/[goalId]/tags" options={{ title: 'Goal tags' }} />
     <Stack.Screen name="goals/[goalId]/records/[recordId]" options={{ title: 'Daily record' }} />

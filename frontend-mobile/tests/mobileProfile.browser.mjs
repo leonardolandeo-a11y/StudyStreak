@@ -66,7 +66,7 @@ try{
   await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.click('Settings');await browser.wait(has('Light'));await browser.click('Light');await browser.click('Purple');await browser.evaluate(`document.querySelector('[aria-label="Reduce motion"]').click()`);
   await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await openProfile();await browser.click('Edit Profile');await browser.wait(has('Bio'));
   image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/profile-editor-light.png',Buffer.from(image.data,'base64'));await browser.click('Cancel');
-  await browser.click('Sign out');await browser.wait(has('Username'));
+  await browser.evaluate('history.back()');await browser.wait(has('Open menu'));await browser.click('Open menu');await browser.click('Sign out');await browser.wait(has('Username'));
   id=102;profile={...profile,id,username:'second-fixture',displayName:null,presentationName:'second-fixture',bio:null,registrationDate:null};
   await browser.fill('[aria-label="Username"]','second-fixture');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');await browser.wait(has('Open menu'));await openProfile();
   assert.equal(await browser.evaluate(`document.body.innerText.includes('Updated biography') || document.body.innerText.includes('Joined Jan 4')`),false);
