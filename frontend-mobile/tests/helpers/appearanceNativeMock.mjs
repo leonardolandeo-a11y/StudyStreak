@@ -26,7 +26,9 @@ export function View(props) { assertNativeTextChildren(props.children, props.tes
 export const SafeAreaView = View;
 export const ScrollView = View;
 export const KeyboardAvoidingView = View;
-export function useWindowDimensions() { return { width: 390, height: 844, scale: 1, fontScale: 1 }; }
+export const windowMetrics={width:390,height:844,screenWidth:390,screenHeight:844};
+export const Dimensions={get:()=>({width:windowMetrics.screenWidth,height:windowMetrics.screenHeight,scale:1,fontScale:1})};
+export function useWindowDimensions() { return {width:windowMetrics.width,height:windowMetrics.height,scale:1,fontScale:1}; }
 export function Text(props) { return React.createElement('span', propsFor(props), props.children); }
 export function Pressable(props) {
   assertNativeTextChildren(props.children, props.accessibilityLabel ?? 'Pressable');
