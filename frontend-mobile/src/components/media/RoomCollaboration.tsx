@@ -107,7 +107,7 @@ export function RoomCollaboration({ room, userId, children }: { room: StudyRoom;
             <ScrollView testID="room-participants-scroll" accessibilityLabel="Room participants" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: 540 }} contentContainerStyle={{ padding: 12, gap: 12 }}>{children}</ScrollView>
         </View>
         <Modal visible={canRemove} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => setRemoving(null)}>
-            <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: '#150e22aa', justifyContent: 'center', padding: 24 }}>
+            <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: palette.overlay, justifyContent: 'center', padding: 24 }}>
                 <View style={{ backgroundColor: palette.surface, borderRadius: 12, padding: 18, gap: 12, width: '100%', maxWidth: 440, alignSelf: 'center' }}>
                     <Text accessibilityRole="header" style={{ color: palette.text, fontSize: 18, fontWeight: '600' }}>Delete this message?</Text>
                     <Text style={{ color: palette.muted }}>The message will be removed for everyone.</Text>

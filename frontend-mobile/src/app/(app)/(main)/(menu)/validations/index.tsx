@@ -4,7 +4,7 @@ import { ValidationStepper } from '../../../../../components/validations/Validat
 import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { SocialAvatar, MemberProfileLink } from '../../../../../components/social/MemberReference';
+import { SocialAvatar } from '../../../../../components/social/MemberReference';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
@@ -182,7 +182,7 @@ export default function Validations() {
   const flow = <View style={{ gap: 16 }}>
     <ValidationStepper step={step} busy={saving} onStep={setStep}/>
     {step === 0 ? <Section step={1} title="Tracking partners"><ActionButton compact secondary title="Refresh partners" onPress={partners.reload}/><ListStatus state={partners} empty="No active tracking partners yet."/>
-      {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <View key={link.id} style={[styles.item,partner?.id===member.id&&styles.itemSelected,{flexDirection:'row',gap:12}]}><SocialAvatar userId={member.id} name={member.username}/><View style={{flex:1,minWidth:0}}><Text style={styles.itemTitle}>{member.username}</Text><MemberProfileLink userId={member.id} name={member.username}/><ActionButton compact secondary title={`Review goals from ${member.username}`} selected={partner?.id===member.id} onPress={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/></View></View>; }) : null}
+      {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <View key={link.id} style={[styles.item,partner?.id===member.id&&styles.itemSelected,{flexDirection:'row',gap:12}]}><SocialAvatar userId={member.id} name={member.username}/><View style={{flex:1,minWidth:0}}><Text style={styles.itemTitle}>{member.username}</Text><ActionButton compact secondary title={`Review goals from ${member.username}`} selected={partner?.id===member.id} onPress={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/></View></View>; }) : null}
       <PageControls page={partners.page} totalPages={partners.data?.totalPages ?? 0} onChange={partners.setPage}/>
     </Section> : null}
     {step === 1 && partner ? <Section step={2} title={`Study goals · ${partner.username}`}><ListStatus state={goals} empty="This partner has no goals."/>{!goals.loading && !goals.error ? goals.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`View records for ${item.topic}`} selected={goal?.id===item.id} onPress={() => { if(goal?.id!==item.id){setGoal(item);setRecord(null);} }}/>) : null}<PageControls page={goals.page} totalPages={goals.data?.totalPages ?? 0} onChange={goals.setPage}/></Section> : null}

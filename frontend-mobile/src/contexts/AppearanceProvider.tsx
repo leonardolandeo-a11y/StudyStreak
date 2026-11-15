@@ -1,11 +1,15 @@
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { AccessibilityInfo, Appearance } from 'react-native';
 import { AppearanceContext } from './AppearanceContext';
 import { createAppearanceStore } from '../features/appearance/appearanceStore';
-import { appearanceStorage } from '../services/appearanceStorage';
+import { createAccountAppearanceStorage } from '../services/appearanceStorage';
+
+import { useAuth } from '../hooks/useAuth';
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
-  const [store] = useState(() => createAppearanceStore(appearanceStorage));
+  const { currentUser } = useAuth();
+  const userId = currentUser?.id ?? null;
+  const store = useMemo(() => createAppearanceStore(createAccountAppearanceStorage(userId)), [userId]);
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   useEffect(() => store.connect({
     getScheme: () => Appearance.getColorScheme() === 'light' ? 'light' : 'dark',

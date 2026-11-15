@@ -9,7 +9,7 @@ import { StatusMessage } from '../../components/ui/StatusMessage';
 import { AppIcon } from '../../components/ui/AppIcon';
 import { NavigationPressable } from '../../components/navigation/NavigationPressable';
 import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
-import { accentNames, appearanceModes, createTheme, defaultAppearance, type ThemeColors } from '../../features/appearance/theme';
+import { accentNames, appearanceModes, backgroundNames, createTheme, defaultAppearance, type ThemeColors } from '../../features/appearance/theme';
 
 export default function Settings() {
   const { currentUser } = useAuth();
@@ -21,11 +21,35 @@ export default function Settings() {
       <Text accessibilityRole="header" style={styles.heading}>Theme</Text>
       <View style={styles.choices}>
         {appearanceModes.map(mode => <AppearanceChoice key={mode} label={label(mode)} selected={preferences.mode === mode}
-          onPress={() => { void setPreferences({ mode }); }} color={mode === 'dark' ? '#0b1014' : mode === 'light' ? '#ffffff' : theme.colors.surfaceRaised}>
+          onPress={() => { void setPreferences({ mode }); }} color={createTheme({ ...preferences, mode }, theme.mode).colors.background}>
           {mode === 'system' ? <AppIcon name="device" size={28} color={theme.colors.textSecondary} /> : null}
         </AppearanceChoice>)}
       </View>
       {preferences.mode === 'system' ? <Text style={styles.description}>Follows your device appearance.</Text> : null}
+    </Card>
+    <Card style={styles.section}>
+      <Text accessibilityRole="header" style={styles.heading}>Background theme</Text>
+      <Text style={styles.description}>Light and dark previews. Your accent stays independent.</Text>
+      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {backgroundNames.map(background => <NavigationPressable key={background} accessibilityRole="radio"
+          accessibilityLabel={`${label(background)} background`} aria-checked={preferences.background === background} accessibilityState={{ checked: preferences.background === background }}
+          onPress={() => { void setPreferences({ background }); }}
+          style={({ pressed }) => ({ minWidth: 110, flexGrow: 1, flexBasis: '30%', minHeight: 84, padding: 10, gap: 8,
+            borderRadius: 10, borderWidth: preferences.background === background ? 2 : 1,
+            borderColor: preferences.background === background ? theme.colors.primary : theme.colors.border,
+            backgroundColor: theme.colors.surfaceRaised, opacity: pressed ? .7 : 1 })}>
+          <View accessible={false} style={{ flexDirection: 'row', gap: 4 }}>
+            {(['light', 'dark'] as const).map(mode => {
+              const sample = createTheme({ ...preferences, background, mode }, mode).colors;
+              return <View key={mode} testID={`background-preview-${background}-${mode}`} style={{ flex: 1, height: 26,
+                borderRadius: 4, borderWidth: 1, borderColor: sample.borderStrong, backgroundColor: sample.background }}>
+                <View style={{ margin: 4, height: 16, backgroundColor: sample.surface, borderRadius: 2 }} />
+              </View>;
+            })}
+          </View>
+          <Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '600' }}>{label(background)}{preferences.background === background ? ' ✓' : ''}</Text>
+        </NavigationPressable>)}
+      </View>
     </Card>
     <Card style={styles.section}>
       <Text accessibilityRole="header" style={styles.heading}>Accent palette</Text>
@@ -61,7 +85,7 @@ function AppearanceChoice({ label, selected, onPress, color, compact = false, ch
 }) {
   const { theme } = useAppearance();
   const size = compact ? 36 : 44;
-  return <NavigationPressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected }} onPress={onPress}
+  return <NavigationPressable accessibilityRole="button" accessibilityLabel={label} aria-selected={selected} accessibilityState={{ selected }} onPress={onPress}
     style={({ pressed }) => ({ flex: 1, minHeight: compact ? 68 : 78, alignItems: 'center', justifyContent: 'center', gap: 8,
       borderRadius: 10, opacity: pressed ? .7 : 1 })}>
     <View style={{ width: size, height: size, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.borderStrong,

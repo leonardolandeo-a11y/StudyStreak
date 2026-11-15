@@ -1,21 +1,16 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AuthProvider } from '../contexts/AuthProvider';
 import { useAuth } from '../hooks/useAuth';
 import { AppearanceProvider } from '../contexts/AppearanceProvider';
 import { useAppearance } from '../hooks/useAppearance';
+import { AppLoadingScreen } from '../components/ui/AppLoadingScreen';
 
 function Navigator() {
   const { isAuthenticated, isLoading } = useAuth();
   const { theme, ready, reduceMotion } = useAppearance();
   if (isLoading || !ready) {
-    return (
-      <View style={[styles.loading, { backgroundColor: theme.colors.background }]}>
-        <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />
-        <ActivityIndicator accessibilityLabel="Loading StudyStreak" size="large" color={theme.colors.primary} />
-      </View>
-    );
+    return <><StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} /><AppLoadingScreen /></>;
   }
 
   return (
@@ -38,18 +33,10 @@ function Navigator() {
 
 export default function RootLayout() {
   return (
-    <AppearanceProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <AppearanceProvider>
         <Navigator />
-      </AuthProvider>
-    </AppearanceProvider>
+      </AppearanceProvider>
+    </AuthProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

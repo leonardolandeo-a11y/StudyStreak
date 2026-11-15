@@ -5,6 +5,7 @@ import { totalMemory } from 'expo-device';
 import { useAppearance } from '../../hooks/useAppearance';
 import scene from './sceneData';
 import { sceneImages } from './sceneImages';
+import { PixelClouds, cloudTracks } from './PixelClouds';
 import type { StudyPeriod } from './studyPeriod';
 
 export function StudyScene({ period, width, height = width * scene.height / scene.width }: { period: StudyPeriod | null; width: number; height?: number }) {
@@ -12,24 +13,23 @@ export function StudyScene({ period, width, height = width * scene.height / scen
     const [active, setActive] = useState(false);
     const [constrained, setConstrained] = useState(totalMemory !== null && totalMemory <= 3 * 1024 ** 3);
     const [failed, setFailed] = useState(false);
-    const [values] = useState(() => ({ clouds: new Animated.Value(0), steam: new Animated.Value(0), stars: new Animated.Value(0), glow: new Animated.Value(0), landscape: new Animated.Value(0) }));
+    const [values] = useState(() => ({ clouds: cloudTracks.map(() => new Animated.Value(0)), stars: new Animated.Value(0) }));
     useFocusEffect(useCallback(() => {
         setActive(AppState.currentState === 'active');
         const state = AppState.addEventListener('change', value => setActive(value === 'active'));
         const memory = AppState.addEventListener('memoryWarning', () => setConstrained(true));
         return () => { setActive(false); state?.remove(); memory?.remove(); };
     }, []));
-    const moving = active && !reduceMotion && !constrained && !failed;
+    const moving = active && period !== null && !reduceMotion && !constrained && !failed;
     useEffect(() => {
-        const loops = Object.entries(values).filter(([name]) => name !== (period === 'night' ? 'clouds' : 'stars')).map(([name,value]) => {
-            const duration = { clouds: 34000, steam: 4500, stars: 8000, glow: 18000, landscape: 48000 }[name] ?? 8000;
-            return Animated.loop(Animated.sequence([
-                Animated.timing(value, { toValue: 1, duration, easing: name === 'clouds' ? Easing.linear : Easing.inOut(Easing.ease), useNativeDriver: true, isInteraction: false }),
-                Animated.timing(value, { toValue: 0, duration: name === 'steam' ? 0 : duration, easing: name === 'clouds' ? Easing.linear : Easing.inOut(Easing.ease), useNativeDriver: true, isInteraction: false }),
-            ]));
-        });
+        const loops = period === 'night' ? [Animated.loop(Animated.sequence([
+            Animated.timing(values.stars, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true, isInteraction: false }),
+            Animated.timing(values.stars, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true, isInteraction: false }),
+        ]))] : values.clouds.map((value, index) => Animated.loop(Animated.timing(value, {
+            toValue: 1, duration: cloudTracks[index].duration, easing: Easing.linear, useNativeDriver: true, isInteraction: false,
+        })));
         if (moving) loops.forEach(loop => loop.start());
-        return () => { loops.forEach(loop => loop.stop()); Object.values(values).forEach(value => { value.stopAnimation(); value.setValue(0); }); };
+        return () => { loops.forEach(loop => loop.stop()); [...values.clouds, values.stars].forEach(value => { value.stopAnimation(); value.setValue(0); }); };
     }, [moving, values, period]);
     const textures = sceneImages[period ?? 'night'];
     const unit = Math.max(width / scene.width, height / scene.height);
@@ -48,13 +48,15 @@ export function StudyScene({ period, width, height = width * scene.height / scen
         </View>
         {!failed ? <>
             <View style={windowClip} testID="scene-window">
-                <Animated.View testID="scene-landscape" style={[insideWindow, { transform: [{ translateX: values.landscape.interpolate({ inputRange: [0,1], outputRange: [-.7*unit,.7*unit] }) }] }]}><Image source={textures.landscape} style={layer} fadeDuration={0} /></Animated.View>
-                <Animated.View testID="scene-clouds" style={[insideWindow, { opacity: .65, transform: [{ translateX: values.clouds.interpolate({ inputRange: [0,1], outputRange: [-4*unit,8*unit] }) }] }]}><Image source={textures.clouds} style={layer} fadeDuration={0} /></Animated.View>
-                <Animated.View style={[insideWindow, { opacity: values.stars.interpolate({ inputRange: [0,.5,1], outputRange: [.55,.85,.55] }) }]}><Image source={textures.stars} style={layer} fadeDuration={0} /></Animated.View>
+                <View testID="scene-landscape" style={insideWindow}><Image source={textures.landscape} style={layer} fadeDuration={0} /></View>
+                {period !== 'night' ? <View testID="scene-clouds" style={{ position: 'absolute', left: 0, top: 0, width: windowWidth*unit, height: 55*unit, overflow: 'hidden' }}>
+                    <View style={insideWindow}><PixelClouds values={values.clouds} unit={unit} color={scene.palettes[period ?? 'morning'].page}/></View>
+                </View> : <Animated.View testID="scene-stars" style={[insideWindow, { opacity: values.stars.interpolate({ inputRange: [0,1], outputRange: [.55,.9] }) }]}><Image source={textures.stars} style={layer} fadeDuration={0} /></Animated.View>}
+
             </View>
             <Image testID="scene-window-frame" source={textures.windowFrame} style={frameImage} fadeDuration={0} />
-            <Animated.View testID="scene-steam" style={[frame, { opacity: moving ? values.steam.interpolate({ inputRange: [0,.35,1], outputRange: [0,.55,0] }) : .4, transform: [{ translateY: values.steam.interpolate({ inputRange: [0,1], outputRange: [0,-7*unit] }) }] }]}><Image source={textures.steam} style={layer} fadeDuration={0} /></Animated.View>
-            <Animated.View style={[frame, { opacity: values.glow.interpolate({ inputRange: [0,1], outputRange: [.08,.13] }) }]}><Image source={textures.glow} style={layer} fadeDuration={0} /></Animated.View>
+            <View testID="scene-steam" style={[frame, { opacity: .4 }]}><Image source={textures.steam} style={layer} fadeDuration={0} /></View>
+            <View style={[frame, { opacity: .08 }]}><Image source={textures.glow} style={layer} fadeDuration={0} /></View>
         </> : null}
     </View>;
 }

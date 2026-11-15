@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { AcademicSprite, type AcademicSpriteName } from '../academic/AcademicSprite';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { useAppearance } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import type { GoalDifficulty } from '../../types/goal';
 const levels: { value: GoalDifficulty; label: string; face: AcademicSpriteName; expression: string }[] = [
   { value: 'TRIVIAL', label: 'Intrascendente', face: 'difficultyTrivial', expression: 'Neutral' },
@@ -9,16 +10,15 @@ const levels: { value: GoalDifficulty; label: string; face: AcademicSpriteName; 
   { value: 'INTERMEDIATE', label: 'Intermedio', face: 'difficultyIntermediate', expression: 'Seria' },
   { value: 'HARD', label: 'Difícil', face: 'difficultyHard', expression: 'Enojada' },
 ];
-function colors(value: GoalDifficulty | null | undefined, dark: boolean) {
-  const tones = { EASY: dark ? ['#a4e6b8','#203e31'] : ['#166534','#dcfce7'],
-    INTERMEDIATE: dark ? ['#f3d08a','#443820'] : ['#854d0e','#fef3c7'],
-    HARD: dark ? ['#ffb4b4','#4b2932'] : ['#991b1b','#fee2e2'],
-    TRIVIAL: dark ? ['#cbd5e1','#38404d'] : ['#4b5563','#e5e7eb'] };
+function colors(value: GoalDifficulty | null | undefined, palette: ThemeColors) {
+  const tones = { EASY: [palette.success, palette.successSurface],
+    INTERMEDIATE: [palette.pending, palette.warningSurface], HARD: [palette.error, palette.errorSurface],
+    TRIVIAL: [palette.textSecondary, palette.surfaceRaised] };
   return tones[value ?? 'TRIVIAL'] ?? tones.TRIVIAL;
 }
 export function DifficultyBadge({ value, strip = false }: { value?: GoalDifficulty | null; strip?: boolean }) {
   const { theme } = useAppearance();
-  const [color, backgroundColor] = colors(value, theme.mode === 'dark');
+  const [color, backgroundColor] = colors(value, theme.colors);
   const level = levels.find(item => item.value === value);
   return <View accessible accessibilityLabel={level?.label ?? (value == null ? 'Sin dificultad' : 'Difficulty unavailable')} style={strip
     ? { width: 48, alignSelf: 'stretch', justifyContent: 'center', alignItems: 'center', backgroundColor }
@@ -37,7 +37,7 @@ export function DifficultySelector({ value, disabled, onChange }: {
     {!value && <Text style={{ color: theme.colors.muted, fontSize: 12 }}>Sin dificultad · choose a level to set it.</Text>}
     <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {levels.map(level => {
-        const [color, backgroundColor] = colors(level.value, theme.mode === 'dark');
+        const [color, backgroundColor] = colors(level.value, theme.colors);
         return <NavigationPressable key={level.value} accessibilityRole="radio"
           accessibilityLabel={`${level.label} · ${level.expression}`} accessibilityState={{ checked: value === level.value, disabled }}
           disabled={disabled} onPress={() => onChange(level.value)}

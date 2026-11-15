@@ -54,7 +54,7 @@ test('Settings controls change the context immediately, persist appearance and s
   let saved;
   const appearance = createAppearanceStore({ read: async () => null, write: async value => { saved = JSON.parse(value); } });
   let html = render(h(Settings), appearance);
-  assert.match(html, /Appearance/); assert.equal(controls.get('Dark').accessibilityState.selected, true);
+  assert.match(html, /Appearance/); assert.equal(controls.get('System').accessibilityState.selected, true);
   controls.get('Light').onPress();
   html = render(h(Settings), appearance);
   assert.equal(controls.get('Light').accessibilityState.selected, true);
@@ -65,9 +65,9 @@ test('Settings controls change the context immediately, persist appearance and s
   html = render(h(Settings), appearance);
   assert.equal(appearance.getSnapshot().reduceMotion, true);
   await appearance.retryPersistence();
-  assert.deepEqual(saved, { mode: 'light', accent: 'orange', reduceMotion: true });
+  assert.deepEqual(saved, { mode: 'light', background: 'neutral', accent: 'orange', reduceMotion: true });
   controls.get('Restore default appearance').onPress();
-  assert.equal(appearance.getSnapshot().preferences.mode, 'dark');
+  assert.equal(appearance.getSnapshot().preferences.mode, 'system');
 });
 
 test('header navigates to Settings once, marks the active route and retains native Back configuration', async () => {

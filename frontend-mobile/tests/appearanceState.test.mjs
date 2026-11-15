@@ -22,7 +22,7 @@ test('missing, malformed and unsupported preferences use safe field defaults', (
     assert.deepEqual(parseAppearance(input), defaultAppearance);
   }
   assert.deepEqual(parseAppearance('{"mode":"light","accent":"blue","reduceMotion":true,"token":"discard"}'),
-    { mode: 'light', accent: 'blue', reduceMotion: true });
+    { mode: 'light', background: 'neutral', accent: 'blue', reduceMotion: true });
 });
 test('all palettes preserve readable semantic text, accents and independent error/success colors', () => {
   function luminance(hex) {
@@ -43,12 +43,12 @@ test('native preference file survives a new store without touching study or toke
   files.clear(); files.set('test://documents/study-outbox-v3/existing.json', 'unchanged');
   const first = createAppearanceStore(appearanceStorage);
   const stop = first.connect(environment()); await tick();
-  await first.setPreferences({ mode: 'light', accent: 'purple', reduceMotion: true }); stop();
+  await first.setPreferences({ mode: 'light', background: 'neutral', accent: 'purple', reduceMotion: true }); stop();
   const second = createAppearanceStore(appearanceStorage);
   const disconnect = second.connect(environment()); await tick();
-  assert.deepEqual(second.getSnapshot().preferences, { mode: 'light', accent: 'purple', reduceMotion: true });
+  assert.deepEqual(second.getSnapshot().preferences, { mode: 'light', background: 'neutral', accent: 'purple', reduceMotion: true });
   assert.equal(files.get('test://documents/study-outbox-v3/existing.json'), 'unchanged');
-  assert.deepEqual(JSON.parse(files.get('test://documents/appearance/preferences-v1.json')), second.getSnapshot().preferences);
+  assert.deepEqual(JSON.parse(files.get('test://documents/appearance/preferences-v2-guest.json')), second.getSnapshot().preferences);
   disconnect();
 });
 test('System follows changes, manual themes remain fixed and listeners stop on disconnect', async () => {
@@ -82,7 +82,7 @@ test('hydration cannot overwrite a newer choice; rapid writes persist in order',
   const changes = [store.setPreferences({ mode: 'light' }), store.setPreferences({ accent: 'orange' })];
   finish(JSON.stringify(defaultAppearance)); await Promise.all(changes); await tick();
   assert.equal(store.getSnapshot().theme.mode, 'light');
-  assert.deepEqual(writes.at(-1), { mode: 'light', accent: 'orange', reduceMotion: false }); stop();
+  assert.deepEqual(writes.at(-1), { mode: 'light', background: 'neutral', accent: 'orange', reduceMotion: false }); stop();
 });
 test('read/write failures leave the UI usable and retry persists the latest choice', async () => {
   let fail = true; let saved;

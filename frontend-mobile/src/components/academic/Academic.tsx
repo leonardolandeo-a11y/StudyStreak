@@ -30,7 +30,7 @@ export function AcademicHeading({ title, eyebrow, description, focus = false, gl
 export function AcademicPanel({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
     const { theme: { colors } } = useAppearance();
     return <View testID="academic-panel" style={[{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-        borderRadius: 10, padding: 14, gap: 12, shadowColor: '#000000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: .06, shadowRadius: 3 },style]}>{children}</View>;
+        borderRadius: 10, padding: 14, gap: 12, shadowColor: colors.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: .06, shadowRadius: 3 },style]}>{children}</View>;
 }
 export function AcademicEmpty({ children, glyph = 'book' }: { children: ReactNode; glyph?: AcademicGlyph }) {
     return <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 6 }}><PixelGlyph name={glyph} size={24} /><View style={{ flex: 1 }}>{children}</View></View>;

@@ -53,7 +53,7 @@ export default function MainLayout() {
     {/* The installed native drawer forces spring animation. The same content
         uses an unanimated native Modal when reduced motion is requested. */}
     <Modal visible={reduceMotion && reducedMenu !== null} transparent animationType="none" onRequestClose={close} onDismiss={() => trigger.current?.focus()}>
-      <View accessibilityViewIsModal style={{ flex: 1, flexDirection: 'row', backgroundColor: '#00000066' }}>
+      <View accessibilityViewIsModal style={{ flex: 1, flexDirection: 'row', backgroundColor: theme.colors.overlay }}>
         <View style={{ width: Math.min(320, width * .88) }}>
           {reducedMenu ? <StudyDrawerContent active={reducedMenu.getState().routes[reducedMenu.getState().index].name}
             close={close} navigate={name => reducedMenu.navigate(name)} /> : null}

@@ -36,12 +36,21 @@ try{
   const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`.expo/auth72-mobile-${period}.png`,Buffer.from(shot.data,'base64'));
  }
  await browser.wait(`!!document.querySelector('[data-testid="ambient-running"]')`);
- const before=await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-steam"]')).transform`);
+ const before=await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-stars"]')).opacity`);
  await new Promise(resolve=>setTimeout(resolve,350));
- assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-steam"]')).transform`),before);
+ assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-stars"]')).opacity`),before);
  const exterior=await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-landscape"]')).transform`);
  await new Promise(resolve=>setTimeout(resolve,350));
- assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-landscape"]')).transform`),exterior);
+ assert.equal(exterior,'none');
+ assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="scene-landscape"]')).transform`),exterior);
+ // Daytime tracks move independently and leave the landscape fixed.
+ await browser.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'));window.__sceneNow=new window.__RealDate(2026,10,9,9).getTime();window.__sceneHidden=false;document.dispatchEvent(new Event('visibilitychange'))`);
+ await browser.wait(`!!document.querySelector('[data-testid="scene-cloud-track-0"]')`);
+ const clouds=await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid^="scene-cloud-track-"]')).map(e=>getComputedStyle(e).transform)`);
+ await new Promise(resolve=>setTimeout(resolve,500));
+ const after=await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid^="scene-cloud-track-"]')).map(e=>getComputedStyle(e).transform)`);
+ for(let i=0;i<3;i++)assert.notEqual(clouds[i],after[i]);
+ assert.equal(new Set(after).size,3);
  assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[data-testid="ambient-running"]')).transform`),'none');
  await browser.evaluate(`window.__sceneHidden=true;document.dispatchEvent(new Event('visibilitychange'))`);
  await browser.wait(`!!document.querySelector('[data-testid="ambient-paused"]')`);

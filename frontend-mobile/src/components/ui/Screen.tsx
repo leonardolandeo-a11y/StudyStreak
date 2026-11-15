@@ -1,13 +1,11 @@
 import type { ReactNode, Ref, ComponentRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { palette } from '../../constants/palette';
 import { useSegments } from 'expo-router';
 import { useAppearance } from '../../hooks/useAppearance';
 import { useCurrentMenuAction } from '../../contexts/MenuActionContext';
 
-// Legacy screens keep their dark canvas until their own fixed text is migrated.
-export function Screen({ children, scroll = true, themed = false, scrollRef, onRefresh, refreshing = false, compact = false, backgroundColor }: {
+export function Screen({ children, scroll = true, themed: _themed = true, scrollRef, onRefresh, refreshing = false, compact = false, backgroundColor }: {
   children: ReactNode; scroll?: boolean; themed?: boolean; scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   onRefresh?: () => void; refreshing?: boolean;
   compact?: boolean; backgroundColor?: string;
@@ -17,7 +15,7 @@ export function Screen({ children, scroll = true, themed = false, scrollRef, onR
   const action = useCurrentMenuAction();
   const hasTabBar = segments.some(segment => segment === '(menu)') && !action?.hidden;
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: backgroundColor ?? (themed ? theme.colors.background : palette.background) }]}
+    <SafeAreaView style={[styles.safe, { backgroundColor: backgroundColor ?? theme.colors.background }]}
       edges={segments[0] === '(app)' ? hasTabBar ? [] : ['bottom'] : ['top', 'bottom']}>
       {scroll ? (
         <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
@@ -34,7 +32,7 @@ export function Screen({ children, scroll = true, themed = false, scrollRef, onR
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: palette.background },
+  safe: { flex: 1 },
   body: { flexGrow: 1, paddingHorizontal: 18, paddingVertical: 28, gap: 18, width: '100%', maxWidth: 760, alignSelf: 'center' },
   compact: { paddingVertical: 16, gap: 16 },
 });

@@ -25,12 +25,12 @@ export function StudyBrand({ variant = 'navigation' }: { variant?: 'navigation' 
   const { theme: { colors } } = useAppearance();
   const signature = variant === 'signature';
   const fontFamily = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
-  return <View testID="study-brand" accessible accessibilityLabel="StudyStreak"
+  return <View testID="study-brand" accessible accessibilityLabel="StudyStreak" accessibilityHint={variant === 'compact' ? undefined : 'Small sessions. Lasting progress.'}
     style={{ flexDirection: signature ? 'column' : 'row', alignItems: 'center', gap: signature ? 12 : 10, minWidth: 0 }}>
-    <StudyMark size={signature ? 64 : variant === 'compact' ? 32 : 36} decorative />
+    <StudyMark size={signature ? 64 : variant === 'compact' ? 32 : 52} decorative />
     <View style={{ flexShrink: 1, minWidth: 0, gap: 3, alignItems: signature ? 'center' : 'flex-start' }}>
       <Text numberOfLines={1} style={{ color: colors.text, fontFamily, fontWeight: '700', fontSize: signature ? 24 : 16, letterSpacing: -.5 }}>Study<Text style={{ color: colors.primary }}>Streak</Text></Text>
-      {variant !== 'compact' ? <Text style={{ color: colors.muted, fontSize: signature ? 12 : 11 }}>Small sessions. Lasting progress.</Text> : null}
+      {variant !== 'compact' ? <Text style={{ color: colors.muted, fontSize: signature ? 12 : 11, lineHeight: signature ? 18 : 16 }}>Small sessions. Lasting progress.</Text> : null}
     </View>
     {signature ? <PixelRule /> : null}
   </View>;

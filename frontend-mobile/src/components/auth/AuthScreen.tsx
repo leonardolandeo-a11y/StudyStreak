@@ -22,7 +22,7 @@ export function AuthScreen({ title, description, children, footer }: { title: st
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
                 contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16, paddingTop: compact ? 16 : 64, paddingBottom: 24 }}>
-                <View testID="auth-card" style={{ width: '100%', maxWidth: 440, alignSelf: 'center', backgroundColor: colors.surface + 'f0', borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 20, gap: 18, shadowColor: '#000000', shadowOpacity: .16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+                <View testID="auth-card" style={{ width: '100%', maxWidth: 440, alignSelf: 'center', backgroundColor: colors.surface + 'f0', borderColor: colors.border, borderWidth: 1, borderRadius: 18, padding: 20, gap: 18, shadowColor: colors.shadow, shadowOpacity: .16, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
                 <View testID="auth-brand" style={{ alignItems: 'center' }}><StudyBrand variant={compact ? 'compact' : 'signature'} /></View>
                 <View style={{ gap: 8 }}><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 26, fontWeight: '700' }}>{title}</Text>
                     <Text style={{ color: colors.muted, fontSize: 14, lineHeight: 21 }}>{description}</Text></View>
