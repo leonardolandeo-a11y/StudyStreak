@@ -10,7 +10,7 @@ import { AcademicPanel } from '../academic/Academic';
 import { StudyAnalyticsDetails } from './StudyAnalyticsDetails';
 
 /** Presentation only: shares the Dashboard request, period and refresh. */
-export function FocusInsightsMobile({ data, days }: { data: FocusStatistics; days: 7 | 30 }) {
+export function FocusInsightsMobile({ data, days, calendarExternal = false }: { data: FocusStatistics; days: 7 | 30; calendarExternal?: boolean }) {
   const { theme } = useAppearance();
   const colors = dashboardPalette(theme);
   const [expanded, setExpanded] = useState(false);
@@ -31,6 +31,6 @@ export function FocusInsightsMobile({ data, days }: { data: FocusStatistics; day
       </View>)}
     </View>
     <NavigationPressable accessibilityRole="button" accessibilityLabel={expanded ? 'Hide study details' : 'Explore study details'} accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(value => !value)} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8, borderRadius: 8 }}><Text style={{ color: colors.primary, fontWeight: '600' }}>{expanded ? 'Hide study details' : 'Explore study details'}</Text></NavigationPressable>
-    {expanded ? <StudyAnalyticsDetails key={days} data={data}/> : null}
+    {expanded ? <StudyAnalyticsDetails key={days} data={data} calendarExternal={calendarExternal}/> : null}
   </AcademicPanel>;
 }

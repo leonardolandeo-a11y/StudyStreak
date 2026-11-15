@@ -5,13 +5,13 @@ const { defaultWidgets, parseWidgets, moveWidget, widgetKey, createWidgetStore }
 test('layouts normalize corrupt, partial, duplicate and unknown entries without retaining private fields', () => {
  for(const raw of [null,'bad','null','{}','42']) assert.deepEqual(parseWidgets(raw),defaultWidgets());
  const rows=parseWidgets(JSON.stringify([{id:'quick',visible:false,token:'never persist'}, {id:'quick',visible:true},{id:'invented',visible:true},null,{id:'streak',visible:'false'}]));
- assert.equal(rows.length,8);assert.deepEqual(rows[0],{id:'quick',visible:false});assert.equal(new Set(rows.map(r=>r.id)).size,8);
+ assert.equal(rows.length,9);assert.deepEqual(rows[0],{id:'quick',visible:false});assert.equal(new Set(rows.map(r=>r.id)).size,9);
  assert.equal(rows.find(r=>r.id==='streak').visible,true);assert.ok(!JSON.stringify(rows).includes('token'));
 });
 test('accessible moves, visibility and default restoration preserve every widget', () => {
  const original=defaultWidgets();assert.equal(moveWidget(original,original[0].id,-1),original);
  const moved=moveWidget(original,'quick',-1);assert.equal(moved[6].id,'quick');assert.equal(original[7].id,'quick');
- assert.deepEqual(parseWidgets(JSON.stringify(original.map(r=>({...r,visible:false})))).map(r=>r.visible),Array(8).fill(false));
+ assert.deepEqual(parseWidgets(JSON.stringify(original.map(r=>({...r,visible:false})))).map(r=>r.visible),Array(9).fill(false));
  assert.deepEqual(defaultWidgets(),original);
 });
 test('storage isolates accounts, survives a new instance and serializes writes', async () => {
@@ -34,4 +34,11 @@ test('late hydration cannot replace a preview and storage failure remains explic
 test('Web and Mobile keep an identical layout-only contract',()=>{
  const web=readFileSync(new URL('../../frontend-web/src/features/dashboard/widgetPreferences.ts',import.meta.url),'utf8');
  const mobile=readFileSync(new URL('../../frontend-mobile/src/features/dashboard/widgetPreferences.ts',import.meta.url),'utf8');assert.equal(web,mobile);
+});
+
+test('older layouts retain order/visibility and append the calendar hidden; defaults include it',()=>{
+ const old=defaultWidgets().filter(row=>row.id!=='calendar').reverse().map(row=>({...row,visible:row.id==='quick'}));
+ const restored=parseWidgets(JSON.stringify(old));assert.deepEqual(restored.slice(0,8),old);
+ assert.deepEqual(restored.at(-1),{id:'calendar',visible:false});
+ assert.equal(defaultWidgets().find(row=>row.id==='calendar').visible,true);
 });

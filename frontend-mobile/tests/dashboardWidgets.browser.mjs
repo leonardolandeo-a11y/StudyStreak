@@ -1,10 +1,11 @@
 import { mobileBrowser } from './helpers/mobileBrowser.mjs';
 import { environmentFixture } from '../../scripts/tests/studyEnvironmentFixture.mjs';
-import { reviewDashboardWidgets } from '../../scripts/tests/dashboardWidgetsReview.mjs';
+import { reviewM3Dashboard } from './helpers/m3DashboardReview.mjs';
 let owner=101,stats=0;
 const tokenFor=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Fixture Student',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 const browser=await mobileBrowser({intercept:request=>{
  const path=new URL(request.url).pathname;if(path==='/api/focus-sessions/stats')stats++;
+ if(path==='/logout')return {status:204};
  if(path==='/login')return {body:{token:tokenFor(owner),refreshToken:'fixture-only'}};
  if(path==='/api/tracking-links/active')return {body:{content:owner===101?[
  {id:1,requesterId:101,receiverId:3,requesterUsername:'Fixture Student',receiverUsername:'Authorized partner',status:'ACCEPTED'},
@@ -15,4 +16,4 @@ const browser=await mobileBrowser({intercept:request=>{
  if(path===`/users/${owner}/goals`&&owner!==101)return {body:{content:[],totalPages:0,totalElements:0,last:true}};
  return environmentFixture(request);
 }});
-try{await reviewDashboardWidgets(browser,'mobile',{account:id=>owner=id,statsRequests:()=>stats,tokenFor});}finally{await browser.close();}
+try{await reviewM3Dashboard(browser,{account:id=>owner=id,statsRequests:()=>stats,tokenFor});}finally{await browser.close();}

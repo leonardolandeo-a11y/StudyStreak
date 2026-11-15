@@ -1,5 +1,6 @@
 import { Animated, Text, View, useWindowDimensions } from 'react-native';
 import { useDashboardWidgets } from '../../../hooks/useDashboardWidgets';
+import { RecordedCalendar } from '../../../components/dashboard/RecordedCalendar';
 import { CustomizeDashboard } from '../../../components/dashboard/CustomizeDashboard';
 import { DashboardPartners } from '../../../components/dashboard/DashboardPartners';
 import { AcademicPanel } from '../../../components/academic/Academic';
@@ -41,7 +42,7 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
   const stats = state.status === 'success' ? state.data : null;
   const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
   const retryWithoutChart = state.status === 'error' && !visibleWidgets.some(row => row.id === 'activity') &&
-    visibleWidgets.some(row => ['focus-summary','streak','journey','recent'].includes(row.id));
+    visibleWidgets.some(row => ['focus-summary','streak','journey','recent','calendar'].includes(row.id));
   const period = stats ? verifiedActivity(stats, days) : null;
   return <Screen themed compact backgroundColor={colors.background} onRefresh={retry} refreshing={state.status === 'loading'}>
     <StudyEnvironment username={username} />
@@ -56,7 +57,8 @@ function DashboardContent({ userId, username }: { userId: number; username: stri
       {row.id === 'streak' && <DashboardActivity part="streak" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'activity' && <DashboardActivity part="activity" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'goals' && <DashboardGoals userId={userId}/>}
-      {row.id === 'journey' && (stats ? <FocusInsightsMobile data={stats} days={days}/> : <StatusMessage message={state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}/>)}
+      {row.id === 'journey' && (stats ? <FocusInsightsMobile data={stats} days={days} calendarExternal={visibleWidgets.some(widget => widget.id === 'calendar')}/> : <StatusMessage message={state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}/>)}
+      {row.id === 'calendar' && (stats ? <RecordedCalendar activity={stats.activity}/> : <StatusMessage message={state.status === 'loading' ? 'Loading Activity Calendar…' : 'Reload study activity to view your calendar.'}/>)}
       {row.id === 'recent' && (period && stats ? <DashboardRecent from={period.daily[0].date} to={period.daily.at(-1)!.date} timeZone={stats.timeZone}/> : <StatusMessage message={state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'}/>)}
       {row.id === 'partners' && <DashboardPartners userId={userId}/>}
       {row.id === 'quick' && <AcademicPanel style={{ backgroundColor: dashboardPalette(theme).surface, borderColor: dashboardPalette(theme).border }}><Text accessibilityRole="header" style={{ color: dashboardPalette(theme).text, fontSize: 18, fontWeight: '700' }}>Quick Focus</Text><ActionButton compact title="Open Focus Studio" onPress={() => router.navigate('/focus-studio')}/></AcademicPanel>}

@@ -55,8 +55,8 @@ try{
    }
   }
   await back(id);await active(true);
-  const effect=id==='library'?'environment-rain-0':id==='night'?'environment-stars':'environment-clouds-0';
-  const property=id==='night'?'opacity':'transform';
+  const effect=id==='library'||id==='night'?'environment-rain-0':'environment-clouds-0';
+  const property='transform'; // Night Desk uses rain in the final study-v2 artwork.
   const before=await browser.evaluate(`getComputedStyle(document.querySelector('${hero} [data-testid="${effect}"]')).${property}`);
   await new Promise(r=>setTimeout(r,450));assert.notEqual(await browser.evaluate(`getComputedStyle(document.querySelector('${hero} [data-testid="${effect}"]')).${property}`),before);
   for(const width of [320,390,768]){
@@ -99,7 +99,7 @@ try{
  await browser.click('Open menu');await browser.click('Dashboard');await browser.waitForDrawerClosed();await loaded('campus');
  // Real image-loader failure, not a DOM onError event: restore session in a fresh JS context.
  await settings();await pick('library');await browser.evaluate(`document.querySelector('[aria-label="Reduce motion"]').click()`);await back('library');await active(true);
- await browser.command('Network.enable');await browser.command('Network.setCacheDisabled',{cacheDisabled:true});await browser.command('Network.setBlockedURLs',{urls:['*study-v1/library.*png']});
+ await browser.command('Network.enable');await browser.command('Network.setCacheDisabled',{cacheDisabled:true});await browser.command('Network.setBlockedURLs',{urls:['*study-v2/library.*png']});
  await browser.reload();await login();await browser.wait(`!!document.querySelector('${hero} [data-testid="environment-fallback"]')`);await active(false);await capture('fallback');
  assert.deepEqual(writes,[]);assert.deepEqual(browser.errors,[]);
  console.log('8.3b: four original environments, preview and native Back, reload/account isolation, automatic periods, real effects and pause, 12 appearances, widgets, fallback and 320/390/768 passed.');

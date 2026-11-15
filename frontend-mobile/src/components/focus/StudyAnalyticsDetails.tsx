@@ -13,7 +13,7 @@ import { ActionButton } from '../ui/ActionButton';
 import { barPercent, sessionDate } from '../study/chartPresentation';
 interface Entry { id:string;goal_name:string;source:string;state:string;confirmed_seconds:number;planned_seconds:number;verified:boolean;started_at:string; }
 const sections=['Activity','Goals','Together','History'] as const;
-export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
+export function StudyAnalyticsDetails({data,calendarExternal=false}:{data:FocusStatistics;calendarExternal?:boolean}) {
  const { theme } = useAppearance();
  const palette = dashboardPalette(theme);
  const styles = createStyles(palette);
@@ -40,7 +40,7 @@ export function StudyAnalyticsDetails({data}:{data:FocusStatistics}) {
    <View style={styles.panel}><Text style={styles.heading}>Completion rate</Text><Text style={styles.large}>{data.completionPercent===null?'—':`${data.completionPercent.toFixed(0)}%`}</Text><View style={styles.track}><View style={[styles.fill,{width:`${barPercent(data.completionPercent??0,100)}%`}]}/></View><Text style={styles.caption}>Completed / verified attempts started in this period</Text></View>
    <ActionButton colors={palette} compact secondary title={trends ? 'Hide recorded trends' : 'Recorded trends · weekly / monthly'} onPress={() => setTrends(value => !value)}/>
    {trends && <View style={styles.panel}><View style={styles.row}>{(['Weekly','Monthly'] as const).map(item=><Pressable key={item} accessibilityRole="button" accessibilityState={{selected:scale===item}} onPress={()=>setScale(item)} style={[styles.tab,scale===item&&styles.selected]}><Text style={[styles.tabText,scale===item&&styles.selectedText]}>{item}</Text></Pressable>)}</View><BarChart colors={palette} key={scale} items={bars} label={`${scale} study time`}/><Text style={styles.caption}>Includes historical estimates; daily recorded values remain in the calendar. Only the selected {data.days} days. Boundary weeks/months may be partial. Dates use completion in {data.timeZone}.</Text></View>}
-   <RecordedCalendar activity={data.activity}/>
+   {calendarExternal ? <Text style={styles.caption}>See the Activity Calendar widget on your Dashboard.</Text> : <RecordedCalendar activity={data.activity}/>}
    <View style={styles.panel}><BarChart colors={palette} items={data.hourly.map(item=>({label:`${item.hour}:00`,value:item.hours*60}))} label="When sessions finish"/><Text style={styles.caption}>Selected period · recorded time, including historical estimates. Local completion hour, not minute-by-minute attendance.</Text></View>
   </>}
   {section==='Goals'&&<View style={styles.panel}><Text style={styles.heading}>Where your time goes</Text><Text style={styles.caption}>All-time recorded time · includes historical estimates</Text>

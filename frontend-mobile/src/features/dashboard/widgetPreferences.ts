@@ -1,6 +1,6 @@
 export const widgetLabels = {
     'focus-summary': 'Focus Summary', streak: 'Study Streak', activity: 'Study Activity', goals: 'Active Goals',
-    journey: 'Study Journey', recent: 'Recent Activity', partners: 'Study Partners', quick: 'Quick Focus',
+    journey: 'Study Journey', recent: 'Recent Activity', partners: 'Study Partners', quick: 'Quick Focus', calendar: 'Activity Calendar',
 } as const;
 export type WidgetId = keyof typeof widgetLabels;
 export interface WidgetSetting { id: WidgetId; visible: boolean }
@@ -18,7 +18,7 @@ export function parseWidgets(raw: string | null): WidgetSetting[] {
             const id = row.id as WidgetId; seen.add(id);
             rows.push({ id, visible: typeof row.visible === 'boolean' ? row.visible : true });
         }
-        return [...rows, ...defaultWidgets().filter(row => !seen.has(row.id))];
+        return [...rows, ...defaultWidgets().filter(row => !seen.has(row.id)).map(row => row.id === 'calendar' ? { ...row, visible: false } : row)];
     } catch { return defaultWidgets(); }
 }
 export function moveWidget(rows: WidgetSetting[], id: WidgetId, direction: -1 | 1) {

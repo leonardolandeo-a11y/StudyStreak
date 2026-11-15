@@ -102,7 +102,7 @@ try {
   // A real image loading failure (not a DOM event) exercises React Native's image loader.
   await browser.command('Network.enable');
   await browser.command('Network.setCacheDisabled',{cacheDisabled:true});
-  await browser.command('Network.setBlockedURLs',{urls:['*study-v1/campus.*png','*study-v1/library.*png','*study-v1/night.*png','*study-v1/cafe.*png']});
+  await browser.command('Network.setBlockedURLs',{urls:['*study-v2/campus.*png','*study-v2/library.*png','*study-v2/night.*png','*study-v2/cafe.*png']});
   await browser.reload();await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);
   await browser.fill('[aria-label="Username"]','Scholar');await browser.fill('[aria-label="Password"]','Fixture-password-1');await browser.click('Sign in');
   await browser.wait(`!!document.querySelector('[aria-label="Open menu"]')`);await navigate('Dashboard');

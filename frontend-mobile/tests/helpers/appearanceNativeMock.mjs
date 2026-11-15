@@ -61,3 +61,10 @@ export function Image(props) { return React.createElement('img', { alt: props.ac
 
 export const totalMemory = 4 * 1024 ** 3;
 export const Easing = { ease: value => value, inOut: value => value };
+
+export const AccessibilityInfo = { setAccessibilityFocus() {}, announceForAccessibility() {} };
+export const findNodeHandle = () => null;
+export const PanResponder = { create: config => ({ panHandlers: {
+  onResponderGrant: config.onPanResponderGrant, onResponderMove: config.onPanResponderMove,
+  onResponderRelease: config.onPanResponderRelease, onResponderTerminate: config.onPanResponderTerminate,
+} }) };
