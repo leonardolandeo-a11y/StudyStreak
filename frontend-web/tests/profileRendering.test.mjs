@@ -89,10 +89,15 @@ test('Chrome: protected profile, editing, images, sidebar, error states, themes 
         const banner=preview.firstElementChild.getBoundingClientRect(), avatar=preview.lastElementChild.getBoundingClientRect();
         return avatar.top>banner.top && avatar.top<banner.bottom && avatar.bottom>banner.bottom && preview.getBoundingClientRect().bottom>=avatar.bottom;
       })()`), `Avatar geometry at ${width}`);
-      assert.ok(await page.evaluate(`Array.from(document.querySelectorAll('dialog [data-image-picker]')).every(b=>{
-        const remove=b.nextElementSibling, a=b.getBoundingClientRect(), r=remove.getBoundingClientRect();
-        return a.top===r.top && Math.abs(a.width-r.width)<=1 && a.height===r.height && a.height>=44 && getComputedStyle(b.closest('[role=group]').querySelector('input')).display==='none';
-      })`), `Image controls at ${width}`);
+      // System fonts differ between Linux runners; a wrapped label must still align with Remove.
+      for (const font of ['', 'DejaVu Sans, sans-serif']) {
+        await page.evaluate(`document.documentElement.style.setProperty('--ss-font-body',${JSON.stringify(font)})`);
+        assert.ok(await page.evaluate(`Array.from(document.querySelectorAll('dialog [data-image-picker]')).every(b=>{
+          const remove=b.nextElementSibling, a=b.getBoundingClientRect(), r=remove.getBoundingClientRect();
+          return a.top===r.top && Math.abs(a.width-r.width)<=1 && a.height===r.height && a.height>=44 && getComputedStyle(b.closest('[role=group]').querySelector('input')).display==='none';
+        })`), `Image controls at ${width}/${font || 'system'}`);
+      }
+      await page.evaluate(`document.documentElement.style.removeProperty('--ss-font-body')`);
       if (process.env.STUDYSTREAK_PROFILE_SCREENSHOTS && [320,1440].includes(width)) {
         const shot=await page.command('Page.captureScreenshot', {format:'png'});
         writeFileSync(`/tmp/studystreak-profile-editor-${width}.png`,Buffer.from(shot.data,'base64'));

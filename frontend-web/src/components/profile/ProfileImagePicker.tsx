@@ -15,7 +15,7 @@ export function ProfileImagePicker({ slot, file, removed, removable, changed, on
         <input ref={input} id={id} hidden data-image-slot={slot} type="file" accept="image/png,image/jpeg,image/webp"
             aria-label={`Select ${slot} file`} aria-describedby={`${id}-help`}
             onChange={event => { onSelect(event.target.files?.[0]); event.target.value = ""; }} />
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex items-stretch gap-2">
             <button type="button" data-image-picker={slot} className="study-button profile-file-button min-w-0 flex-1 gap-1 px-1 sm:gap-2 sm:px-2" aria-label={`Select ${slot} file`} aria-describedby={`${id}-help`} onClick={() => input.current?.click()}>
                 <ImagePlus size={16} className="shrink-0" aria-hidden="true" />Select file
             </button>

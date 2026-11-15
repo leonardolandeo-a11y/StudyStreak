@@ -110,6 +110,7 @@ test('Chrome: duration modal, keyboard focus, responsive timer and circular soun
 }, async () => {
   const virtualId = '\0virtual:focus-refinement';
   const live = await createServer({
+    define: { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://focus.invalid') },
     appType: 'custom', server: { host: '127.0.0.1', port: 0, hmr: false, watch: null },
     plugins: [{ name: 'focus-refinement-test',
       resolveId(id) { if (id === virtualId) return virtualId; },

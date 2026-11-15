@@ -70,7 +70,7 @@ const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium',
 test('Chrome: global appearance, first paint, routes, contrast and accessibility', {
   timeout: 120000, skip: chrome ? false : 'Chrome unavailable; set STUDYSTREAK_CHROME_BIN',
 }, async () => {
-  const live = await createServer({ server: { host: '127.0.0.1', port: 0, hmr: false, watch: null } });
+  const live = await createServer({ define: { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify('https://appearance.invalid') }, server: { host: '127.0.0.1', port: 0, hmr: false, watch: null } });
   await live.listen();
   const origin = `http://127.0.0.1:${live.httpServer.address().port}`;
   const profile = mkdtempSync(join(tmpdir(), 'studystreak-appearance-'));

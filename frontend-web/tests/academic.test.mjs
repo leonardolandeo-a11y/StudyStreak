@@ -30,6 +30,9 @@ test('Chrome: scoped academic Dashboard/Focus, themes, pixel progress and respon
   return {status:404};
  }});
  try{
+  // The helper creates the test target via CDP; Chrome must not also bootstrap an unused tab.
+  const {targetInfos}=await page.command('Target.getTargets');
+  assert.equal(targetInfos.filter(target=>target.type==='page').length,1);
   await page.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)})`});
   for(const route of ['/dashboard','/focus-studio']){
    await page.navigate(route);await page.wait('!!document.querySelector(".academic-page")');

@@ -12,7 +12,7 @@ export async function profileBrowser({ api = 'https://profile.invalid', port = 0
   await vite.listen();
   const origin = `http://127.0.0.1:${vite.httpServer.address().port}`;
   const folder = mkdtempSync(join(tmpdir(), 'studystreak-profile-'));
-  const browser = spawn(chrome, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', ...(desktopPointer ? ['--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'] : []), '--disable-background-networking', '--disable-sync', '--no-first-run', `--user-data-dir=${folder}`, '--remote-debugging-pipe', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
+  const browser = spawn(chrome, ['--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', ...(desktopPointer ? ['--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'] : []), '--disable-background-networking', '--disable-sync', '--no-first-run', `--user-data-dir=${folder}`, '--remote-debugging-pipe', '--no-startup-window'], { stdio: ['ignore', 'ignore', 'pipe', 'pipe', 'pipe'] });
   let closing = false, stderr = '';
   const pending = new Map(), errors = []; let nextId = 0, buffer = '', loaded;
   browser.stderr.setEncoding('utf8');
