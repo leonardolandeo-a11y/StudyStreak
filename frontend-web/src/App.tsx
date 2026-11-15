@@ -9,6 +9,7 @@ import {
   Suspense
 } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthEntry } from './components/auth/AuthEntry';
 import AuthenticatedLayout from "./components/navigation/AuthenticatedLayout";
 import {
     ROUTES,
@@ -52,9 +53,9 @@ function App(){
         <Routes>
           <Route path={ROUTES.home} element={<Home />} />
 
-          <Route path= {ROUTES.login} element= {<Login></Login>}></Route>
+          <Route path= {ROUTES.login} element= {<AuthEntry><Login/></AuthEntry>}></Route>
 
-          <Route path= {ROUTES.register} element= {<Register></Register>}></Route>
+          <Route path= {ROUTES.register} element= {<AuthEntry><Register/></AuthEntry>}></Route>
 
           <Route
             element={
