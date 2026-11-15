@@ -71,7 +71,7 @@ test('Chrome: social authorization states, privacy, navigation, themes, keyboard
     denied=false;failed=true;await page.click('Refresh profile');await page.wait('document.querySelector("[data-social-profile] [role=alert]")?.textContent.includes("try again")');
     failed=false;missingImages=true;await page.click('Refresh profile');await page.wait('!!document.querySelector("[data-social-profile] h2")');
     assert.ok(await page.evaluate('!document.querySelector("[data-social-profile] img")'));
-    await page.navigate('/validations');await page.wait('!!Array.from(document.querySelectorAll("a[aria-label^=View]")).find(a=>a.pathname==="/users/77/profile")');
+    await page.navigate('/tracking-links');await page.wait('!!Array.from(document.querySelectorAll("a[aria-label^=View]")).find(a=>a.pathname==="/users/77/profile")');
     await page.evaluate('Array.from(document.querySelectorAll("a[aria-label^=View]")).find(a=>a.pathname==="/users/77/profile").focus()');await page.key('Enter');await page.wait('location.pathname==="/users/77/profile"');
     await page.navigate('/study-rooms');await page.wait('Array.from(document.querySelectorAll("button")).some(b=>b.textContent.includes("Social room"))');
     await page.evaluate('Array.from(document.querySelectorAll("button")).find(b=>b.textContent.includes("Social room")).click()');await page.wait('!!Array.from(document.querySelectorAll("a[aria-label^=View]")).find(a=>a.pathname==="/users/77/profile")');

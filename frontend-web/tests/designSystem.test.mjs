@@ -125,7 +125,7 @@ test('keyboard focus survives legacy utilities without styling noninteractive co
         const { frameTree } = await command('Page.getFrameTree');
         await command('Page.setDocumentContent', {
             frameId: frameTree.frame.id,
-            html: `<!doctype html><html><head><meta charset="utf-8"><style>${stylesheet.code}</style></head><body>
+            html: `<!doctype html><html data-theme="light" data-background="neutral" data-accent="mint"><head><meta charset="utf-8"><style>${stylesheet.code}</style></head><body>
                 ${markup}
                 <button id="legacy-result" class="focus:bg-slate-800 focus:outline-none">Tracking result</button>
                 <input id="legacy-resource" class="outline-none focus:border-sky-500" aria-label="Books">
@@ -151,9 +151,9 @@ test('keyboard focus survives legacy utilities without styling noninteractive co
             return colors;
         })()`);
         assert.deepEqual(palette, [
-            'rgb(11, 16, 20)', 'rgb(20, 28, 34)', 'rgb(38, 50, 59)', 'rgb(60, 75, 86)',
-            'rgb(145, 162, 174)', 'rgb(148, 232, 195)', 'rgb(117, 218, 176)', 'rgb(117, 218, 176)',
-        ], 'Consolidating compatibility tokens must preserve the existing palette');
+            'rgb(248, 250, 252)', 'rgb(255, 255, 255)', 'rgb(232, 235, 240)', 'rgb(100, 116, 139)',
+            'rgb(71, 85, 105)', 'rgb(18, 100, 73)', 'rgb(14, 80, 59)', 'rgb(22, 101, 52)',
+        ], 'Compatibility tokens must follow the explicit Neutral Light palette');
         const targets = ['partner-search', 'legacy-result', 'legacy-resource', 'test-link',
             'test-select', 'test-textarea', 'test-summary', 'test-custom'];
         for (const target of targets) {
@@ -171,7 +171,7 @@ test('keyboard focus survives legacy utilities without styling noninteractive co
             assert.equal(focus.outline, 'solid', `Focus hidden on ${target}`);
             assert.equal(focus.width, '2px');
             assert.equal(focus.offset, '3px');
-            assert.equal(focus.color, 'rgb(148, 232, 195)');
+            assert.equal(focus.color, 'rgb(18, 100, 73)');
         }
         const excluded = await evaluate(`(() => {
             const element = document.getElementById('noninteractive');

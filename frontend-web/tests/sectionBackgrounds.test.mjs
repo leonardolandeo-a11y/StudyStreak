@@ -22,7 +22,7 @@ function audit(){
  const contrast=(a,b)=>{const x=lum(rgb(a)),y=lum(rgb(b));return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
  const badCanvas=[...document.querySelectorAll('.min-h-screen,.workspace-sidebar')].filter(el=>rgb(getComputedStyle(el).backgroundColor)[3]>0&&!equal(getComputedStyle(el).backgroundColor,'var(--ss-background)')).map(el=>({classes:el.className,bg:getComputedStyle(el).backgroundColor,expected:root.backgroundColor}));
  const panels=[];
- for(const [selector,paint]of [['.cozy-rooms .study-panel','--ss-surface'],['.cozy-rooms input,.cozy-rooms textarea,.cozy-rooms select','--ss-surface-hover'],['.cozy-dashboard .retro-stat','--ss-surface-raised'],['.goal-detail-hero,.streak-card,[aria-label="Profile identity"]','--ss-surface'],['dialog[open],.workflow-dialog','--ss-surface'],['article[role=dialog]','--ss-surface-raised']]){
+ for(const [selector,paint]of [['.cozy-rooms .study-panel','--ss-surface'],['.cozy-rooms input,.cozy-rooms textarea,.cozy-rooms select','--ss-surface-hover'],['.cozy-dashboard .retro-stat','--ss-surface-raised'],['.goal-detail-hero,.streak-card,[aria-label="Profile identity"]','--ss-surface'],['dialog[open]:not(.book-details-dialog),.workflow-dialog','--ss-surface'],['article[role=dialog],.book-details-dialog','--ss-surface-raised']]){
   for(const el of document.querySelectorAll(selector)){const s=getComputedStyle(el);panels.push({selector,bg:s.backgroundColor,expected:paint,match:equal(s.backgroundColor,`var(${paint})`),contrast:contrast(s.color,s.backgroundColor)});}
  }
  const controls=[...document.querySelectorAll('.cozy-rooms input,.cozy-rooms textarea,.cozy-rooms select,dialog[open] input:not([type=checkbox]):not([type=radio]):not([type=range]),dialog[open] textarea,[role=dialog] input:not([type=checkbox]):not([type=radio]):not([type=range])')].filter(el=>el.getClientRects().length>0).map(el=>{const s=getComputedStyle(el);return{border:contrast(s.borderTopColor,s.backgroundColor),text:contrast(s.color,s.backgroundColor)}});
@@ -83,7 +83,7 @@ test('all functional sections and main dialogs inherit background families; Room
    }
    const openers={'dashboard':()=>browser.click('Customize Dashboard'),'goal-details':()=>browser.click('Update Goal'),'tracking':()=>browser.evaluate(`document.querySelector('[aria-label^="Remove tracking link"]').click()`),'resources':()=>browser.evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Algebra companion')).click()`),'profile':()=>browser.click('Edit profile'),'focus':()=>browser.evaluate(`document.querySelector('[aria-label="Pomodoro settings"]').click()`)};
    if(openers[name]){
-    await openers[name]();await browser.wait(name==='dashboard'?'!!document.querySelector("#dashboard-customize")':'!!document.querySelector("dialog[open],[role=dialog]")');
+    await openers[name]();await browser.wait('!!document.querySelector("dialog[open],[role=dialog]")');
     for(const [background,mode,accent]of combinations){await apply(background,mode,accent);await sample(name+' modal');if(['profile','resources','goal-details'].includes(name))await capture(`${name}-modal-${background}-${mode}-${accent}`);}
     if(name==='dashboard')await browser.click('Done customizing');else await browser.key('Escape');
    }

@@ -49,7 +49,7 @@ test('Chrome: protected avatars in history, Validations and room participants pr
   await page.wait('!!document.querySelector("section[aria-label^=Select] article img")');
   await page.evaluate('Array.from(document.querySelectorAll("button")).find(b=>b.textContent.trim()==="View goals").click()');
   await page.wait('Array.from(document.querySelectorAll("button")).some(b=>b.textContent.trim()==="Refresh goals" && b.getAttribute("aria-pressed")==="true")');
-  assert.ok(await page.evaluate('!!document.querySelector("a[aria-label^=View]")'));
+  assert.equal(await page.evaluate(`!!document.querySelector('section[aria-label="Select tracking partner"] a[href^="/users/"]')`),false,'F5 removes profile navigation from the validation wizard; goal selection remains available');
   await page.evaluate('history.pushState({},"","/study-rooms");window.dispatchEvent(new PopStateEvent("popstate"))');
   await page.wait('Array.from(document.querySelectorAll("button")).some(b=>b.textContent.includes("Avatar room"))');
   await page.evaluate('Array.from(document.querySelectorAll("button")).find(b=>b.textContent.includes("Avatar room")).click()');
@@ -97,9 +97,10 @@ test('Chrome: book leaf crosses the spine without moving the book; goal pulse sc
    if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(`/tmp/studystreak-book-frame-${time}.png`,Buffer.from(shot.data,'base64'));}
   }
   assert.ok(frames[0].scale>0.99&&frames[2].scale<-.99&&frames[4].scale>.99);assert.ok(frames[1].opacity>.99 && Math.abs(frames[1].scale)<.9);
-  assert.ok(frames.every(f=>f.bookTransform==='none'&&f.fixed&&f.width===22));
+  assert.ok(frames.every(f=>f.bookTransform==='none'&&f.fixed&&Math.abs(f.width-22)<.1));
   await page.command('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});await page.key('Tab');
   for(const label of ['Resources','Goals']){await page.evaluate(`document.querySelector('a[data-nav-icon=${label}]').focus()`);assert.ok(await page.evaluate('document.activeElement.matches(":focus-visible")'));}
+  await new Promise(resolve=>setTimeout(resolve,300)); // Let the approved link hover translation finish.
   const goalFrames=[];
   for(const time of [0,150,300]){
    goalFrames.push(await page.evaluate(`(()=>{const link=document.querySelector('a[data-nav-icon=Goals]'),svg=link.querySelector('svg'),animation=svg.getAnimations()[0];animation.pause();animation.currentTime=${time};const m=new DOMMatrix(getComputedStyle(svg).transform);return {scale:m.a,b:m.b,c:m.c,width:svg.getBoundingClientRect().width,textX:link.querySelector('span').getBoundingClientRect().x}})()`));

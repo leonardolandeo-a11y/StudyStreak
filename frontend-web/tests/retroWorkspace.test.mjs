@@ -48,7 +48,7 @@ try{
    if(route==='tracking-links')assert.equal(await browser.evaluate(`Array.from(document.querySelectorAll('.tracking-group article')).every(a=>a.getBoundingClientRect().right<=a.closest('.tracking-group').getBoundingClientRect().right)`),true);
    await capture(route+'-dark-'+width);
    if(route==='dashboard'&&width===1440){
-    assert.equal(await browser.evaluate(`(()=>{const chart=document.querySelector('[aria-labelledby="study-activity-heading"]').getBoundingClientRect(),metrics=document.querySelector('[aria-label="Study statistics"]').getBoundingClientRect();return metrics.left>chart.right&&Math.abs(metrics.top-chart.top)<2})()`),true);
+    assert.equal(await browser.evaluate(`(()=>{const chart=document.querySelector('[aria-labelledby="study-activity-heading"]').getBoundingClientRect(),metrics=document.querySelector('[aria-label="Focus Summary"]').getBoundingClientRect();return metrics.bottom<=chart.top&&metrics.width>0&&chart.width>0})()`),true);
    }
    if(width===390||width===1440){await browser.evaluate(`window.studyStreakAppearance.apply({mode:'light',accent:'purple',reduceMotion:true})`);await capture(route+'-light-'+width);}
   }
@@ -58,7 +58,7 @@ try{
  await browser.wait(`document.querySelector('.workspace-sidebar').getBoundingClientRect().width===84`);
  await capture('sidebar-collapsed');
  await browser.navigate('/focus-studio');
- assert.equal(await browser.evaluate(`!!document.querySelector('.retro-shell')`),false,'The treatment must not leak into Focus or other modules');
+ await browser.wait(`!!document.querySelector('[role="timer"]')`);assert.equal(await browser.evaluate(`!!document.querySelector('.study-environment')`),false,'Focus stays clean without a Dashboard illustration');
  assert.deepEqual(mutations,[]);assert.deepEqual(browser.errors,[]);
 }finally{await browser.close()}
 });

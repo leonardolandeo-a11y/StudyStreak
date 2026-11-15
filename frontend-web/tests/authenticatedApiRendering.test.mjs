@@ -22,7 +22,8 @@ for (const refreshStatus of [200,401]) test(`Chrome: authenticated API single-fl
     if(auth===`Bearer ${initial}`)oldHeaders++;
     else if(auth===`Bearer ${renewed}`)newHeaders++;
     else missingHeaders++;
-    if(path.includes('unread'))return {body:0};
+    // The notification provider polls count and list; neither starts this diagnostic refresh.
+    if(path.includes('/notifications'))return {body:path.includes('unread')?0:{content:[],number:0,size:20,totalElements:0,totalPages:0,first:true,last:true,empty:true}};
     if(auth!==`Bearer ${renewed}`)return {status:401,body:{message:'Authentication is required'}};
     if(path==='/api/profile')return {body:profile};
     if(path==='/api/profile/privacy')return {body:{showPresence:false,showLastSeen:false,shareVerifiedMinutes:false,shareVerifiedSessions:false}};

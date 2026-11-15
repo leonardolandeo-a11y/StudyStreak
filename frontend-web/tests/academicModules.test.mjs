@@ -47,7 +47,7 @@ test('Chrome: academic modules retain forms, avatars, status labels, local theme
    if(name==='resources')await page.wait(`document.body.textContent.includes('Algebra companion')`);
    if(name==='profile'||name==='member')await page.wait(`!!document.querySelector('[aria-label="Profile identity"]')`);
    if(name==='tracking')await page.wait(`document.body.textContent.includes('Study partner')`);
-   for(const width of [320,390,768,1440]){
+   for(const width of [320,390,768,1440,1920]){
     await page.command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<768});
     for(const mode of ['dark','light','system'])for(const accent of ['mint','blue','purple','orange']){
      if(name!=='settings')await page.evaluate(`window.studyStreakAppearance.apply({mode:'${mode}',accent:'${accent}',reduceMotion:true})`);

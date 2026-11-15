@@ -51,7 +51,7 @@ test('Chrome: protected profile, editing, images, sidebar, error states, themes 
     await page.click('Save changes'); await page.wait('!document.querySelector("dialog")');
     assert.equal(profile.displayName, 'María 李 😀');
     assert.ok(await page.evaluate('document.querySelector("[data-profile-page]").textContent.includes("<b>Not HTML</b>") && !document.querySelector("[data-profile-page] b")'));
-    assert.ok(await page.evaluate('document.querySelector("aside [role=group]").textContent.includes("María 李 😀")'));
+    assert.ok(await page.evaluate('document.querySelector("aside [aria-label^=User]").textContent.includes("María 李 😀")'));
     await page.reload(); await page.wait('document.querySelector("[data-profile-page] h2")?.textContent === "María 李 😀"');
     await page.click('Edit profile');
     const encoded = image.toString('base64');
@@ -62,13 +62,13 @@ test('Chrome: protected profile, editing, images, sidebar, error states, themes 
     await page.wait('!!document.querySelector("dialog [role=alert]")');
     assert.ok(await page.evaluate('document.querySelector("dialog [role=alert]").textContent.includes("Some changes")'));
     failUpload = false; await page.click('Save changes');
-    await page.wait('!document.querySelector("dialog") && !!document.querySelector("aside [role=group] img")');
+    await page.wait('!document.querySelector("dialog") && !!document.querySelector("aside [aria-label^=User] img")');
     assert.ok(writes.includes('PUT avatar') && writes.includes('PUT banner'));
     assert.ok(await page.evaluate('Array.from(document.querySelectorAll("[data-profile-page] img")).every(i=>i.src.startsWith("blob:"))'));
     await page.click('Edit profile'); await choose('avatar'); await page.click('Save changes'); await page.wait('!document.querySelector("dialog")');
     assert.equal(writes.filter(w=>w==='PUT avatar').length, 2);
     await page.click('Edit profile'); await page.click('Remove avatar'); await page.click('Remove banner'); await page.click('Save changes');
-    await page.wait('!document.querySelector("dialog") && !document.querySelector("aside [role=group] img")');
+    await page.wait('!document.querySelector("dialog") && !document.querySelector("aside [aria-label^=User] img")');
     assert.equal(assets.avatar, null); assert.equal(assets.banner, null);
     for (const error of ['network', 403, 401, 500]) {
       failure=error; await page.evaluate('document.querySelector("button[title^=Refresh]").click()');

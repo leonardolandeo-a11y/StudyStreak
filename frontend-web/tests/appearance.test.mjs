@@ -290,7 +290,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
       if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(244, 241, 248)'`), route);
       else assert.ok(await evaluate('!!document.querySelector(".auth-content")'));
       assert.equal(await evaluate('document.documentElement.dataset.accent'), 'blue', route);
-      assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), route === '/dashboard' ? 'rgb(255, 249, 239)' : 'rgb(15, 23, 42)', route);
+      assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), 'rgb(15, 23, 42)', route);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `${route} desktop overflow`);
       if (route === '/dashboard') {
         await wait('!!document.querySelector(".recharts-bar-rectangle path")');
