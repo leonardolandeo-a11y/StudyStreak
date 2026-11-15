@@ -1,16 +1,16 @@
 import { AccessibilityInfo, Animated, Platform, Text, View, useWindowDimensions } from 'react-native';
 import { useDashboardWidgets } from '../../../hooks/useDashboardWidgets';
 import { RecordedCalendar } from '../../../components/dashboard/RecordedCalendar';
-import { CustomizeDashboard, type DashboardCustomization } from '../../../components/dashboard/CustomizeDashboard';
+import { CustomizeDashboard } from '../../../components/dashboard/CustomizeDashboard';
 import { DashboardPartners } from '../../../components/dashboard/DashboardPartners';
 import { AcademicPanel } from '../../../components/academic/Academic';
 import { ActionButton } from '../../../components/ui/ActionButton';
-import { router, useIsFocused } from 'expo-router';
+import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { StudyEnvironment } from '../../../components/environment/StudyEnvironment';
 import { workspacePalette, dashboardPalette } from '../../../components/academic/workspacePalette';
 import { useAppearance } from '../../../hooks/useAppearance';
 import { Screen } from '../../../components/ui/Screen';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useFocusedResource } from '../../../hooks/useFocusedResource';
 import { getMobileFocusStatistics } from '../../../features/focus/focusStatisticsService';
@@ -45,15 +45,16 @@ function DashboardContent({ userId }: { userId: number }) {
   const { state, retry } = useFocusedResource(load);
   const stats = state.status === 'success' ? state.data : null;
   const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
-  const customization = useRef<DashboardCustomization>(null);
+  const [selectedId, setSelectedId] = useState<WidgetId | null>(null);
+  const selectWidget = useCallback((id: WidgetId) => setSelectedId(current => current === id ? null : id), []);
+  useFocusEffect(useCallback(() => () => setSelectedId(null), []));
   const [customizationOpen, setCustomizationOpen] = useState(false);
   const focused = useIsFocused();
   const [announcement, setAnnouncement] = useState('');
   const announce = useCallback((message: string) => {
     setAnnouncement(message); if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(message);
   }, []);
-  const choose = useCallback((id: WidgetId) => customization.current?.choose(id), []);
-  const { drag, translation, translationX, scrollRef, viewportRef, contentRef, registerRow, onContentLayout, scrollProps, start, move, finish, accessibleMove } = useWidgetDrag({ rows: layout.rows, items: visibleWidgets, save: layout.save, announce, choose, enabled: focused && !customizationOpen });
+  const { drag, translation, translationX, scrollRef, viewportRef, contentRef, registerRow, onContentLayout, scrollProps, start, move, finish, accessibleMove } = useWidgetDrag({ rows: layout.rows, items: visibleWidgets, save: layout.save, announce, onSelect: selectWidget, enabled: focused && !customizationOpen });
   const targetFrame = drag?.frame;
   const retryWithoutChart = state.status === 'error' && !visibleWidgets.some(row => row.id === 'activity') &&
     visibleWidgets.some(row => ['focus-summary','streak','journey','recent','calendar'].includes(row.id));
@@ -65,7 +66,7 @@ function DashboardContent({ userId }: { userId: number }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><AppIcon name="dashboard" size={18} color={colors.primary}/><Text accessibilityRole="header" style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>Dashboard</Text></View>
         <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12 }}>Your study progress at a glance.</Text>
       </View>
-      <CustomizeDashboard ref={customization} onOpenChange={setCustomizationOpen} {...layout}/>
+      <CustomizeDashboard selectedId={selectedId} onSelect={selectWidget} onOpenChange={setCustomizationOpen} {...layout}/>
     </View>
     {layout.error ? <View><StatusMessage error message={layout.error}/><ActionButton compact secondary title="Retry layout" onPress={() => { void layout.save(layout.rows); }}/></View> : null}
     {retryWithoutChart ? <AcademicPanel style={{ backgroundColor: dashboardPalette(theme).surface, borderColor: dashboardPalette(theme).border }}>
@@ -74,8 +75,9 @@ function DashboardContent({ userId }: { userId: number }) {
     </AcademicPanel> : null}
     <Animated.View ref={contentRef} onLayout={onContentLayout} style={{ opacity: fade, flexDirection: 'row', flexWrap: 'wrap', gap: 14 }} testID="dashboard-widgets">
     {visibleWidgets.map((row,index) => <Animated.View testID={`widget-${row.id}`} key={row.id} onLayout={event => { registerRow(row.id, event.nativeEvent.layout); }} style={{ zIndex: drag?.id === row.id ? 2 : 0, opacity: drag?.id === row.id ? .75 : 1, transform: [{ translateY: drag?.id === row.id ? translation : 0 }, { translateX: drag?.id === row.id ? translationX : 0 }], minWidth: 0, width: width >= 700 && ['goals','partners','quick','streak'].includes(row.id) ? '48%' : '100%', flexGrow: 1 }}>
-      <View style={{ minHeight: 44, alignItems: 'flex-end' }}><WidgetDragHandle compact focus={false} labelPrefix="Move widget" id={row.id} index={index} count={visibleWidgets.length}
-        start={start} move={move} finish={finish} choose={choose} accessibleMove={accessibleMove}/></View>
+      <View style={{ minHeight: 44, alignItems: 'flex-end' }}><WidgetDragHandle compact selected={selectedId === row.id} labelPrefix="Move widget" id={row.id} index={index} count={visibleWidgets.length}
+        start={start} move={move} finish={finish} onSelect={selectWidget} accessibleMove={accessibleMove}/></View>
+      {selectedId === row.id ? <View testID="selected-widget-outline" pointerEvents="none" style={{ zIndex: 3, position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: 12, borderWidth: 2, borderColor: colors.primary }}/>: null}
       {row.id === 'focus-summary' && <DashboardActivity part="focus" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'streak' && <DashboardActivity part="streak" days={days} onDaysChange={setDays} state={state} retry={retry}/>}
       {row.id === 'activity' && <DashboardActivity part="activity" days={days} onDaysChange={setDays} state={state} retry={retry}/>}

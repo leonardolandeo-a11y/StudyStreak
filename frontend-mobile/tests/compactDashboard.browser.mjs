@@ -61,9 +61,9 @@ try{
  await load(101);assert.equal(await browser.evaluate(`(${widgets}).at(-1)`),'focus-summary');
  await load(202);assert.equal(await browser.evaluate(`(${widgets})[0]`),'activity');
  await load(101);assert.equal(await browser.evaluate(`(${widgets}).at(-1)`),'focus-summary');
- // Direct handle activation opens the existing non-gesture position chooser.
- await browser.click('Move widget Study Activity');await browser.wait(modal);
- await browser.click('Position 1 · Study Activity');await browser.click('Restore default layout');await browser.click('Done customizing');await browser.wait('!'+modal);
+ // Direct handle activation selects without opening customization.
+ await browser.click('Move widget Study Activity');assert.equal(await browser.evaluate(modal),false);
+ await browser.click('Customize Dashboard');await browser.wait(modal);await browser.click('Restore default layout');await browser.click('Done customizing');await browser.wait('!'+modal);
  assert.equal(await browser.evaluate(`(${widgets})[0]`),'activity');assert.equal(await browser.evaluate(`(${widgets}).length`),9);
  await browser.click('Lines');await browser.click('30 days');await browser.wait(`!!document.querySelector('[aria-label^="Line chart, 30 days"]')`);
  // Real semantic background is used by both gradients in all ten family/mode pairs.
@@ -82,5 +82,5 @@ try{
  await touch(await center('Move widget Study Streak'),await center('Move widget Active Goals'));
  await browser.wait(`${layout}.findIndex(row=>row.id==='streak')===3`);
  assert.deepEqual(browser.errors,[]);
- console.log('Compact Dashboard passed: art/gradient, activity first, direct touch drag/cancel/autoscroll, modal alternative, A/B/A, chart controls, ten theme pairs and 320/390/768 widths.');
+ console.log('Compact Dashboard passed: art/gradient, activity first, direct touch drag/cancel/autoscroll, selection without popups, A/B/A, chart controls, ten theme pairs and 320/390/768 widths.');
 }catch(error){writeFileSync('.expo/m3-hotfix-failure.json',JSON.stringify({error:String(error),text:await browser.evaluate('document.body.innerText'),runtime:browser.errors}));throw error;}finally{await browser.close();}

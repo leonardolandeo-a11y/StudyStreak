@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, View, type ViewStyle } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 
-export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close' | 'trash';
+export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close' | 'trash' | 'chevron-up' | 'chevron-down';
 export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName; color: string; size?: number; pulse?: number }) {
   const { reduceMotion } = useAppearance();
   const [motion] = useState(() => new Animated.Value(0));
@@ -26,6 +26,7 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
   return <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ width: size, height: size }}>
     <Animated.View testID={`icon-${name}-motion`} style={{ width: 24, height: 24, left: (size - 24) / 2, top: (size - 24) / 2,
       transform: [{ scale: size / 24 }, { rotate: name === 'focus' || name === 'notifications' ? tilt : '0deg' }] }}>
+      {name === 'chevron-up' || name === 'chevron-down' ? <><View style={line(4, 10, 10, name === 'chevron-up' ? -45 : 45)}/><View style={line(10, 10, 10, name === 'chevron-up' ? 45 : -45)}/></> : null}
       {name === 'dashboard' ? [[2, 2], [14, 2], [2, 14], [14, 14]].map(([x, y], index) =>
         <Animated.View key={index} style={[box(x, y, 8, 8), { transform: [
           { translateX: motion.interpolate({ inputRange: [0, 1], outputRange: [0, x < 10 ? -1.5 : 1.5] }) },

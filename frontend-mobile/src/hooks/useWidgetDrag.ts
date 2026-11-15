@@ -4,15 +4,15 @@ import { widgetLabels, type WidgetId, type WidgetSetting } from '../features/das
 import { moveVisibleWidgetTo, widgetDropIndex, type RowFrame } from '../features/dashboard/widgetReorder';
 
 /** Shared by the modal and Dashboard; only handles start a drag, only drop saves. */
-export function useWidgetDrag({ rows, items = rows, save, announce, choose, enabled = true }: {
+export function useWidgetDrag({ rows, items = rows, save, announce, onSelect, enabled = true }: {
   rows: WidgetSetting[]; items?: WidgetSetting[]; save(rows: WidgetSetting[]): Promise<void>;
-  announce(message: string): void; choose(id: WidgetId): void; enabled?: boolean;
+  announce(message: string): void; onSelect(id: WidgetId): void; enabled?: boolean;
 }) {
   const [drag, setDrag] = useState<{ id: WidgetId; target: number; from: number; frame?: RowFrame } | null>(null);
   const [translation] = useState(() => new Animated.Value(0));
   const [translationX] = useState(() => new Animated.Value(0));
   const contentRef = useRef<ComponentRef<typeof View>>(null);
-  const latest = useRef({ rows, items, save, announce, choose }); latest.current = { rows, items, save, announce, choose };
+  const latest = useRef({ rows, items, save, announce, onSelect }); latest.current = { rows, items, save, announce, onSelect };
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null), viewport = useRef<ComponentRef<typeof View>>(null);
   const frames = useRef(new Map<WidgetId, RowFrame>());
   const position = useRef({ top: 0, left: 0, originY: 0, originX: 0, height: 0, offset: 0, content: 0 });
@@ -65,13 +65,13 @@ export function useWidgetDrag({ rows, items = rows, save, announce, choose, enab
     stop(); const current = gesture.current; gesture.current = null; setDrag(null); translation.setValue(0); translationX.setValue(0);
     if (!current) return;
     if (cancelled) { latest.current.announce('Reordering cancelled.'); return; }
-    if (!current.active) { latest.current.choose(current.id); return; }
+    if (!current.active) { latest.current.onSelect(current.id); return; }
     const next = moveVisibleWidgetTo(latest.current.rows, current.id, latest.current.items[current.target]?.id);
     if (next !== latest.current.rows) void latest.current.save(next);
     latest.current.announce(`${widgetLabels[current.id]} at position ${current.target+1} of ${latest.current.items.length}.`);
   }, [stop, translation, translationX]);
   const accessibleMove = useCallback((id: WidgetId, action: string) => {
-    if (!['increment','decrement','first','last'].includes(action)) { if (action === 'activate') latest.current.choose(id); return; }
+    if (!['increment','decrement','first','last'].includes(action)) { if (action === 'activate') latest.current.onSelect(id); return; }
     const index = latest.current.items.findIndex(row => row.id === id);
     const target = action === 'increment' ? index+1 : action === 'decrement' ? index-1 : action === 'first' ? 0 : latest.current.items.length-1;
     const next = moveVisibleWidgetTo(latest.current.rows, id, latest.current.items[Math.max(0, Math.min(latest.current.items.length-1,target))]?.id);

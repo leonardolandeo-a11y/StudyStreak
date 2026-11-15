@@ -7,11 +7,21 @@ export interface WidgetSetting { id: WidgetId; visible: boolean }
 const ids = Object.keys(widgetLabels) as WidgetId[];
 const defaultOrder: WidgetId[] = ['activity', ...ids.filter(id => id !== 'activity')];
 export const defaultWidgets = (): WidgetSetting[] => defaultOrder.map(id => ({ id, visible: true }));
+// Only an exact, fully visible historical default is safe to migrate.
+function isLegacyDefault(input: unknown): boolean {
+    return Array.isArray(input) && (input.length === 8 || input.length === 9) &&
+        input[0]?.layoutVersion !== 2 && input.every((row,index) => row?.id === ids[index] && row?.visible === true);
+}
+/** Keep the array contract; mark new explicit choices so a deliberate old order survives reload. */
+function serializeWidgets(rows: WidgetSetting[]) {
+    return JSON.stringify(rows.map((row,index) => index === 0 ? { ...row, layoutVersion: 2 } : row));
+}
 /** Accept older partial arrays, discard unknown fields/IDs and keep each ID exactly once. */
-export function parseWidgets(raw: string | null): WidgetSetting[] {
+export function parseWidgets(raw: string | null, migrateLegacy = true): WidgetSetting[] {
     try {
         const input: unknown = raw ? JSON.parse(raw) : null;
         if (!Array.isArray(input)) return defaultWidgets();
+        if (migrateLegacy && isLegacyDefault(input)) return defaultWidgets();
         const seen = new Set<WidgetId>();
         const rows: WidgetSetting[] = [];
         for (const row of input) {
@@ -42,15 +52,31 @@ export function createWidgetStore(storage: { read(): Promise<string | null>; wri
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
         async hydrate() {
             const revision = edits;
-            try { const raw = await storage.read(); if (edits === revision) state = { rows: parseWidgets(raw), ready: true, error: null }; }
+            try {
+                const raw = await storage.read();
+                if (edits === revision) {
+                    const rows = parseWidgets(raw);
+                    state = { rows, ready: true, error: null };
+                    let migrating = false;
+                    try { migrating = raw !== null && isLegacyDefault(JSON.parse(raw)); } catch { /* Invalid input already uses defaults. */ }
+                    if (migrating) {
+                        task = task.catch(() => {}).then(async () => {
+                            if (edits === revision) await storage.write(serializeWidgets(rows));
+                        }).catch(() => {
+                            if (edits === revision) state = { ...state, error: 'Layout works for now, but could not be saved. Please retry.' };
+                        });
+                        await task;
+                    }
+                }
+            }
             catch { if (edits === revision) state = { ...state, ready: true, error: 'Layout could not be loaded. Defaults are shown.' }; }
             publish();
         },
         save(rows: WidgetSetting[]) {
             const revision = ++edits;
-            const clean = parseWidgets(JSON.stringify(rows));
+            const clean = parseWidgets(JSON.stringify(rows), false);
             state = { rows: clean, ready: true, error: null }; publish();
-            task = task.catch(() => {}).then(() => storage.write(JSON.stringify(clean))).then(() => {
+            task = task.catch(() => {}).then(() => storage.write(serializeWidgets(clean))).then(() => {
                 if (edits === revision) { state = { ...state, error: null }; publish(); }
             }).catch(() => {
                 if (edits === revision) { state = { ...state, error: 'Layout works for now, but could not be saved. Please retry.' }; publish(); }

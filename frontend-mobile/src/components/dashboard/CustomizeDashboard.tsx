@@ -1,5 +1,5 @@
-import { useCallback, useImperativeHandle, useRef, useState, type ComponentRef, type Ref } from 'react';
-import { AccessibilityInfo, findNodeHandle, Modal, Platform, ScrollView, Text, View } from 'react-native';
+import { useCallback, useRef, useState, type ComponentRef } from 'react';
+import { AccessibilityInfo, findNodeHandle, Modal, Platform, Text, View } from 'react-native';
 import { useIsFocused } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppearance } from '../../hooks/useAppearance';
@@ -7,16 +7,12 @@ import { ActionButton } from '../ui/ActionButton';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { AppIcon } from '../ui/AppIcon';
 import { WidgetReorderList } from './WidgetReorderList';
-import { moveWidgetTo } from '../../features/dashboard/widgetReorder';
-import { defaultWidgets, widgetLabels, type WidgetId, type WidgetSetting } from '../../features/dashboard/widgetPreferences';
+import { defaultWidgets, type WidgetId, type WidgetSetting } from '../../features/dashboard/widgetPreferences';
 
-export interface DashboardCustomization { choose(id: WidgetId): void }
-export function CustomizeDashboard({ rows, ready, error, save, ref, onOpenChange }: { ref?: Ref<DashboardCustomization>; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
+export function CustomizeDashboard({ rows, ready, error, save, selectedId, onSelect, onOpenChange }: { selectedId: WidgetId | null; onSelect(id: WidgetId): void; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
   const { theme: { colors }, reduceMotion } = useAppearance();
   const focused = useIsFocused();
   const [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
-  const [choosing, setChoosing] = useState<WidgetId | null>(null);
-  const [focusId, setFocusId] = useState<WidgetId | null>(null);
   const trigger = useRef<ComponentRef<typeof NavigationPressable>>(null);
   const heading = useRef<ComponentRef<typeof Text>>(null);
   const restoreFocus = useCallback(() => {
@@ -25,11 +21,7 @@ export function CustomizeDashboard({ rows, ready, error, save, ref, onOpenChange
       const node = findNodeHandle(trigger.current); if (node) AccessibilityInfo.setAccessibilityFocus(node);
     }
   }, []);
-  const close = () => { setOpen(false); onOpenChange?.(false); setChoosing(null); requestAnimationFrame(restoreFocus); };
-  useImperativeHandle(ref, () => ({ choose(id: WidgetId) {
-    setOpen(true); onOpenChange?.(true); setChoosing(id); setFocusId(id);
-  } }), [onOpenChange]);
-  const choose = useCallback((id: WidgetId) => { setFocusId(id); setChoosing(id); }, []);
+  const close = () => { setOpen(false); onOpenChange?.(false); requestAnimationFrame(restoreFocus); };
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
     if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(message);
@@ -37,7 +29,7 @@ export function CustomizeDashboard({ rows, ready, error, save, ref, onOpenChange
   return <>
     <View style={{ alignSelf: 'flex-end' }}>
       <NavigationPressable ref={trigger} accessibilityRole="button" accessibilityLabel="Customize Dashboard" accessibilityState={{ disabled: !ready, expanded: open }}
-        aria-expanded={open} disabled={!ready} onPress={() => { setOpen(true); onOpenChange?.(true); setChoosing(null); setFocusId(null); }}
+        aria-expanded={open} disabled={!ready} onPress={() => { setOpen(true); onOpenChange?.(true); }}
         style={{ width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
         <AppIcon name="settings" size={20} color={colors.primary}/>
       </NavigationPressable>
@@ -52,18 +44,13 @@ export function CustomizeDashboard({ rows, ready, error, save, ref, onOpenChange
             <AppIcon name="close" color={colors.text}/>
           </NavigationPressable>
         </View>
-        <Text style={{ padding: 16, color: colors.muted, fontSize: 13, lineHeight: 19 }}>Drag a handle to reorder. Tap a handle to choose a position. Changes save on this device for your account.</Text>
-        {choosing ? <ScrollView contentContainerStyle={{ padding: 16, gap: 10, maxWidth: 760, width: '100%', alignSelf: 'center' }}>
-          <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ color: colors.text, fontSize: 18 }}>Place {widgetLabels[choosing]}</Text>
-          {rows.map((row,index) => <ActionButton key={row.id} secondary compact title={`Position ${index+1} · ${widgetLabels[row.id]}`}
-            onPress={() => { const next = moveWidgetTo(rows, choosing, index); if (next !== rows) void save(next); announce(`${widgetLabels[choosing]} at position ${index+1} of ${rows.length}.`); setChoosing(null); }}/>) }
-          <ActionButton secondary title="Cancel position change" onPress={() => setChoosing(null)}/>
-        </ScrollView> : <WidgetReorderList focusId={focusId} rows={rows} save={save} announce={announce} choose={choose}/>}
+        <Text style={{ padding: 16, color: colors.muted, fontSize: 13, lineHeight: 19 }}>Drag a handle to reorder. Tap a handle to select or deselect a widget. Changes save on this device for your account.</Text>
+        <WidgetReorderList selectedId={selectedId} onSelect={onSelect} rows={rows} save={save} announce={announce}/>
         <View style={{ padding: 16, gap: 10, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
           <Text accessibilityLiveRegion="polite" style={{ color: colors.muted, fontSize: 12 }}>{announcement}</Text>
           {error ? <Text accessibilityRole="alert" style={{ color: colors.error }}>{error}</Text> : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <ActionButton secondary compact title="Restore default layout" onPress={() => { void save(defaultWidgets()); setChoosing(null); announce('Default layout restored.'); }}/>
+            <ActionButton secondary compact title="Restore default layout" onPress={() => { void save(defaultWidgets()); announce('Default layout restored.'); }}/>
             <ActionButton compact title="Done customizing" onPress={close}/>
           </View>
         </View>

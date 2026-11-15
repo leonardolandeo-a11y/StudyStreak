@@ -18,7 +18,7 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await browser.command('Emulation.setTouchEmulationEnabled',{enabled:true});
  await browser.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
  await browser.navigate('/');await browser.wait(`!!document.querySelector('[aria-label="Username"]')`);
- await browser.evaluate(`localStorage.setItem('studystreak-dashboard-v1-101',${JSON.stringify(JSON.stringify(ids.map(id=>({id,visible:true}))))})`);
+ await browser.evaluate(`localStorage.setItem('studystreak-dashboard-v1-101',${JSON.stringify(JSON.stringify(ids.map((id,index)=>({id,visible:true,...(index===0?{layoutVersion:2}:{})}))))})`);
  await load(101);assert.equal(await browser.evaluate(`(${visible}).length`),8);assert.equal(await browser.evaluate(calendars),0);
  assert.equal(await browser.evaluate(`document.body.textContent.includes('Your notifications')`),false);
  await open();assert.equal(await browser.evaluate(`document.querySelectorAll('[data-testid^="customize-row-"]').length`),9);
@@ -33,9 +33,9 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await browser.command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  await browser.wait(`${layout}.findIndex(row=>row.id==='focus-summary')===2`);
  assert.equal(await browser.evaluate(`document.body.textContent.includes('Place Focus Summary')`),false,'drag must not open position picker');
- // Non-gesture alternative and visibility are still available.
- await browser.evaluate(`document.querySelector('[aria-label="Reorder Focus Summary"]').focus()`);await browser.command('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.command('Input.dispatchKeyEvent',{type:'char',text:'\r',unmodifiedText:'\r',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.wait(`document.body.textContent.includes('Place Focus Summary')`);
- await browser.click('Position 1 · Study Streak');await browser.wait(`${layout}[0].id==='focus-summary'`);
+ // Keyboard selection and visibility remain available without a position picker.
+ await browser.evaluate(`document.querySelector('[aria-label="Reorder Focus Summary"]').focus()`);await browser.command('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.command('Input.dispatchKeyEvent',{type:'char',text:'\r',unmodifiedText:'\r',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});await browser.wait(`document.querySelector('[aria-label="Reorder Focus Summary"]').getAttribute('aria-pressed')==='true'`);assert.equal(await browser.evaluate(`document.body.textContent.includes('Place Focus Summary')`),false);
+
  // Cancelled touches never persist an intermediate order.
  const beforeCancel=await browser.evaluate(`localStorage.getItem('studystreak-dashboard-v1-101')`);
  const source=await browser.evaluate(`(()=>{const r=document.querySelector('[aria-label="Reorder Focus Summary"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
@@ -50,8 +50,7 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await new Promise(r=>setTimeout(r,1800));
  await browser.command('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  await browser.wait(`${layout}.findIndex(row=>row.id==='focus-summary')===8`);
- await browser.click('Reorder Focus Summary');await browser.click('Position 1 · Study Streak');
- await browser.wait(`${layout}[0].id==='focus-summary'`);
+ await browser.click('Reorder Focus Summary');assert.equal(await browser.evaluate(`document.body.textContent.includes('Place Focus Summary')`),false);
  await browser.evaluate(`document.querySelector('[aria-label="Show Activity Calendar"]').click()`);
  await browser.wait(`${layout}.find(row=>row.id==='calendar').visible===true`);
  assert.equal(statsRequests(),initial,'customization adds no statistics requests');
@@ -60,12 +59,11 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await browser.click('Explore study details');await browser.wait(`document.body.textContent.includes('See the Activity Calendar widget')`);assert.equal(await browser.evaluate(calendars),1);
  await open();await browser.evaluate(`document.querySelector('[aria-label="Show Activity Calendar"]').click()`);await end();
  await browser.wait(`${calendars}===1`);assert.equal(await browser.evaluate(`document.body.textContent.includes('See the Activity Calendar widget')`),false);
- await open();await browser.click('Reorder Quick Focus');await browser.click('Position 1 · Focus Summary');await end();
- await browser.wait(`(${visible})[0]==='quick'`);
+ await browser.wait(`(${visible}).at(-1)==='focus-summary'`);
  // Reload loses only the in-memory preview login; saved layout remains per account.
- await load(101);await browser.wait(`(${visible})[0]==='quick'`);
+ await load(101);await browser.wait(`(${visible}).at(-1)==='focus-summary'`);
  await load(202);assert.equal(await browser.evaluate(`(${visible})[0]`),'activity');assert.equal(await browser.evaluate(`(${visible}).length`),9);
- await load(101);await browser.wait(`(${visible})[0]==='quick'`);
+ await load(101);await browser.wait(`(${visible}).at(-1)==='focus-summary'`);
  await open();await browser.click('Restore default layout');await end();await browser.wait(`(${visible}).length===9&&(${visible})[0]==='activity'`);
  await open();
  const labels=await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="dashboard-customization-modal"] [aria-label^="Show "]')).map(e=>e.getAttribute('aria-label'))`);
@@ -87,5 +85,5 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await browser.wait(`!!document.querySelector('[data-testid="widget-activity"]')`);
  const dashboard=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('.expo/m3-dashboard.png',Buffer.from(dashboard.data,'base64'));
  assert.deepEqual(browser.errors,[]);
- console.log('M3: native touch drag/drop, target feedback, position picker, modal Escape/focus, calendar uniqueness, A/B/A persistence, defaults, routes and 320–768px passed.');
+ console.log('M3: native touch drag/drop, target feedback, tap selection, modal Escape/focus, calendar uniqueness, A/B/A persistence, defaults, routes and 320–768px passed.');
 }

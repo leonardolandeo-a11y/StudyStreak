@@ -44,3 +44,25 @@ test('older layouts retain order/visibility and append the calendar hidden; defa
  assert.deepEqual(restored.at(-1),{id:'calendar',visible:false});
  assert.equal(defaultWidgets().find(row=>row.id==='calendar').visible,true);
 });
+
+test('exact unversioned defaults migrate; customized order or visibility is preserved',async()=>{
+ const legacy=['focus-summary','streak','activity','goals','journey','recent','partners','quick','calendar'].map(id=>({id,visible:true}));
+ for(const rows of [legacy,legacy.slice(0,8)])assert.deepEqual(parseWidgets(JSON.stringify(rows)),defaultWidgets());
+ const hidden=legacy.map(row=>row.id==='calendar'?{...row,visible:false}:row);
+ assert.deepEqual(parseWidgets(JSON.stringify(hidden)),hidden);
+ const custom=[legacy[3],...legacy.filter(row=>row.id!=='goals')];
+ assert.deepEqual(parseWidgets(JSON.stringify(custom)),custom);
+ let disk=JSON.stringify(legacy);
+ const storage={read:async()=>disk,write:async value=>{disk=value;}};
+ const first=createWidgetStore(storage);await first.hydrate();
+ assert.equal(first.getSnapshot().rows[0].id,'activity');assert.equal(JSON.parse(disk)[0].layoutVersion,2);
+ // An explicit choice matching the historical order must survive another launch.
+ await first.save(legacy);const second=createWidgetStore(storage);await second.hydrate();
+ assert.deepEqual(second.getSnapshot().rows,legacy);
+});
+test('late legacy hydration cannot overwrite a newer order',async()=>{
+ let resolveRead,disk;const store=createWidgetStore({read:()=>new Promise(resolve=>resolveRead=resolve),write:async value=>{disk=value;}});
+ const reading=store.hydrate();const custom=moveWidget(defaultWidgets(),'quick',-1);await store.save(custom);
+ resolveRead(JSON.stringify(['focus-summary','streak','activity','goals','journey','recent','partners','quick'].map(id=>({id,visible:true}))));await reading;
+ assert.deepEqual(store.getSnapshot().rows,custom);assert.deepEqual(parseWidgets(disk),custom);
+});
