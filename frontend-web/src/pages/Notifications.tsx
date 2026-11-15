@@ -70,6 +70,7 @@ function Notifications(){
         notificationPage,
         loading,
         error,
+        refreshError,
         actionLoadingId,
         refreshKey
     } = state;
@@ -243,10 +244,9 @@ function Notifications(){
                     dispatch({ type: "LOAD_SUCCESS", payload: result });
                 }
             } catch {
-                // A background refresh must not hide notifications already on screen.
-                if (!silent && !controller.signal.aborted) {
-                    dispatch({ type: "LOAD_ERROR", payload: "Could not load notifications." });
-                }
+                if (!controller.signal.aborted) dispatch(silent
+                    ? { type: "REFRESH_ERROR", payload: "Notifications could not refresh. Showing the last loaded results." }
+                    : { type: "LOAD_ERROR", payload: "Could not load notifications." });
             } finally {
                 inFlight = false;
             }
@@ -399,6 +399,10 @@ function Notifications(){
             </div>
         </section>
 
+
+        {refreshError && notificationPage && <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 text-sm text-warning">
+            <span>{refreshError}</span><button type="button" className="study-button" onClick={() => dispatch({ type: "REFRESH" })}>Retry</button>
+        </div>}
 
         {loading && (
             <LoadingState

@@ -12,6 +12,7 @@ export interface NotificationState{
     loading : boolean;
 
     error : string|null;
+    refreshError: string|null;
     success :string |null;
 
     actionLoadingId:number|null;
@@ -24,6 +25,7 @@ export const initialNotificationState:NotificationState ={
     notificationPage :null,
     loading: true,
     error:null,
+    refreshError:null,
     success:null,
     actionLoadingId:null,
     refreshKey:0
@@ -41,6 +43,7 @@ export type NotificationAction =
         type: "LOAD_ERROR";
         payload: string;
     }
+    | { type: "REFRESH_ERROR"; payload: string; }
     | {
         type: "ACTION_START";
         payload: number;
@@ -67,7 +70,8 @@ export function notificationReducer(state:NotificationState, action:Notification
             return {
                 ...state,
                 loading: true,
-                error: null
+                error: null,
+                refreshError: null
             };
 
 
@@ -76,7 +80,8 @@ export function notificationReducer(state:NotificationState, action:Notification
                 ...state,
                 notificationPage: action.payload,
                 loading: false,
-                error: null
+                error: null,
+                refreshError: null
             };
 
 
@@ -87,6 +92,9 @@ export function notificationReducer(state:NotificationState, action:Notification
                 error: action.payload
             };
 
+
+        case "REFRESH_ERROR":
+            return { ...state, refreshError: action.payload };
 
         case "ACTION_START":
             return {

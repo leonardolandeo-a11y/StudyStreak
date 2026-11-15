@@ -146,6 +146,7 @@ function DailyRecords(){
 
                 setLoading(true);
                 setError(null);
+                setRecordPage(null);
 
                 const response = await getDailyRecords(id, page, size, controller.signal);
 
