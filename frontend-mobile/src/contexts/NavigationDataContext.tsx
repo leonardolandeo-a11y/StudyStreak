@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { AppState, View } from 'react-native';
 import { getOwnProfile, type OwnProfile, type ProfileImageSlot } from '../services/ownProfileService';
 import { OwnProfileMedia, cleanStaleProfileMedia, type SelectedProfileAsset, type ProfileImageDraft } from '../features/profile/ownProfileMedia';
 import { createUnreadCounter } from '../features/notifications/unreadCounter';
+import { NotificationPopups } from '../components/notifications/NotificationPopups';
+import { createNotificationCursor, appendNotificationPopups } from '../features/notifications/incomingNotifications';
+import type { Notification } from '../types/notification';
 import { notificationService } from '../services/notificationService';
 import { getApiErrorMessage } from '../utils/apiError';
 import { getSessionRevision } from '../services/authSession';
@@ -22,6 +25,8 @@ export function NavigationDataProvider({ userId, children }: { userId: number; c
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unread, setUnread] = useState<number | null>(null);
+  const [incoming, setIncoming] = useState<{owner:number;rows:Notification[]}>({owner:userId,rows:[]});
+  const dismissPopup = useCallback((id:number) => setIncoming(previous=>previous.owner===userId?{owner:userId,rows:previous.rows.filter(row=>row.id!==id)}:previous),[userId]);
   const unreadCounter = useRef<ReturnType<typeof createUnreadCounter> | null>(null);
   const refreshUnread = useCallback(() => unreadCounter.current?.refresh(true) ?? Promise.resolve(), []);
   const scope = useRef<Scope | null>(null);
@@ -79,18 +84,27 @@ export function NavigationDataProvider({ userId, children }: { userId: number; c
     return () => { owner.controller.abort(); owner.media.dispose(); if (scope.current === owner) scope.current = null; };
   }, [userId, reload]);
   useEffect(() => {
-    const counter = createUnreadCounter(signal => notificationService.countUnread(userId, signal), setUnread);
+    let disposed=false;
+    const cursor=createNotificationCursor();
+    const counter = createUnreadCounter(async signal => {
+      const page=await notificationService.unread(userId,0,signal);
+      if(!disposed&&!signal.aborted) {
+        const fresh=cursor.observe(Array.isArray(page.content)?page.content:[]);
+        if(fresh.length)setIncoming(previous=>({owner:userId,rows:appendNotificationPopups(previous.owner===userId?previous.rows:[],fresh)}));
+      }
+      return page.totalElements;
+    }, setUnread);
     unreadCounter.current = counter;
     const refresh = () => { if (AppState.currentState === 'active') void counter.refresh(); };
     refresh(); const timer = setInterval(refresh, 30000);
-    const listener = AppState.addEventListener('change', refresh);
-    return () => { counter.dispose(); clearInterval(timer); listener.remove(); if (unreadCounter.current === counter) unreadCounter.current = null; };
+    const listener = AppState.addEventListener('change', state => { if(state==='active')refresh();else counter.cancel(); });
+    return () => { disposed=true; counter.dispose(); clearInterval(timer); listener.remove(); if (unreadCounter.current === counter) unreadCounter.current = null; };
   }, [userId]);
   return <NavigationDataContext.Provider value={{ profile, avatar, banner, loading, error, imageErrors, unread, refreshUnread, retry, refresh, ensureBanner,
     prepareImage: (slot, asset) => { if (!scope.current) return Promise.reject(new Error('Profile is unavailable.')); return scope.current.media.prepare(slot, asset); },
     imageBytes: draft => { if (!scope.current) return Promise.reject(new Error('Profile is unavailable.')); return scope.current.media.bytes(draft); },
     releaseImage: uri => scope.current?.media.release(uri),
-  }}>{children}</NavigationDataContext.Provider>;
+  }}><View style={{flex:1}}>{children}<NotificationPopups key={userId} userId={userId} notifications={incoming.owner===userId?incoming.rows:[]} dismiss={dismissPopup} refresh={refreshUnread}/></View></NavigationDataContext.Provider>;
 }
 export function useNavigationData() {
   const value = useContext(NavigationDataContext);

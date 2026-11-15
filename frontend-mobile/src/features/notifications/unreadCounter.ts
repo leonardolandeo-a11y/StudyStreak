@@ -19,5 +19,5 @@ export function createUnreadCounter(load: (signal: AbortSignal) => Promise<numbe
     current = { controller, task };
     return task;
   }
-  return { refresh, dispose() { disposed = true; current?.controller.abort(); current = null; } };
+  return { refresh, cancel() { current?.controller.abort(); current = null; }, dispose() { disposed = true; current?.controller.abort(); current = null; } };
 }

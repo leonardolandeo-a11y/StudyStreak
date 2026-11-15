@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { NavigationPressable } from '../navigation/NavigationPressable';
 import { ActionButton } from '../ui/ActionButton';
-import { useThemedStyles } from '../../hooks/useAppearance';
+import { AppIcon } from '../ui/AppIcon';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
 import type { ThemeColors } from '../../features/appearance/theme';
 import type { Notification } from '../../types/notification';
 import { notificationTypeLabels } from '../../types/notification';
@@ -19,6 +20,7 @@ interface Props {
 
 export function NotificationCard({ notification, busy, disabled, onMarkRead, onDelete, onOpen }: Props) {
   const styles = useThemedStyles(createStyles);
+  const { theme: { colors } } = useAppearance();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const formattedDate = new Date(notification.createdAt);
   const dateText = Number.isNaN(formattedDate.getTime())
@@ -51,7 +53,7 @@ export function NotificationCard({ notification, busy, disabled, onMarkRead, onD
           {!notification.read ? (
             <ActionButton compact title="Mark as read" secondary disabled={disabled} busy={busy} onPress={onMarkRead} />
           ) : null}
-          <ActionButton compact title="Delete" secondary disabled={disabled} onPress={() => setConfirmDelete(true)} />
+          <NavigationPressable accessibilityRole="button" accessibilityLabel="Delete notification" disabled={disabled || busy} onPress={() => setConfirmDelete(true)} style={{minWidth:44,minHeight:44,alignItems:'center',justifyContent:'center'}}><AppIcon name="trash" color={colors.error} size={20}/></NavigationPressable>
         </View>
       )}
     </View>

@@ -68,3 +68,5 @@ export const PanResponder = { create: config => ({ panHandlers: {
   onResponderGrant: config.onPanResponderGrant, onResponderMove: config.onPanResponderMove,
   onResponderRelease: config.onPanResponderRelease, onResponderTerminate: config.onPanResponderTerminate,
 } }) };
+
+export function useSafeAreaInsets() { return {top:0,bottom:0,left:0,right:0}; }
