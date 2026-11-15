@@ -48,7 +48,7 @@ La rúbrica exige un porcentaje de cumplimiento individual por integrante (0 % a
 | Aplicación Android (React Native/Expo) | **Pendiente:** enlace instalable del APK preview/EAS o publicación equivalente |
 | Base de datos administrada | Amazon RDS PostgreSQL; verificar conectividad privada desde el backend, sin publicar credenciales ni dirección interna |
 
-La funcionalidad **Google Books** se consulta desde ambos clientes a través del backend (`GET /api/resources/books`); la API key se configura únicamente como `GOOGLE_BOOKS_API_KEY` en el servidor. El responsable de la clave ya la compartió con Leonardo para la configuración de producción. La presencia de la clave no sustituye la prueba real de búsqueda en la aplicación publicada.
+La funcionalidad **Google Books** se consulta desde ambos clientes a través del backend (`GET /api/resources/books`); la API key se configura únicamente como `GOOGLE_BOOKS_API_KEY` en el servidor. La clave debe configurarse en el entorno privado del backend de producción; nunca se incluye en este repositorio. La presencia de la clave no sustituye la prueba real de búsqueda en la aplicación publicada.
 
 La presentación final prevista por la rúbrica dura **20 minutos**, con una **demo de 6 minutos** y una ronda de **5 minutos de preguntas técnicas**.
 

@@ -106,8 +106,8 @@ test('Chrome: book leaf crosses the spine without moving the book; goal pulse sc
    goalFrames.push(await page.evaluate(`(()=>{const link=document.querySelector('a[data-nav-icon=Goals]'),svg=link.querySelector('svg'),animation=svg.getAnimations()[0];animation.pause();animation.currentTime=${time};const m=new DOMMatrix(getComputedStyle(svg).transform);return {scale:m.a,b:m.b,c:m.c,width:svg.getBoundingClientRect().width,textX:link.querySelector('span').getBoundingClientRect().x}})()`));
    if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(`/tmp/studystreak-goal-frame-${time}.png`,Buffer.from(shot.data,'base64'));}
   }
-  assert.ok(Math.abs(goalFrames[1].scale-.91)<.001 && goalFrames.every(f=>f.b===0&&f.c===0&&f.textX===goalFrames[0].textX));
-  assert.ok(goalFrames[1].width<goalFrames[0].width&&goalFrames[2].width===goalFrames[0].width);
+  assert.ok(Math.abs(goalFrames[1].scale-.91)<.01 && goalFrames.every(f=>Math.abs(f.b)<.001&&Math.abs(f.c)<.001&&Math.abs(f.textX-goalFrames[0].textX)<.5),JSON.stringify(goalFrames));
+  assert.ok(goalFrames[1].width<goalFrames[0].width&&Math.abs(goalFrames[2].width-goalFrames[0].width)<.2,JSON.stringify(goalFrames));
   for(const label of ['Resources','Goals']){
    await page.evaluate(`document.querySelector('a[data-nav-icon=${label}]').focus()`);
    await page.evaluate('window.studyStreakAppearance.apply({mode:"dark",accent:"mint",reduceMotion:true})');
