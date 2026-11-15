@@ -286,9 +286,9 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     for (const route of routes) {
       console.log(`Appearance route: ${route}`);
       await navigate(route);
-      // Auth uses the fullscreen illustration from 7.2; its form remains theme-aware.
-      if (route !== '/login' && route !== '/register') assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(244, 241, 248)'`), route);
-      else assert.ok(await evaluate('!!document.querySelector(".auth-content")'));
+      // M4d sends an existing session away from public auth routes; guest forms are covered by authScenes.
+      if (['/', '/login', '/register'].includes(route)) await wait(`location.pathname === "/dashboard" && !!document.querySelector('[aria-label="Recorded study statistics"]')`);
+      assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(244, 241, 248)'`), route);
       assert.equal(await evaluate('document.documentElement.dataset.accent'), 'blue', route);
       assert.equal(await evaluate('getComputedStyle(document.querySelector("h1")).color'), 'rgb(15, 23, 42)', route);
       assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth'), `${route} desktop overflow`);
@@ -314,8 +314,8 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     assert.equal(await evaluate('Array.from(document.querySelectorAll("label")).find(e=>e.textContent.trim()==="Always reduce motion").querySelector("input").checked'), false);
     for (const path of ['/login', '/dashboard', '/focus-studio']) {
       await navigate(path);
-      if (path === '/login') assert.equal(await evaluate('getComputedStyle(document.querySelector(".auth-content h1")).color'), 'rgb(241, 245, 249)');
-      else assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(32, 36, 42)'`), path);
+      if (path === '/login') await wait('location.pathname === "/dashboard"');
+      assert.equal(await evaluate('getComputedStyle(document.querySelector(".min-h-screen")).backgroundColor'), await evaluate(`'rgb(32, 36, 42)'`), path);
     }
     await navigate('/settings');
     // Storage denial is reported truthfully while preferences still apply.
@@ -325,6 +325,7 @@ test('Chrome: global appearance, first paint, routes, contrast and accessibility
     assert.equal(await evaluate('document.documentElement.dataset.accent'), 'purple');
     await evaluate(`Array.from(document.querySelectorAll('aside button')).find(e=>e.textContent.trim()==='Sign out').click()`);
     await wait('location.pathname === "/login" && !!document.querySelector("form")');
+    assert.equal(await evaluate('getComputedStyle(document.querySelector(".auth-content h1")).color'), 'rgb(241, 245, 249)');
     assert.equal(await evaluate('sessionStorage.getItem("accessToken")'), null, 'Sidebar uses the existing sign-out mechanism');
     assert.deepEqual(runtimeErrors, []);
     assert.deepEqual(writes, []);
