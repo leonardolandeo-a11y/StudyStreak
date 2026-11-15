@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'vite';
@@ -188,9 +189,11 @@ test('keyboard focus survives legacy utilities without styling noninteractive co
         await command('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point });
         assert.equal(await evaluate(`document.getElementById('legacy-result').matches(':focus-visible')`), false);
     } finally {
-        const stopped = new Promise(resolve => browser.once('exit', resolve));
-        browser.kill('SIGTERM');
-        if (browser.exitCode === null && browser.signalCode === null) await stopped;
-        rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        if (browser.exitCode === null && browser.signalCode === null) {
+            const stopped = new Promise(resolve => browser.once('exit', resolve));
+            browser.kill('SIGTERM');
+            await stopped;
+        }
+        await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
     }
 });
