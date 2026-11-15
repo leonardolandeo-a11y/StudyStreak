@@ -41,7 +41,7 @@ export default function Notifications() {
     return notificationService.list(userId, page, signal);
   }, [userId, filter, selectedType]);
 
-  const { page, setPage, data, loading, error, reload } = usePagedResource(load, userId != null, 30000);
+  const { page, setPage, data, loading, error, refreshError, reload } = usePagedResource(load, userId != null, 30000);
 
   function selectFilter(next: Filter, type?: NotificationType) {
     setFilter(next);
@@ -133,6 +133,7 @@ export default function Notifications() {
       {message ? <StatusMessage message={message} /> : null}
       {actionError ? <StatusMessage message={actionError} error /> : null}
       {loading ? <ActivityIndicator accessibilityLabel="Loading notifications" /> : null}
+      {refreshError && data ? <StatusMessage error message="Notifications could not refresh. Showing the last loaded results." /> : null}
       {error ? (
         <>
           <StatusMessage error message={error} />
