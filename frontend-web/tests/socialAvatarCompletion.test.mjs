@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
@@ -73,7 +75,7 @@ test('Chrome: protected avatars in history, Validations and room participants pr
     if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS&&[320,1440].includes(width)){
      await page.evaluate('new Promise(r=>setTimeout(r,200))');
      await page.evaluate(path==='/study-rooms'?'document.querySelector("[data-room-participant]").scrollIntoView({block:"center"})':path==='/validations'?'document.querySelector("section[aria-label^=Select] article").scrollIntoView({block:"center"})':'document.querySelector(".tracking-partner").scrollIntoView({block:"center"})');
-     const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-complete-${path.slice(1)}-${width}.png`,Buffer.from(shot.data,'base64'));
+     const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-complete-${path.slice(1)}-${width}.png`),Buffer.from(shot.data,'base64'));
     }
    }
   }
@@ -94,7 +96,7 @@ test('Chrome: book leaf crosses the spine without moving the book; goal pulse sc
   for(const time of [0,75,150,225,300]){
    const data=await page.evaluate(`(()=>{const icon=document.querySelector('a[data-nav-icon=Resources] svg'),leaf=icon.querySelector('.sidebar-resource-page');const animation=leaf.getAnimations()[0];animation.pause();animation.currentTime=${time};const m=new DOMMatrix(getComputedStyle(leaf).transform);return {scale:m.a,opacity:Number(getComputedStyle(leaf).opacity),bookTransform:getComputedStyle(icon).transform,fixed: Array.from(icon.children).filter(p=>p!==leaf).every(p=>getComputedStyle(p).transform==='none'),width:icon.getBoundingClientRect().width}})()`);
    frames.push(data);
-   if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(`/tmp/studystreak-book-frame-${time}.png`,Buffer.from(shot.data,'base64'));}
+   if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(join(tmpdir(), `studystreak-book-frame-${time}.png`),Buffer.from(shot.data,'base64'));}
   }
   assert.ok(frames[0].scale>0.99&&frames[2].scale<-.99&&frames[4].scale>.99);assert.ok(frames[1].opacity>.99 && Math.abs(frames[1].scale)<.9);
   assert.ok(frames.every(f=>f.bookTransform==='none'&&f.fixed&&Math.abs(f.width-22)<.1));
@@ -104,7 +106,7 @@ test('Chrome: book leaf crosses the spine without moving the book; goal pulse sc
   const goalFrames=[];
   for(const time of [0,150,300]){
    goalFrames.push(await page.evaluate(`(()=>{const link=document.querySelector('a[data-nav-icon=Goals]'),svg=link.querySelector('svg'),animation=svg.getAnimations()[0];animation.pause();animation.currentTime=${time};const m=new DOMMatrix(getComputedStyle(svg).transform);return {scale:m.a,b:m.b,c:m.c,width:svg.getBoundingClientRect().width,textX:link.querySelector('span').getBoundingClientRect().x}})()`));
-   if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(`/tmp/studystreak-goal-frame-${time}.png`,Buffer.from(shot.data,'base64'));}
+   if(process.env.STUDYSTREAK_AVATAR_SCREENSHOTS){const shot=await page.command('Page.captureScreenshot',{format:'png',clip:{x:0,y:220,width:256,height:120,scale:3}});writeFileSync(join(tmpdir(), `studystreak-goal-frame-${time}.png`),Buffer.from(shot.data,'base64'));}
   }
   assert.ok(Math.abs(goalFrames[1].scale-.91)<.01 && goalFrames.every(f=>Math.abs(f.b)<.001&&Math.abs(f.c)<.001&&Math.abs(f.textX-goalFrames[0].textX)<.5),JSON.stringify(goalFrames));
   assert.ok(goalFrames[1].width<goalFrames[0].width&&Math.abs(goalFrames[2].width-goalFrames[0].width)<.2,JSON.stringify(goalFrames));

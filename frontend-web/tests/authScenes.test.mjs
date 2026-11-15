@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {after,test} from 'node:test';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {createServer} from 'vite';
@@ -33,7 +35,7 @@ test('Chrome: local periods/foreground, responsive themes and unchanged registra
    await page.evaluate(`window.__sceneNow=new window.__RealDate(2026,10,9,${hour}).getTime();window.dispatchEvent(new Event('focus'))`);await page.wait(`document.querySelector('[data-study-period]')?.dataset.studyPeriod==='${period}'`);
    await page.command('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
    await page.evaluate(`document.querySelector('.auth-scene-base').decode()`);
-   const image=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-auth-${period}.png`,Buffer.from(image.data,'base64'));
+   const image=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-auth-${period}.png`),Buffer.from(image.data,'base64'));
   }
   await page.command('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
   await page.evaluate(`window.studyStreakAppearance.apply({mode:'dark',accent:'mint',reduceMotion:false})`);
@@ -61,13 +63,13 @@ test('Chrome: local periods/foreground, responsive themes and unchanged registra
     assert.equal(await page.evaluate('document.querySelector(".auth-scene").getAnimations({subtree:true}).filter(a=>a.playState==="running").length'),0);
     assert.deepEqual(await page.evaluate('(()=>{const r=document.querySelector(".auth-scene").getBoundingClientRect();return [r.x,r.y,r.width,r.height]})()'),[0,0,width,900]);
    }
-   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/fullscreen-${path.slice(1)}-${width}.png`,Buffer.from(shot.data,'base64'));
+   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `fullscreen-${path.slice(1)}-${width}.png`),Buffer.from(shot.data,'base64'));
    }
   }
   await page.command('Emulation.setDeviceMetricsOverride',{width:320,height:900,deviceScaleFactor:1,mobile:true});
   await page.evaluate(`window.studyStreakAppearance.apply({mode:'light',accent:'orange',reduceMotion:true});document.querySelector('#username').focus()`);
   assert.equal(await page.evaluate('document.activeElement.id'),'username');
-  const compactShot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/studystreak-auth-mobile-light.png',Buffer.from(compactShot.data,'base64'));
+  const compactShot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), 'studystreak-auth-mobile-light.png'),Buffer.from(compactShot.data,'base64'));
   await page.command('Emulation.setDeviceMetricsOverride',{width:600,height:390,deviceScaleFactor:1,mobile:true});
   assert.equal(await page.evaluate('getComputedStyle(document.querySelector(".auth-scene")).position'),'fixed');
   assert.equal(await page.evaluate('document.querySelectorAll("form input").length'),3);

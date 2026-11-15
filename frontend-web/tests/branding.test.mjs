@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'vite';
@@ -53,7 +55,7 @@ test('Chrome: sidebar/topbar brand, contrast, themes, small marks and navigation
   await page.evaluate(`document.body.insertAdjacentHTML('beforeend',${JSON.stringify(gallery)})`);
   for(const mode of ['dark','light']){
    await page.evaluate(`window.studyStreakAppearance.apply({mode:'${mode}',accent:'mint',reduceMotion:false})`);
-   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-brand-${mode}.png`,Buffer.from(shot.data,'base64'));
+   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-brand-${mode}.png`),Buffer.from(shot.data,'base64'));
   }
   await page.evaluate(`document.querySelector('#brand-review').remove()`);
   const status=await page.evaluate(`fetch('/favicon.svg').then(r=>r.status)`);assert.equal(status,200);assert.deepEqual(page.errors,[]);

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
@@ -42,9 +44,9 @@ test('Chrome: Tracking avatars preserve search/send flow, fallback, responsive a
    }
    if(process.env.STUDYSTREAK_TRACKING_SCREENSHOTS&&[320,1440].includes(width)){
     await page.evaluate('window.scrollTo(0,0);new Promise(r=>setTimeout(r,200))');
-    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-tracking-polish-${width}.png`,Buffer.from(shot.data,'base64'));
+    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-tracking-polish-${width}.png`),Buffer.from(shot.data,'base64'));
     await page.evaluate('document.querySelector("article").scrollIntoView({block:"center"})');
-    const active=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-tracking-active-${width}.png`,Buffer.from(active.data,'base64'));
+    const active=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-tracking-active-${width}.png`),Buffer.from(active.data,'base64'));
     await page.evaluate('window.scrollTo(0,0)');
    }
   }

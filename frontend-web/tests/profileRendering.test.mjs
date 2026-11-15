@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
@@ -100,7 +102,7 @@ test('Chrome: protected profile, editing, images, sidebar, error states, themes 
       await page.evaluate(`document.documentElement.style.removeProperty('--ss-font-body')`);
       if (process.env.STUDYSTREAK_PROFILE_SCREENSHOTS && [320,1440].includes(width)) {
         const shot=await page.command('Page.captureScreenshot', {format:'png'});
-        writeFileSync(`/tmp/studystreak-profile-editor-${width}.png`,Buffer.from(shot.data,'base64'));
+        writeFileSync(join(tmpdir(), `studystreak-profile-editor-${width}.png`),Buffer.from(shot.data,'base64'));
       }
       await page.key('Escape');
     }

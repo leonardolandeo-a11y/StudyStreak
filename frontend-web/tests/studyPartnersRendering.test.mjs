@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
@@ -136,7 +138,7 @@ test('Chrome: responsive partners rail/drawer, keyboard, themes, reduced motion 
     assert.ok(await page.evaluate('document.querySelector("aside").getBoundingClientRect().right<=document.querySelector("main").getBoundingClientRect().left'));
    }
    if(process.env.STUDYSTREAK_PARTNERS_SCREENSHOTS&&[320,1440].includes(width)){
-    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/studystreak-partners-${width}.png`,Buffer.from(shot.data,'base64'));
+    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `studystreak-partners-${width}.png`),Buffer.from(shot.data,'base64'));
    }
   }
   assert.equal(state.trackRequests,1,'Changing viewport must not restart data polling');

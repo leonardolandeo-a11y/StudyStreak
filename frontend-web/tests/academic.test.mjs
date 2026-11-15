@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {test} from 'node:test';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {chrome,profileBrowser} from './helpers/profileBrowser.mjs';
@@ -46,12 +48,12 @@ test('Chrome: scoped academic Dashboard/Focus, themes, pixel progress and respon
      assert.equal(await page.evaluate(`document.querySelector('.academic-page').getAnimations({subtree:true}).filter(a=>a.playState==='running').length`),0);
      if(route==='/focus-studio')assert.equal(await page.evaluate(`(()=>{const r=document.querySelector('.academic-dial').getBoundingClientRect();return r.width>0&&Math.abs(r.width-r.height)<1;})()`),true);
     }
-    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/73a-${route.slice(1)}-${width}-light.png`,Buffer.from(shot.data,'base64'));
+    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `73a-${route.slice(1)}-${width}-light.png`),Buffer.from(shot.data,'base64'));
    }
    await page.evaluate(`window.studyStreakAppearance.apply({mode:'dark',accent:'mint',reduceMotion:false})`);
    await page.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
    await new Promise(resolve=>setTimeout(resolve,300));
-   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/73a-${route.slice(1)}-dark.png`,Buffer.from(shot.data,'base64'));
+   const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `73a-${route.slice(1)}-dark.png`),Buffer.from(shot.data,'base64'));
    if(route==='/dashboard'){
     assert.equal(await page.evaluate(`document.body.textContent.includes('99999')`),false);
     assert.equal(await page.evaluate(`!!document.querySelector('[aria-label="Active study days in this period"]')`),false);

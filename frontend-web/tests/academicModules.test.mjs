@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {test} from 'node:test';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {chrome,profileBrowser} from './helpers/profileBrowser.mjs';
@@ -63,20 +65,20 @@ test('Chrome: academic modules retain forms, avatars, status labels, local theme
      await page.wait(`document.querySelector('input[name="display-mode"][value="light"]').checked&&document.documentElement.dataset.theme==='light'`);
      await page.evaluate(`document.querySelector('input[name="accent-palette"][value="orange"]').click()`);
     }
-    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/73b-web-${name}-${width}.png`,Buffer.from(shot.data,'base64'));
+    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `73b-web-${name}-${width}.png`),Buffer.from(shot.data,'base64'));
    }
    if(name==='settings'){
     await page.evaluate(`document.querySelector('input[name="display-mode"][value="dark"]').click()`);
     await page.wait(`document.documentElement.dataset.theme==='dark'`);
     await page.evaluate(`document.querySelector('input[name="accent-palette"][value="mint"]').click()`);
    }else await page.evaluate(`window.studyStreakAppearance.apply({mode:'dark',accent:'mint',reduceMotion:true})`);
-   const dark=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/73b-web-${name}-dark.png`,Buffer.from(dark.data,'base64'));
+   const dark=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `73b-web-${name}-dark.png`),Buffer.from(dark.data,'base64'));
    if(name==='profile'){
     await page.click('Edit profile');await page.wait('document.querySelector("dialog")?.open');
     assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('dialog input[type=file]')).display`),'none');
-    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/73b-web-profile-editor.png',Buffer.from(shot.data,'base64'));await page.key('Escape');
+    const shot=await page.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), '73b-web-profile-editor.png'),Buffer.from(shot.data,'base64'));await page.key('Escape');
    }
   }
   assert.deepEqual(writes,[]);assert.deepEqual(page.errors,[]);
- }catch(error){writeFileSync('/tmp/73b-web-failure.json',JSON.stringify({text:await page.evaluate('document.body.innerText'),errors:page.errors,path:await page.evaluate('location.pathname')}));throw error;}finally{await page.close();}
+ }catch(error){writeFileSync(join(tmpdir(), '73b-web-failure.json'),JSON.stringify({text:await page.evaluate('document.body.innerText'),errors:page.errors,path:await page.evaluate('location.pathname')}));throw error;}finally{await page.close();}
 });
