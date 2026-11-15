@@ -49,7 +49,7 @@ const browser = await mobileBrowser({ intercept: async request => {
   if (path === '/api/focus-sessions/stats') {
     const days = Number(url.searchParams.get('days'));
     const daily = Array.from({ length: days }, (_, index) => ({ date: new Date(Date.UTC(2026, 10, index + 1)).toISOString().slice(0, 10), minutes: index === 0 ? 25 : 0, sessions: index === 0 ? 1 : 0 }));
-    return { body: { days, timeZone: 'America/Lima', studyStreak: 2, verifiedPeriod: { minutes: 25, sessions: 1, daily } } };
+    return { body: { days, timeZone: 'America/Lima', studyStreak: 2, activity: daily, verifiedPeriod: { minutes: 25, sessions: 1, daily } } };
   }
   if (path === '/api/study/history') return { body: makePage([]) };
   return { status: 404 };

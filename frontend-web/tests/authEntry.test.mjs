@@ -44,7 +44,7 @@ test('Chrome: root/login/register, persistent session, restore, logout and prote
    assert.ok(layout.width>layout.height?layout.left>=layout.width*.4:Math.abs(layout.left+layout.cardWidth/2-layout.width/2)<2,JSON.stringify(layout));
    await page.evaluate(`(async()=>{for(const e of document.querySelectorAll('form input,button[type=submit]')){e.scrollIntoView({block:'center'});await new Promise(requestAnimationFrame);const r=e.getBoundingClientRect(),w=document.documentElement.clientWidth,h=visualViewport?.height??document.documentElement.clientHeight;if(r.left<0||r.right>w+1||r.top<0||r.bottom>h+1)throw Error('Inaccessible auth control');}})()`);
   }
-  await page.evaluate(`document.querySelector('a[href="/login"]').click()`);await page.wait(`location.pathname==='/login'&&!!document.querySelector('#password')`);
+  await page.evaluate(`document.querySelector('a[href="/login"]').click()`);await page.wait(`location.pathname==='/login'&&document.querySelector('button[type=submit]')?.textContent.trim()==='Login'`);
   await page.fill('#username','fixture');await page.fill('#password','Fixture-pass-1');await page.click('Login');await page.wait(`location.pathname==='/dashboard'`);assert.equal(logins,1);
   for(const path of ['/','/login','/register']){await page.navigate(path);await page.wait(`location.pathname==='/dashboard'`);}
   await page.navigate('/goals/7');await page.wait(`location.pathname==='/goals/7'`);assert.equal(await page.evaluate(`!!sessionStorage.getItem('accessToken')`),true);
