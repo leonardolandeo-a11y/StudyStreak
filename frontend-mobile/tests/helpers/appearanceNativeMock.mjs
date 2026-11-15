@@ -13,13 +13,23 @@ function propsFor(props) {
     'aria-label': props.accessibilityLabel, 'aria-selected': props.accessibilityState?.selected,
     'aria-checked': props.accessibilityState?.checked, 'aria-busy': props.accessibilityState?.busy, 'aria-live': props.accessibilityLiveRegion };
 }
-export function View(props) { return React.createElement('div', { ...propsFor(props), 'data-edges': props.edges?.join(',') }, props.children); }
+// React Native rejects even whitespace and zero outside Text; DOM rendering does not.
+export function assertNativeTextChildren(children, host = 'View') {
+  React.Children.forEach(children, child => {
+    if ((typeof child === 'string' && child.length > 0) || typeof child === 'number') {
+      throw new Error(`Text strings must be rendered within a <Text> component. ${host} received ${JSON.stringify(child)}`);
+    }
+    if (React.isValidElement(child) && child.type === React.Fragment) assertNativeTextChildren(child.props.children, host);
+  });
+}
+export function View(props) { assertNativeTextChildren(props.children, props.testID ?? 'View'); return React.createElement('div', { ...propsFor(props), 'data-edges': props.edges?.join(',') }, props.children); }
 export const SafeAreaView = View;
 export const ScrollView = View;
 export const KeyboardAvoidingView = View;
 export function useWindowDimensions() { return { width: 390, height: 844, scale: 1, fontScale: 1 }; }
 export function Text(props) { return React.createElement('span', propsFor(props), props.children); }
 export function Pressable(props) {
+  assertNativeTextChildren(props.children, props.accessibilityLabel ?? 'Pressable');
   controls.set(props.accessibilityLabel, props);
   return React.createElement('button', { ...propsFor({ ...props, style: typeof props.style === 'function' ? props.style({ pressed: false }) : props.style }),
     disabled: props.disabled, type: 'button' }, props.children);

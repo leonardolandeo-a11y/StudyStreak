@@ -16,7 +16,8 @@ export function PixelGlyph({ name = 'book', size = 28 }: { name?: AcademicGlyph;
 }
 export function AcademicHeading({ title, eyebrow, description, focus = false, glyph = 'book', art }: { title: string; eyebrow: string; description?: string; focus?: boolean; glyph?: AcademicGlyph; art?: ReactNode }) {
     const { theme: { colors } } = useAppearance();
-    const copy = <>        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+    const copy = <>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             {art ? null : focus ? <StudyMark size={28} decorative /> : <PixelGlyph name={glyph} size={22} />}
             <Text style={{ color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11, letterSpacing: .5, flexShrink: 1 }}>{eyebrow}</Text>
         </View>
