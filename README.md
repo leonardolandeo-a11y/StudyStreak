@@ -38,6 +38,20 @@ La rúbrica exige un porcentaje de cumplimiento individual por integrante (0 % a
 
 **Antes de entregar:** sustituir los tres valores «Por confirmar» por porcentajes acordados y justificados por el equipo. Leonardo coordina la verificación y publicación del despliegue; no se modifican credenciales ni infraestructura desde esta rama.
 
+### Enlaces de entrega — por completar tras el despliegue
+
+| Recurso | Estado / enlace |
+|---|---|
+| Código fuente | https://github.com/leonardolandeo-a11y/StudyStreak |
+| Frontend Web (React) | **Pendiente:** URL pública HTTPS de Vercel |
+| Backend REST (Spring Boot) | **Pendiente:** URL pública HTTPS verificada por Leonardo |
+| Aplicación Android (React Native/Expo) | **Pendiente:** enlace instalable del APK preview/EAS o publicación equivalente |
+| Base de datos administrada | Amazon RDS PostgreSQL; verificar conectividad privada desde el backend, sin publicar credenciales ni dirección interna |
+
+La funcionalidad **Google Books** se consulta desde ambos clientes a través del backend (`GET /api/resources/books`); la API key se configura únicamente como `GOOGLE_BOOKS_API_KEY` en el servidor. El responsable de la clave ya la compartió con Leonardo para la configuración de producción. La presencia de la clave no sustituye la prueba real de búsqueda en la aplicación publicada.
+
+La presentación final prevista por la rúbrica dura **20 minutos**, con una **demo de 6 minutos** y una ronda de **5 minutos de preguntas técnicas**.
+
 ---
 
 ## Índice
@@ -64,13 +78,13 @@ La rúbrica exige un porcentaje de cumplimiento individual por integrante (0 % a
 
 ### Contexto
 
-StudyStreak es una aplicación backend orientada a ayudar a estudiantes a mantener hábitos de estudio constantes. Integra metas personales, registro de progreso diario, seguimiento entre usuarios, validación de actividades, cálculo de rachas, notificaciones y autenticación segura dentro de una API REST.
+StudyStreak es una aplicación web y móvil, respaldada por una API REST propia, que ayuda a estudiantes a mantener hábitos de estudio constantes. Integra metas personales, registro de progreso diario, seguimiento entre usuarios, validación de actividades, cálculo de rachas, notificaciones y autenticación segura dentro de una API REST.
 
 El proyecto fue desarrollado con Spring Boot y PostgreSQL siguiendo una arquitectura por capas. Spring Security y JWT protegen los recursos privados, mientras que eventos de aplicación y listeners asíncronos desacoplan tareas secundarias como notificaciones y correo electrónico.
 
 ### Objetivos del proyecto
 
-El objetivo general es desarrollar un backend seguro y estructurado para gestionar metas de estudio y convertir el progreso diario en información verificable. Los objetivos específicos son permitir registro y login, proteger contraseñas con BCrypt, administrar metas y registros diarios, organizar metas mediante tags, gestionar relaciones de seguimiento, validar progreso, calcular rachas, generar notificaciones, integrar correo, persistir información en PostgreSQL y facilitar ejecución con Docker y despliegue en AWS.
+El objetivo general es ofrecer una plataforma web y móvil con backend seguro para gestionar metas de estudio y convertir el progreso diario en información verificable. Los objetivos específicos son permitir registro y login, proteger contraseñas con BCrypt, administrar metas y registros diarios, organizar metas mediante tags, gestionar relaciones de seguimiento, validar progreso, calcular rachas, generar notificaciones, integrar correo, persistir información en PostgreSQL y facilitar ejecución con Docker y despliegue en AWS.
 
 ---
 
@@ -280,7 +294,7 @@ La batería actual cubre autenticación JWT, refresh tokens, ownership, validaci
 
 ## Docker y PostgreSQL
 
-Docker Compose levanta PostgreSQL 17 y el backend. La aplicación recibe por variables de entorno la URL JDBC, credenciales, configuración JWT —incluida la expiración del refresh token— y configuración SMTP. PostgreSQL utiliza un volumen persistente.
+El Compose general sirve para desarrollo y pruebas: levanta PostgreSQL 17 y el backend, configura JWT, SMTP, CORS y Google Books, y utiliza volúmenes persistentes para PostgreSQL e imágenes de perfil. El puerto PostgreSQL se expone solo en localhost. **No sustituye el despliegue administrado de AWS/RDS**: Leonardo debe configurar la base gestionada, TLS y los orígenes públicos en su infraestructura.
 
 ```bash
 docker compose up --build
@@ -292,7 +306,7 @@ docker compose up --build
 
 La infraestructura utilizada en la primera fase se documentó con **Amazon EC2** para Spring Boot y **Amazon RDS for PostgreSQL** para los datos. El estado actual, la exposición HTTPS y la integración con Web/Mobile requieren verificación antes de afirmar que la segunda fase está desplegada.
 
-La aplicación Spring Boot se ejecuta dentro de un contenedor Docker en la instancia EC2 y se comunica con la base de datos RDS mediante la red privada de AWS.
+La arquitectura prevista utiliza Spring Boot en EC2 mediante Docker y PostgreSQL administrado en RDS por red privada. Se debe confirmar el estado y la conectividad del despliegue de la segunda fase antes de presentarlos como validados.
 
 ```mermaid
 flowchart LR
