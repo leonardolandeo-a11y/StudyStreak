@@ -40,7 +40,7 @@ type SearchRequest = {
     revision:number;
 };
 
-function ResourcesContent({ initialTopic }: { initialTopic: string }) {
+function ResourcesContent({ initialTopic, onSearch }: { initialTopic: string; onSearch: (topic: string) => void }) {
     const [query, setQuery] = useState(initialTopic);
 
     const [request, setRequest] = useState<SearchRequest | null>(
@@ -124,6 +124,7 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
             return;
         }
 
+        if (term !== initialTopic) { onSearch(term); return; }
         setSelectedBook(null);
         setError(null);
         setBooks([]);
@@ -373,9 +374,10 @@ function ResourcesContent({ initialTopic }: { initialTopic: string }) {
 
 // Recreate the search state when URL topic changes, including navigation to /resources.
 function Resources() {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const initialTopic = (searchParams.get("topic") ?? "").trim().slice(0, 80);
-    return <ResourcesContent key={initialTopic} initialTopic={initialTopic} />;
+    const updateTopic = (topic: string) => setSearchParams(current => { const next = new URLSearchParams(current); next.set("topic", topic); return next; });
+    return <ResourcesContent key={initialTopic} initialTopic={initialTopic} onSearch={updateTopic} />;
 }
 
 export default Resources;
