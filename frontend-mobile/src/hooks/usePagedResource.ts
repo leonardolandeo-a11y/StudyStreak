@@ -14,6 +14,7 @@ export function usePagedResource<T>(
   const [data, setData] = useState<PageResponse<T> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
   const latestRevision = useRef(revision);
   const reload = useCallback(() => setRevision((value) => value + 1), []);
@@ -35,6 +36,7 @@ export function usePagedResource<T>(
       if (!silent) {
         setLoading(true);
         setError(null);
+        setRefreshError(null);
         setData(null);
       }
       try {
@@ -46,12 +48,12 @@ export function usePagedResource<T>(
             return;
           }
           setData(response);
-          if (silent) setError(null);
+          if (silent) setRefreshError(null);
         }
       } catch (cause) {
-        // Keep the last successfully loaded page visible if a poll fails.
-        if (!silent && isCurrent()) {
-          setError(getApiErrorMessage(cause, 'Unable to load this list.'));
+        if (isCurrent()) {
+          if (silent) setRefreshError(getApiErrorMessage(cause, 'Unable to refresh the list.'));
+          else setError(getApiErrorMessage(cause, 'Unable to load this list.'));
         }
       } finally {
         inFlight = false;
@@ -79,5 +81,5 @@ export function usePagedResource<T>(
     };
   }, [enabled, load, page, revision, pollIntervalMs]));
 
-  return { page, setPage, data, loading, error, reload };
+  return { page, setPage, data, loading, error, refreshError, reload };
 }
