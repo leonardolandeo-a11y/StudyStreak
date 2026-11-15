@@ -274,7 +274,7 @@ Las pruebas automatizadas se ejecutan con:
 ./mvnw clean test
 ```
 
-La versión revisada contiene **8 tests** que cubren carga del contexto, JWT access/refresh, separación entre refresh y access token, ownership de DailyRecords y respuestas 403/404/409 del manejador global.
+La batería actual cubre autenticación JWT, refresh tokens, ownership, validación, persistencia PostgreSQL, salas de estudio, registros diarios, perfiles y manejo de excepciones. En la ejecución de Backend CI del 15/11/2026 se registraron **233 pruebas: 0 fallidas y 17 omitidas**. Las pruebas omitidas deben distinguirse de las aprobadas; consulta GitHub Actions para los resultados del commit evaluado.
 
 ---
 
