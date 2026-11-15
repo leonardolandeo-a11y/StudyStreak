@@ -8,7 +8,8 @@ import { AcademicHeading, AcademicEmpty } from '../../../../../components/academ
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { RefreshButton } from '../../../../../components/ui/RefreshButton';
 import { Screen } from '../../../../../components/ui/Screen';
 import { ActionButton } from '../../../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../../../components/ui/StatusMessage';
@@ -74,7 +75,7 @@ export default function Goals() {
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>
-        <Pressable accessibilityRole="button" onPress={reload}><Text style={styles.link}>Refresh</Text></Pressable>
+        <RefreshButton onPress={reload} loading={loading}/>
       </View>
       {loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {error ? <StatusMessage error message={error} /> : null}

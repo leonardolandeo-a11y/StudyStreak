@@ -10,21 +10,39 @@ const { MenuActionContext } = await import('../src/contexts/MenuActionContext.ts
 const { MenuTabBar } = await import('../src/components/navigation/MenuTabBar.tsx');
 const { PageControls } = await import('../src/components/ui/PageControls.tsx');
 const { AppIcon } = await import('../src/components/ui/AppIcon.tsx');
+const { RefreshButton } = await import('../src/components/ui/RefreshButton.tsx');
 const { ValidationPartnerRow } = await import('../src/components/validations/ValidationPartnerRow.tsx');
 const { menuTabs } = await import('../src/features/navigation/menu.ts');
 const h=React.createElement,store=createAppearanceStore({read:async()=>null,write:async()=>{}});
 const render=child=>renderToStaticMarkup(h(AppearanceContext.Provider,{value:{...store.getSnapshot(),setPreferences:store.setPreferences}},child));
-test('pixel goal action follows all forty family/mode/accent pairs and retains its callback',async()=>{
- let created=0;
+test('one identical pixel action across every tab and forty appearances retains each contextual callback',async()=>{
+ const calls=[0,0,0,0];
  const state={routes:menuTabs.map(item=>({name:item.name,key:item.name})),index:0};
- const bar=index=>h(MenuActionContext.Provider,{value:{action:{label:'Create a goal',hidden:false,run:()=>created++},setAction(){}}},h(MenuTabBar,{state:{...state,index},insets:{bottom:8},emitter:{emit:()=>({})},navigateToTab(){}}));
+ const bar=index=>h(MenuActionContext.Provider,{value:{action:{label:menuTabs[index].action,hidden:false,run:()=>calls[index]++},setAction(){}}},h(MenuTabBar,{state:{...state,index},insets:{bottom:24},emitter:{emit:()=>({})},navigateToTab(){}}));
  for(const background of ['neutral','lavender','sage','amber','sky'])for(const mode of ['light','dark'])for(const accent of ['mint','blue','purple','orange']){
   await store.setPreferences({background,mode,accent,reduceMotion:true});controls.clear();
-  const html=render(bar(0));assert.match(html,/pixel-goal-action/);assert.ok(html.includes(store.getSnapshot().theme.colors.primary));
-  controls.get('Create a goal').onPress();assert.equal(controls.get('Create a goal').disabled,false);
-  for(const name of ['copy','refresh','chevron-left','chevron-right','check'])assert.doesNotThrow(()=>render(h(AppIcon,{name,color:store.getSnapshot().theme.colors.primary})));
+  let firstStyle;
+  for(let index=0;index<menuTabs.length;index++){
+   controls.clear();const html=render(bar(index));assert.equal((html.match(/pixel-goal-action/g)||[]).length,1);assert.ok(html.includes(store.getSnapshot().theme.colors.primary));assert.match(html,/padding-bottom:24px/);
+   const action=controls.get(menuTabs[index].action),style=action.style({pressed:false});
+   if(index===0)firstStyle=style;else assert.deepEqual(style,firstStyle,'shape and dimensions cannot depend on selected tab');
+   action.onPress();assert.equal(action.disabled,false);
+   assert.equal(controls.get(menuTabs[index].label).accessibilityState.selected,true);
+  }
+  for(const name of ['copy','refresh','reload','chevron-left','chevron-right','check'])assert.doesNotThrow(()=>render(h(AppIcon,{name,color:store.getSnapshot().theme.colors.primary})));
  }
- assert.equal(created,40);assert.doesNotMatch(render(bar(1)),/pixel-goal-action/);
+ assert.deepEqual(calls,[40,40,40,40]);
+});
+test('shared Refresh retains its callback, accent, loading and explicit disabled semantics',async()=>{
+ let refreshed=0;
+ for(const mode of ['light','dark'])for(const accent of ['mint','blue','purple','orange']){
+  await store.setPreferences({mode,accent});controls.clear();
+  const html=render(h(RefreshButton,{onPress:()=>refreshed++,loading:true}));
+  assert.match(html,/icon-reload-motion/);assert.doesNotMatch(html,/icon-refresh-motion|>Refresh</);assert.ok(html.includes(store.getSnapshot().theme.colors.primary));
+  const refresh=controls.get('Refresh');assert.equal(refresh.accessibilityState.busy,true);assert.equal(refresh.disabled,false);refresh.onPress();
+  render(h(RefreshButton,{onPress(){},disabled:true}));assert.equal(controls.get('Refresh').disabled,true);
+ }
+ assert.equal(refreshed,8);
 });
 test('compact pagination keeps accessible names, bounds and the original target pages',()=>{
  const changes=[];

@@ -60,9 +60,9 @@ try{
  await browser.click('Share invitation');assert.deepEqual(await browser.evaluate('window.__shares'),['Join my StudyStreak room: ABCDEFGHIJ']);
  await responsive();
  await browser.click('Participants (12)');await browser.wait(visible('View profile of LunaStudy'));await browser.click('View profile of LunaStudy');await browser.wait(`location.pathname.includes('/users/3/profile')`);await browser.evaluate('history.back()');await browser.wait(visible('Open menu'));
- await browser.click('Open menu');await browser.click('Notifications');await browser.waitForDrawerClosed();await browser.wait(visible('Refresh notifications'));await browser.wait(text('No notifications in this category.'));
- assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Refresh notifications"]').textContent`),'');
- const before=[notificationReads,unreadReads];await browser.click('Refresh notifications');
+ await browser.click('Open menu');await browser.click('Notifications');await browser.waitForDrawerClosed();await browser.wait(visible('Refresh'));await browser.wait(text('No notifications in this category.'));
+ assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Refresh"]').textContent`),'');
+ const before=[notificationReads,unreadReads];await browser.click('Refresh');
  for(let i=0;i<100&&(notificationReads<=before[0]||unreadReads<=before[1]);i++)await new Promise(resolve=>setTimeout(resolve,30));
  assert.ok(notificationReads>before[0]);assert.ok(unreadReads>before[1]);await responsive();
  assert.deepEqual(browser.errors,[]);assert.ok(reads.includes('/users/3/goals'));

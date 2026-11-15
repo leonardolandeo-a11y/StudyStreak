@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
-import { AppIcon } from '../../../../components/ui/AppIcon';
+import { RefreshButton } from '../../../../components/ui/RefreshButton';
 import { StatusMessage } from '../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../components/ui/PageControls';
 import { NotificationCard } from '../../../../components/notifications/NotificationCard';
@@ -14,7 +14,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../hooks/usePagedResource';
 import { notificationService } from '../../../../services/notificationService';
 import { getApiErrorMessage } from '../../../../utils/apiError';
-import { useAppearance, useThemedStyles } from '../../../../hooks/useAppearance';
+import { useThemedStyles } from '../../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../../features/appearance/theme';
 import { notificationTypeLabels, notificationTypes } from '../../../../types/notification';
 import { notificationDestination } from '../../../../utils/notificationDestination';
@@ -25,7 +25,6 @@ type Filter = 'all' | 'unread' | 'type';
 
 export default function Notifications() {
   const styles = useThemedStyles(createStyles);
-  const { theme: { colors } } = useAppearance();
   const { refreshUnread } = useNavigationData();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
@@ -129,9 +128,7 @@ export default function Notifications() {
       </ScrollView>
       <View style={styles.row}>
         <Text style={styles.heading}>{filter === 'unread' ? 'Unread notifications' : filter === 'type' ? notificationTypeLabels[selectedType] : 'All notifications'}</Text>
-        <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh notifications" accessibilityState={{busy:loading}} onPress={() => { reload(); void refreshUnread(); }} style={{ minHeight: 48, minWidth:44, alignItems:'center', justifyContent: 'center' }}>
-          <AppIcon name="refresh" color={colors.primary} size={22}/>
-        </NavigationPressable>
+        <RefreshButton loading={loading} onPress={() => { reload(); void refreshUnread(); }}/>
       </View>
       {message ? <StatusMessage message={message} /> : null}
       {actionError ? <StatusMessage message={actionError} error /> : null}

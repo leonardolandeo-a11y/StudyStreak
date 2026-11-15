@@ -8,6 +8,7 @@ import { ValidationPartnerRow } from '../../../../../components/validations/Vali
 import { DifficultyBadge } from '../../../../../components/goals/GoalDifficulty';
 import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
 import { AppIcon } from '../../../../../components/ui/AppIcon';
+import { RefreshButton } from '../../../../../components/ui/RefreshButton';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
@@ -52,12 +53,12 @@ function partnerFromLink(link: TrackingLink, currentUserId: number): Partner {
     : { id: link.requesterId, username: link.requesterUsername };
 }
 
-function Section({ step, title, children }: { step: number; title: string; children: ReactNode }) {
+function Section({ step, title, children, action }: { step: number; title: string; children: ReactNode; action?: ReactNode }) {
   const styles = useWorkflowStyles();
   return (
     <View style={styles.section}>
       <Text style={styles.step}>Step {step} of 5</Text>
-      <Text style={styles.heading}>{title}</Text>
+      {action ? <View style={{flexDirection:'row',alignItems:'center',gap:8}}><Text style={[styles.heading,{flex:1}]}>{title}</Text>{action}</View> : <Text style={styles.heading}>{title}</Text>}
       {children}
     </View>
   );
@@ -184,7 +185,7 @@ export default function Validations() {
 
   const flow = <View style={{ gap: 16 }}>
     <ValidationStepper step={step} busy={saving} onStep={setStep}/>
-    {step === 0 ? <Section step={1} title="Tracking partners"><ActionButton compact secondary title="Refresh partners" onPress={partners.reload}/><ListStatus state={partners} empty="No active tracking partners yet."/>
+    {step === 0 ? <Section step={1} title="Tracking partners" action={<RefreshButton onPress={partners.reload} loading={partners.loading}/>}><ListStatus state={partners} empty="No active tracking partners yet."/>
       {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <ValidationPartnerRow key={link.id} id={member.id} name={member.username} selected={partner?.id===member.id} onSelect={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/>; }) : null}
       <PageControls compact page={partners.page} totalPages={partners.data?.totalPages ?? 0} onChange={partners.setPage}/>
     </Section> : null}
