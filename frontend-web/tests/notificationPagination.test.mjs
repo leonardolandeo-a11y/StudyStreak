@@ -35,6 +35,7 @@ test('notifications preserve page size and filters across shareable URLs', { tim
     await page.click('Next');
     await page.wait(`new URLSearchParams(location.search).get('page')==='1'`);
     await page.wait(`document.body.textContent.includes('Showing 11–20 of 55')`);
+    for (let attempt = 0; attempt < 100 && !requests.some(r => r.path.endsWith('/unread') && r.number === 1 && r.size === 10); attempt++) await new Promise(resolve => setTimeout(resolve, 40));
     assert.ok(requests.some(r => r.path.endsWith('/unread') && r.number === 1 && r.size === 10));
     assert.deepEqual(page.errors, []);
   } finally { await page.close(); }
