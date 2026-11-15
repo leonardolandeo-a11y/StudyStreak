@@ -1,0 +1,24 @@
+.workflow-dialog { margin: auto; padding: 0; width: min(560px,calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; border: 1px solid var(--ss-border-strong); border-radius: 14px; background: var(--ss-surface); color: var(--ss-text); box-shadow: 0 16px 48px #0004; }
+.workflow-dialog::backdrop { background: #120c24aa; }
+.workflow-form label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.workflow-form :is(input:not([type=checkbox]),select,textarea) { display: block; width: 100%; min-height: 44px; background: var(--ss-background); color: var(--ss-text); border: 1px solid var(--ss-border-strong); border-radius: 8px; padding: 10px 12px; font: inherit; }
+.workflow-form :is(input,select,textarea):focus { border-color: var(--ss-accent); }
+.workflow-form small { display: block; font-size: 12px; margin-top: 5px; color: var(--ss-text-muted); }
+.goal-workflows .study-panel,.validation-workflow > section { background: var(--ss-surface); border: 1px solid var(--ss-border); border-radius: 12px; }
+.goal-workflow-card { min-width: 0; border: 1px solid var(--ss-border); border-radius: 12px; overflow: hidden; background: var(--ss-surface); transition: transform 220ms,border-color 220ms; }
+.goal-workflow-card:is(:hover,:focus-within) { transform: translateY(-2px); border-color: var(--ss-accent); }
+.goal-card-main { display: flex; min-height: 148px; align-items: center; gap: 18px; padding: 20px; }
+.goal-status { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: 8px; }
+.goal-detail-hero { padding: 20px; }
+.goal-tags { border: 1px solid var(--ss-border); background: var(--ss-surface); border-radius: 12px; padding: 14px; }
+.goal-tag-badge { display: inline-flex; max-width: 100%; align-items: center; gap: 5px; border-radius: 20px; background: var(--ss-accent-soft); color: var(--ss-accent); padding: 3px 10px; font-size: 13px; overflow-wrap: anywhere; }
+.goal-tag-badge > button { display: flex; align-items: center; justify-content: center; min-width: 36px; min-height: 38px; border-radius: 20px; }
+.workflow-stepper { position: relative; display: flex; overflow-x: auto; gap: 8px; padding: 4px 0 12px; }
+.workflow-stepper button { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; min-width: 112px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--ss-border); border-radius: 10px; background: var(--ss-surface); font-size: 13px; }
+.workflow-stepper button > span { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--ss-border-strong); border-radius: 50%; }
+.workflow-stepper [aria-current="step"] { background: var(--ss-accent-soft); border-color: var(--ss-accent); color: var(--ss-accent); font-weight: 700; }
+.workflow-stepper button:disabled { opacity: .5; }
+.validation-workflow [hidden],.goal-workflows [hidden] { display: none !important; }
+@media (max-width: 480px) { .goal-card-main { padding: 16px; gap: 12px; } .goal-card-main > img { width: 44px; height: auto; } }
+@media (prefers-reduced-motion: reduce) { .goal-workflow-card { transition: none; transform: none !important; } }
+:root[data-motion="reduce"] .goal-workflow-card { transition: none; transform: none; }

@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import axios from 'axios';
 import { createValidation, getValidation, updateValidation } from '../services/validationService';
 import ValidationForm from '../components/validations/ValidationForm';
@@ -259,7 +260,7 @@ function DailyRecordDetails(){
         return ( <EmptyState message="Daily record not found."/>);
     }
     return (
-    <div className="space-y-8">
+    <div className="academic-page academic-module space-y-6">
 
         <section
             className="
@@ -267,30 +268,11 @@ function DailyRecordDetails(){
                 border border-slate-800
                 bg-slate-900/70
                 p-6
-                shadow-lg shadow-black/10
+                shadow-lg shadow-appearance-shadow/10
             "
         >
             <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <p className="text-sm font-medium text-sky-400">
-                        Daily Record
-                    </p>
-
-                    <h1
-                        className="
-                            mt-2
-                            text-3xl font-bold
-                            tracking-tight
-                            text-slate-100
-                        "
-                    >
-                        {dailyRecord.date}
-                    </h1>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                        Record #{dailyRecord.id}
-                    </p>
-                </div>
+                <AcademicHeading title={dailyRecord.date} eyebrow="Daily Record" description={`Record #${dailyRecord.id}`} glyph="note" />
 
                 <span
                     className="
@@ -395,7 +377,7 @@ function DailyRecordDetails(){
         {canReview ? (
             validationError ? (
                 <button type="button" onClick={() => setReviewRevision(value => value + 1)}
-                    className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
+                    className="rounded-lg border border-outline-strong px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
                     Retry loading review
                 </button>
             ) : (

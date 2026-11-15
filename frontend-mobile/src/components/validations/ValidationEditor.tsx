@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { FormField } from '../ui/FormField';
-import { palette } from '../../constants/palette';
+import { useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import type { Validation, ValidationRequest } from '../../types/validation';
 
 type Props = {
@@ -12,7 +13,9 @@ type Props = {
 };
 
 export function ValidationEditor({ initial, busy, onSubmit }: Props) {
+  const styles = useThemedStyles(createStyles);
   const [approved, setApproved] = useState<boolean | null>(initial?.approved ?? null);
+  const [confirming,setConfirming] = useState(false);
   const [comment, setComment] = useState(initial?.comment ?? '');
   const [error, setError] = useState<string | null>(null);
 
@@ -21,10 +24,17 @@ export function ValidationEditor({ initial, busy, onSubmit }: Props) {
       setError('Choose Approve or Reject before saving.');
       return;
     }
+    if (busy) return;
     setError(null);
+    if (!confirming) { setConfirming(true); return; }
     await onSubmit({ approved, comment: comment.trim() });
   }
 
+  if (confirming) return <View style={styles.wrap}>
+    <Text style={styles.label}>Confirm your decision</Text><Text style={styles.label}>{approved ? 'Approve' : 'Reject'}</Text><Text style={styles.counter}>{comment || 'No comment'}</Text>
+    <ActionButton compact secondary title="Edit decision" disabled={busy} onPress={() => setConfirming(false)}/>
+    <ActionButton compact title={initial ? 'Update validation' : 'Create validation'} busy={busy} onPress={() => { void submit(); }}/>
+  </View>;
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>Your decision</Text>
@@ -40,26 +50,26 @@ export function ValidationEditor({ initial, busy, onSubmit }: Props) {
           <Text style={[styles.choiceText, approved === false && styles.selectedText]}>Reject</Text>
         </Pressable>
       </View>
-      <FormField label="Comment (optional)" value={comment} onChangeText={setComment}
+      <FormField variant="subtle" label="Comment (optional)" value={comment} onChangeText={setComment}
         maxLength={500} multiline numberOfLines={3} textAlignVertical="top"
         editable={!busy} style={styles.comment} placeholder="Explain your decision" />
       <Text style={styles.counter}>{comment.length}/500</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <ActionButton title={initial ? 'Update validation' : 'Create validation'} busy={busy}
+      <ActionButton compact title="Review decision" disabled={approved === null} busy={busy}
         onPress={() => { void submit(); }} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { gap: 12 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  wrap: { gap: 10 },
   label: { color: palette.text, fontWeight: '700', fontSize: 15 },
   choices: { flexDirection: 'row', gap: 10 },
   choice: { flex: 1, paddingVertical: 15, backgroundColor: palette.surfaceRaised, borderWidth: 1,
     borderColor: palette.border, borderRadius: 12, alignItems: 'center' },
-  selected: { borderColor: palette.primary, backgroundColor: '#082f49' },
+  selected: { borderColor: palette.primary, backgroundColor: palette.primarySoft },
   choiceText: { color: palette.muted, fontWeight: '700' },
-  selectedText: { color: palette.text },
+  selectedText: { color: palette.primary },
   comment: { minHeight: 90, paddingTop: 12 },
   counter: { color: palette.muted, textAlign: 'right', fontSize: 12 },
   error: { color: palette.error, fontSize: 13 },

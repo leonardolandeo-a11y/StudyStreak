@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import {
     useEffect,
     useState
@@ -219,29 +220,9 @@ function DailyRecords(){
         return null;
     }
     return(
-    <div className="space-y-8">
+    <div className="academic-page academic-module space-y-6">
 
-        <section>
-            <p className="text-sm font-medium text-sky-400">
-                Progress tracking
-            </p>
-
-            <h1
-                className="
-                    mt-2
-                    text-3xl font-bold
-                    tracking-tight
-                    text-slate-100
-                "
-            >
-                Daily Records
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-slate-400">
-                Log your progress for this goal and review
-                previous study records.
-            </p>
-        </section>
+        <AcademicHeading title="Daily Records" eyebrow="Progress tracking" description="Log your progress for this goal and review previous study records." glyph="note" />
 
 
         <section>

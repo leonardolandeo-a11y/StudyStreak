@@ -11,6 +11,7 @@ RUN chmod +x mvnw
 RUN ./mvnw dependency:go-offline
 
 COPY src ./src
+COPY db/migrations ./db/migrations
 
 RUN ./mvnw clean package -DskipTests
 #######

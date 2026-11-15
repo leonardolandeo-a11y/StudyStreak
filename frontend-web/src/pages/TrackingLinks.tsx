@@ -1,3 +1,7 @@
+import { AcademicSprite } from "../components/academic/AcademicSprite";
+import { AcademicHeading } from "../components/academic/Academic";
+import { TrackingAvatar, TrackingAvatarProvider } from "../components/trackingLinks/TrackingAvatar";
+import { TrackingGroup } from "../components/trackingLinks/TrackingGroup";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
@@ -49,6 +53,8 @@ function TrackingLinks() {
     const [creating, setCreating] = useState(false);
     const [busyId, setBusyId] = useState<number | null>(null);
     const [revision, setRevision] = useState(0);
+    const [expanded, setExpanded] = useState({ active: true, pending: true, history: true });
+    const toggle = (group: keyof typeof expanded) => setExpanded(previous => ({ ...previous, [group]: !previous[group] }));
 
     const setPage = useCallback((key: PageKey, nextPage: number) => {
         setSearchParams((previous) => {
@@ -183,113 +189,48 @@ function TrackingLinks() {
     if (!currentUser) return null;
 
     return (
-        <div className="space-y-8">
-            <header>
-                <p className="text-sm font-medium text-sky-400">Connections</p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">Tracking Links</h1>
-                <p className="mt-2 max-w-2xl text-slate-400">Send requests, manage invitations and review your study partners.</p>
-            </header>
-
-            <TrackingLinkForm onSubmit={handleCreate} loading={creating} />
+        <TrackingAvatarProvider revision={revision}><div className="academic-page academic-module retro-tracking space-y-4">
+            <div className="tracking-toolbar"><AcademicHeading title="Tracking Links" eyebrow="Study connections" description="Send requests, manage invitations and review your study partners." glyph="people" art={<AcademicSprite name="companions" width={76}/>}/>
+                <TrackingLinkForm onSubmit={handleCreate} loading={creating}/>
+            </div>
             {loading && <LoadingState message="Loading tracking connections..." />}
             {error && <ErrorMessage message={error} />}
             {error && (
                 <button
                     type="button"
                     onClick={() => setRevision((value) => value + 1)}
-                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
+                    className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-on-accent hover:bg-sky-400"
                 >
                     Retry
                 </button>
             )}
 
-            {!loading && !error && pendingLinks && (
-                <section>
-                    <h2 className="text-xl font-semibold text-slate-100">Pending Invitations</h2>
-                    <p className="mt-1 text-sm text-slate-400">Requests waiting for your response.</p>
-                    {pendingLinks.empty ? (
-                        <div className="mt-4"><EmptyState message="No pending invitations." /></div>
-                    ) : (
-                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                            {pendingLinks.content.map((link) => (
-                                <article key={link.id} className="rounded-2xl border border-amber-900/40 bg-amber-950/10 p-5">
-                                    <p className="text-sm text-slate-200">
-                                        <span className="font-semibold">@{link.requesterUsername || "Unknown user"}</span> sent you a tracking request.
-                                    </p>
-                                    <div className="mt-4 flex flex-wrap gap-3">
-                                        <button
-                                            type="button"
-                                            disabled={busyId !== null}
-                                            onClick={() => handleStatus(link.id, "ACCEPTED")}
-                                            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
-                                        >Accept</button>
-                                        <button
-                                            type="button"
-                                            disabled={busyId !== null}
-                                            onClick={() => handleStatus(link.id, "REJECTED")}
-                                            className="rounded-lg border border-red-900 bg-red-950/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-950/60 disabled:opacity-50"
-                                        >Reject</button>
-                                    </div>
-                                </article>
-                            ))}
+            {!loading && !error && activeLinks && <TrackingGroup title="Active Tracking Links" glyph="people" count={activeLinks.totalElements} expanded={expanded.active} onToggle={() => toggle('active')}>
+                {activeLinks.empty ? <EmptyState message="No active connections."/> : <div className="grid gap-3 xl:grid-cols-2">
+                    {activeLinks.content.map(link => <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id} busy={busyId !== null} onRemove={handleRemove}/>)}
+                </div>}
+                {pagination("activePage", activePageNumber, activeLinks)}
+            </TrackingGroup>}
+            {!loading && !error && pendingLinks && <TrackingGroup title="Pending Invitations" glyph="note" count={pendingLinks.totalElements} expanded={expanded.pending} onToggle={() => toggle('pending')}>
+                {pendingLinks.empty ? <EmptyState message="No pending invitations."/> : <div className="grid gap-3 xl:grid-cols-2">
+                    {pendingLinks.content.map(link => <article key={link.id} className="min-w-0 rounded-lg border border-outline bg-surface p-3">
+                        <div className="flex min-w-0 items-center gap-3"><TrackingAvatar id={link.requesterId} name={link.requesterUsername || "?"} className="size-11"/>
+                            <p className="min-w-0 flex-1 truncate font-semibold text-content">@{link.requesterUsername || "Unknown user"}</p><span className="text-xs text-warning">PENDING</span></div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <button type="button" disabled={busyId !== null} onClick={() => handleStatus(link.id, "ACCEPTED")} className="study-button bg-accent text-on-accent hover:bg-accent-hover disabled:opacity-50">Accept</button>
+                            <button type="button" disabled={busyId !== null} onClick={() => handleStatus(link.id, "REJECTED")} className="study-button border-danger-outline text-danger hover:bg-danger-surface disabled:opacity-50">Reject</button>
                         </div>
-                    )}
-                    {pagination("pendingPage", pendingPageNumber, pendingLinks)}
-                </section>
-            )}
-
-            {!loading && !error && activeLinks && (
-                <section>
-                    <h2 className="text-xl font-semibold text-slate-100">Active Tracking Links</h2>
-                    <p className="mt-1 text-sm text-slate-400">Partners currently connected to your progress.</p>
-                    {activeLinks.empty ? (
-                        <div className="mt-4"><EmptyState message="No active connections." /></div>
-                    ) : (
-                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                            {activeLinks.content.map((link) => {
-                                const partnerName = link.requesterId === currentUser.id ? link.receiverUsername : link.requesterUsername;
-                                return (
-                                    <article key={link.id} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500">Tracking with</p>
-                                        <p className="mt-1 text-lg font-semibold text-slate-100">@{partnerName || "Unknown user"}</p>
-                                        <span className="mt-2 inline-block rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-semibold text-emerald-300">ACCEPTED</span>
-                                        <button
-                                            type="button"
-                                            disabled={busyId !== null}
-                                            onClick={() => handleRemove(link.id)}
-                                            className="mt-4 block rounded-lg border border-red-900 bg-red-950/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-950/60 disabled:opacity-50"
-                                        >Remove Tracking Link</button>
-                                    </article>
-                                );
-                            })}
-                        </div>
-                    )}
-                    {pagination("activePage", activePageNumber, activeLinks)}
-                </section>
-            )}
-
-            {!loading && !error && allLinks && (
-                <section>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-100">All Tracking Links</h2>
-                            <p className="mt-1 text-sm text-slate-400">Complete history of your tracking connections.</p>
-                        </div>
-                        <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-xs text-slate-400">{allLinks.totalElements} total</span>
-                    </div>
-                    {allLinks.empty ? (
-                        <div className="mt-4"><EmptyState message="No tracking links yet." /></div>
-                    ) : (
-                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                            {allLinks.content.map((link) => (
-                                <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id} />
-                            ))}
-                        </div>
-                    )}
-                    {pagination("page", page, allLinks)}
-                </section>
-            )}
-        </div>
+                    </article>)}
+                </div>}
+                {pagination("pendingPage", pendingPageNumber, pendingLinks)}
+            </TrackingGroup>}
+            {!loading && !error && allLinks && <TrackingGroup title="All Tracking Links" glyph="book" count={allLinks.totalElements} expanded={expanded.history} onToggle={() => toggle('history')}>
+                {allLinks.empty ? <EmptyState message="No tracking links yet."/> : <div className="grid gap-3 xl:grid-cols-2">
+                    {allLinks.content.map(link => <TrackingLinkCard key={link.id} trackingLink={link} currentUserId={currentUser.id}/>)}
+                </div>}
+                {pagination("page", page, allLinks)}
+            </TrackingGroup>}
+        </div></TrackingAvatarProvider>
     );
 }
 

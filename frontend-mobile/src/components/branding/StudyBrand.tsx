@@ -1,0 +1,53 @@
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Platform, Text, View } from 'react-native';
+import { useAppearance } from '../../hooks/useAppearance';
+import { NavigationPressable } from '../navigation/NavigationPressable';
+import mark from './mark';
+
+export function StudyMark({ size = 36, decorative = false }: { size?: number; decorative?: boolean }) {
+  const { theme: { colors } } = useAppearance();
+  const fills: Record<string, string> = { ink: colors.text, accent: colors.primary, paper: colors.primaryText, muted: colors.muted, warm: colors.pending };
+  const unit = size / mark.grid;
+  return <View testID="study-mark" accessible={!decorative} accessibilityRole="image"
+    accessibilityLabel={decorative ? undefined : 'StudyStreak coffee mark'}
+    importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'} style={{ width: size, height: size, flexShrink: 0 }}>
+    {mark.rects.filter(rect => size > 24 || rect[5] !== 'detail').map(([x,y,width,height,role], index) =>
+      <View key={index} accessible={false} style={{ position: 'absolute', left: Number(x)*unit, top: Number(y)*unit,
+        width: Number(width)*unit, height: Number(height)*unit, backgroundColor: fills[String(role)] }} />)}
+  </View>;
+}
+export function PixelRule() {
+  const { theme: { colors } } = useAppearance();
+  return <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ width: 28, height: 6 }}>
+    <View style={{ position: 'absolute', width: 24, height: 2, backgroundColor: colors.primary }} />
+    <View style={{ position: 'absolute', left: 4, top: 4, width: 24, height: 2, backgroundColor: colors.border }} />
+  </View>;
+}
+export function StudyBrand({ variant = 'navigation', interactive = false }: { variant?: 'navigation' | 'compact' | 'signature'; interactive?: boolean }) {
+  const { theme: { colors }, reduceMotion } = useAppearance();
+  const [motion] = useState(() => new Animated.Value(0));
+  const animation = useRef<Animated.CompositeAnimation | null>(null);
+  useEffect(() => {
+    if (reduceMotion) { animation.current?.stop(); motion.setValue(0); }
+    return () => { animation.current?.stop(); motion.setValue(0); };
+  }, [motion,reduceMotion]);
+  const nod = () => {
+    if (reduceMotion) return;
+    animation.current?.stop(); motion.setValue(0);
+    animation.current=Animated.timing(motion,{toValue:1,duration:320,useNativeDriver:true,isInteraction:false});
+    animation.current.start();
+  };
+  const signature = variant === 'signature';
+  const fontFamily = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+  return <View testID="study-brand" accessible={!interactive} accessibilityLabel={interactive ? undefined : 'StudyStreak'} accessibilityHint={interactive || variant === 'compact' ? undefined : 'Small sessions. Lasting progress.'}
+    style={{ flexDirection: signature ? 'column' : 'row', alignItems: 'center', gap: signature ? 12 : 10, minWidth: 0 }}>
+    {interactive ? <NavigationPressable accessibilityRole="button" accessibilityLabel="Animate StudyStreak cup" onPress={nod} style={{width:56,height:56,flexShrink:0,alignItems:'center',justifyContent:'center'}}>
+      <Animated.View testID="drawer-cup-motion" style={{transformOrigin:'50% 75%',transform:[{rotate:motion.interpolate({inputRange:[0,.35,.7,1],outputRange:['0deg','-4deg','3deg','0deg']})},{translateY:motion.interpolate({inputRange:[0,.35,.7,1],outputRange:[0,-2,-1,0]})}]}}><StudyMark size={52} decorative/></Animated.View>
+    </NavigationPressable> : <StudyMark size={signature ? 64 : variant === 'compact' ? 32 : 52} decorative />}
+    <View style={{ flexShrink: 1, minWidth: 0, gap: 3, alignItems: signature ? 'center' : 'flex-start' }}>
+      <Text numberOfLines={1} style={{ color: colors.text, fontFamily, fontWeight: '700', fontSize: signature ? 24 : 16, letterSpacing: -.5 }}>Study<Text style={{ color: colors.primary }}>Streak</Text></Text>
+      {variant !== 'compact' ? <Text style={{ color: colors.muted, fontSize: signature ? 12 : 11, lineHeight: signature ? 18 : 16 }}>Small sessions. Lasting progress.</Text> : null}
+    </View>
+    {signature ? <PixelRule /> : null}
+  </View>;
+}

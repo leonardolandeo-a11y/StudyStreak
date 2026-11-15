@@ -1,0 +1,37 @@
+/* Brand-only accents; the body font, controls and existing theme stay intact. */
+.study-brand {
+    --ss-brand-font: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --ss-brand-step: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--ss-text);
+}
+[data-study-mark] { flex-shrink: 0; display: block; }
+.study-mark-ink { fill: var(--ss-text); }
+.study-mark-accent { fill: var(--ss-accent); }
+.study-mark-paper { fill: var(--ss-on-accent); }
+.study-mark-muted { fill: var(--ss-text-muted); }
+.study-mark-warm { fill: var(--ss-warning); }
+.study-brand-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.study-brand-name { font: 700 16px/1.25 var(--ss-brand-font); letter-spacing: -.5px; }
+.study-brand-name > span { color: var(--ss-accent); }
+.study-brand-tagline { color: var(--ss-text-muted); font: 400 11px/1.4 var(--ss-font-body); }
+.study-brand-signature { flex-direction: column; text-align: center; gap: 12px; }
+.study-brand-signature .study-brand-name { font-size: 24px; }
+.study-brand-signature .study-brand-tagline { font-size: 12px; }
+/* Optional pixel accent for brand-only panels; no moving/animated decoration. */
+.study-brand-rule { display: block; flex-shrink: 0; width: 24px; height: var(--ss-brand-step); background: var(--ss-accent); box-shadow: 4px 4px 0 var(--ss-border); }
+
+/* Shared, opt-in identity interaction; compact navigation keeps its existing shape. */
+.study-brand-interactive .study-brand-copy { position: relative; align-items: center; }
+.study-brand-interactive .study-brand-name { border-radius: 3px; }
+.study-brand-interactive .study-brand-name:focus-visible { outline: 2px solid var(--ss-focus); outline-offset: 4px; }
+.study-brand-interactive .study-brand-tagline { position: absolute; top: calc(100% + 5px); left: 50%; z-index: 80; width: max-content; max-width: 230px; padding: 6px 8px; border: 1px solid var(--ss-border-strong); border-radius: 6px; background: var(--ss-surface-raised); color: var(--ss-text-secondary); box-shadow: 0 3px 10px color-mix(in srgb,var(--ss-shadow-color) 12%,transparent); opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%,2px); transition: opacity 180ms, transform 180ms, visibility 180ms; }
+.study-brand-interactive:not([data-brand-dismissed]):is(:hover,:focus-within) .study-brand-tagline { opacity: 1; visibility: visible; transform: translate(-50%,0); }
+.study-brand-interactive:is(:hover,:focus-within) > [data-study-mark],.sidebar-brand:hover > [data-study-mark] { animation: brand-cup-nod 320ms ease-out; transform-origin: 50% 75%; }
+@keyframes brand-cup-nod { 0%,100% { transform: rotate(0) translateY(0); } 35% { transform: rotate(-4deg) translateY(-2px); } 70% { transform: rotate(3deg) translateY(-1px); } }
+@media(prefers-reduced-motion:reduce) { .study-brand-interactive > [data-study-mark],.sidebar-brand > [data-study-mark] { animation: none !important; } .study-brand-interactive .study-brand-tagline { transition: none; } }
+[data-motion="reduce"] .study-brand-interactive > [data-study-mark],[data-motion="reduce"] .sidebar-brand > [data-study-mark] { animation: none !important; }
+[data-motion="reduce"] .study-brand-interactive .study-brand-tagline { transition: none; }

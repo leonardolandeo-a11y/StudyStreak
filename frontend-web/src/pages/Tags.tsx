@@ -1,3 +1,4 @@
+import { AcademicHeading } from "../components/academic/Academic";
 import {
     useEffect,
     useState
@@ -349,29 +350,9 @@ function Tags() {
 
 
     return (
-    <div className="space-y-8">
+    <div className="academic-page academic-module space-y-6">
 
-        <section>
-            <p className="text-sm font-medium text-sky-400">
-                Organization
-            </p>
-
-            <h1
-                className="
-                    mt-2
-                    text-3xl font-bold
-                    tracking-tight
-                    text-slate-100
-                "
-            >
-                Tags
-            </h1>
-
-            <p className="mt-2 max-w-2xl text-slate-400">
-                Organize this goal with short labels that make
-                your study progress easier to classify.
-            </p>
-        </section>
+        <AcademicHeading title="Tags" eyebrow="Organization" description="Organize this goal with short labels that make your study progress easier to classify." glyph="note" />
 
 
         <section>

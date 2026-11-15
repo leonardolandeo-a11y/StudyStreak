@@ -3,7 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { FormField } from '../ui/FormField';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import type { DailyRecordRequest } from '../../types/dailyRecord';
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function DailyRecordForm({ initialValues, busy, onSubmit, onCancel }: Props) {
+  const styles = useThemedStyles(createStyles);
   const date = initialValues?.date;
   const [note, setNote] = useState(initialValues?.note ?? '');
   const [evidence, setEvidence] = useState(initialValues?.evidence ?? '');
@@ -36,21 +38,21 @@ export function DailyRecordForm({ initialValues, busy, onSubmit, onCancel }: Pro
           {date ? 'La fecha original es de solo lectura y no se puede modificar.' : 'La fecha se asignará automáticamente al guardar según la zona horaria de tu cuenta'}
         </Text>
       </View>
-      <FormField label="Notes" hint={`${note.length}/1000 characters`} value={note}
+      <FormField variant="subtle" label="Notes" hint={`${note.length}/1000 characters`} value={note}
         onChangeText={setNote} multiline numberOfLines={4} maxLength={1000}
         placeholder="What did you study?" style={styles.note} editable={!busy} />
-      <FormField label="Evidence" hint="Optional link or description" value={evidence}
+      <FormField variant="subtle" label="Evidence" hint="Optional link or description" value={evidence}
         onChangeText={setEvidence} placeholder="Study evidence" editable={!busy} />
       {error ? <StatusMessage error message={error} /> : null}
-      <ActionButton title={initialValues ? 'Save record' : 'Create record'} busy={busy}
+      <ActionButton compact title={initialValues ? 'Save record' : 'Create record'} busy={busy}
         onPress={() => { void submit(); }} />
-      <ActionButton title="Cancel" secondary disabled={busy} onPress={onCancel} />
+      <ActionButton compact title="Cancel" secondary disabled={busy} onPress={onCancel} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  form: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 18, gap: 14 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  form: { backgroundColor: 'transparent', gap: 12 },
   heading: { color: palette.text, fontSize: 20, fontWeight: '700' },
   dateLabel: { color: palette.text, fontSize: 16, fontWeight: '600' },
   datePanel: {backgroundColor:palette.background,borderLeftWidth:2,borderLeftColor:palette.primary,padding:14,gap:8,borderRadius:10},

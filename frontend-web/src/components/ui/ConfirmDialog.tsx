@@ -100,7 +100,7 @@ function ConfirmDialog({
                     rounded-2xl
                     border border-slate-800
                     bg-slate-900
-                    shadow-2xl shadow-black/50
+                    shadow-2xl shadow-appearance-shadow/50
                 "
             >
 
@@ -194,7 +194,7 @@ function ConfirmDialog({
                         onClick={onCancel}
                         className="
                             rounded-lg
-                            border border-slate-700
+                            border border-outline-strong
                             bg-slate-950
                             px-4 py-2
                             text-sm font-medium
@@ -215,8 +215,8 @@ function ConfirmDialog({
                             text-sm font-semibold
                             ${
                                 isDanger
-                                    ? "bg-red-500 text-white hover:bg-red-400"
-                                    : "bg-sky-500 text-slate-950 hover:bg-sky-400"
+                                    ? "bg-red-500 text-on-danger hover:bg-red-400"
+                                    : "bg-sky-500 text-on-accent hover:bg-sky-400"
                             }
                         `}
                     >

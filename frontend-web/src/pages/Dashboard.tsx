@@ -1,166 +1,97 @@
-import { ArrowRight, BadgeCheck, Bell, BookOpen, Flame, Target } from "lucide-react";
+import { RecordedCalendar } from '../components/dashboard/RecordedCalendar';
+import { useWidgetReorder } from '../hooks/useWidgetReorder';
+import { useDashboardWidgets } from '../hooks/useDashboardWidgets';
+import { CustomizeDashboard } from '../components/dashboard/CustomizeDashboard';
+import { DashboardPartners } from '../components/dashboard/DashboardPartners';
+import { useReducedMotion } from '../theme/appearance';
+import '../components/dashboard/cozy-dashboard.css';
+import { StudyEnvironment } from '../components/environment/StudyEnvironment';
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { ArrowRight, GripVertical, Timer, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import SummaryCard from "../components/dashboard/SummaryCard";
 import { useAuth } from "../hooks/useAuth";
-import { useUnreadNotifications } from "../hooks/useUnreadNotifications";
+import { useDashboardResource } from "../hooks/useDashboardResource";
 import { ROUTES } from "../routes/paths";
-import {
-    getGoalSummary,
-    getRecordSummary,
-    getStreakSummary,
-    getValidationSummary
-} from "../services/dashboardService";
+import { fetchFocusStatistics } from "../services/focusStatisticsService";
+import { verifiedActivity } from "../utils/studyActivity";
+import type { StudyPeriod } from "../utils/studyActivity";
+import StudyActivityChart from "../components/dashboard/StudyActivityChart";
+import FocusInsights from "../components/dashboard/FocusInsights";
+import DashboardMetrics from "../components/dashboard/DashboardMetrics";
+import { DashboardGoals, DashboardRecent } from "../components/dashboard/DashboardContext";
 
-function Dashboard() {
-    const { currentUser } = useAuth();
-    const { unreadCount } = useUnreadNotifications();
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div className="space-y-8">
-            <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                <div>
-                    <p className="text-sm font-medium text-sky-400">Overview</p>
-                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100 sm:text-4xl">
-                        Welcome back, {currentUser.username}
-                    </h1>
-                    <p className="mt-2 text-slate-400">Your study progress at a glance.</p>
-                </div>
-                <Link to={ROUTES.goals} className="inline-flex w-fit items-center gap-2 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-sky-400">
-                    View Goals <ArrowRight size={16} />
-                </Link>
-            </section>
-
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Study statistics">
-                <SummaryCard
-                    key={`${currentUser.id}-goals`}
-                    title="Goals"
-                    icon={<Target size={20} />}
-                    accent="bg-sky-950 text-sky-400"
-                    href={ROUTES.goals}
-                    action="Manage goals"
-                    load={getGoalSummary}
-                >
-                    {summary => (
-                        <div>
-                            <p className="text-3xl font-bold text-slate-100">{summary.active}</p>
-                            <p className="mt-1 text-sm text-slate-400">Active goals</p>
-                            <p className="mt-3 text-sm text-slate-300">{summary.completed} completed</p>
-                        </div>
-                    )}
-                </SummaryCard>
-
-                <SummaryCard
-                    key={`${currentUser.id}-streaks`}
-                    title="Streaks"
-                    icon={<Flame size={20} />}
-                    accent="bg-orange-950 text-orange-400"
-                    href={ROUTES.goals}
-                    action="View goal streaks"
-                    load={getStreakSummary}
-                >
-                    {summary => (
-                        <div>
-                            <p className="text-3xl font-bold text-slate-100">{summary.current} <span className="text-sm font-normal text-slate-400">days</span></p>
-                            <p className="mt-1 text-sm text-slate-400">Highest current streak</p>
-                            <p className="mt-3 text-sm text-slate-300">Best streak: {summary.best} days</p>
-                        </div>
-                    )}
-                </SummaryCard>
-
-                <SummaryCard
-                    key={`${currentUser.id}-validations`}
-                    title="Validations"
-                    icon={<BadgeCheck size={20} />}
-                    accent="bg-emerald-950 text-emerald-400"
-                    href={ROUTES.validations}
-                    action="View validations"
-                    load={getValidationSummary}
-                >
-                    {summary => (
-                        <div>
-                            <p className="text-3xl font-bold text-slate-100">{summary.reviewed}</p>
-                            <p className="mt-1 text-sm text-slate-400">Your records reviewed by peers</p>
-                            <p className="mt-3 text-sm text-slate-300">{summary.awaitingReview} awaiting review</p>
-                        </div>
-                    )}
-                </SummaryCard>
-
-                <SummaryCard
-                    key={`${currentUser.id}-records`}
-                    title="Records"
-                    icon={<BookOpen size={20} />}
-                    accent="bg-violet-950 text-violet-400"
-                    href={ROUTES.goals}
-                    action="View study records"
-                    load={getRecordSummary}
-                >
-                    {summary => (
-                        <div>
-                            <p className="text-3xl font-bold text-slate-100">{summary.lastSevenDays}</p>
-                            <p className="mt-1 text-sm text-slate-400">Check-ins in the last 7 days</p>
-                            <p className="mt-3 text-sm text-slate-300">Across all your goals</p>
-                        </div>
-                    )}
-                </SummaryCard>
-            </section>
-
-            <section className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-100">Your Study Flow</h2>
-                            <p className="mt-1 text-sm text-slate-400">Track your goals, log progress and get peer feedback.</p>
-                        </div>
-                        <Target size={23} className="shrink-0 text-sky-400" />
-                    </div>
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <Link to={ROUTES.goals} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
-                            <p className="font-medium text-slate-100">1. Create a goal</p>
-                            <p className="mt-1 text-sm text-slate-400">Set your study target.</p>
-                        </Link>
-                        <Link to={ROUTES.goals} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
-                            <p className="font-medium text-slate-100">2. Log progress</p>
-                            <p className="mt-1 text-sm text-slate-400">Record a study session.</p>
-                        </Link>
-                        <Link to={ROUTES.validations} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
-                            <p className="font-medium text-slate-100">3. Validate</p>
-                            <p className="mt-1 text-sm text-slate-400">Support a study partner.</p>
-                        </Link>
-                        <Link to={ROUTES.resources} className="rounded-xl border border-slate-800 p-4 hover:bg-slate-800/60">
-                            <p className="font-medium text-slate-100">4. Find resources</p>
-                            <p className="mt-1 text-sm text-slate-400">Search books for your study topics.</p>
-                        </Link>
-                    </div>
-                    <Link to={ROUTES.notifications} className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 hover:bg-slate-800/60">
-                        <span className="flex items-center gap-2 text-sm font-medium text-slate-200"><Bell size={17} className="text-sky-400" />Unread notifications</span>
-                        <span className="rounded-full bg-sky-950 px-3 py-1 text-sm font-semibold text-sky-300" aria-label={`${unreadCount} unread notifications`}>{unreadCount}</span>
-                    </Link>
-                </div>
-                <aside className="h-fit rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                    <h2 className="text-lg font-semibold text-slate-100">Account</h2>
-                    <div className="mt-5 flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-950 font-semibold text-sky-300">
-                            {currentUser.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-100">{currentUser.username}</p>
-                            <p className="truncate text-sm text-slate-500">{currentUser.email}</p>
-                        </div>
-                    </div>
-                    <div className="mt-5 border-t border-slate-800 pt-5 text-sm">
-                        <div className="flex justify-between gap-4">
-                            <span className="text-slate-500">Role</span>
-                            <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-300">{currentUser.role}</span>
-                        </div>
-                    </div>
-                </aside>
-            </section>
+function DashboardActivity({ days, onDaysChange, userId }: { days: StudyPeriod; onDaysChange: (days: StudyPeriod) => void; userId: number }) {
+    const load = useCallback((signal: AbortSignal) => fetchFocusStatistics(days, signal), [days]);
+    const { state, retry } = useDashboardResource(load);
+    const stats = state.status === "success" ? state.data : null;
+    const period = stats ? verifiedActivity(stats, days) : null;
+    const from = stats?.daily[0]?.date, to = stats?.daily.at(-1)?.date;
+    const layout = useDashboardWidgets(userId);
+    const reorder = useWidgetReorder(layout.rows,layout.save);
+    const calendarVisible = layout.rows.some(row => row.id === 'calendar' && row.visible);
+    const visibleWidgets = layout.ready ? layout.rows.filter(row => row.visible) : [];
+    const retryWithoutChart = state.status === 'error' &&
+        !visibleWidgets.some(row => row.id === 'activity') &&
+        visibleWidgets.some(row => ['focus-summary', 'streak', 'journey', 'recent', 'calendar'].includes(row.id));
+    const reduced = useReducedMotion();
+    const grid = useRef<HTMLDivElement>(null);
+    const previous = useRef(new Map<string, { x: number; y: number }>());
+    useLayoutEffect(() => {
+        const animations: Animation[] = [];
+        const next = new Map<string, { x: number; y: number }>();
+        grid.current?.querySelectorAll<HTMLElement>('[data-widget]').forEach(element => {
+            const id = element.dataset.widget!, box = element.getBoundingClientRect(), origin = grid.current!.getBoundingClientRect();
+            const rect = { x: box.x-origin.x, y: box.y-origin.y }, before = previous.current.get(id);
+            next.set(id, rect);
+            if (before && !reduced && element.animate && (before.x !== rect.x || before.y !== rect.y)) animations.push(element.animate([
+                { transform: `translate(${before.x-rect.x}px,${before.y-rect.y}px)` }, { transform: 'translate(0,0)' },
+            ], { duration: 220, easing: 'ease-out' }));
+        });
+        previous.current = next;
+        return () => animations.forEach(animation => animation.cancel());
+    }, [layout.rows, reduced]);
+    return <>
+        <CustomizeDashboard {...layout}/>
+        {retryWithoutChart && <section className="study-panel flex flex-wrap items-center justify-between gap-3 p-4" aria-label="Study statistics error">
+            <p role="alert" className="text-sm text-content-secondary">Study statistics could not be loaded. Your saved data has not changed.</p>
+            <button type="button" className="study-button" aria-label="Retry study statistics" onClick={retry}>Retry study statistics</button>
+        </section>}
+        <p id="dashboard-reorder-help" className="sr-only">Drag a handle to reorder widgets. Keyboard: Arrow Up, Arrow Down, Home or End.</p>
+        <div ref={grid} className="custom-widget-grid" data-widget-count={visibleWidgets.length} aria-label="Dashboard widgets">
+        {visibleWidgets.map(row => <div className={`dashboard-widget widget-${row.id}`} data-widget={row.id} data-reorder-item={row.id} id={row.id === 'calendar' ? 'dashboard-calendar' : undefined} key={row.id} {...reorder.targetProps(row.id)}>
+            <button type="button" className="study-button widget-drag-handle widget-grid-handle" aria-describedby="dashboard-reorder-help" {...reorder.handleProps(row.id)}><GripVertical size={17} aria-hidden="true"/></button>
+            {row.id === 'focus-summary' && <DashboardMetrics group="focus" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
+            {row.id === 'streak' && <DashboardMetrics group="streak" days={days} stats={stats} period={period} loading={state.status === 'loading'}/>}
+            {row.id === 'activity' && <StudyActivityChart days={days} onDaysChange={onDaysChange} status={state.status} period={period} timeZone={stats?.timeZone} onRetry={retry}/>}
+            {row.id === 'goals' && <DashboardGoals userId={userId}/>}
+            {row.id === 'journey' && (stats ? <FocusInsights data={stats} days={days} calendarOutside={calendarVisible}/> : <section className="study-panel p-4">{state.status === 'loading' ? 'Loading study journey…' : 'Reload study activity to view your journey.'}</section>)}
+            {row.id === 'recent' && (from && to && stats ? <DashboardRecent key={`${from}-${to}`} from={from} to={to} timeZone={stats.timeZone}/> : <section className="study-panel p-4 text-sm" aria-label="Recent study activity">{state.status === 'loading' ? 'Loading your study period…' : 'Reload study activity to view recent attempts.'}</section>)}
+            {row.id === 'calendar' && (stats ? <RecordedCalendar activity={stats.activity}/> : <section className="study-panel p-4" aria-label="Recorded activity calendar">{state.status === 'loading' ? 'Loading activity calendar…' : 'Reload study activity to view recorded dates.'}</section>)}
+            {row.id === 'partners' && <DashboardPartners userId={userId}/>}
+            {row.id === 'quick' && <section className="study-panel p-4"><h2 className="text-lg font-bold">Quick Focus</h2><p className="my-2 text-sm text-content-secondary">Make room for your next focused session.</p><Link to={ROUTES.focusStudio} className="study-button"><Timer size={18}/>Open Focus Studio</Link></section>}
+        </div>)}
         </div>
-    );
+        <p role="status" aria-live="polite" className="sr-only">{reorder.announcement}</p>
+        {!layout.rows.some(row => row.visible) && <p role="status" className="study-panel p-4">Your Dashboard is clear. Use Customize Dashboard to show widgets.</p>}
+    </>;
 }
 
-export default Dashboard;
+function DashboardContent({ userId, username }: { userId: number; username: string }) {
+    const [days, setDays] = useState<StudyPeriod>(7);
+    return <div className="academic-page academic-dashboard retro-dashboard cozy-dashboard min-w-0 space-y-4">
+        <StudyEnvironment username={username}>
+            <h1>Welcome back to <span>StudyStreak!</span></h1>
+            <p className="cozy-hero-description">Keep the momentum going. A focused session today will take you closer to your goals.</p>
+            <div className="cozy-hero-actions">
+                <Link to={ROUTES.focusStudio} className="study-button border-accent bg-accent text-on-accent hover:bg-accent-hover"><Timer size={17} aria-hidden="true"/>Start focusing <ArrowRight size={15} aria-hidden="true"/></Link>
+                <Link to={ROUTES.studyRooms} className="study-button cozy-room-link"><Users size={17} aria-hidden="true"/>Join a Study Room</Link>
+            </div>
+        </StudyEnvironment>
+        <DashboardActivity days={days} onDaysChange={setDays} userId={userId}/>
+    </div>;
+}
+
+export default function Dashboard() {
+    const { currentUser } = useAuth();
+    return currentUser ? <DashboardContent key={currentUser.id} userId={currentUser.id} username={currentUser.username}/> : null;
+}

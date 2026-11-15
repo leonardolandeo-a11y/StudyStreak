@@ -5,7 +5,8 @@ import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Animated, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { voiceEvidenceService } from '../../services/voiceEvidenceService';
 import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -51,6 +52,8 @@ function VoicePlayback({ uri, busy, onRetry }: {
   // Create the native player *after* the authenticated M4A has been saved.
   // This avoids repeatedly replacing the empty source while the file loads.
   const player = useAudioPlayer(uri);
+  const { reduceMotion } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const status = useAudioPlayerStatus(player);
   const [pulse] = useState(() => new Animated.Value(1));
   const [loadTimedOut, setLoadTimedOut] = useState(false);
@@ -63,7 +66,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
   }, [status.isLoaded, status.error]);
 
   useEffect(() => {
-    if (!status.playing) {
+    if (!status.playing || reduceMotion) {
       pulse.setValue(1);
       return;
     }
@@ -73,7 +76,7 @@ function VoicePlayback({ uri, busy, onRetry }: {
     ]));
     animation.start();
     return () => { animation.stop(); pulse.setValue(1); };
-  }, [status.playing, pulse]);
+  }, [status.playing, pulse, reduceMotion]);
 
   const elapsed = Math.max(0, status.currentTime || 0);
   const duration = Math.max(0, status.duration || 0);
@@ -122,11 +125,11 @@ function VoicePlayback({ uri, busy, onRetry }: {
           <View style={[styles.progress, { width: `${percent}%` as `${number}%` }]} />
         </View>
       </View>
-      <ActionButton title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary
+      <ActionButton compact title={status.playing ? 'Pause voice note' : '▶ Play voice note'} secondary
         disabled={!canPlay && !status.playing} onPress={togglePlayback} />
       {playbackError ? <StatusMessage error message={playbackError} /> : null}
       {playbackError ? (
-        <ActionButton title="Retry voice playback" secondary disabled={busy} onPress={onRetry} />
+        <ActionButton compact title="Retry voice playback" secondary disabled={busy} onPress={onRetry} />
       ) : null}
     </>
   );
@@ -139,6 +142,8 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   onDelete?: () => void;
   readOnly?: boolean;
 }) {
+  const { theme: { colors: palette } } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const [uri, setUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -149,6 +154,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
   useFocusEffect(useCallback(() => {
     if (!available) return;
     let active = true;
+    const controller = new AbortController();
     let localFile: File | null = null;
 
     function cleanUp(file: File | null) {
@@ -162,7 +168,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
       setLoading(true);
       try {
         await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-        const downloaded = await downloadEvidence(voiceEvidenceService.url(goalId, recordId), 'm4a', retryKey);
+        const downloaded = await downloadEvidence(voiceEvidenceService.url(goalId, recordId), 'm4a', retryKey, controller.signal);
         localFile = downloaded;
         verifyM4a(downloaded);
         if (active) {
@@ -181,6 +187,7 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
     void loadVoiceNote();
     return () => {
       active = false;
+      controller.abort();
       setUri(null);
       cleanUp(localFile);
     };
@@ -216,27 +223,27 @@ export function RecordVoice({ goalId, recordId, available, onDelete, readOnly = 
         <VoicePlayback key={uri} uri={uri} busy={busy} onRetry={() => setRetryKey((value) => value + 1)} />
       ) : null}
       {error ? <StatusMessage error message={error} /> : null}
-      {error ? <ActionButton title="Retry voice playback" secondary disabled={busy || loading}
+      {error ? <ActionButton compact title="Retry voice playback" secondary disabled={busy || loading}
         onPress={() => setRetryKey((value) => value + 1)} /> : null}
       {!readOnly ? (
-        <ActionButton title={confirm ? 'Cancel deletion' : 'Delete voice note'} secondary disabled={busy}
+        <ActionButton compact title={confirm ? 'Cancel deletion' : 'Delete voice note'} secondary disabled={busy}
           onPress={() => setConfirm((old) => !old)} />
       ) : null}
-      {confirm && !readOnly ? <ActionButton title="Confirm delete voice note" busy={busy} onPress={() => { void remove(); }} /> : null}
+      {confirm && !readOnly ? <ActionButton compact title="Confirm delete voice note" busy={busy} onPress={() => { void remove(); }} /> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { gap: 10 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  container: { gap: 10, backgroundColor: palette.surface, borderRadius: 12, padding: 12 },
   label: { color: palette.text, fontWeight: '700', fontSize: 14 },
   playback: { backgroundColor: palette.surfaceRaised, borderRadius: 12, padding: 13, gap: 10 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   indicator: { width: 10, height: 10, borderRadius: 5 },
-  indicatorPlaying: { backgroundColor: '#fb4b5e' },
+  indicatorPlaying: { backgroundColor: palette.error },
   indicatorIdle: { backgroundColor: palette.muted },
   stateText: { color: palette.text, fontSize: 13, fontWeight: '700', flex: 1 },
-  statePlaying: { color: '#fda4af' },
+  statePlaying: { color: palette.error },
   timer: { color: palette.muted, fontSize: 12, fontVariant: ['tabular-nums'] },
   track: { height: 5, backgroundColor: palette.border, borderRadius: 4, overflow: 'hidden' },
   progress: { height: '100%', backgroundColor: palette.primary, borderRadius: 4 },

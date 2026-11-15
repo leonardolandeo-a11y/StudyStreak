@@ -1,12 +1,17 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { palette } from '../../constants/palette';
+import { useAppearance } from '../../hooks/useAppearance';
+import { workspacePalette } from '../academic/workspacePalette';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { streakService } from '../../services/streakService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import type { Streak } from '../../types/streak';
 
 export function StreakCard({ goalId }: { goalId: number }) {
+  const { theme } = useAppearance();
+  const palette = workspacePalette(theme);
+  const styles = createStyles(palette);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,8 +88,8 @@ export function StreakCard({ goalId }: { goalId: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 16,
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  card: { borderWidth: 1, borderColor: palette.border, borderRadius: 8,
     backgroundColor: palette.surface, padding: 17, gap: 13 },
   headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   title: { color: palette.text, fontSize: 20, fontWeight: '700' },

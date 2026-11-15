@@ -1,0 +1,32 @@
+export type StudyPeriod = 'morning' | 'afternoon' | 'night';
+export function studyPeriod(date: Date): StudyPeriod {
+    const hour = date.getHours();
+    return hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'night';
+}
+export function nextStudyBoundary(date: Date): Date {
+    const next = new Date(date.getTime());
+    const hour = date.getHours();
+    if (hour < 5) next.setHours(5, 0, 0, 0);
+    else if (hour < 12) next.setHours(12, 0, 0, 0);
+    else if (hour < 18) next.setHours(18, 0, 0, 0);
+    else { next.setDate(next.getDate() + 1); next.setHours(5, 0, 0, 0); }
+    return next;
+}
+type Clock = { now(): Date; schedule(run: () => void, delay: number): unknown; cancel(id: unknown): void };
+export function createStudyPeriodSchedule(publish: (period: StudyPeriod) => void, clock: Clock = {
+    now: () => new Date(), schedule: (run, delay) => setTimeout(run, delay), cancel: id => clearTimeout(id as ReturnType<typeof setTimeout>),
+}) {
+    let active = false, disposed = false;
+    let timer: unknown;
+    function clear() { if (timer !== undefined) { clock.cancel(timer); timer = undefined; } }
+    function refresh() {
+        clear();
+        if (!active || disposed) return;
+        const now = clock.now(); publish(studyPeriod(now));
+        timer = clock.schedule(refresh, Math.max(1, nextStudyBoundary(now).getTime() - now.getTime()));
+    }
+    return {
+        setActive(value: boolean) { active = value; refresh(); },
+        dispose() { disposed = true; active = false; clear(); },
+    };
+}

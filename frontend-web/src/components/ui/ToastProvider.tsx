@@ -155,7 +155,7 @@ function ToastProvider({
                                 rounded-xl
                                 border
                                 px-4 py-3
-                                shadow-xl shadow-black/30
+                                shadow-xl shadow-appearance-shadow/30
                                 backdrop-blur
                                 ${
                                     isSuccess

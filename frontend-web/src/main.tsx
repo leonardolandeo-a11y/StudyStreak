@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
 
-import "./index.css";
 
 import App from "./App";
+import { ThemeProvider } from "./theme/ThemeProvider";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { AuthProvider } from "./contexts/AuthProvider";
 import ToastProvider from "./components/ui/ToastProvider";
@@ -15,6 +15,7 @@ createRoot(
 ).render(
     <ErrorBoundary>
     <AuthProvider>
+    <ThemeProvider>
 
         <UnreadNotificationProvider>
 
@@ -28,6 +29,7 @@ createRoot(
 
         </UnreadNotificationProvider>
 
+    </ThemeProvider>
     </AuthProvider>
     </ErrorBoundary>
 );

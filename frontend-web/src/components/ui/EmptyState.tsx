@@ -1,24 +1,8 @@
-interface EmptyStateProps {
-    message: string;
+import { AcademicEmpty } from '../academic/Academic';
+interface EmptyStateProps { message: string; }
+function EmptyState({ message }: EmptyStateProps) {
+    return <div className="rounded-control border border-dashed border-outline-strong bg-surface px-4 py-3 text-sm text-content-muted break-words">
+        <AcademicEmpty>{message}</AcademicEmpty>
+    </div>;
 }
-
-function EmptyState({
-    message
-}: EmptyStateProps) {
-    return (
-        <div
-            className="
-                rounded-xl
-                border border-dashed border-slate-700
-                bg-slate-900/40
-                px-6 py-10
-                text-center
-                text-sm text-slate-400
-            "
-        >
-            {message}
-        </div>
-    );
-}
-
 export default EmptyState;

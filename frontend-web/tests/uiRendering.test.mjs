@@ -29,19 +29,19 @@ test('missing recorded data is unknown, while a confirmed zero stays zero', () =
 
 test('online presence alone never marks a participant as studying', () => {
   const html = render(h(ParticipantCard, { name: 'Student', online: true, studying: false, host: false }));
-  assert.match(html, /Member · Online/);
+  assert.match(html.replace(/<[^>]*>/g,''), /Member · Connected to room/);
   assert.match(html, /Not studying/);
   assert.doesNotMatch(html, />Studying</);
   const offline = render(h(ParticipantCard, { name: 'Host', online: false, studying: true, host: true }));
-  assert.match(offline, /Host · Offline/);
-  assert.match(offline, /Study status paused · offline/);
+  assert.match(offline.replace(/<[^>]*>/g,''), /Host · Disconnected from room/);
+  assert.match(offline, /Study status paused · disconnected/);
 });
 
 test('empty and zero charts expose accessible data without artificial bar heights', () => {
   assert.match(render(h(BarChart, { label: 'Daily', items: [] })), /No recorded time/);
   const html = render(h(BarChart, { label: 'Daily', items: [{ label: '2026-11-05', value: 0 }] }));
   assert.match(html, /aria-label="2026-11-05: 0.0 min"/);
-  assert.match(html, /height:0%/);
+  assert.match(html, /width:0%/);
   assert.doesNotMatch(html, /NaN|Infinity/);
 });
 

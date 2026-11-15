@@ -14,7 +14,7 @@ test("sets a finite 15-second limit on regular API calls", () => {
 });
 
 test("also limits the standalone refresh request", () => {
-    const refresh = client.match(/refreshTask = axios\.post<LoginResponse>\(([\s\S]*?)\)\.then/)?.[1];
+    const refresh = client.match(/const task = axios\.post<LoginResponse>\(([\s\S]*?)\)\.then/)?.[1];
     assert.ok(refresh, "Expected the single-flight refresh request");
     assert.match(refresh, /\{ refreshToken \},\s*\{ timeout: API_REQUEST_TIMEOUT_MS \}/);
 });

@@ -4,7 +4,8 @@ import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { ActionButton } from '../ui/ActionButton';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { photoEvidenceService } from '../../services/photoEvidenceService';
 import { downloadEvidence } from '../../services/evidenceDownloadService';
 import { getApiErrorMessage } from '../../utils/apiError';
@@ -18,6 +19,8 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
   onDelete?: () => void;
   readOnly?: boolean;
 }) {
+  const { theme: { colors: palette } } = useAppearance();
+  const styles = useThemedStyles(createStyles);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -28,6 +31,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
   useFocusEffect(useCallback(() => {
     if (!available) return;
     let active = true;
+    const controller = new AbortController();
     let localFile: File | null = null;
 
     function dispose(file: File | null) {
@@ -40,7 +44,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
       setError(null);
       setLoading(true);
       try {
-        localFile = await downloadEvidence(photoEvidenceService.url(goalId, recordId), 'jpg', reloadKey);
+        localFile = await downloadEvidence(photoEvidenceService.url(goalId, recordId), 'jpg', reloadKey, controller.signal);
         if (active) setPhotoUri(localFile.uri);
       } catch (cause) {
         if (active) {
@@ -64,6 +68,7 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
     void loadPhoto();
     return () => {
       active = false;
+      controller.abort();
       dispose(localFile);
     };
   }, [available, goalId, recordId, reloadKey]));
@@ -102,23 +107,23 @@ export function RecordPhoto({ goalId, recordId, available, onDelete, readOnly = 
       {error ? (
         <>
           <StatusMessage error message={error} />
-          <ActionButton title="Retry photo preview" secondary disabled={busy || loading}
+          <ActionButton compact title="Retry photo preview" secondary disabled={busy || loading}
             onPress={() => setReloadKey((value) => value + 1)} />
         </>
       ) : null}
       {!readOnly ? (
-        <ActionButton title={confirm ? 'Cancel photo deletion' : 'Delete photo'} secondary disabled={busy}
+        <ActionButton compact title={confirm ? 'Cancel photo deletion' : 'Delete photo'} secondary disabled={busy}
           onPress={() => setConfirm((old) => !old)} />
       ) : null}
       {confirm && !readOnly ? (
-        <ActionButton title="Confirm delete photo" busy={busy} onPress={() => { void remove(); }} />
+        <ActionButton compact title="Confirm delete photo" busy={busy} onPress={() => { void remove(); }} />
       ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { gap: 10 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  container: { gap: 10, backgroundColor: palette.surface, borderRadius: 12, padding: 12 },
   label: { color: palette.text, fontSize: 14, fontWeight: '700' },
   image: { width: '100%', height: 230, backgroundColor: palette.surfaceRaised, borderRadius: 10 },
 });

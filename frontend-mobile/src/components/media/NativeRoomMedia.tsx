@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { LiveKitRoom, VideoTrack, registerGlobals, useTracks, useConnectionState } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import { apiClient } from '../../services/apiClient';
 import { ActionButton } from '../ui/ActionButton';
-import { palette } from '../../constants/palette';
+import { useAppearance } from '../../hooks/useAppearance';
 
 registerGlobals({autoConfigureAudioSession:false});
 type Credentials={url:string;token:string;epoch:string};
 type State={enabled:boolean;epoch:string};
 function Screens() {
+    const { theme: { colors: palette } } = useAppearance();
     const tracks=useTracks([Track.Source.ScreenShare]);
     const connection=useConnectionState();
     const [selected,setSelected]=useState<string|null>(null);
@@ -21,18 +23,19 @@ function Screens() {
     return <View style={{gap:12}}>
         <Text accessibilityLiveRegion="polite" style={{color:palette.muted}}>Media: {connection}</Text>
         {current?<>{!maximized&&<VideoTrack trackRef={current} objectFit="contain" style={{width:'100%',aspectRatio:16/9,backgroundColor:'#000'}}/>}
-            <Text style={{color:palette.text}}>{name} is sharing</Text><ActionButton secondary title="Maximize screen" onPress={()=>setMaximized(true)}/></>:
+            <Text style={{color:palette.text}}>{name} is sharing</Text><ActionButton compact secondary title="Maximize screen" onPress={()=>setMaximized(true)}/></>:
             <Text style={{color:palette.muted}}>No screens shared yet.</Text>}
-        <ScrollView horizontal contentContainerStyle={{gap:8}}>{tracks.map(track=><ActionButton key={track.publication?.trackSid} secondary title={track.participant.name||'Participant'} onPress={()=>setSelected(track.publication?.trackSid??null)}/>)}</ScrollView>
+        <ScrollView horizontal contentContainerStyle={{gap:8}}>{tracks.map(track=><ActionButton compact key={track.publication?.trackSid} secondary title={track.participant.name||'Participant'} onPress={()=>setSelected(track.publication?.trackSid??null)}/>)}</ScrollView>
         <Modal visible={maximized&&!!current} onRequestClose={()=>setMaximized(false)} supportedOrientations={['portrait','landscape']}>
-            <View style={{flex:1,backgroundColor:palette.background,padding:20,justifyContent:'center',gap:16}}>
+            <SafeAreaView style={{flex:1,backgroundColor:palette.background,padding:20,justifyContent:'center',gap:16}}>
                 {current&&<VideoTrack trackRef={current} objectFit="contain" style={{width:width-40,height:Math.max(100,height-150),backgroundColor:'#000'}}/>}
-                <ActionButton title="Close fullscreen" onPress={()=>setMaximized(false)}/>
-            </View>
+                <ActionButton compact title="Close fullscreen" onPress={()=>setMaximized(false)}/>
+            </SafeAreaView>
         </Modal>
     </View>;
 }
 export default function NativeRoomMedia({roomId}:{roomId:string}) {
+    const { theme: { colors: palette } } = useAppearance();
     const [credentials,setCredentials]=useState<Credentials|null>(null);
     const [state,setState]=useState<State|null>(null);
     const [error,setError]=useState<string|null>(null);
@@ -82,8 +85,8 @@ export default function NativeRoomMedia({roomId}:{roomId:string}) {
             options={{adaptiveStream:{pixelDensity:'screen'},dynacast:true}}
             onDisconnected={()=>{disconnect();setError('Media disconnected. Request fresh access to reconnect.');}}
             onError={()=>{disconnect();setError('Media connection failed. Check the server address and network.');}}><Screens/></LiveKitRoom>
-            <ActionButton secondary title="Disconnect media" onPress={disconnect}/></>:
-            <ActionButton secondary title="Connect to screens" busy={busy} disabled={!state?.enabled} onPress={()=>void connect()}/>}
+            <ActionButton compact secondary title="Disconnect media" onPress={disconnect}/></>:
+            <ActionButton compact secondary title="Connect to screens" busy={busy} disabled={!state?.enabled} onPress={()=>void connect()}/>}
         <Text style={{color:palette.muted}}>View only · no camera, microphone or recording. Media disconnects when leaving this screen or entering the background.</Text>
     </View>;
 }

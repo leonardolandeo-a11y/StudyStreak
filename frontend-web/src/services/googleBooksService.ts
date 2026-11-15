@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ApiConfigurationError } from "../config/apiRuntime";
 import apiClient from "./apiClient";
 import type { StudyBook } from "../types/studyBook";
 
@@ -109,6 +110,7 @@ export async function searchStudyBooks(
 export function getBookSearchErrorMessage(
     error: unknown
 ): string {
+    if (error instanceof ApiConfigurationError) return error.message;
     if (!axios.isAxiosError(error)) {
         return "Books could not be loaded. Try again.";
     }

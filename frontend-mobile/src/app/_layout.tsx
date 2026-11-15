@@ -1,24 +1,23 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AuthProvider } from '../contexts/AuthProvider';
 import { useAuth } from '../hooks/useAuth';
-import { palette } from '../constants/palette';
+import { AppearanceProvider } from '../contexts/AppearanceProvider';
+import { useAppearance } from '../hooks/useAppearance';
+import { AppLoadingScreen } from '../components/ui/AppLoadingScreen';
 
 function Navigator() {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={palette.primary} />
-      </View>
-    );
+  const { theme, ready, reduceMotion } = useAppearance();
+  if (isLoading || !ready) {
+    return <><StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} /><AppLoadingScreen /></>;
   }
 
   return (
     <>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default',
+        contentStyle: { backgroundColor: theme.colors.background } }}>
         <Stack.Screen name="index" />
         <Stack.Protected guard={!isAuthenticated}>
           <Stack.Screen name="sign-in" />
@@ -35,16 +34,9 @@ function Navigator() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Navigator />
+      <AppearanceProvider>
+        <Navigator />
+      </AppearanceProvider>
     </AuthProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: palette.background,
-  },
-});

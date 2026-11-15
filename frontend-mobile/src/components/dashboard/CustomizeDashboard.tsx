@@ -1,0 +1,60 @@
+import { useCallback, useRef, useState, type ComponentRef } from 'react';
+import { AccessibilityInfo, findNodeHandle, Modal, Platform, Text, View } from 'react-native';
+import { useIsFocused } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppearance } from '../../hooks/useAppearance';
+import { ActionButton } from '../ui/ActionButton';
+import { NavigationPressable } from '../navigation/NavigationPressable';
+import { AppIcon } from '../ui/AppIcon';
+import { WidgetReorderList } from './WidgetReorderList';
+import { defaultWidgets, type WidgetId, type WidgetSetting } from '../../features/dashboard/widgetPreferences';
+
+export function CustomizeDashboard({ rows, ready, error, save, selectedId, onOpenChange }: { selectedId: WidgetId | null; onSelect(id: WidgetId): void; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
+  const { theme: { colors }, reduceMotion } = useAppearance();
+  const focused = useIsFocused();
+  const [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
+  const trigger = useRef<ComponentRef<typeof NavigationPressable>>(null);
+  const heading = useRef<ComponentRef<typeof Text>>(null);
+  const restoreFocus = useCallback(() => {
+    trigger.current?.focus();
+    if (Platform.OS !== 'web') {
+      const node = findNodeHandle(trigger.current); if (node) AccessibilityInfo.setAccessibilityFocus(node);
+    }
+  }, []);
+  const close = () => { setOpen(false); onOpenChange?.(false); requestAnimationFrame(restoreFocus); };
+  const announce = useCallback((message: string) => {
+    setAnnouncement(message);
+    if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(message);
+  }, []);
+  return <>
+    <View style={{ alignSelf: 'flex-end' }}>
+      <NavigationPressable ref={trigger} accessibilityRole="button" accessibilityLabel="Customize Dashboard" accessibilityState={{ disabled: !ready, expanded: open }}
+        aria-expanded={open} disabled={!ready} onPress={() => { setOpen(true); onOpenChange?.(true); }}
+        style={{ width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+        <AppIcon name="settings" size={20} color={colors.primary}/>
+      </NavigationPressable>
+    </View>
+    <Modal visible={open && focused} animationType={reduceMotion ? 'none' : 'slide'} presentationStyle="fullScreen" onRequestClose={close} onDismiss={restoreFocus}
+      onShow={() => { if (Platform.OS === 'web') heading.current?.focus(); else { const node = findNodeHandle(heading.current); if (node) AccessibilityInfo.setAccessibilityFocus(node); } }}>
+      {open && focused ? <SafeAreaView testID="dashboard-customization-modal" accessibilityViewIsModal onAccessibilityEscape={close}
+        style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 8, backgroundColor: colors.surface }}>
+          <Text ref={heading} tabIndex={-1} accessibilityRole="header" style={{ flex: 1, color: colors.text, fontSize: 20, fontWeight: '700' }}>Customize Dashboard</Text>
+          <NavigationPressable accessibilityRole="button" accessibilityLabel="Close customization" onPress={close} style={{ minWidth: 48, minHeight: 56, alignItems: 'center', justifyContent: 'center' }}>
+            <AppIcon name="close" color={colors.text}/>
+          </NavigationPressable>
+        </View>
+        <Text style={{ padding: 16, color: colors.muted, fontSize: 13, lineHeight: 19 }}>Choose which widgets to show. Tap a chevron to learn more. Changes save on this device for your account.</Text>
+        <WidgetReorderList selectedId={selectedId} rows={rows} save={save} announce={announce}/>
+        <View style={{ padding: 16, gap: 10, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
+          <Text accessibilityLiveRegion="polite" style={{ color: colors.muted, fontSize: 12 }}>{announcement}</Text>
+          {error ? <Text accessibilityRole="alert" style={{ color: colors.error }}>{error}</Text> : null}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <ActionButton secondary compact title="Restore default layout" onPress={() => { void save(defaultWidgets()); announce('Default layout restored.'); }}/>
+            <ActionButton compact title="Done customizing" onPress={close}/>
+          </View>
+        </View>
+      </SafeAreaView> : null}
+    </Modal>
+  </>;
+}

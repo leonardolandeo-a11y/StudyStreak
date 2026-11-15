@@ -1,0 +1,16 @@
+# Add to compose.local.yaml; never use this override for production.
+services:
+  app:
+    user: "${LOCAL_PROFILE_UID:-1000}:${LOCAL_PROFILE_GID:-1000}"
+    environment:
+      PROFILE_IMAGE_DIRECTORY: /var/lib/studystreak/profile-images
+      # The profile migration is manual: startup may validate, never initialize.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      APP_AUTH_SCHEMA_INIT: never
+      STUDY_LEDGER_MIGRATE_ON_START: "false"
+    volumes:
+      - type: bind
+        source: ${LOCAL_PROFILE_IMAGE_DIRECTORY:-./.local/profile-images}
+        target: /var/lib/studystreak/profile-images
+        bind:
+          create_host_path: false

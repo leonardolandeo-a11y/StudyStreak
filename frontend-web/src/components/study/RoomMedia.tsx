@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+import { Trash2 } from 'lucide-react';
 import { toggleScreenCapture } from "./mediaCapture";
 import { useEffect, useRef, useState } from 'react';
 import { Room, RoomEvent, Track, ConnectionState, type Participant, type TrackPublication } from 'livekit-client';
@@ -19,7 +21,7 @@ function ScreenVideo({screen}:{screen:Screen}) {
     return <video ref={video} autoPlay playsInline muted className="aspect-video w-full bg-black object-contain" aria-label={`Screen shared by ${screen.name}`}/>;
 }
 
-export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
+export function RoomMedia({room:studyRoom, moderationTarget}:{room:StudyRoom; moderationTarget?: HTMLElement | null}) {
     const [state,setState]=useState<MediaState|null>(null);
     const [status,setStatus]=useState('Not connected');
     const [error,setError]=useState<string|null>(null);
@@ -120,13 +122,17 @@ export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
     }
     const active=screens.find(screen=>screen.id===selected)??screens[0];
     const captureSupported=typeof navigator.mediaDevices?.getDisplayMedia==='function' && window.isSecureContext;
-    return <section className="study-panel space-y-4" aria-label="Shared screens">
+    const moderation = studyRoom.host&&state&&<details><summary className="room-permission-heading">Host · screen permissions</summary><div className="room-screen-permissions">{studyRoom.members.filter(member=>!member.host).map(member=>{
+            const allowed=state.permissions.find(permission=>permission.userId===member.userId)?.canPublish??false;
+            return <div key={member.userId} className="room-screen-permission"><span>{member.username}</span><div className="flex flex-wrap gap-2"><button className="study-button" onClick={()=>{if(!allowed||window.confirm(`Revoke screen permission for ${member.username}? Media will disconnect.`))void moderate(member.userId,!allowed);}}>{allowed?'Revoke screen permission':'Allow screen sharing'}</button><button type="button" className="study-button room-permission-remove" title={`Remove ${member.username} from room`} aria-label={`Remove ${member.username} from room`} onClick={()=>{if(window.confirm(`Remove ${member.username} from this room?`))void moderate(member.userId);}}><Trash2 size={17} aria-hidden="true"/><span className="sr-only">Remove</span></button></div></div>;
+        })}</div><p className="text-xs text-slate-400">Permission changes disconnect media for everyone. Reconnect to enter the updated room.</p></details>;
+    return <section className="study-panel room-screen-panel space-y-4" aria-label="Shared screens">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-xl font-semibold">Shared screens</h3><p role="status" className="text-sm text-slate-400">{state&&!state.enabled?'LiveKit is not configured. The study timer remains available.':status}</p></div>
             {hasConnection?<button className="study-button" onClick={disconnect}>Disconnect media</button>:<button className="study-button" disabled={!state?.enabled||busy} onClick={()=>void connect()}>{busy?'Connecting…':'Connect to screens'}</button>}
         </div>
         {error&&<p role="alert" className="text-sm text-amber-200">{error}</p>}
-        <div ref={panel} className="overflow-hidden rounded-xl bg-black">
-            {active?<><ScreenVideo screen={active}/><p className="p-3 text-sm text-white">{active.name} is sharing</p></>:<p className="flex aspect-video items-center justify-center p-6 text-center text-slate-400">{connected?'No screens shared yet.':'Connect to view shared screens.'}</p>}
+        <div ref={panel} className="room-screen-stage overflow-hidden rounded-xl bg-black">
+            {active?<><ScreenVideo screen={active}/><p className="p-3 text-sm text-content">{active.name} is sharing</p></>:<p className="flex aspect-video items-center justify-center p-6 text-center text-slate-400">{connected?'No screens shared yet.':'Connect to view shared screens.'}</p>}
         </div>
         {screens.length>0&&<div className="flex flex-wrap gap-2">{screens.map(screen=><button key={screen.id} className="study-tab" aria-pressed={active?.id===screen.id} onClick={()=>setSelected(screen.id)}>{screen.name}</button>)}<button className="study-button" onClick={()=>void panel.current?.requestFullscreen().catch(()=>setError('Fullscreen is unavailable in this browser.'))}>Fullscreen</button></div>}
         {connected&&<div className="flex flex-wrap items-center gap-3">
@@ -134,10 +140,7 @@ export function RoomMedia({room:studyRoom}:{room:StudyRoom}) {
             {sharing&&<p role="status" className="font-semibold text-emerald-200">● Your screen is visible to this room</p>}
             {!captureSupported&&state?.canPublish&&<p className="text-sm text-amber-200">Screen capture requires a supported desktop browser on HTTPS or localhost.</p>}
         </div>}
-        {studyRoom.host&&state&&<details><summary className="cursor-pointer py-3 font-semibold">Host · screen permissions</summary><div className="space-y-3">{studyRoom.members.filter(member=>!member.host).map(member=>{
-            const allowed=state.permissions.find(permission=>permission.userId===member.userId)?.canPublish??false;
-            return <div key={member.userId} className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 py-3"><span>{member.username}</span><div className="flex flex-wrap gap-2"><button className="study-button" onClick={()=>void moderate(member.userId,!allowed)}>{allowed?'Revoke screen permission':'Allow screen sharing'}</button><button className="study-button" onClick={()=>{if(window.confirm(`Remove ${member.username} from this room?`))void moderate(member.userId);}}>Remove</button></div></div>;
-        })}</div><p className="text-xs text-slate-400">Permission changes disconnect media for everyone. Reconnect to enter the updated room.</p></details>}
+        {moderation && (moderationTarget ? createPortal(moderation, moderationTarget) : moderation)}
         <p className="text-xs text-slate-400">Screen video only. No recording, camera or microphone. Sharing does not record study minutes.</p>
     </section>;
 }

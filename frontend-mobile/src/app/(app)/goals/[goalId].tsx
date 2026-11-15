@@ -1,17 +1,22 @@
+import { GoalWriteUnconfirmedError } from '../../../utils/goalWrite';
+import { GoalTags } from '../../../components/tags/GoalTags';
+import { DifficultyBadge } from '../../../components/goals/GoalDifficulty';
+import { workspacePalette } from '../../../components/academic/workspacePalette';
 import { RecordedSummary } from "../../../components/study/RecordedSummary";
 import { useCallback, useRef, useState } from 'react';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, AppState, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../components/ui/Screen';
 import { ActionButton } from '../../../components/ui/ActionButton';
 import { StatusMessage } from '../../../components/ui/StatusMessage';
 import { PageControls } from '../../../components/ui/PageControls';
 import { GoalForm } from '../../../components/goals/GoalForm';
 import { DailyRecordForm } from '../../../components/records/DailyRecordForm';
-import { RecordPhoto } from '../../../components/records/RecordPhoto';
-import { RecordVoice } from '../../../components/records/RecordVoice';
+import { DailyRecordCard } from '../../../components/records/DailyRecordCard';
+import { CreationModal } from '../../../components/ui/CreationModal';
 import { StreakCard } from '../../../components/streaks/StreakCard';
-import { palette } from '../../../constants/palette';
+import { useAppearance } from '../../../hooks/useAppearance';
+import type { ThemeColors } from '../../../features/appearance/theme';
 import { useAuth } from '../../../hooks/useAuth';
 import { usePagedResource } from '../../../hooks/usePagedResource';
 import { goalService } from '../../../services/goalService';
@@ -24,6 +29,7 @@ import type { DailyRecord, DailyRecordRequest } from '../../../types/dailyRecord
 import type { PageResponse } from '../../../types/page';
 
 export default function GoalDetails() {
+  const { theme } = useAppearance(); const palette = workspacePalette(theme); const styles = createStyles(palette);
   const { goalId: goalParam } = useLocalSearchParams<{ goalId: string }>();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
@@ -34,12 +40,15 @@ export default function GoalDetails() {
   const [goalError, setGoalError] = useState<string | null>(null);
   const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
   const [summaryRevision, setSummaryRevision] = useState(0);
+  const latestSummaryRevision = useRef(summaryRevision);
   const [focusSummaryError, setFocusSummaryError] = useState(false);
   const [goalRevision, setGoalRevision] = useState(0);
   const latestGoalRevision = useRef(goalRevision);
+  const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
   const [editingGoal, setEditingGoal] = useState(false);
   const [showCreateRecord, setShowCreateRecord] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DailyRecord | null>(null);
+  const [confirmDeleteGoal, setConfirmDeleteGoal] = useState(false);
   const [confirmDeleteRecord, setConfirmDeleteRecord] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -71,11 +80,11 @@ export default function GoalDetails() {
 
   useFocusEffect(useCallback(() => {
     if (!valid) return;
-    void summaryRevision;
     const controller = new AbortController();
+    latestSummaryRevision.current = summaryRevision;
     let sending = false;
     const refresh = async () => {
-      if (sending || AppState.currentState !== 'active') return;
+      if (sending || controller.signal.aborted || latestSummaryRevision.current !== summaryRevision || AppState.currentState !== 'active') return;
       sending = true;
       try {
         const data = await getMobileFocusSummary(goalId, controller.signal);
@@ -106,6 +115,7 @@ export default function GoalDetails() {
       setMessage('Goal updated successfully.');
       return true;
     } catch (cause) {
+      if (cause instanceof GoalWriteUnconfirmedError) setUnconfirmed(cause);
       setMutationError(getApiErrorMessage(cause, 'Unable to update goal.'));
       return false;
     } finally { setBusy(false); }
@@ -114,15 +124,7 @@ export default function GoalDetails() {
   function requestDeleteGoal() {
     if (busy || !goal) return;
 
-    Alert.alert(
-      'Delete goal?',
-      `Are you sure you want to delete "${goal.topic}"? This may permanently remove its related study records and evidence. This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete permanently', style: 'destructive', onPress: () => { void deleteGoal(); } },
-      ],
-      { cancelable: true },
-    );
+    setConfirmDeleteGoal(true);
   }
 
   async function deleteGoal() {
@@ -131,7 +133,7 @@ export default function GoalDetails() {
     setMutationError(null);
     try {
       await goalService.remove(userId, goalId);
-      router.replace('/(app)/goals');
+      router.replace('/goals');
     } catch (cause) {
       setMutationError(getApiErrorMessage(cause, 'Unable to delete goal.'));
     } finally { setBusy(false); }
@@ -184,119 +186,108 @@ export default function GoalDetails() {
     } finally { setBusy(false); }
   }
 
-  if (!valid) return <Screen><StatusMessage error message="Invalid goal or session." /></Screen>;
+  if (!valid) return <Screen themed compact backgroundColor={palette.background}><StatusMessage error message="Invalid goal or session." /></Screen>;
 
   return (
-    <Screen>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}>
-        <Text style={styles.back}>‹ All goals</Text>
-      </Pressable>
+    <>
+    <CreationModal visible={editingGoal} title="Edit goal" busy={busy} onClose={() => setEditingGoal(false)}>
+      {goal ? <GoalForm blocked={unconfirmed !== null} key={`goal-form-${goal.id}`} initialValues={goal} busy={busy} onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
+      {mutationError ? <StatusMessage error message={mutationError} /> : null}
+    </CreationModal>
+    <CreationModal visible={showCreateRecord || editingRecord !== null} title={editingRecord ? 'Edit daily record' : 'Add daily record'} busy={busy}
+      onClose={() => { setShowCreateRecord(false); setEditingRecord(null); }}>
+      <DailyRecordForm key={editingRecord?.id ?? 'new'} busy={busy}
+        initialValues={editingRecord ? { date: editingRecord.date, note: editingRecord.note ?? '', evidence: editingRecord.evidence ?? '' } : undefined}
+        onSubmit={editingRecord ? updateRecord : createRecord} onCancel={() => { setShowCreateRecord(false); setEditingRecord(null); }} />
+      {mutationError ? <StatusMessage error message={mutationError} /> : null}
+    </CreationModal>
+    <CreationModal visible={confirmDeleteGoal || confirmDeleteRecord !== null} title={confirmDeleteGoal ? 'Delete goal?' : 'Delete record?'} busy={busy}
+      onClose={() => { setConfirmDeleteGoal(false); setConfirmDeleteRecord(null); }}>
+      <Text style={styles.warning}>{confirmDeleteGoal ? `Delete ${goal?.topic}? Related records and evidence may be permanently removed. This cannot be undone.` : 'Delete this daily record and its evidence? This cannot be undone.'}</Text>
+      {mutationError ? <StatusMessage error message={mutationError} /> : null}
+      <ActionButton compact title={confirmDeleteGoal ? 'Delete permanently' : 'Confirm delete record'} busy={busy}
+        onPress={() => { if (confirmDeleteGoal) void deleteGoal(); else if (confirmDeleteRecord !== null) void deleteRecord(confirmDeleteRecord); }} />
+      <ActionButton compact secondary title="Keep" disabled={busy} onPress={() => { setConfirmDeleteGoal(false); setConfirmDeleteRecord(null); }} />
+    </CreationModal>
+    <Screen themed compact backgroundColor={palette.background}>
       {goalLoading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
       {goalError ? <StatusMessage error message={goalError} /> : null}
-      {goalError ? <ActionButton secondary title="Retry goal" onPress={() => setGoalRevision((value) => value + 1)} /> : null}
+      {goalError ? <ActionButton compact secondary title="Retry goal" onPress={() => setGoalRevision((value) => value + 1)} /> : null}
       {goal && !goalLoading ? (
         <>
           <View style={styles.card}>
-            <Text style={styles.title}>{goal.topic}</Text>
+            <Text style={{ color: palette.muted, fontSize: 12 }}>GOAL DETAILS</Text>
+            <Text accessibilityRole="header" style={styles.title}>{goal.topic}</Text>
+            <DifficultyBadge value={goal.difficulty}/>
             <Text style={styles.muted}>{goal.frequency} sessions/week · {goal.duration} min/session</Text>
             <Text style={goal.completed ? styles.completed : styles.active}>
               {goal.completed ? 'Completed' : 'Active'}
             </Text>
-            <ActionButton secondary title={editingGoal ? 'Close goal editor' : 'Edit goal'}
-              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); }} />
-            {editingGoal ? <GoalForm key={`goal-form-${goal.id}`} initialValues={goal} busy={busy}
-              onSubmit={saveGoal} onCancel={() => setEditingGoal(false)} /> : null}
+            <ActionButton compact secondary title={editingGoal ? 'Close goal editor' : 'Update Goal'}
+              disabled={busy} onPress={() => { setEditingGoal((value) => !value); setMutationError(null); setUnconfirmed(null); }} />
             {!editingGoal ? (
-              <ActionButton title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
+              <ActionButton compact title="Delete goal" secondary disabled={busy} onPress={requestDeleteGoal} />
             ) : null}
           </View>
-          <View style={styles.focusCard}>
-            <RecordedSummary minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
+          <View style={styles.card}>
+            <Text style={{ color: palette.muted }}>Daily Records</Text>
+            <Text style={{ color: palette.text, fontSize: 38, fontWeight: '700' }}>{records.data?.totalElements ?? '—'}</Text>
+            <RecordedSummary embedded minutes={focusSummary?.goalId === goal.id ? focusSummary.totalMinutes : undefined}
               sessions={focusSummary?.goalId === goal.id ? focusSummary.completedSessions : undefined}
               error={focusSummaryError} onRefresh={() => setSummaryRevision(value => value + 1)} />
+          </View>
+          <View style={styles.focusCard}>
             <Text style={styles.focusNote}>Saved individual and group sessions. Daily Records and their streaks are tracked separately.</Text>
-            <ActionButton secondary title="Study Rooms" onPress={() => router.push('/(app)/study-rooms')} />
+            <ActionButton compact secondary title="Study Rooms" onPress={() => router.push('/study-rooms')} />
             {!goal.completed && (
-              <ActionButton title="Study this Goal" onPress={() => router.push({
-                pathname: '/(app)/focus-studio', params: { goalId: String(goal.id) },
+              <ActionButton compact title="Study this Goal" onPress={() => router.push({
+                pathname: '/focus-studio', params: { goalId: String(goal.id) },
               })} />
             )}
           </View>
+          <GoalTags goalId={goalId} owner={userId!}/>
           <StreakCard key={`streak-${goal.id}`} goalId={goal.id} />
-          <ActionButton secondary title="Find books for this goal"
-            onPress={() => router.push({ pathname: '/(app)/resources', params: { topic: goal.topic } })} />
+          <ActionButton compact secondary title="Find books for this goal"
+            onPress={() => router.push({ pathname: '/resources', params: { topic: goal.topic } })} />
           {mutationError ? <StatusMessage error message={mutationError} /> : null}
           {message ? <StatusMessage message={message} /> : null}
           <View style={styles.row}>
-            <Text style={styles.section}>Daily records</Text>
+            <Text style={styles.section}>Daily records <Text style={{ fontSize: 22 }}>{records.data?.totalElements ?? '—'}</Text></Text>
             <Pressable accessibilityRole="button" onPress={records.reload}><Text style={styles.back}>Refresh</Text></Pressable>
           </View>
           {!editingRecord ? (
-            <ActionButton title={showCreateRecord ? 'Close record form' : 'Add a daily record'}
+            <ActionButton compact title={showCreateRecord ? 'Close record form' : 'Add a daily record'}
               secondary={showCreateRecord} disabled={busy}
               onPress={() => { setShowCreateRecord((value) => !value); setMutationError(null); }} />
           ) : null}
-          {showCreateRecord ? (
-            <DailyRecordForm busy={busy} onSubmit={createRecord}
-              onCancel={() => setShowCreateRecord(false)} />
-          ) : null}
-          {editingRecord ? (
-            <DailyRecordForm key={`edit-record-${editingRecord.id}`} busy={busy}
-              initialValues={{ date: editingRecord.date, note: editingRecord.note ?? '', evidence: editingRecord.evidence ?? '' }}
-              onSubmit={updateRecord} onCancel={() => setEditingRecord(null)} />
-          ) : null}
           {records.loading ? <ActivityIndicator size="large" color={palette.primary} /> : null}
           {records.error ? <StatusMessage error message={records.error} /> : null}
-          {records.error ? <ActionButton secondary title="Retry records" onPress={records.reload} /> : null}
+          {records.error ? <ActionButton compact secondary title="Retry records" onPress={records.reload} /> : null}
           {!records.loading && records.data?.empty ? (
             <Text style={styles.muted}>No daily records for this goal yet.</Text>
           ) : null}
           {!records.loading && records.data ? (
             <>
               <Text style={styles.muted}>{records.data.totalElements} records</Text>
-              {records.data.content.map((record) => (
-                <View key={`record-${record.id}`} style={styles.card}>
-                  <Text style={styles.recordDate}>{record.date}</Text>
-                  <Text style={styles.muted}>{record.note || 'No notes added.'}</Text>
-                  {record.evidence ? <Text style={styles.muted}>Evidence: {record.evidence}</Text> : null}
-                  <RecordPhoto goalId={goalId} recordId={record.id} available={record.photoAvailable}
-                    onDelete={records.reload} />
-                  <ActionButton title={record.photoAvailable ? 'Replace photo evidence' : 'Take evidence photo'} secondary
-                    disabled={busy} onPress={() => router.push({ pathname: '/(app)/camera',
-                      params: { goalId: String(goalId), recordId: String(record.id) } })} />
-                  <RecordVoice goalId={goalId} recordId={record.id} available={record.voiceAvailable}
-                    onDelete={records.reload} />
-                  <ActionButton title={record.voiceAvailable ? 'Replace voice note' : 'Record study voice note'} secondary
-                    disabled={busy} onPress={() => router.push({ pathname: '/(app)/voice',
-                      params: { goalId: String(goalId), recordId: String(record.id) } })} />
-                  <ActionButton title="Edit record" secondary disabled={busy}
-                    onPress={() => { setEditingRecord(record); setShowCreateRecord(false); setConfirmDeleteRecord(null); setMutationError(null); }} />
-                  <ActionButton title="Delete record" secondary disabled={busy}
-                    onPress={() => setConfirmDeleteRecord(record.id)} />
-                  {confirmDeleteRecord === record.id ? (
-                    <View style={styles.confirm}>
-                      <Text style={styles.warning}>Delete this daily record?</Text>
-                      <ActionButton title="Confirm deletion" busy={busy} onPress={() => { void deleteRecord(record.id); }} />
-                      <ActionButton title="Cancel" secondary disabled={busy} onPress={() => setConfirmDeleteRecord(null)} />
-                    </View>
-                  ) : null}
-                </View>
-              ))}
+              {records.data.content.map(record => <DailyRecordCard key={record.id} goalId={goalId} record={record} busy={busy} onReload={records.reload}
+                onEdit={() => { setEditingRecord(record); setShowCreateRecord(false); setConfirmDeleteRecord(null); setMutationError(null); }}
+                onRemove={() => { setMutationError(null); setConfirmDeleteRecord(record.id); }} />)}
               <PageControls page={records.page} totalPages={records.data.totalPages} onChange={records.setPage} />
             </>
           ) : null}
         </>
       ) : null}
     </Screen>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   back: { color: palette.primary, fontSize: 15, fontWeight: '700', paddingVertical: 3 },
-  title: { color: palette.text, fontSize: 27, fontWeight: '800' },
+  title: { color: palette.text, fontSize: 24, fontWeight: '800' },
   section: { color: palette.text, fontSize: 21, fontWeight: '700' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 16, padding: 17, gap: 13 },
+  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 17, gap: 13 },
   muted: { color: palette.muted, fontSize: 14, lineHeight: 21 },
   recordDate: { color: palette.text, fontSize: 17, fontWeight: '700' },
   active: { color: palette.primary, fontWeight: '700' },

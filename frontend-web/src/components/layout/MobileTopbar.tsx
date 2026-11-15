@@ -1,3 +1,6 @@
+import { StudyBrand } from "../branding/StudyBrand";
+import type { ReactNode } from "react";
+import { UserPanel } from "./UserPanel";
 import {
     BadgeCheck,
     Bell,
@@ -32,7 +35,7 @@ import {
     useUnreadNotifications
 } from "../../hooks/useUnreadNotifications";
 
-function MobileTopbar() {
+function MobileTopbar({ actions }: { actions?: ReactNode }) {
 
     const [open, setOpen] = useState(false);
     const {unreadCount} = useUnreadNotifications();
@@ -109,29 +112,9 @@ function MobileTopbar() {
                     lg:hidden
                 "
             >
-                <div className="flex items-center gap-3">
+                <StudyBrand variant="compact" />
 
-                    <div
-                        className="
-                            flex h-9 w-9
-                            items-center justify-center
-                            rounded-lg
-                            bg-sky-500
-                            font-bold
-                            text-slate-950
-                        "
-                    >
-                        S
-                    </div>
-
-                    <span className="font-semibold text-slate-100">
-                        StudyStreak
-                    </span>
-
-                </div>
-
-
-                <button
+                <div className="flex items-center gap-2">{actions}<button
                     type="button"
                     onClick={() =>
                         setOpen((current) => !current)
@@ -140,7 +123,7 @@ function MobileTopbar() {
                     aria-expanded={open}
                     className="
                         rounded-lg
-                        border border-slate-700
+                        border border-outline-strong
                         bg-slate-900
                         p-2
                         text-slate-300
@@ -150,7 +133,7 @@ function MobileTopbar() {
                     {open
                         ? <X size={20} />
                         : <Menu size={20} />}
-                </button>
+                </button></div>
             </header>
 
 
@@ -205,8 +188,8 @@ function MobileTopbar() {
                                             ${
                                                 isActive
                                                     ? to === ROUTES.focusStudio
-                                                        ? "bg-emerald-950/60 text-emerald-100"
-                                                        : "bg-slate-800 text-white"
+                                                        ? "bg-accent-soft text-accent"
+                                                        : "bg-slate-800 text-content"
                                                     : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                                             }
                                         `}
@@ -229,7 +212,7 @@ function MobileTopbar() {
                                                         text-xs
                                                         font-bold
                                                         leading-none
-                                                        text-slate-950
+                                                        text-on-accent
                                                     "
                                                 >
                                                     {unreadCount > 99
@@ -246,39 +229,7 @@ function MobileTopbar() {
 
                         <div className="border-t border-slate-800 p-4">
 
-                            {currentUser && (
-                                <div className="mb-4 flex items-center gap-3 px-2">
-
-                                    <div
-                                        className="
-                                            flex h-9 w-9
-                                            items-center justify-center
-                                            rounded-full
-                                            bg-slate-800
-                                            text-sm font-semibold
-                                            text-slate-200
-                                        "
-                                    >
-                                        {currentUser.username
-                                            .charAt(0)
-                                            .toUpperCase()}
-                                    </div>
-
-                                    <div className="min-w-0">
-
-                                        <p className="truncate text-sm font-medium text-slate-200">
-                                            {currentUser.username}
-                                        </p>
-
-                                        <p className="truncate text-xs text-slate-500">
-                                            {currentUser.email}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-                            )}
-
+                            {currentUser && <UserPanel user={currentUser} onSettingsClick={() => setOpen(false)} onProfileClick={() => setOpen(false)} />}
 
                             <button
                                 type="button"

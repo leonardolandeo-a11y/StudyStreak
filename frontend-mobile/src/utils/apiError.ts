@@ -1,8 +1,12 @@
+import { GoalWriteUnconfirmedError } from './goalWrite';
 import { isAxiosError } from 'axios';
+import { ApiConfigurationError } from '../config/apiRuntime';
 
 type ApiErrorBody = { message?: string; detail?: string; title?: string };
 
 export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
+  if (error instanceof GoalWriteUnconfirmedError) return error.message;
+  if (error instanceof ApiConfigurationError) return error.message;
   if (!isAxiosError(error)) return fallback;
   if (error.code === 'ECONNABORTED') return 'The request timed out. Try again.';
   if (!error.response) return 'Cannot connect to StudyStreak. Check your connection and API address.';

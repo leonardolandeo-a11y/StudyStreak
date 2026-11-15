@@ -1,0 +1,46 @@
+[
+  {
+    "id": "campus",
+    "source": "study-environment-sunset-campus.png",
+    "sourceSHA256": "78f09db57ffd1af01c165325af25ec17d1f67788d39b45db004d374b8f4340d2",
+    "dimensions": [
+      2172,
+      724
+    ],
+    "originalBytes": 1346416,
+    "webpBytes": 852630
+  },
+  {
+    "id": "library",
+    "source": "study-environment-rainy-library.png",
+    "sourceSHA256": "9ae122636b335a8dd78c1ca5d732979c7beb5d6276d7501521d4206ec32c05d1",
+    "dimensions": [
+      2172,
+      724
+    ],
+    "originalBytes": 1294247,
+    "webpBytes": 854436
+  },
+  {
+    "id": "night",
+    "source": "study-environment-night-desk.png",
+    "sourceSHA256": "0be913fb90a0410330027daca9793046be8247d9bb15b0a4b21f1b1e03e09d80",
+    "dimensions": [
+      2172,
+      724
+    ],
+    "originalBytes": 1315247,
+    "webpBytes": 855540
+  },
+  {
+    "id": "cafe",
+    "source": "study-environment-cozy-cafe.png",
+    "sourceSHA256": "51d1dd41c2af3cc2ec7f06d07298a113ac28bd32e305ec7f9e01f4b0f1406647",
+    "dimensions": [
+      2172,
+      724
+    ],
+    "originalBytes": 1296016,
+    "webpBytes": 829646
+  }
+]

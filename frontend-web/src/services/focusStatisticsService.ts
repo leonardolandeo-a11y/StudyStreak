@@ -5,6 +5,11 @@ export interface DailyFocus {
     minutes: number;
     sessions: number;
 }
+export interface VerifiedFocusPeriod {
+    minutes: number;
+    sessions: number;
+    daily: DailyFocus[];
+}
 export interface GoalFocus {
     goalId: number | null;
     topic: string;
@@ -12,6 +17,8 @@ export interface GoalFocus {
     sessions: number;
 }
 export interface FocusStatistics {
+    // Optional for compatibility with servers deployed before this additive field.
+    verifiedPeriod?: VerifiedFocusPeriod;
     timeZone: string;
     verifiedMinutes: number; estimatedMinutes: number;
     groupMinutes: number; individualMinutes: number; groupSessions: number;

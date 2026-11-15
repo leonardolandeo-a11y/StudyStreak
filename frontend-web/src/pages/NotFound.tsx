@@ -26,7 +26,7 @@ function NotFound(){
                         bg-slate-900/70
                         p-8
                         text-center
-                        shadow-xl shadow-black/20
+                        shadow-xl shadow-appearance-shadow/20
                     "
                 >
                     <p
@@ -77,7 +77,7 @@ function NotFound(){
                                 bg-sky-500
                                 px-5 py-2.5
                                 text-sm font-semibold
-                                text-slate-950
+                                text-on-accent
                                 hover:bg-sky-400
                             "
                         >
@@ -88,12 +88,12 @@ function NotFound(){
                             to={ROUTES.dashboard}
                             className="
                                 rounded-lg
-                                border border-slate-700
+                                border border-outline-strong
                                 bg-slate-950
                                 px-5 py-2.5
                                 text-sm font-medium
                                 text-slate-200
-                                hover:border-slate-600
+                                hover:border-outline-strong
                                 hover:bg-slate-800
                             "
                         >

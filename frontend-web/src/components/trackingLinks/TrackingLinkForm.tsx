@@ -1,3 +1,5 @@
+import { UserRoundPlus } from "lucide-react";
+import { TrackingAvatar } from "./TrackingAvatar";
 import { useEffect, useState, type SubmitEvent } from "react";
 import { searchUsers } from "../../services/userSearchService";
 import type { UserSearchResult } from "../../types/userSearch";
@@ -66,13 +68,11 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg shadow-black/10">
-            <p className="text-sm font-medium text-sky-400">Tracking</p>
-            <h2 className="mt-1 text-xl font-semibold text-slate-100">Send Tracking Request</h2>
-            <p className="mt-1 text-sm text-slate-400">Find a study partner by username or their exact email address.</p>
+        <form onSubmit={handleSubmit} className="tracking-search">
+            <h2 className="sr-only">Send Tracking Request</h2>
 
-            <div className="mt-5">
-                <label htmlFor="partner-search" className="mb-2 block text-sm font-medium text-slate-300">
+            <div className="min-w-0">
+                <label htmlFor="partner-search" className="sr-only">
                     Study partner
                 </label>
                 <input
@@ -81,16 +81,16 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                     autoComplete="off"
                     value={query}
                     onChange={(event) => handleQueryChange(event.target.value)}
-                    placeholder="Enter a username or email"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
+                    placeholder="Search partner by username or email"
+                    className="w-full rounded-lg border border-outline-strong bg-slate-950 px-3 py-2.5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:outline-none"
                     required
                     minLength={2}
                     maxLength={100}
                 />
                 {selected ? (
-                    <p className="mt-2 text-sm text-emerald-300" role="status">Selected: @{selected.username}</p>
+                    <div className="mt-3 flex min-w-0 items-center gap-3 rounded-control bg-accent-soft p-3" role="status"><TrackingAvatar id={selected.id} name={selected.username} /><p className="min-w-0 truncate text-sm text-accent" title={selected.username}>Selected: @{selected.username}</p></div>
                 ) : query.trim().length >= 2 ? (
-                    <div className="mt-2 rounded-lg border border-slate-700 bg-slate-950 p-2">
+                    <div className="mt-2 rounded-lg border border-outline-strong bg-slate-950 p-2">
                         {searching && <p className="px-2 py-1 text-sm text-slate-400" role="status">Searching...</p>}
                         {!searching && error && <p className="px-2 py-1 text-sm text-red-300" role="alert">{error}</p>}
                         {!searching && !error && results.length === 0 && (
@@ -105,9 +105,9 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
                                     setQuery(user.username);
                                     setResults([]);
                                 }}
-                                className="block w-full rounded-md px-3 py-2 text-left text-sm text-slate-100 hover:bg-slate-800 focus:bg-slate-800 focus:outline-none"
+                                className="flex min-h-14 w-full min-w-0 items-center gap-3 rounded-control px-3 py-2 text-left text-sm text-content hover:bg-surface-hover focus-visible:bg-surface-hover"
                             >
-                                @{user.username}
+                                <TrackingAvatar id={user.id} name={user.username} /><span className="min-w-0 truncate font-medium" title={user.username}>@{user.username}</span>
                             </button>
                         ))}
                     </div>
@@ -119,9 +119,9 @@ function TrackingLinkForm({ onSubmit, loading }: TrackingLinkFormProps) {
             <button
                 type="submit"
                 disabled={loading || !selected}
-                className="mt-5 rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="study-button tracking-send bg-accent text-on-accent hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {loading ? "Sending..." : "Send Request"}
+                <UserRoundPlus size={18} aria-hidden="true"/>{loading ? "Sending..." : "Send Request"}
             </button>
         </form>
     );

@@ -1,37 +1,36 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
-import { displayFocusDuration, getMobileFocusStatistics } from '../../features/focus/focusStatisticsService';
+import { useState } from 'react';
+import { Text, View } from 'react-native';
 import type { FocusStatistics } from '../../features/focus/focusStatisticsService';
-import { palette } from '../../constants/palette';
-import { MetricCard } from '../study/MetricCard';
-import { ActionButton } from '../ui/ActionButton';
+import { activityNumber } from '../../features/dashboard/verifiedActivity';
+import { useAppearance } from '../../hooks/useAppearance';
+import { AcademicSprite } from '../academic/AcademicSprite';
+import { dashboardPalette } from '../academic/workspacePalette';
+import { NavigationPressable } from '../navigation/NavigationPressable';
+import { AcademicPanel } from '../academic/Academic';
 import { StudyAnalyticsDetails } from './StudyAnalyticsDetails';
-export function FocusInsightsMobile({ refreshKey=0 }: {refreshKey?:number}) {
- const [days,setDays]=useState<7|30>(7),[revision,setRevision]=useState(0);
- const [data,setData]=useState<FocusStatistics|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(false);
- useFocusEffect(useCallback(()=>{
-  void refreshKey;void revision;const controller=new AbortController();let sending=false;
-  const load=async()=>{
-   if(sending||AppState.currentState!=='active'||controller.signal.aborted)return;
-   sending=true;setLoading(true);
-   try{const result=await getMobileFocusStatistics(days,controller.signal);if(!controller.signal.aborted){setData(result);setError(false);}}
-   catch{if(!controller.signal.aborted)setError(true);}finally{sending=false;if(!controller.signal.aborted)setLoading(false);}
-  };
-  void load();const interval=setInterval(()=>void load(),30000);const subscription=AppState.addEventListener('change',state=>{if(state==='active')void load();});
-  return()=>{controller.abort();clearInterval(interval);subscription.remove();};
- },[days,refreshKey,revision]));
- return <View style={styles.container}>
-  <Text style={styles.kicker}>YOUR PROGRESS</Text><Text style={styles.title}>Time well spent.</Text><Text style={styles.caption}>Saved sessions across Web and Mobile. Pending time is excluded.</Text>
-  <View style={styles.row}>{([7,30] as const).map(option=><Pressable key={option} accessibilityRole="button" accessibilityState={{selected:days===option}} onPress={()=>{setDays(option);setData(null);}} style={[styles.tab,days===option&&{backgroundColor:palette.primary}]}><Text style={{color:days===option?palette.primaryText:palette.text,fontWeight:'600'}}>{option} days</Text></Pressable>)}<ActionButton secondary title="Refresh" onPress={()=>setRevision(n=>n+1)}/></View>
-  {loading&&<ActivityIndicator accessibilityLabel="Updating study statistics" color={palette.primary}/>}
-  {error&&<Text accessibilityRole="alert" style={styles.error}>Statistics unavailable. {data?'Showing the last saved snapshot.':''} Tap Refresh to retry.</Text>}
-  {data&&<><View style={styles.row}>
-   <MetricCard label="All-time recorded" value={displayFocusDuration(data.totalMinutes)} detail={`${data.verifiedMinutes} min verified · ${data.estimatedMinutes} min historical estimates`}/>
-   <MetricCard label="Completed sessions" value={data.completedSessions} detail="Across all Goals"/>
-   <MetricCard label={`Last ${days} days`} value={displayFocusDuration(data.periodMinutes)} detail={`${data.periodSessions} sessions · ${data.timeZone}`}/>
-   <MetricCard label="This week" value={displayFocusDuration(data.weekMinutes)} detail="Monday through today"/>
-  </View><StudyAnalyticsDetails key={days} data={data}/></>}
- </View>;
+
+/** Presentation only: shares the Dashboard request, period and refresh. */
+export function FocusInsightsMobile({ data, days, calendarExternal = false }: { data: FocusStatistics; days: 7 | 30; calendarExternal?: boolean }) {
+  const { theme } = useAppearance();
+  const colors = dashboardPalette(theme);
+  const [expanded, setExpanded] = useState(false);
+  const metrics = [
+    { label: 'All-time recorded', value: `${activityNumber(data.totalMinutes)} min`, detail: `${activityNumber(data.verifiedMinutes)} min verified · ${activityNumber(data.estimatedMinutes)} min historical estimates` },
+    { label: 'All-time completed sessions', value: data.completedSessions, detail: 'Across all Goals · recorded sessions' },
+    { label: `Recorded in ${days} days`, value: `${activityNumber(data.periodMinutes)} min`, detail: `${data.periodSessions} sessions · includes historical estimates` },
+    { label: 'This week', value: `${activityNumber(data.weekMinutes)} min`, detail: 'Monday through today · recorded time' },
+  ];
+  return <AcademicPanel style={{ backgroundColor: colors.surface, borderColor: colors.border }}>
+    <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}><AcademicSprite name="books" width={60}/><View style={{ flex: 1, gap: 4 }}>
+      <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Your study journey</Text>
+      <Text style={{ color: colors.muted, fontSize: 12, lineHeight: 18 }}>Saved sessions · {data.timeZone}. Pending time excluded.</Text>
+    </View></View>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+      {metrics.map(metric => <View key={metric.label} style={{ flexBasis: '45%', flexGrow: 1, minWidth: 110, paddingLeft: 10, borderLeftWidth: 1, borderColor: colors.borderStrong, gap: 4 }}>
+        <Text style={{ color: colors.textSecondary, fontSize: 12 }}>{metric.label}</Text><Text style={{ color: colors.text, fontSize: 23, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{metric.value}</Text><Text style={{ color: colors.muted, fontSize: 11, lineHeight: 16 }}>{metric.detail}</Text>
+      </View>)}
+    </View>
+    <NavigationPressable accessibilityRole="button" accessibilityLabel={expanded ? 'Hide study details' : 'Explore study details'} accessibilityState={{ expanded }} aria-expanded={expanded} onPress={() => setExpanded(value => !value)} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 8, borderRadius: 8 }}><Text style={{ color: colors.primary, fontWeight: '600' }}>{expanded ? 'Hide study details' : 'Explore study details'}</Text></NavigationPressable>
+    {expanded ? <StudyAnalyticsDetails key={days} data={data} calendarExternal={calendarExternal}/> : null}
+  </AcademicPanel>;
 }
-const styles=StyleSheet.create({container:{gap:16},row:{flexDirection:'row',flexWrap:'wrap',gap:10,alignItems:'center'},title:{color:palette.text,fontSize:28,fontWeight:'700'},kicker:{color:palette.primary,fontSize:12,fontWeight:'700',letterSpacing:2},caption:{color:palette.muted,fontSize:14,lineHeight:21},error:{color:palette.error,fontSize:14},tab:{minHeight:48,borderRadius:12,paddingHorizontal:18,paddingVertical:15,backgroundColor:palette.surfaceRaised}});

@@ -1,12 +1,13 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
 @layer base {
     html {
-        @apply bg-slate-950 text-slate-100;
+        @apply bg-canvas text-content;
     }
 
     body {
-        @apply min-h-screen bg-slate-950 text-slate-100 antialiased;
+        @apply min-h-screen bg-canvas text-content antialiased;
         margin: 0;
         min-width: 320px;
     }
@@ -16,53 +17,129 @@
     input,
     textarea,
     select {
-        @apply transition-colors duration-150;
-    }
-
-    button:focus-visible,
-    a:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible,
-    select:focus-visible {
-        @apply outline-none ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-950;
+        transition: color var(--ss-motion-fast), background-color var(--ss-motion-fast), border-color var(--ss-motion-fast);
     }
 
     input,
     textarea,
     select {
-        @apply border-slate-700 bg-slate-900 text-slate-100 placeholder:text-slate-500;
+        @apply border-outline-strong bg-surface text-content placeholder:text-content-muted;
     }
 
     button:disabled {
         @apply cursor-not-allowed opacity-50;
     }
 }
-/* Study workspace: neutral surfaces, mint actions, amber pending states. */
-@theme {
-    --color-slate-950: #0b1014;
-    --color-slate-900: #141c22;
-    --color-slate-800: #26323b;
-    --color-slate-700: #3c4b56;
-    --color-slate-500: #91a2ae;
-    --color-sky-400: #94e8c3;
-    --color-sky-500: #75dab0;
-    --color-emerald-400: #75dab0;
+/* Deliberately unlayered: legacy outline-none utilities must not hide keyboard
+   focus. Only interactive/focusable elements are selected; no !important or
+   box-shadow override, so component shadows and pointer styles are preserved. */
+:is(
+    button,
+    a[href],
+    input:not([type="hidden"]),
+    textarea,
+    select,
+    summary,
+    audio[controls],
+    video[controls],
+    [contenteditable="true"],
+    [tabindex]:not([tabindex^="-"])
+):not(:disabled):focus-visible {
+    outline: var(--ss-focus-width) solid var(--ss-focus);
+    outline-offset: var(--ss-focus-offset);
 }
+
 @layer components {
-    .study-panel { @apply rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6; }
-    .study-kicker { @apply text-xs font-bold uppercase tracking-[0.16em] text-emerald-300; }
-    .study-button { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800; }
-    .study-tabs { @apply flex flex-wrap gap-2 border-b border-slate-800 pb-4; }
-    .study-tab { @apply min-h-11 rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800; }
-    .study-tab[aria-pressed="true"] { @apply bg-emerald-400 text-slate-950; }
-    .study-empty { @apply rounded-xl border border-dashed border-slate-700 p-6 text-sm leading-relaxed text-slate-400; }
+    .study-panel { @apply rounded-panel border border-outline bg-surface p-5 sm:p-6; }
+    .study-kicker { @apply text-xs font-bold uppercase tracking-[0.16em] text-accent; }
+    .study-button { @apply inline-flex items-center justify-center gap-2 rounded-control border border-outline-strong px-4 py-2 text-sm font-semibold text-content-secondary hover:bg-surface-hover; min-height: var(--ss-control-height); }
+    .study-button[aria-current="page"] { @apply border-accent bg-accent-soft text-accent; }
+    .study-tabs { @apply flex flex-wrap gap-2 border-b border-outline pb-4; }
+    .study-tab { @apply rounded-control px-4 py-2 text-sm font-semibold text-content-secondary hover:bg-surface-hover; min-height: var(--ss-control-height); }
+    .study-tab[aria-pressed="true"] { @apply bg-accent text-on-accent; }
+    .study-empty { @apply rounded-control border border-dashed border-outline-strong p-6 text-sm leading-relaxed text-content-muted; }
+    .study-status { @apply flex items-center gap-3 rounded-control border border-outline bg-surface px-4 py-3 text-sm text-content-muted; }
 }
 @layer base {
     button, a, input, select { touch-action: manipulation; }
     button { cursor: pointer; }
     input, select, textarea { font-size: max(1rem, 16px); }
-    ::selection { background: #75dab0; color: #0b1014; }
+    ::selection { background: var(--ss-accent); color: var(--ss-on-accent); }
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
 }
+
+/* An explicit preference can reduce motion further; it never overrides the OS. */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+}
+
+.profile-icon-button { width: 44px; height: 44px; padding: 0; }
+.profile-icon-button, .profile-file-button, .profile-remove-button, .sidebar-profile-link {
+    transition: background-color 250ms, color 250ms, border-color 250ms, box-shadow 250ms;
+}
+:is(.profile-icon-button, .profile-file-button):is(:hover, :focus-visible) {
+    background-color: var(--ss-accent-soft); border-color: var(--ss-accent); color: var(--ss-accent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--ss-accent) 18%, transparent);
+}
+.profile-remove-button { color: var(--ss-danger); border-color: var(--ss-danger-border); background-color: var(--ss-danger-surface); }
+.profile-remove-button:enabled:is(:hover, :focus-visible) { background-color: var(--ss-danger); color: var(--ss-on-danger); }
+.sidebar-profile-link:is(:hover, :focus-visible) { background-color: var(--ss-surface-hover); }
+.sidebar-profile-link > :first-child { transition: transform 250ms; }
+.sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: rotate(-5deg) scale(1.05); }
+
+/* Each icon returns to rest after a single 300 ms interaction. */
+.sidebar-nav-link svg { overflow: visible; }
+.sidebar-nav-link svg > * { transform-box: fill-box; transform-origin: center; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Dashboard"] svg > :is(:nth-child(1), :nth-child(4)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Study Rooms"] svg > :is(:nth-child(1), :nth-child(4)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Tracking"] svg > :first-child { animation: sidebar-part-left 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Dashboard"] svg > :is(:nth-child(2), :nth-child(3)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Study Rooms"] svg > :is(:nth-child(2), :nth-child(3)),
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Tracking"] svg > :nth-child(2) { animation: sidebar-part-right 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Focus Studio"] svg { animation: sidebar-sway 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Goals"] svg { animation: sidebar-goal-pulse 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Resources"] .sidebar-resource-page { animation: sidebar-page 300ms ease-in-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Validations"] svg > :last-child { stroke-dasharray: 24; animation: sidebar-check 300ms ease-out; }
+.sidebar-nav-link:is(:hover, :focus-visible)[data-nav-icon="Notifications"] svg { transform-origin: 50% 15%; animation: sidebar-ring 300ms ease-in-out; }
+@keyframes sidebar-part-left { 50% { transform: translateX(-2px); } }
+@keyframes sidebar-part-right { 50% { transform: translateX(2px); } }
+@keyframes sidebar-sway { 30% { transform: rotate(-9deg); } 70% { transform: rotate(7deg); } }
+@keyframes sidebar-goal-pulse { 50% { transform: scale(0.91); } }
+/* The fixed book never transforms. The leaf crosses the spine and returns. */
+.sidebar-nav-link .sidebar-resource-page { opacity: 0; transform-box: view-box; transform-origin: 12px 12px; }
+@keyframes sidebar-page {
+    0%, 100% { opacity: 0; transform: scaleX(1); }
+    15%, 85% { opacity: 1; transform: scaleX(0.9); }
+    50% { opacity: 1; transform: scaleX(-1); }
+}
+@keyframes sidebar-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes sidebar-ring { 25% { transform: rotate(12deg); } 55% { transform: rotate(-10deg); } 80% { transform: rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; } }
+:root[data-motion="reduce"] .sidebar-profile-link:is(:hover, :focus-visible) > :first-child { transform: none; }
+
+/* The desktop rail takes layout space; mobile uses a native modal top layer. */
+.partners-desktop {
+    position: sticky; top: 0; align-self: flex-start; flex-shrink: 0;
+    width: 0; height: 100dvh; overflow: hidden;
+    transition: width 240ms ease;
+}
+.partners-desktop[data-open="true"] { width: 18rem; border-left: 1px solid var(--ss-border); }
+.partners-desktop .partners-panel-shell { width: calc(18rem - 1px); }
+.partners-drawer {
+    position: fixed; inset: 0 0 0 auto; margin: 0 0 0 auto; padding: 0;
+    width: min(22rem, calc(100vw - 1rem)); max-width: 100vw;
+    height: 100dvh; max-height: 100dvh; border: 0; border-left: 1px solid var(--ss-border);
+    background: var(--ss-surface); color: var(--ss-text);
+    transform: translateX(100%); opacity: 0;
+    transition: transform 240ms ease, opacity 240ms ease;
+}
+.partners-drawer[data-open="true"] { transform: translateX(0); opacity: 1; }
+.partners-drawer::backdrop { background: rgb(0 0 0 / 55%); }
+@starting-style { .partners-drawer[open][data-open="true"] { transform: translateX(100%); opacity: 0; } }
+.partners-member-link { transition: background-color 240ms ease; }

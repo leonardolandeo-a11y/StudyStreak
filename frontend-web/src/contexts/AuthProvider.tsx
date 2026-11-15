@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
 import { login as loginRequest } from "../services/authService";
+import { requireConfiguredApiBaseUrl } from "../config/apiRuntime";
 import { getUserFromToken } from "../utils/jwt";
 import type { AuthenticatedUser, LoginResponse } from "../types/auth";
 
@@ -24,8 +25,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!expectedRefresh) { void Promise.resolve().then(() => setIsLoading(false)); return; }
         let active = true;
 
-        void axios.post<LoginResponse>(`${import.meta.env.VITE_API_BASE_URL}/refresh`,
-            { refreshToken: expectedRefresh }, { timeout: 15000 })
+        void Promise.resolve().then(() => axios.post<LoginResponse>(`${requireConfiguredApiBaseUrl()}/refresh`,
+            { refreshToken: expectedRefresh }, { timeout: 15000 }))
             .then(({ data }) => {
                 if (!active || sessionStorage.getItem("refreshToken") !== expectedRefresh) return;
                 const user = getUserFromToken(data.token);
@@ -59,8 +60,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const refreshToken = sessionStorage.getItem("refreshToken");
         if (refreshToken) {
             // A failed revocation request must not prevent local sign-out.
-            void axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`,
-                { refreshToken }, { timeout: 3500 }).catch(() => undefined);
+            void Promise.resolve().then(() => axios.post(`${requireConfiguredApiBaseUrl()}/logout`,
+                { refreshToken }, { timeout: 3500 })).catch(() => undefined);
         }
         sessionStorage.removeItem("accessToken");
         sessionStorage.removeItem("refreshToken");

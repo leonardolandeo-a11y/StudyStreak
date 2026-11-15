@@ -5,7 +5,8 @@ import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } 
 import { Screen } from '../../components/ui/Screen';
 import { ActionButton } from '../../components/ui/ActionButton';
 import { StatusMessage } from '../../components/ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance, useThemedStyles } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { photoEvidenceService } from '../../services/photoEvidenceService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { File } from 'expo-file-system';
@@ -20,6 +21,8 @@ function deleteTemporaryPhoto(uri: string | null) {
 }
 
 export default function StudyCamera() {
+  const styles = useThemedStyles(createStyles);
+  const { theme: { colors: palette } } = useAppearance();
   const { goalId: goalParam, recordId: recordParam } = useLocalSearchParams<{ goalId: string; recordId: string }>();
   const goalId = Number(goalParam);
   const recordId = Number(recordParam);
@@ -107,7 +110,7 @@ export default function StudyCamera() {
   }
 
   return (
-    <Screen>
+    <Screen themed compact>
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
         <Text style={styles.link}>‹ Back to goal</Text>
       </Pressable>
@@ -145,7 +148,7 @@ export default function StudyCamera() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   title: { color: palette.text, fontSize: 26, fontWeight: '800' },
   muted: { color: palette.muted, fontSize: 14, lineHeight: 21 },
   link: { color: palette.primary, fontWeight: '700', fontSize: 15 },

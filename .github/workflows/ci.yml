@@ -14,19 +14,19 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_DB: studystreak
+          POSTGRES_DB: studystreak_schema_check
           POSTGRES_USER: studystreak
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U studystreak -d studystreak"
+          --health-cmd "pg_isready -U studystreak -d studystreak_schema_check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/studystreak?currentSchema=ss_audit_ci
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/studystreak_schema_check?currentSchema=ss_audit_ci
       STUDYSTREAK_POSTGRES_INTEGRATION: "true"
       SPRING_DATASOURCE_USERNAME: studystreak
       SPRING_DATASOURCE_PASSWORD: ""
@@ -53,7 +53,7 @@ jobs:
         run: echo "JWT_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
       - name: Create isolated integration schema
-        run: psql -h localhost -U studystreak -d studystreak -c 'CREATE SCHEMA ss_audit_ci'
+        run: psql -h localhost -U studystreak -d studystreak_schema_check -c 'CREATE SCHEMA ss_audit_ci'
 
       - name: Run backend verification including PostgreSQL integration
         run: ./mvnw -B -Dspring.jpa.properties.hibernate.default_schema=ss_audit_ci verify

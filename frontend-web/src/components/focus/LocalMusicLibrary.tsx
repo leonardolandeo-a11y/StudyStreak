@@ -1,0 +1,10 @@
+import { useRef } from 'react';
+import { FileAudio, Pause, Play, Trash2, Upload } from 'lucide-react';
+import type { LocalTrack } from '../../hooks/useLocalMusic';
+export function ImportMusicButton({onFiles}:{onFiles(files:FileList|null):void}) {
+    const input=useRef<HTMLInputElement>(null);
+    return <><input ref={input} type="file" multiple accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm" className="hidden" aria-label="Import local audio files" onChange={event=>{onFiles(event.target.files);event.target.value='';}}/><button type="button" className="study-button text-xs" onClick={()=>input.current?.click()}><Upload size={16} aria-hidden="true"/>Import Music</button></>;
+}
+export function LocalMusicLibrary({tracks,selected,playing,error,onPlay,onRemove}:{tracks:LocalTrack[];selected:string|null;playing:boolean;error:string|null;onPlay(id:string):Promise<void>;onRemove(id:string):void}) {
+    return <>{error&&<p role="alert" className="break-words text-sm text-danger">{error}</p>}{tracks.length>0&&<section className="study-panel p-4" aria-label="Imported music"><h2 className="flex items-center gap-2 text-lg font-semibold"><FileAudio size={18} className="text-accent"/>Imported music</h2><p className="mt-1 text-xs text-content-muted">Local to this session. Never uploaded; removed when you leave Focus Studio.</p><ul className="mt-3 grid gap-2">{tracks.map(track=><li key={track.id} className="flex min-w-0 items-center gap-2 rounded-control border border-outline bg-surface-raised p-2"><button type="button" className="study-button size-11 shrink-0 p-0" aria-label={`${selected===track.id&&playing?'Pause':'Play'} imported ${track.name}`} onClick={()=>void onPlay(track.id)}>{selected===track.id&&playing?<Pause size={17}/>:<Play size={17}/>}</button><span className="min-w-0 flex-1 truncate text-sm" title={track.name}>{track.name}</span><button type="button" className="study-button size-11 shrink-0 p-0 text-danger hover:bg-danger-surface" aria-label={`Remove imported ${track.name}`} title="Remove local track" onClick={()=>onRemove(track.id)}><Trash2 size={17}/></button></li>)}</ul></section>}</>;
+}

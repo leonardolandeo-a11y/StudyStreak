@@ -1,0 +1,56 @@
+# Standalone disposable environment. Does not extend compose.local.yaml and
+# never mounts a named/host volume. Stopping PostgreSQL loses its synthetic data.
+name: studystreak-schema-check
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: studystreak_schema_check
+      POSTGRES_USER: studystreak_check
+      POSTGRES_PASSWORD: disposable-local-check-only
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${CHECK_DB_PORT:-55436}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studystreak_check -d studystreak_schema_check"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  app:
+    build: .
+    image: studystreak-schema-check-backend:dev
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/studystreak_schema_check
+      SPRING_DATASOURCE_USERNAME: studystreak_check
+      SPRING_DATASOURCE_PASSWORD: disposable-local-check-only
+      APP_AUTH_SCHEMA_INIT: always
+      # Public development-only key; never reuse it outside this disposable test.
+      JWT_SECRET: c3R1ZHlzdHJlYWstZGlzcG9zYWJsZS1sb2NhbC10ZXN0LWtleS0yMDI2
+      JWT_EXPIRATION: 3600000
+      JWT_REFRESH_EXPIRATION: 86400000
+      MAIL_HOST: 127.0.0.1
+      MAIL_PORT: 9
+      MAIL_USERNAME: check@example.invalid
+      MAIL_PASSWORD: local-only
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_CONNECTIONTIMEOUT: 500
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_TIMEOUT: 500
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_WRITETIMEOUT: 500
+      SPRING_JPA_SHOW_SQL: "false"
+    ports:
+      - "127.0.0.1:${CHECK_API_PORT:-18081}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080;
+          printf "GET /api/dashboard/goals HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3;
+          head -n 1 <&3 | grep -q " 401 "'
+      interval: 3s
+      timeout: 5s
+      start_period: 30s
+      retries: 30

@@ -3,6 +3,8 @@ export const ROUTES={
     login: "/login",
     register:"/register",
     dashboard:"/dashboard",
+    profile: "/profile",
+    settings: "/settings",
     focusStudio:"/focus-studio",
     studyRooms:"/study-rooms",
 
@@ -15,6 +17,7 @@ export const ROUTES={
 } as const;
 
 export const ROUTE_PATTERNS = {
+    socialProfile: "/users/:userId/profile",
     goalDetails: "/goals/:goalId",
     dailyRecords:"/goals/:goalId/daily-records",
     dailyRecordDetails:"/goals/:goalId/daily-records/:dailyRecordId",
@@ -44,3 +47,5 @@ export function resourcesPath(topic?:string):string {
 
     return `${ROUTES.resources}?topic=${encodeURIComponent(topic)}`;
 }
+
+export function socialProfilePath(id: number): string { return `/users/${id}/profile`; }

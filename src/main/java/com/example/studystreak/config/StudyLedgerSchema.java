@@ -10,10 +10,11 @@ public class StudyLedgerSchema {
     public Object initializeStudyLedger(DataSource source,
             @org.springframework.beans.factory.annotation.Value("${study-ledger.migrate-on-start:true}") boolean migrate) {
         if (!migrate) {
-            new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("select count(*) from study_ledger where false", Integer.class);
+            new org.springframework.jdbc.core.JdbcTemplate(source).queryForObject("select count(observed_remainder_us) from study_ledger where false", Integer.class);
             return new Object();
         }
-        new ResourceDatabasePopulator(new ClassPathResource("db/study-tracking-v3.sql")).execute(source);
+        new ResourceDatabasePopulator(new ClassPathResource("db/study-tracking-v3.sql"),
+                new ClassPathResource("db/migrations/2026-11-06_preserve_observation_precision.sql")).execute(source);
         return new Object();
     }
 }

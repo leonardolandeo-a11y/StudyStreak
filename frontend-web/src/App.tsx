@@ -9,14 +9,17 @@ import {
   Suspense
 } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthEntry } from './components/auth/AuthEntry';
 import AuthenticatedLayout from "./components/navigation/AuthenticatedLayout";
 import {
     ROUTES,
     ROUTE_PATTERNS
 } from "./routes/paths";
-import LoadingState
-    from "./components/ui/LoadingState";
+import AppLoadingScreen from "./components/ui/AppLoadingScreen";
 
+const SocialProfile = lazy(() => import("./pages/SocialProfile"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
 const Home = lazy(()=> import("./pages/Home"));
 const Login = lazy(()=> import("./pages/Login"));
 const Dashboard = lazy(()=>import("./pages/Dashboard"));
@@ -44,19 +47,15 @@ function App(){
   return (
     <BrowserRouter>
       <Suspense
-          fallback={
-              <LoadingState
-                  message="Loading page..."
-              />
-          }
+          fallback={<AppLoadingScreen />}
       >
         
         <Routes>
           <Route path={ROUTES.home} element={<Home />} />
 
-          <Route path= {ROUTES.login} element= {<Login></Login>}></Route>
+          <Route path= {ROUTES.login} element= {<AuthEntry><Login/></AuthEntry>}></Route>
 
-          <Route path= {ROUTES.register} element= {<Register></Register>}></Route>
+          <Route path= {ROUTES.register} element= {<AuthEntry><Register/></AuthEntry>}></Route>
 
           <Route
             element={
@@ -65,6 +64,9 @@ function App(){
               </ProtectedRoute>
             }
           >
+            <Route path={ROUTE_PATTERNS.socialProfile} element={<SocialProfile />} />
+            <Route path={ROUTES.profile} element={<Profile />} />
+            <Route path={ROUTES.settings} element={<Settings />} />
             <Route path= {ROUTES.dashboard} element={<Dashboard></Dashboard>}></Route>
             <Route path={ROUTES.focusStudio} element={<FocusStudioPage />} />
             <Route path={ROUTES.studyRooms} element={<StudyRoomsPage />} />

@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Link, router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Screen } from '../components/ui/Screen';
-import { FormField } from '../components/ui/FormField';
-import { ActionButton } from '../components/ui/ActionButton';
+import { StyleSheet, Text } from 'react-native';
+import { AuthScreen } from '../components/auth/AuthScreen';
+import { AuthField as FormField, AuthButton as ActionButton } from '../components/auth/AuthControls';
 import { StatusMessage } from '../components/ui/StatusMessage';
 import { useAuth } from '../hooks/useAuth';
 import { getApiErrorMessage } from '../utils/apiError';
-import { palette } from '../constants/palette';
+import { useThemedStyles } from '../hooks/useAppearance';
+import type { ThemeColors } from '../features/appearance/theme';
+import { Card } from '../components/ui/Card';
 
 export default function SignUp() {
   const { signUp } = useAuth();
+  const styles = useThemedStyles(createStyles);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,35 +38,26 @@ export default function SignUp() {
   }
 
   return (
-    <Screen>
-      <View style={styles.heading}>
-        <Text style={styles.brand}>STUDYSTREAK</Text>
-        <Text style={styles.title}>Create your account</Text>
-        <Text style={styles.description}>Start tracking your goals with your study partner.</Text>
-      </View>
-      <View style={styles.card}>
-        <FormField label="Username" placeholder="Choose a username" value={username}
+    <AuthScreen title="Create your account" description="Start tracking your goals with your study partner."
+      footer={<Text style={styles.footer}>Already registered? <Link href="/sign-in" style={styles.link}>Sign in</Link></Text>}>
+      <Card style={styles.card}>
+        <FormField variant="subtle" label="Username" placeholder="Choose a username" value={username}
           onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} autoComplete="username" editable={!busy} />
-        <FormField label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail}
+        <FormField variant="subtle" label="Email" placeholder="you@example.com" value={email} onChangeText={setEmail}
           autoCapitalize="none" keyboardType="email-address" autoComplete="email" editable={!busy} />
-        <FormField label="Password" placeholder="Create a password" value={password} onChangeText={setPassword}
+        <FormField variant="subtle" label="Password" placeholder="Create a password" value={password} onChangeText={setPassword}
           secureTextEntry autoComplete="new-password" editable={!busy}
           hint="8–72 characters with uppercase, lowercase and a number." />
         {error ? <StatusMessage message={error} error /> : null}
-        <ActionButton title="Create account" onPress={() => { void submit(); }} busy={busy} />
-      </View>
-      <Text style={styles.footer}>Already registered? <Link href="/sign-in" style={styles.link}>Sign in</Link></Text>
-    </Screen>
+        <ActionButton compact title="Create account" onPress={() => { void submit(); }} busy={busy} />
+      </Card>
+    </AuthScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  heading: { gap: 12, marginTop: 24, marginBottom: 4 },
-  brand: { color: palette.primary, fontSize: 13, letterSpacing: 2, fontWeight: '800' },
-  title: { color: palette.text, fontSize: 30, fontWeight: '800' },
-  description: { color: palette.muted, fontSize: 15, lineHeight: 23 },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1,
-    borderRadius: 18, padding: 20, gap: 16 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  card: { backgroundColor: 'transparent', borderWidth: 0,
+    borderRadius: 0, padding: 0, gap: 16 },
   footer: { textAlign: 'center', color: palette.muted },
   link: { color: palette.primary, fontWeight: '700' },
 });

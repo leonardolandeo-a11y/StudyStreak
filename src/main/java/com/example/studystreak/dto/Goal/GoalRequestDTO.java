@@ -3,6 +3,7 @@ package com.example.studystreak.dto.Goal;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import com.example.studystreak.model.GoalDifficulty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,6 +23,9 @@ public class GoalRequestDTO {
     private Integer duration;
 
     private Boolean completed;
+
+    // Optional for historical goals and older clients.
+    private GoalDifficulty difficulty;
 
     public GoalRequestDTO() {}
 }

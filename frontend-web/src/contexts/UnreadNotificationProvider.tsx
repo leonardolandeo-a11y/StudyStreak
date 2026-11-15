@@ -1,3 +1,5 @@
+import type { Notification } from '../types/notification';
+import { createNotificationCursor } from '../features/notifications/incomingNotifications';
 import {
     useCallback,
     useEffect,
@@ -9,7 +11,10 @@ import {
 
 import { UnreadNotificationContext } from "./UnreadNotificationContext";
 import { useAuth } from "../hooks/useAuth";
-import { getUnreadNotificationCount } from "../services/notificationService";
+import { getNotifications, getUnreadNotificationCount } from "../services/notificationService";
+
+// Retain only a watermark across provider remounts; logout/account changes reset it.
+let cursorSession: { userId: number; cursor: ReturnType<typeof createNotificationCursor> } | null = null;
 
 interface UnreadNotificationProviderProps {
     children: ReactNode;
@@ -24,6 +29,9 @@ function UnreadNotificationProvider({ children }: UnreadNotificationProviderProp
     const { currentUser } = useAuth();
     const userId = currentUser?.id;
     const [snapshot, setSnapshot] = useState<UnreadSnapshot | null>(null);
+    const [incoming, setIncoming] = useState<{userId:number; rows:Notification[]} | null>(null);
+    const notices = useMemo(() => incoming && incoming.userId === userId ? incoming.rows : [], [incoming,userId]);
+    const dismissNotice = useCallback((id: number) => setIncoming(previous => previous && previous.userId === userId ? { ...previous, rows: previous.rows.filter(row => row.id !== id) } : previous), [userId]);
     const controllerRef = useRef<AbortController | null>(null);
     const pendingRef = useRef<Promise<void> | null>(null);
     const requestIdRef = useRef(0);
@@ -44,10 +52,18 @@ function UnreadNotificationProvider({ children }: UnreadNotificationProviderProp
         controllerRef.current = controller;
         const requestId = ++requestIdRef.current;
 
-        const task = getUnreadNotificationCount(userId, controller.signal)
-            .then((count) => {
-                if (!controller.signal.aborted && requestId === requestIdRef.current) {
-                    setSnapshot({ userId, count });
+        if(cursorSession?.userId !== userId)cursorSession={userId,cursor:createNotificationCursor()};
+        const cursor=cursorSession.cursor;
+        const task = Promise.all([
+            getUnreadNotificationCount(userId, controller.signal).catch(() => null),
+            getNotifications(userId, 0, 20, controller.signal).catch(() => null),
+        ])
+            .then(([count,page]) => {
+                if (controller.signal.aborted || requestId !== requestIdRef.current) return;
+                if(count !== null)setSnapshot({ userId, count });
+                if(page){
+                    const fresh=cursor.observe(page.content);
+                    setIncoming(previous => ({userId,rows:[...(previous && previous.userId === userId ? previous.rows.filter(row => !page.content.some(item => item.id === row.id && item.read)) : []),...fresh].filter((row,index,all)=>all.findIndex(item=>item.id===row.id)===index).slice(-3)}));
                 }
             })
             .catch(() => undefined)
@@ -71,6 +87,7 @@ function UnreadNotificationProvider({ children }: UnreadNotificationProviderProp
 
     useEffect(() => {
         if (userId === undefined) {
+            cursorSession=null;
             return;
         }
 
@@ -98,8 +115,10 @@ function UnreadNotificationProvider({ children }: UnreadNotificationProviderProp
 
     const contextValue = useMemo(() => ({
         unreadCount,
+        notices,
+        dismissNotice,
         refreshUnreadCount
-    }), [unreadCount, refreshUnreadCount]);
+    }), [unreadCount, notices, dismissNotice, refreshUnreadCount]);
 
     return (
         <UnreadNotificationContext.Provider value={contextValue}>

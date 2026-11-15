@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AcademicSprite } from '../academic/AcademicSprite';
+import { workspacePalette } from '../academic/workspacePalette';
+import { SocialAvatar } from '../social/MemberReference';
 import { ActionButton } from '../ui/ActionButton';
 import { PageControls } from '../ui/PageControls';
 import { StatusMessage } from '../ui/StatusMessage';
-import { palette } from '../../constants/palette';
+import { useAppearance } from '../../hooks/useAppearance';
+import type { ThemeColors } from '../../features/appearance/theme';
 import { userSearchService } from '../../services/userSearchService';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { getPageFallback } from '../../utils/pageBounds';
@@ -14,6 +18,9 @@ export function PartnerSearch({ onSend, busy }: {
   onSend: (userId: number) => Promise<boolean>;
   busy: boolean;
 }) {
+  const { theme } = useAppearance();
+  const palette = workspacePalette(theme);
+  const styles = createStyles(palette);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<UserSearchResult | null>(null);
   const [page, setPage] = useState(0);
@@ -70,7 +77,7 @@ export function PartnerSearch({ onSend, busy }: {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.heading}>Find a study partner</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><AcademicSprite name="companions" width={48}/><Text style={styles.heading}>Find a study partner</Text></View>
       <Text style={styles.description}>Search by username or exact email. Select a person to send a request.</Text>
       <TextInput
         accessibilityLabel="Search study partners"
@@ -95,11 +102,12 @@ export function PartnerSearch({ onSend, busy }: {
             <Text style={styles.description}>No matching users.</Text>
           ) : null}
           {!searching && !searchError ? results?.content.map((user) => (
-            <Pressable key={user.id} accessibilityRole="button" onPress={() => {
+            <Pressable key={user.id} accessibilityRole="button" accessibilityLabel={`Select tracking partner ${user.username}`} onPress={() => {
               setSelected(user);
               setResults(null);
             }} style={styles.result}>
-              <Text style={styles.user}>@{user.username}</Text>
+              <SocialAvatar userId={user.id} name={user.username} size={32} />
+              <Text numberOfLines={1} style={[styles.user, { flex: 1, minWidth: 0 }]}>@{user.username}</Text>
               <Text style={styles.select}>Select</Text>
             </Pressable>
           )) : null}
@@ -111,18 +119,18 @@ export function PartnerSearch({ onSend, busy }: {
           ) : null}
         </View>
       )}
-      <ActionButton title="Send tracking request" disabled={!selected} busy={busy} onPress={() => { void send(); }} />
+      <ActionButton compact title="Send tracking request" disabled={!selected} busy={busy} onPress={() => { void send(); }} />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 18, borderRadius: 16, gap: 13 },
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  card: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, padding: 12, borderRadius: 8, gap: 10 },
   heading: { color: palette.text, fontSize: 19, fontWeight: '700' },
   description: { color: palette.muted, fontSize: 13, lineHeight: 21 },
   input: { backgroundColor: palette.background, color: palette.text, borderWidth: 1, borderColor: palette.border, borderRadius: 12, minHeight: 48, paddingHorizontal: 14, fontSize: 15 },
   results: { backgroundColor: palette.background, borderRadius: 12, padding: 12, gap: 10 },
-  result: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 6, borderBottomWidth: 1, borderColor: palette.border },
+  result: { gap: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 6, borderBottomWidth: 1, borderColor: palette.border },
   user: { color: palette.text, fontSize: 15, fontWeight: '600' },
   select: { color: palette.primary, fontWeight: '700', fontSize: 13 },
 });

@@ -1,0 +1,73 @@
+/* The illustrated workspace is opt-in. Other routes and all authentication scenes keep their tokens. */
+/* Background families are defined globally, never per route. */
+.retro-shell main { padding-top: 20px; }
+.retro-shell .retro-dashboard .study-panel { border-radius: 12px; border: 1px solid var(--ss-border); background: var(--ss-surface); box-shadow: 0 3px 0 color-mix(in srgb,var(--ss-background) 50%,transparent); }
+.retro-dashboard .academic-heading { gap: 16px; padding-bottom: 16px; }
+.retro-dashboard .academic-heading-copy { flex-basis: 280px; }
+.retro-dashboard .academic-heading h1 { margin-top: 4px; font-size: clamp(25px,2.2vw,32px); }
+.retro-dashboard .academic-heading-kicker > svg { display: none; }
+.retro-dashboard .academic-heading-kicker { color: var(--ss-accent); }
+.retro-dashboard .academic-heading p { max-width: 44ch; }
+.academic-sprite { object-fit: contain; pointer-events: none; user-select: none; }
+.welcome-nook { align-self: flex-end; margin-bottom: -10px; }
+.retro-dashboard .activity-chart-title h2::before { content: ''; display: inline-block; width: 28px; height: 30px; margin-right: 10px; vertical-align: middle; background: url('/academic/growth.svg') center/contain no-repeat; }
+.retro-dashboard .study-tab { min-height: 36px; padding: 7px 10px; font-size: 13px; }
+.retro-dashboard .activity-plot-frame { height: 190px; }
+.retro-dashboard .dashboard-overview > section:first-child > p:last-child { font-size: 11px; line-height: 16px; }
+.retro-shell .retro-dashboard .retro-stat { display: flex; align-items: center; gap: 14px; padding: 16px; position: relative; }
+.retro-shell .retro-dashboard .retro-stat { background: var(--ss-surface-raised); border-color: var(--ss-border); }
+.retro-stat::after { content: '✧'; position: absolute; right: 9px; top: 7px; color: var(--ss-accent); opacity: .65; font-size: 12px; }
+.retro-shell .retro-dashboard .journey-panel { position: relative; display: grid; grid-template-columns: 94px minmax(0,1fr); column-gap: 18px; padding: 16px 20px 8px; overflow: hidden; }
+.journey-books { grid-row: 1/3; align-self: center; }
+.journey-heading p { margin-top: 4px; font-size: 12px; max-width: 100%; }
+.journey-summary { grid-column: 2; gap: 0; margin-top: 12px; }
+.retro-dashboard .journey-summary .academic-metric { border: 0; border-radius: 0; background: transparent; padding: 0 12px; border-left: 1px solid var(--ss-border-strong); }
+.retro-dashboard .journey-summary .academic-metric:first-child { padding-left: 0; border-left: 0; }
+.journey-summary .academic-metric > p:nth-child(2) { font-size: 23px; margin-top: 4px; }
+.journey-summary .academic-metric > p:last-child { font-size: 11px; line-height: 16px; margin-top: 4px; }
+.journey-details { grid-column: 1/-1; }
+.journey-details > summary { font-size: 12px; min-height: 44px; }
+.journey-details[open] { border-top: 1px solid var(--ss-border); margin-top: 12px; }
+.tracking-toolbar { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); align-items: center; gap: 24px; padding-bottom: 8px; }
+.tracking-toolbar .academic-heading { border: 0; gap: 14px; padding: 0; }
+.tracking-toolbar .academic-heading-copy { flex-basis: 200px; }
+.tracking-toolbar .academic-heading-kicker { display: none; }
+.tracking-toolbar .academic-heading h1 { margin: 0; font-size: 28px; }
+.tracking-toolbar .academic-heading p { font-size: 13px; }
+.tracking-search { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: start; }
+.retro-tracking .tracking-search input { min-height: 44px; background-color: var(--ss-surface); border-color: var(--ss-border-strong); border-radius: 8px; font-size: 13px; }
+.tracking-send { min-height: 44px; font-size: 13px; gap: 8px; white-space: nowrap; }
+.retro-tracking .tracking-group { border-color: var(--ss-border); background-color: color-mix(in srgb,var(--ss-surface) 70%,var(--ss-background)); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 0 color-mix(in srgb,var(--ss-border) 35%,transparent); }
+.tracking-group h2 > button { background-color: color-mix(in srgb,var(--ss-accent) 7%,var(--ss-surface-hover)); border-bottom: 1px solid transparent; min-height: 48px; padding-top: 8px; padding-bottom: 8px; }
+.tracking-group h2 > button[aria-expanded="true"] { border-bottom-color: var(--ss-border); border-radius: 0; }
+.tracking-count { background: var(--ss-accent-soft); color: var(--ss-accent); font-weight: 700; min-width: 24px; text-align: center; }
+.tracking-group-body { padding-top: 12px; min-width: 0; }
+.tracking-group-body > .grid { grid-template-columns: minmax(0,1fr); }
+.tracking-group-body[hidden] { display: none; }
+.retro-tracking .tracking-partner { padding: 10px 12px; background-color: color-mix(in srgb,var(--ss-surface-hover) 38%,var(--ss-surface)); border-color: var(--ss-border); transition: border-color 220ms, background-color 220ms, transform 220ms; }
+.retro-tracking .tracking-partner:is(:hover,:focus-within) { border-color: var(--ss-accent); background-color: color-mix(in srgb,var(--ss-accent) 5%,var(--ss-surface)); transform: translateY(-2px); }
+.tracking-partner > :last-child { flex-direction: row; align-items: center; gap: 8px; }
+.tracking-partner a > :first-child { border: 2px solid color-mix(in srgb,var(--ss-accent) 35%,var(--ss-border)); }
+@media (min-width: 1280px) { .tracking-group-body > .grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .journey-summary { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 1279px) { .welcome-nook { display: none; } .journey-summary { row-gap: 12px; } .journey-summary .academic-metric:nth-child(odd) { border-left: 0; padding-left: 0; } }
+@media (max-width: 1100px) { .tracking-toolbar { grid-template-columns: 1fr; gap: 16px; } }
+@media (max-width: 639px) {
+    .retro-dashboard .academic-heading-art > img { width: 56px; height: auto; }
+    .retro-dashboard .academic-heading-copy { flex-basis: 180px; }
+    .retro-dashboard .academic-heading > a { width: 100%; justify-content: center; }
+    .retro-dashboard .dashboard-overview [aria-label="Study statistics"] { grid-template-columns: 1fr; }
+    .retro-shell .retro-dashboard .journey-panel { grid-template-columns: 56px minmax(0,1fr); gap: 10px; padding: 14px; }
+    .journey-books { width: 56px; height: auto; grid-row: 1; }
+    .journey-summary { grid-column: 1/-1; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .journey-summary .academic-metric > p:nth-child(2) { font-size: 21px; }
+    .tracking-toolbar .academic-heading-art > img { width: 56px; height: auto; }
+    .tracking-toolbar .academic-heading h1 { font-size: 25px; }
+    .tracking-search { grid-template-columns: minmax(0,1fr); }
+    .tracking-send { justify-content: center; }
+    .tracking-partner > :last-child { flex-direction: column; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .retro-tracking .tracking-partner { transition: none; transform: none !important; } }
+:root[data-motion="reduce"] .retro-tracking .tracking-partner { transition: none; transform: none; }
+
+/* Shared inner surfaces across Activity, Goals, Together and History. */
+.retro-shell .study-analytics .study-panel,.retro-shell .study-analytics .academic-metric { background: var(--ss-surface-hover); border: 1px solid var(--ss-border); border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px #0000000a; }

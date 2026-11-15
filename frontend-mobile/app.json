@@ -68,7 +68,15 @@
           }
         }
       ],
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow StudyStreak to select an avatar or profile banner.",
+          "cameraPermission": "Allow StudyStreak to take photos of your study notes.",
+          "microphonePermission": "Allow StudyStreak to record voice notes for study sessions."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

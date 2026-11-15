@@ -27,6 +27,12 @@ public class User {
     private LocalDate registrationDate;
     private String timeZone;
 
+    @Column(name = "display_name", length = 60)
+    private String displayName;
+
+    @Column(name = "bio", length = 300)
+    private String bio;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
