@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, View, type ViewStyle } from 'react-native';
 import { useAppearance } from '../../hooks/useAppearance';
 
-export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close' | 'trash' | 'chevron-up' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'copy' | 'refresh' | 'reload' | 'check';
+export type IconName = 'partners' | 'menu' | 'dashboard' | 'focus' | 'resources' | 'notifications' | 'settings' | 'device' | 'bars' | 'lines' | 'back' | 'close' | 'trash' | 'chevron-up' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'copy' | 'refresh' | 'reload' | 'check' | 'pencil';
 export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName; color: string; size?: number; pulse?: number }) {
   const { reduceMotion } = useAppearance();
   const [motion] = useState(() => new Animated.Value(0));
@@ -30,6 +30,7 @@ export function AppIcon({ name, color, size = 22, pulse = 0 }: { name: IconName;
       {name === 'chevron-left' || name === 'chevron-right' ? <><View style={line(7, 7, 10, name === 'chevron-left' ? -45 : 45)}/><View style={line(7, 14, 10, name === 'chevron-left' ? 45 : -45)}/></> : null}
       {name === 'copy' ? <><View style={[box(3, 7, 13, 15, 2), {borderTopWidth:0,borderRightWidth:0}]}/><View style={[box(8, 2, 13, 15, 2), {backgroundColor: 'transparent'}]}/></> : null}
       {name === 'check' ? <><View style={line(3, 13, 8, 45)}/><View style={line(8, 10, 15, -45)}/></> : null}
+      {name === 'pencil' ? <><View style={[box(10, 2, 6, 18, 1),{transform:[{rotate:'40deg'}]}]}/><View style={line(4, 20, 7)}/></> : null}
       {name === 'reload' ? <>
         <View style={[box(3, 3, 18, 18, 9), {borderRightColor:'transparent'}]}/>
         <View style={line(17, 5, 5, 45)}/>

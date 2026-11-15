@@ -49,9 +49,9 @@ test('drawer order, unread count, profile and Settings access are functional and
   controls.get('Open your profile, A long display name').onPress(); assert.equal(history.at(-1), '/(app)/profile');
   controls.get('Settings').onPress(); assert.equal(history.at(-1), '/(app)/settings'); assert.equal(closed, 3);
 });
-test('the minimal own profile remains read-only, uses real identity and retains logout', () => {
+test('own profile uses real identity and offers editing without a duplicate logout', () => {
   const html = render(h(NavigationDataContext.Provider, { value: { profile: { id: 1, username: 'student',
     presentationName: 'Student Name', bio: 'My real biography' }, avatar: null, loading: false, error: null, retry() {} } }, h(Profile)));
-  assert.match(html, /Student Name/); assert.match(html, /My real biography/); assert.match(html, /Sign out/);
+  assert.match(html, /Student Name/); assert.match(html, /My real biography/); assert.doesNotMatch(html, /Sign out/);assert.match(html,/Edit Profile/);
   assert.doesNotMatch(html, /Edit profile|Online|Last seen/);
 });

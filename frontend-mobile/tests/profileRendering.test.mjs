@@ -7,6 +7,9 @@ const { AppearanceContext } = await import('../src/contexts/AppearanceContext.ts
 const { NavigationDataContext } = await import('../src/contexts/NavigationDataContext.tsx');
 const { createAppearanceStore } = await import('../src/features/appearance/appearanceStore.ts');
 const { ProfileCover } = await import('../src/components/profile/ProfileCover.tsx');
+const { ProfileHeader } = await import('../src/components/profile/ProfileHeader.tsx');
+const { MemberProfileContent } = await import('../src/components/social/MemberProfileContent.tsx');
+const { default: Profile } = await import('../src/app/(app)/profile.tsx');
 const { ProfileImageControls } = await import('../src/components/profile/ProfileImageControls.tsx');
 const { ProfileEditor } = await import('../src/components/profile/ProfileEditor.tsx');
 const { ProfileStudyStats } = await import('../src/components/profile/ProfileStudyStats.tsx');
@@ -15,6 +18,20 @@ const { controls } = await import('./helpers/appearanceNativeMock.mjs');
 const appearance=createAppearanceStore({read:async()=>null,write:async()=>{}}),h=React.createElement;
 const profile={id:1,username:'ada',displayName:'Ada',presentationName:'Ada',bio:'Algebra',statistics:{verifiedMinutes:12.5,verifiedSessions:2,studyStreak:3,bestStudyStreak:9,activeGoals:1}};
 const render=(element,data={})=>renderToStaticMarkup(h(AppearanceContext.Provider,{value:{...appearance.getSnapshot(),setPreferences:appearance.setPreferences,retryPersistence:appearance.retryPersistence}},h(NavigationDataContext.Provider,{value:{profile,avatar:null,banner:null,unread:0,releaseImage(){},...data}},element)));
+test('integrated own/member headers retain real identity, themed overlap and owner-only editing',async()=>{
+ let edits=0;
+ for(const background of ['neutral','lavender','sage','amber','sky'])for(const mode of ['light','dark']){
+  await appearance.setPreferences({background,mode});controls.clear();
+  const header=render(h(ProfileHeader,{name:'Ada',username:'ada',bio:'Algebra',avatar:'file:///avatar.png',banner:'file:///banner.png',onEdit:()=>edits++}));
+  assert.match(header,/margin-top:-48px/);assert.match(header,/border-bottom-width:1px/);assert.match(header,/@ada/);assert.match(header,/Algebra/);assert.ok(header.includes(appearance.getSnapshot().theme.colors.background));
+  controls.get('Edit Profile').onPress();
+  controls.clear();const member=render(h(MemberProfileContent,{member:{status:'ready',profile:{...profile,presence:null},avatar:null,banner:null,imageError:false},onRefresh(){}}));
+  assert.match(member,/profile-header/);assert.equal(controls.has('Edit Profile'),false);assert.doesNotMatch(member,/Sign out/);
+  controls.clear();const own=render(h(Profile));assert.equal(controls.has('Edit Profile'),true);assert.equal(controls.has('Sign out'),false);assert.match(own,/Your study journey/);
+ }
+ assert.equal(edits,10);
+ const denied=render(h(MemberProfileContent,{member:{status:'unavailable',profile:null},onRefresh(){}}));assert.match(denied,/accepted Tracking connection/);assert.doesNotMatch(denied,/profile-header/);
+});
 test('profile cover, editor and stats support all palettes/modes with visible, distinct verification labels',async()=>{
   for(const mode of ['dark','light'])for(const accent of ['mint','blue','purple','orange']){
     await appearance.setPreferences({mode,accent});
