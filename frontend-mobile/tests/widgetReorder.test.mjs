@@ -24,14 +24,17 @@ test('drop moves either direction exactly once, clamps bounds and preserves visi
  const frames=[{y:16,height:80},{y:106,height:100},{y:216,height:80}];
  assert.equal(widgetDropIndex(0,frames),0);assert.equal(widgetDropIndex(150,frames),1);assert.equal(widgetDropIndex(1000,frames),2);assert.equal(widgetDropIndex(0,[]),-1);
 });
-test('handles select without saving and expose native accessible actions without arrow controls',()=>{
- let saved,selected=null;const announcements=[];const rows=defaultWidgets();
- render(h(WidgetReorderList,{rows,save:async next=>{saved=next;},selectedId:null,onSelect:id=>{selected=selected===id?null:id;},announce:message=>announcements.push(message)}));
- const handle=controls.get('Reorder Study Streak');
- handle.onAccessibilityAction({nativeEvent:{actionName:'increment'}});assert.equal(saved[rows.findIndex(row=>row.id==='streak')+1].id,'streak');
- handle.onAccessibilityAction({nativeEvent:{actionName:'first'}});assert.equal(saved[0].id,'streak');
- const before=saved;handle.onPress();assert.equal(selected,'streak');handle.onPress();assert.equal(selected,null);assert.equal(saved,before);assert.match(announcements.at(-1),/position 1 of 9/);
- assert.equal(controls.has('Move Study Streak up'),false);
+test('customization rows contain only visibility and description controls, with no drag placeholders',()=>{
+ controls.clear();let saved;const rows=defaultWidgets();
+ const html=render(h(WidgetReorderList,{rows,selectedId:null,save:async next=>{saved=next;},announce(){}}));
+ assert.equal([...controls.keys()].filter(label=>label?.startsWith('Show ')).length,9);
+ assert.equal([...controls.keys()].filter(label=>label?.startsWith('About ')).length,9);
+ assert.equal(controls.size,18);
+ assert.doesNotMatch(html,/⠿|Reorder |widget-drop-target|translateY/);
+ assert.equal(controls.get('About Study Activity')['aria-expanded'],false);
+ controls.get('Show Study Activity').onValueChange(false);
+ assert.deepEqual(saved,rows.map(row=>row.id==='activity'?{...row,visible:false}:row));
+ assert.deepEqual(saved.map(row=>row.id),rows.map(row=>row.id));
 });
 test('Journey references the external calendar or renders its own, using the same activity snapshot',()=>{
  const data={days:7,timeZone:'UTC',daily:[],weekly:[],monthly:[],byGoal:[],activity:[],hourly:[],activeDays:0,bestStudyStreak:0,completionPercent:null};

@@ -9,7 +9,7 @@ import { AppIcon } from '../ui/AppIcon';
 import { WidgetReorderList } from './WidgetReorderList';
 import { defaultWidgets, type WidgetId, type WidgetSetting } from '../../features/dashboard/widgetPreferences';
 
-export function CustomizeDashboard({ rows, ready, error, save, selectedId, onSelect, onOpenChange }: { selectedId: WidgetId | null; onSelect(id: WidgetId): void; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
+export function CustomizeDashboard({ rows, ready, error, save, selectedId, onOpenChange }: { selectedId: WidgetId | null; onSelect(id: WidgetId): void; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
   const { theme: { colors }, reduceMotion } = useAppearance();
   const focused = useIsFocused();
   const [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
@@ -44,8 +44,8 @@ export function CustomizeDashboard({ rows, ready, error, save, selectedId, onSel
             <AppIcon name="close" color={colors.text}/>
           </NavigationPressable>
         </View>
-        <Text style={{ padding: 16, color: colors.muted, fontSize: 13, lineHeight: 19 }}>Drag a handle to reorder. Tap a handle to select or deselect a widget. Changes save on this device for your account.</Text>
-        <WidgetReorderList selectedId={selectedId} onSelect={onSelect} rows={rows} save={save} announce={announce}/>
+        <Text style={{ padding: 16, color: colors.muted, fontSize: 13, lineHeight: 19 }}>Choose which widgets to show. Tap a chevron to learn more. Changes save on this device for your account.</Text>
+        <WidgetReorderList selectedId={selectedId} rows={rows} save={save} announce={announce}/>
         <View style={{ padding: 16, gap: 10, borderTopWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
           <Text accessibilityLiveRegion="polite" style={{ color: colors.muted, fontSize: 12 }}>{announcement}</Text>
           {error ? <Text accessibilityRole="alert" style={{ color: colors.error }}>{error}</Text> : null}
