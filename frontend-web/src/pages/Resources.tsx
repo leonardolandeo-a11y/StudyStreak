@@ -216,7 +216,7 @@ function ResourcesContent({ initialTopic, onSearch }: { initialTopic: string; on
                                     {book.thumbnailUrl ? (
                                         <img
                                             src={book.thumbnailUrl}
-                                            alt=""
+                                            alt="" loading="lazy" decoding="async"
                                             className="h-32 w-24 shrink-0 rounded-lg bg-surface-raised object-contain"
                                         />
                                     ) : (
