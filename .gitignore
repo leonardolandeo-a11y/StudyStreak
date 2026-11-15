@@ -38,3 +38,18 @@ build/
 # Generated local media signing credentials
 .env.livekit
 .local/
+
+# Personal phase reports and audits (keep team documentation in docs/ tracked).
+/docs/final-ui-*.md
+/docs/academia-pixel-viva-etapa-*.md
+/docs/retro-pixel-academia-etapa-*.md
+/docs/auditoria-final-web-mobile-etapa-6-6.md
+/docs/auditoria-paridad-web-mobile.md
+/docs/auditoria_post_sincronizacion_main.md
+/docs/ci-hotfix-post-pr.md
+/docs/cierre-tecnico-etapa-6-7.md
+/docs/entrega-final-studystreak.md
+/docs/hotfix-goals-difficulty-dashboard.md
+/docs/mobile-refinamiento-ui-ux.md
+/docs/profile-sidebar-social-audit.md
+/docs/sidebar-header-hotfix.md
