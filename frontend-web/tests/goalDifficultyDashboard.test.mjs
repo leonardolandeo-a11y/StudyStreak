@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { writeFileSync } from 'node:fs';
-import { profileBrowser } from './helpers/profileBrowser.mjs';
+import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
 const levels=['TRIVIAL','EASY','INTERMEDIATE','HARD'];
 const labels=['Intrascendente','Fácil','Intermedio','Difícil'];
 const paged=content=>({content,number:0,size:10,totalElements:content.length,totalPages:1,first:true,last:true,empty:!content.length});
-test('Chrome: persisted difficulty forms, compact identities and complementary recorded calendar', {timeout:120000}, async()=>{
+test('Chrome: persisted difficulty forms, compact identities and complementary recorded calendar', {timeout:120000,skip:!chrome&&'Chrome unavailable'},async()=>{
  let goals=[...levels,null].map((difficulty,i)=>({id:7+i,topic:i===4?'Historical goal':labels[i]+' study goal',frequency:3,duration:25,completed:false,difficulty}));
  let legacy=false;
  const requests=[],writes=[];
@@ -47,7 +49,7 @@ test('Chrome: persisted difficulty forms, compact identities and complementary r
    await browser.evaluate(`window.studyStreakAppearance.apply({mode:'dark',accent:'mint',reduceMotion:true});document.querySelectorAll('[aria-label="Dismiss notification"]').forEach(b=>b.click())`);
    if(name==='journey')await browser.evaluate(`document.querySelector('[aria-label="Detailed study statistics"]').scrollIntoView({block:'start'})`);
    else await browser.evaluate('window.scrollTo(0,0)');
-   const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/741-web-'+name+'-'+width+'.png',Buffer.from(shot.data,'base64'));
+   const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), '741-web-'+name+'-'+width+'.png'),Buffer.from(shot.data,'base64'));
   }
  };
  try{

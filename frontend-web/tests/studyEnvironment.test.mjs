@@ -1,8 +1,8 @@
 import {test} from 'node:test';
-import {profileBrowser} from './helpers/profileBrowser.mjs';
+import {chrome, profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 import {reviewPanorama} from './helpers/panoramicReview.mjs';
-test('Chrome: pixel Dashboard composition and illustration-free Focus preserve data and controls', {timeout:120000}, async()=>{
+test('Chrome: pixel Dashboard composition and illustration-free Focus preserve data and controls', {timeout:120000,skip:!chrome&&'Chrome unavailable'},async()=>{
  const requests=[];
  const browser=await profileBrowser({intercept:async request=>{
   const path=new URL(request.url).pathname;requests.push(path);

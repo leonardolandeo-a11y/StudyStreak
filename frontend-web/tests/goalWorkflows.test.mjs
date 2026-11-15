@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {test} from 'node:test';
 import {writeFileSync} from 'node:fs';
-import {profileBrowser} from './helpers/profileBrowser.mjs';
+import {chrome, profileBrowser} from './helpers/profileBrowser.mjs';
 const paged=content=>({content,number:0,size:10,totalPages:content.length?1:0,totalElements:content.length,first:true,last:true,empty:!content.length});
-test('Chrome: goal dialogs, truthful tags and one-step validation preserve drafts and authorization IDs',{timeout:120000},async()=>{
+test('Chrome: goal dialogs, truthful tags and one-step validation preserve drafts and authorization IDs',{timeout:120000,skip:!chrome&&'Chrome unavailable'},async()=>{
  let goal={id:7,topic:'Algebra study journal',frequency:3,duration:25,completed:false}, tags=[{id:2,name:'Mathematics'}], validation=null,failCreate=true;const writes=[];
  const browser=await profileBrowser({intercept:async request=>{
   const p=new URL(request.url).pathname,body=request.postData?JSON.parse(request.postData):{};
@@ -29,7 +31,7 @@ test('Chrome: goal dialogs, truthful tags and one-step validation preserve draft
   if(p.includes('/notifications'))return{body:paged([])};
   return{status:404};
  }});
- const shot=async name=>{const r=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/74b-after-web-'+name+'.png',Buffer.from(r.data,'base64'))};
+ const shot=async name=>{const r=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), '74b-after-web-'+name+'.png'),Buffer.from(r.data,'base64'))};
  const review=async(name,themes=false)=>{
   await browser.evaluate(`document.querySelectorAll('[aria-label="Dismiss notification"]').forEach(button=>button.click());document.activeElement?.blur()`);
   for(const width of [320,390,768,1440]){

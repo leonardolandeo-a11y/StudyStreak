@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {test} from 'node:test';
 import {writeFileSync} from 'node:fs';
-import {profileBrowser} from './helpers/profileBrowser.mjs';
+import {chrome, profileBrowser} from './helpers/profileBrowser.mjs';
 const paged=content=>({content,totalPages:1,totalElements:content.length,first:true,last:true,empty:!content.length,number:0,size:10});
 const link={id:1,requesterId:42,receiverId:77,requesterUsername:'Scholar',receiverUsername:'Study partner',status:'ACCEPTED'};
-test('Chrome: original retro illustrations, palette isolation and visible Dashboard/Tracking composition', {timeout:90000}, async()=>{
+test('Chrome: original retro illustrations, palette isolation and visible Dashboard/Tracking composition', {timeout:90000,skip:!chrome&&'Chrome unavailable'},async()=>{
 const requests=[], mutations=[];
 let links=[link,{...link,id:2,status:'PENDING',requesterId:78,receiverId:42,requesterUsername:'Invited scholar',receiverUsername:'Scholar'},{...link,id:3,status:'PENDING',requesterId:79,receiverId:42,requesterUsername:'Another scholar',receiverUsername:'Scholar'}];
 const browser=await profileBrowser({intercept:async request=>{
@@ -28,7 +30,7 @@ try{
  const token='fixture.'+Buffer.from(JSON.stringify({type:'access',userId:42,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
  await browser.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)})`});
  await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
- const capture=async name=>{const image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/74-visual-'+name+'.png',Buffer.from(image.data,'base64'))};
+ const capture=async name=>{const image=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), '74-visual-'+name+'.png'),Buffer.from(image.data,'base64'))};
  for(const route of ['dashboard','tracking-links']){
   await browser.navigate('/'+route);
   await browser.wait(`document.querySelectorAll('[data-academic-sprite]').length>=${route==='dashboard'?7:2}`);

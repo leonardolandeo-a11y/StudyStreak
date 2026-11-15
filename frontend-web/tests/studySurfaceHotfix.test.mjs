@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { writeFileSync } from 'node:fs';
-import { profileBrowser } from './helpers/profileBrowser.mjs';
+import { chrome, profileBrowser } from './helpers/profileBrowser.mjs';
 const phase=process.env.STUDYSTREAK_CAPTURE_PHASE||'after';
 const page=content=>({content,number:0,size:10,totalElements:content.length,totalPages:1,first:true,last:true,empty:!content.length});
-test('Chrome: Goal Details and all Journey tabs share surfaces; zero/few/many charts remain usable',{timeout:120000},async()=>{
+test('Chrome: Goal Details and all Journey tabs share surfaces; zero/few/many charts remain usable',{timeout:120000,skip:!chrome&&'Chrome unavailable'},async()=>{
  let scenario='few';const writes=[];
  const browser=await profileBrowser({intercept:async request=>{
  const p=new URL(request.url).pathname;
@@ -28,7 +30,7 @@ test('Chrome: Goal Details and all Journey tabs share surfaces; zero/few/many ch
   await browser.command('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width<768});
   for(const mode of ['dark','light','system'])for(const accent of ['mint','blue','purple','orange']){await browser.evaluate(`window.studyStreakAppearance.apply({mode:'${mode}',accent:'${accent}',reduceMotion:true})`);await browser.wait('document.documentElement.scrollWidth<=innerWidth');}
   await browser.evaluate(`window.studyStreakAppearance.apply({mode:'dark',accent:'mint',reduceMotion:true});${element?`document.querySelector(${JSON.stringify(element)}).scrollIntoView({block:'start'})`:'window.scrollTo(0,0)'}`);
-  const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(`/tmp/hotfix-${phase}-${name}-${width}.png`,Buffer.from(shot.data,'base64'));
+  const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), `hotfix-${phase}-${name}-${width}.png`),Buffer.from(shot.data,'base64'));
  }}
  try{
  const token='fixture.'+Buffer.from(JSON.stringify({type:'access',userId:42,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';

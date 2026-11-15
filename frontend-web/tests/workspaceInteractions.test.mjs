@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {test} from 'node:test';
 import {writeFileSync} from 'node:fs';
-import {profileBrowser} from './helpers/profileBrowser.mjs';
+import {chrome, profileBrowser} from './helpers/profileBrowser.mjs';
 const paged=content=>({content,totalPages:1,totalElements:content.length,first:true,last:true,empty:!content.length,number:0,size:10});
 const link={id:1,requesterId:42,receiverId:77,requesterUsername:'Scholar',receiverUsername:'Study partner',status:'ACCEPTED'};
-test('Chrome: shared Dashboard statistics, collapsible sidebar and Tracking interactions', {timeout:90000}, async()=>{
+test('Chrome: shared Dashboard statistics, collapsible sidebar and Tracking interactions', {timeout:90000,skip:!chrome&&'Chrome unavailable'},async()=>{
 const requests=[], mutations=[];
 let holdTrackingReads=false;const trackingReads=[];
 let links=[link,{...link,id:2,status:'PENDING',requesterId:78,receiverId:42,requesterUsername:'Invited scholar',receiverUsername:'Scholar'},{...link,id:3,status:'PENDING',requesterId:79,receiverId:42,requesterUsername:'Another scholar',receiverUsername:'Scholar'}];
@@ -32,7 +34,7 @@ try{
  const token='fixture.'+Buffer.from(JSON.stringify({type:'access',userId:42,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
  await browser.command('Page.addScriptToEvaluateOnNewDocument',{source:`sessionStorage.setItem('accessToken',${JSON.stringify(token)})`});
  await browser.command('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
- const shot=async name=>{await browser.evaluate('window.scrollTo(0,0)');const frame=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync('/tmp/74a-after-'+name+'.png',Buffer.from(frame.data,'base64'))};
+ const shot=async name=>{await browser.evaluate('window.scrollTo(0,0)');const frame=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(join(tmpdir(), '74a-after-'+name+'.png'),Buffer.from(frame.data,'base64'))};
  const enter=async()=>{await browser.command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});await browser.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13})};
  const click=async label=>browser.evaluate(`document.querySelector('[aria-label="${label}"]').click()`);
  const finishTrackingReload=async condition=>{
