@@ -39,6 +39,7 @@ function Goals(){
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string|null>(null);
+    const [retryRevision, setRetryRevision] = useState(0);
 
     const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
     const [showCreate, setShowCreate] = useState(false);
@@ -146,7 +147,7 @@ function Goals(){
             controller.abort();
         };
 
-    }, [userId, page, size, setSearchParams]);
+    }, [userId, page, size, setSearchParams, retryRevision]);
 
     if (!currentUser) {
         return <p>Please log in to view your goals.</p>;
@@ -157,7 +158,7 @@ function Goals(){
         />);
     }
     if (error){
-        return (<ErrorMessage message={error}></ErrorMessage>);
+        return <ErrorMessage message={error} onRetry={() => setRetryRevision(value => value + 1)}/>;
     }
     if (!goalPage){
         return null;

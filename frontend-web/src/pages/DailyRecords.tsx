@@ -54,6 +54,7 @@ function DailyRecords(){
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState<string|null> (null);
+    const [retryRevision, setRetryRevision] = useState(0);
 
     const parsedGoalId = goalId ? Number(goalId) : null;
     
@@ -193,7 +194,8 @@ function DailyRecords(){
         invalidGoalId,
         page,
         size,
-        setSearchParams
+        setSearchParams,
+        retryRevision
     ]);
 
     if (invalidGoalId){
@@ -214,6 +216,7 @@ function DailyRecords(){
         return (
             <ErrorMessage
                 message={error}
+                onRetry={() => setRetryRevision(value => value + 1)}
             />
         );
     }

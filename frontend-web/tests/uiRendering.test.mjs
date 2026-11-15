@@ -11,6 +11,15 @@ const { RecordedSummary } = await server.ssrLoadModule('/src/components/study/Re
 const { ParticipantCard } = await server.ssrLoadModule('/src/components/study/ParticipantCard.tsx');
 const { BarChart } = await server.ssrLoadModule('/src/components/study/BarChart.tsx');
 const { default: DailyRecordForm } = await server.ssrLoadModule('/src/components/dailyRecords/DailyRecordForm.tsx');
+const { default: ErrorMessage } = await server.ssrLoadModule('/src/components/ui/ErrorMessage.tsx');
+
+test('recoverable errors expose a retry action without changing existing error messages', () => {
+  const plain = render(h(ErrorMessage, { message: 'Could not load goals.' }));
+  const retry = render(h(ErrorMessage, { message: 'Could not load goals.', onRetry: () => {} }));
+  assert.match(plain, /role="alert"/);
+  assert.doesNotMatch(plain, />Retry<\/button>/);
+  assert.match(retry, />Retry<\/button>/);
+});
 
 test('failed refresh keeps the last confirmed totals, with a stale warning and separate pending count', () => {
   const html = render(h(RecordedSummary, { minutes: 125, sessions: 5, pending: 1, error: true }));
