@@ -49,3 +49,10 @@
 .sidebar-cup-expand:is(:hover,:focus-visible) [data-study-mark] { animation:brand-cup-nod 320ms ease-out; }
 @media(prefers-reduced-motion:reduce) { .sidebar-cup-expand [data-study-mark] { animation:none!important; } }
 [data-motion="reduce"] .sidebar-cup-expand [data-study-mark] { animation:none!important; }
+
+/* Reserve one quiet tagline row in the expanded header; navigation never jumps. */
+.workspace-sidebar[data-collapsed="false"] .sidebar-brand { min-height:104px; padding:6px 12px 10px; flex-shrink:0; }
+.sidebar-brand .study-brand[data-tagline-presentation="inline"] .study-brand-tagline { position:static; top:auto; left:auto; z-index:auto; width:100%; max-width:none; min-height:16px; padding:0; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--ss-text-secondary); font-size:10px; line-height:16px; text-align:center; white-space:nowrap; opacity:0; visibility:hidden; transform:translateY(-4px); transition:opacity 180ms ease,transform 180ms ease,visibility 180ms; }
+.sidebar-brand .study-brand[data-tagline-presentation="inline"]:not([data-brand-dismissed]):is(:hover,:focus-within) .study-brand-tagline { opacity:1; visibility:visible; transform:translateY(0); }
+@media(prefers-reduced-motion:reduce) { .sidebar-brand .study-brand[data-tagline-presentation="inline"] .study-brand-tagline { transition:none; transform:none; } }
+[data-motion="reduce"] .sidebar-brand .study-brand[data-tagline-presentation="inline"] .study-brand-tagline { transition:none; transform:none; }
