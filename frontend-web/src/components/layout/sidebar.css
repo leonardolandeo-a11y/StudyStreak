@@ -39,11 +39,11 @@
 
 /* Stack the slightly larger cup and title inside the existing 76px brand band. */
 .sidebar-brand { padding: 4px 12px; }
-.sidebar-brand .study-brand-navigation { flex-direction: column; gap: 3px; text-align: center; }
+.sidebar-brand .study-brand-navigation { flex-direction: column; gap: 8px; text-align: center; }
 
 /* Hotfix: chevron beside the cup; the collapsed cup itself is the expand control. */
 .sidebar-brand { position: relative; }
-.sidebar-brand .sidebar-collapse { position:absolute; left:calc(50% + 34px); right:auto; top:8px; margin:0; width:36px; min-height:36px; height:36px; padding:0; }
+.sidebar-brand .sidebar-collapse { position:absolute; left:calc(50% + 38px); right:auto; top:8px; margin:0; width:36px; min-height:36px; height:36px; padding:0; }
 .sidebar-cup-expand { display:flex; align-items:center; justify-content:center; width:52px; min-height:52px; border-radius:8px; }
 .sidebar-cup-expand:is(:hover,:focus-visible) { background:var(--ss-surface-hover); }
 .sidebar-cup-expand:is(:hover,:focus-visible) [data-study-mark] { animation:brand-cup-nod 320ms ease-out; }
@@ -51,7 +51,7 @@
 [data-motion="reduce"] .sidebar-cup-expand [data-study-mark] { animation:none!important; }
 
 /* Reserve one quiet tagline row in the expanded header; navigation never jumps. */
-.workspace-sidebar[data-collapsed="false"] .sidebar-brand { min-height:104px; padding:6px 12px 10px; flex-shrink:0; }
+.workspace-sidebar[data-collapsed="false"] .sidebar-brand { min-height:104px; padding:3px 12px 8px; flex-shrink:0; }
 .sidebar-brand .study-brand[data-tagline-presentation="inline"] .study-brand-tagline { position:static; top:auto; left:auto; z-index:auto; width:100%; max-width:none; min-height:16px; padding:0; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--ss-text-secondary); font-size:10px; line-height:16px; text-align:center; white-space:nowrap; opacity:0; visibility:hidden; transform:translateY(-4px); transition:opacity 180ms ease,transform 180ms ease,visibility 180ms; }
 .sidebar-brand .study-brand[data-tagline-presentation="inline"]:not([data-brand-dismissed]):is(:hover,:focus-within) .study-brand-tagline { opacity:1; visibility:visible; transform:translateY(0); }
 @media(prefers-reduced-motion:reduce) { .sidebar-brand .study-brand[data-tagline-presentation="inline"] .study-brand-tagline { transition:none; transform:none; } }
