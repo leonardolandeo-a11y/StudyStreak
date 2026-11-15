@@ -1,6 +1,6 @@
 # StudyStreak — Seguimiento colaborativo de hábitos de estudio
 
-Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma**.
+Proyecto integral (backend, frontend web y aplicación móvil) para el curso **CS2031 – Desarrollo Basado en Plataformas**.
 
 ## Portada
 
@@ -13,7 +13,30 @@ Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma
 - [Leonard Alexander Landeo Huatay](mailto:leonardo.landeo@utec.edu.pe) — **202520151**
 - [Jared Eloy Daniel Chala Lastra](mailto:jared.chala@utec.edu.pe) — **202520040**
 
-**Backend desplegado:** `http://3.238.32.75:8080`
+**Backend de la primera fase:** `http://3.238.32.75:8080` (dirección histórica; la disponibilidad y el HTTPS de producción deben verificarse).
+
+---
+
+## Proyecto 2 — Web y Mobile
+
+Además de la API REST en Spring Boot, StudyStreak incluye **frontend-web/** (React, TypeScript y Vite) y **frontend-mobile/** (React Native y Expo Router). Ambas aplicaciones utilizan los servicios del backend para las funciones principales: autenticación, metas, registros diarios, seguimiento, validaciones y notificaciones. Incorporan también Focus Studio, Study Rooms, perfiles y recursos de estudio.
+
+- **Web:** `cd frontend-web && npm ci && npm run lint && npm run test:web && npm run build`.
+- **Mobile:** `cd frontend-mobile && npm ci && npm run lint && npx tsc --noEmit`. Las pruebas se ejecutan con los scripts `test:auth`, `test:pagination`, `test:review` y `test:focus`.
+- **Configuración:** `VITE_API_BASE_URL` para React Web y `EXPO_PUBLIC_API_URL` para Expo. Estos valores son públicos; nunca se deben almacenar secretos en ellos.
+- **Producción:** la publicación de frontend, backend y aplicación Android requiere verificar por separado HTTPS, CORS, autenticación, permisos y URLs accesibles. Los ejemplos de configuración no equivalen a un despliegue validado.
+
+### Participación individual — pendiente de confirmación del equipo
+
+La rúbrica exige un porcentaje de cumplimiento individual por integrante (0 % a 100 %). La siguiente distribución de aportes debe validarse con el equipo y los porcentajes **no deben inventarse**.
+
+| Integrante | Principales aportes | Cumplimiento individual |
+|---|---|---|
+| Fabricio Nick Tumialan Maihua | Backend, integración móvil, pruebas y auditoría técnica | **Por confirmar** |
+| Leonard Alexander Landeo Huatay | Frontend web, funciones compartidas y coordinación de despliegue | **Por confirmar** |
+| Jared Eloy Daniel Chala Lastra | Diseño UI/UX y mejoras visuales en Web y Mobile | **Por confirmar** |
+
+**Antes de entregar:** sustituir los tres valores «Por confirmar» por porcentajes acordados y justificados por el equipo. Leonardo coordina la verificación y publicación del despliegue; no se modifican credenciales ni infraestructura desde esta rama.
 
 ---
 
@@ -298,7 +321,7 @@ La verificación final del backend incluyó pruebas Maven, construcción de imag
 
 ### GitHub Actions
 
-La versión revisada del repositorio no contiene workflows en `.github/workflows`, por lo que no se afirma que exista CI automatizado con GitHub Actions. El flujo utilizado se basa en validación local y Pull Requests.
+El repositorio contiene `.github/workflows/ci.yml` (Backend CI con Java, Maven y PostgreSQL) y `.github/workflows/frontend-ci.yml` (Frontend CI para React Web y React Native). Las verificaciones automatizadas incluyen pruebas, lint y compilación/TypeScript. El estado de cada commit se consulta en la pestaña **Actions**; la existencia de un workflow no garantiza que todas las ejecuciones hayan aprobado.
 
 ---
 
@@ -314,7 +337,7 @@ El proyecto permitió aplicar modelado relacional, JPA, DTOs, arquitectura por c
 
 ### Trabajo futuro
 
-Como mejoras se propone desarrollar un frontend, ampliar estadísticas, agregar recordatorios, aumentar cobertura de pruebas, añadir Swagger/OpenAPI, incorporar logging estructurado, automatizar CI/CD y mejorar las plantillas de correo.
+Como mejoras futuras se proponen ampliar la cobertura de pruebas end-to-end en dispositivos, mejorar la observabilidad, añadir Swagger/OpenAPI y mantener la documentación y las verificaciones automatizadas actualizadas.
 
 ---
 
