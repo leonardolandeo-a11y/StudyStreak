@@ -15,17 +15,24 @@ Se requieren backend publico con HTTPS (AWS u otro cloud), PostgreSQL administra
 
 ## Pasos de despliegue despues de la auditoria de infraestructura
 
-1. Confirmar endpoint publico HTTPS del backend, estado de EC2/servidor y conectividad a RDS. Mantener la base de datos en red privada; no abrir PostgreSQL a internet.
-2. Configurar credenciales de base de datos, JWT, email, Google Books y `APP_CORS_ALLOWED_ORIGINS` en variables de entorno/secret manager del backend. Reiniciar el backend **solo tras validar configuracion**.
+1. Confirmar endpoint publico HTTPS del backend, estado de EC2/servidor y conectividad a RDS. Mantener la base de datos en red privada; no abrir PostgreSQL a internet. Verificar certificado TLS, proxy inverso y persistencia del directorio de fotos de perfil.
+2. Configurar credenciales de base de datos, JWT, email, Google Books y `APP_CORS_ALLOWED_ORIGINS` en variables de entorno/secret manager del backend. En produccion desactivar SQL debug y validar las migraciones antes de utilizar Hibernate `ddl-auto=validate`. El origen CORS debe coincidir exactamente con la URL HTTPS del frontend, sin ruta ni slash final. Reiniciar el backend **solo tras validar configuracion**.
 3. En Vercel, configurar **Root Directory** `frontend-web`, Build Command `npm run build`, Output Directory `dist` y `VITE_API_BASE_URL=https://TU-API-HTTPS` como variable de entorno de produccion. Si se usa Netlify/Amplify, aplicar la regla SPA equivalente del proveedor elegido.
 4. Para Expo/EAS, definir `EXPO_PUBLIC_API_URL=https://TU-API-HTTPS` en variables de entorno de `production`. Este valor se incluye en el JS; nunca poner secretos en `EXPO_PUBLIC_`. Verificar cuenta Expo, projectId, identificador Android, perfil EAS antes de publicar.
-5. Comprobar acceso directo a rutas web, CORS/OPTIONS, registro/login/refresh/logout y funcionalidades con web y telefono; registrar URLs publicas y tiempos de respuesta. Estas son pruebas finales obligatorias, aun si el build local pasa.
+5. Desde la raiz del repositorio, con ambas URLs HTTPS reales, ejecutar la comprobacion **de solo lectura** siguiente. Revisa home y /login en Vercel, carga del JavaScript, rechazo del perfil sin JWT y preflight de CORS; no requiere claves ni modifica registros:
+
+   ```powershell
+   node scripts/check-deployment.mjs --api https://TU-API-HTTPS --web https://TU-WEB-VERCEL
+   ```
+
+6. Comprobar ademas registro/login/refresh/logout, creacion de metas, registros, notificaciones y Google Books con cuentas de prueba; revisar la instalacion Android EAS, SecureStore, permisos de camara/microfono y, si esta habilitado, LiveKit. La prueba automatica anterior **no demuestra** JWT extremo a extremo ni el funcionamiento en un dispositivo.
+7. Registrar URLs publicas, disponibilidad y latencia promedio de endpoints principales desde varios intentos. La rubrica exige menos de 500 ms; un solo request o el tiempo total de carga de una pagina no bastan para acreditarlo.
 
 ## Observaciones importantes
 
 - La auditoria original excluyo deliberadamente archivos `.properties`, `.env` y configuraciones reales de hosting: no se puede afirmar que AWS, RDS o HTTPS ya esten correctamente configurados.
 - Variables `VITE_*` y `EXPO_PUBLIC_*` son publicas en el bundle; no son aptas para secretos.
 - Las claves y contrasenas reales nunca deben compartirse ni subirse a Git.
-- No se hace `git commit` ni `git push` automaticamente.
+- Esta guia no modifica servicios AWS, RDS, Vercel ni Expo. La rama de auditoria puede contener cambios de codigo que aun no estan publicados en produccion.
 
 Documentacion oficial: https://www.springframework.org/spring-security/reference/servlet/integrations/cors.html ; https://vercel.com/docs/frameworks/frontend/vite ; https://docs.expo.dev/eas/environment-variables/
