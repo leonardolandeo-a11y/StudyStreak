@@ -26,6 +26,39 @@ Además de la API REST en Spring Boot, StudyStreak incluye **frontend-web/** (Re
 - **Configuración:** `VITE_API_BASE_URL` para React Web y `EXPO_PUBLIC_API_URL` para Expo. Estos valores son públicos; nunca se deben almacenar secretos en ellos.
 - **Producción:** la publicación de frontend, backend y aplicación Android requiere verificar por separado HTTPS, CORS, autenticación, permisos y URLs accesibles. Los ejemplos de configuración no equivalen a un despliegue validado.
 
+### Ejecución y pruebas locales de Web y Mobile
+
+Para probar el proyecto sin modificar RDS ni el despliegue de AWS, utilizar la configuración aislada `compose.local.yaml` con una base PostgreSQL de pruebas. Crear `.env.docker.local` a partir de `.env.docker.local.example` y configurar una contraseña local, una clave JWT Base64 generada para pruebas, `LOCAL_LAN_IP` (IPv4 del PC), `LOCAL_API_PORT=18081` y un nombre de volumen nuevo en `LOCAL_DB_VOLUME`. No reutilizar volúmenes o bases con datos importantes.
+
+```powershell
+docker compose --env-file .env.docker.local -f compose.local.yaml config -q
+docker compose --env-file .env.docker.local -f compose.local.yaml up -d --build
+py scripts/check-local-auth.py http://127.0.0.1:18081
+```
+
+En `frontend-web/.env.local` configurar `VITE_API_BASE_URL=http://127.0.0.1:18081`, y en `frontend-mobile/.env.local`, `EXPO_PUBLIC_API_URL=http://IP-LAN-DEL-PC:18081`. Reemplazar la IP por la dirección IPv4 real del PC. Estos archivos están ignorados por Git.
+
+```powershell
+# Terminal Web, dentro de frontend-web:
+npm ci
+npm run lint
+npm run test:web
+npm run build
+npm run dev
+
+# Terminal Mobile, dentro de frontend-mobile:
+npm ci
+npm run lint
+npx tsc --noEmit
+npm run test:auth
+npm run test:pagination
+npm run test:review
+npm run test:focus
+npx expo start --go --lan
+```
+
+Web y Mobile deben probarse manualmente con cuentas de prueba contra **el mismo backend**, incluidas las operaciones de metas, registros diarios, notificaciones y Google Books. Para cámara y micrófono se requiere un teléfono físico y comprobar permisos, carga de evidencia y mensajes de error. Expo Go no incorpora LiveKit/WebRTC: la experiencia nativa de medios en Study Rooms requiere un build de desarrollo/APK EAS. La automatización de CI **no reemplaza** esas pruebas ni verifica la disponibilidad de producción.
+
 ### Participación individual — pendiente de confirmación del equipo
 
 La rúbrica exige un porcentaje de cumplimiento individual por integrante (0 % a 100 %). La siguiente distribución de aportes debe validarse con el equipo y los porcentajes **no deben inventarse**.
