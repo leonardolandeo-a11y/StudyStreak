@@ -50,7 +50,6 @@ import { fallbackPage } from "../utils/pageBounds";
 
 import { useToast } from "../hooks/useToast";
 import { useConfirm } from "../hooks/useConfirm";
-const PAGE_SIZE = 10;
 
 function Tags() {
 
@@ -85,15 +84,16 @@ function Tags() {
     const pageParam = Number(searchParams.get("page") ?? "0" );
 
     const page = Number.isSafeInteger(pageParam) && pageParam >= 0 ? pageParam : 0;
+    const sizeParam = Number(searchParams.get("size") ?? "10");
+    const size = [10, 25, 50, 100].includes(sizeParam) ? sizeParam : 10;
 
     function handlePageChange(newPage: number) {
-        if (newPage < 0) {
-            return;
-        }
+        if (newPage < 0 || (newPage > 0 && tagPage && newPage >= tagPage.totalPages)) return;
+        setSearchParams(current => { const next = new URLSearchParams(current); if (newPage === 0) next.delete("page"); else next.set("page", String(newPage)); return next; });
+    }
 
-        setSearchParams({
-            page: String(newPage)
-        });
+    function handleSizeChange(nextSize: number) {
+        setSearchParams(current => { const next = new URLSearchParams(current); next.set("size", String(nextSize)); next.delete("page"); return next; });
     }
 
 
@@ -111,7 +111,7 @@ function Tags() {
 
             if (page === 0) {
 
-                const updatedTags =await getTags(userId, parsedGoalId, 0,PAGE_SIZE);
+                const updatedTags =await getTags(userId, parsedGoalId, 0,size);
                 setTagPage(updatedTags);
 
             } else {
@@ -224,7 +224,7 @@ function Tags() {
 
             } else {
 
-                const updatedTags =await getTags(userId,parsedGoalId,page, PAGE_SIZE );
+                const updatedTags =await getTags(userId,parsedGoalId,page, size );
                 setTagPage(updatedTags);
             }
 
@@ -264,7 +264,7 @@ function Tags() {
                 setError(null);
                 setTagPage(null);
 
-                const response =await getTags(id,goalNumber,page,PAGE_SIZE,controller.signal);
+                const response =await getTags(id,goalNumber,page,size,controller.signal);
                 if (controller.signal.aborted) return;
                 const fallback = fallbackPage(page, response.totalPages);
                 if (fallback !== null) {
@@ -306,6 +306,7 @@ function Tags() {
         parsedGoalId,
         invalidGoalId,
         page,
+        size,
         setSearchParams,
         retryRevision
     ]);
@@ -449,9 +450,8 @@ function Tags() {
                     onPrevious={() =>
                         handlePageChange(page - 1)
                     }
-                    onNext={() =>
-                        handlePageChange(page + 1)
-                    }
+                    onNext={() => handlePageChange(page + 1)}
+                    onPageChange={handlePageChange} size={size} totalElements={tagPage.totalElements} onPageSizeChange={handleSizeChange}
                 />
             )}
         </section>

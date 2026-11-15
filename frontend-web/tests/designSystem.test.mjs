@@ -46,6 +46,8 @@ test('pagination preserves navigation semantics and native disabled controls', (
     assert.match(html, /disabled=""[^>]*>Previous/);
     assert.match(html, /aria-label="Page 1" aria-current="page"/);
     assert.match(html, /Showing 1–10 of 23/);
+    assert.match(html, /aria-live="polite"/);
+    assert.match(html, /aria-current="page" disabled=""/);
     assert.match(html, /<label[^>]*>.*Per page.*<select/s);
     assert.match(html, /<option value="10" selected=""/);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
@@ -58,6 +60,13 @@ test('empty pagination still shows a stable page count and disabled boundaries',
     }));
     assert.match(html, /Page 1 of 1/);
     assert.equal((html.match(/disabled=""/g) ?? []).length, 2);
+});
+
+test('pagination announces empty ranges, supports the existing 20-item option and distinct list names', () => {
+    const html = render(h(PaginationControls, { page: 0, totalPages: 0, first: true, last: true, size: 20, totalElements: 0, label: 'Notifications pagination', onPrevious() {}, onNext() {}, onPageSizeChange() {} }));
+    assert.match(html, /aria-label="Notifications pagination"/);
+    assert.match(html, /Showing 0–0 of 0/);
+    assert.match(html, /<option value="20" selected=""/);
 });
 
 const chrome = [process.env.STUDYSTREAK_CHROME_BIN, 'google-chrome', 'chromium', 'chromium-browser']

@@ -21,10 +21,12 @@ export const NOTIFICATION_TYPES:NotificationType[] = [
 export function useNotificationFilters(){
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const {page,filter,selectedType} = useMemo(()=>{
+    const {page,filter,selectedType,size} = useMemo(()=>{
         const pageParam=Number(searchParams.get("page")?? "0");
 
         const page = Number.isSafeInteger(pageParam) && pageParam>= 0? pageParam : 0;
+        const sizeParam = Number(searchParams.get("size") ?? "20");
+        const size = [10, 20, 25, 50, 100].includes(sizeParam) ? sizeParam : 20;
 
         const filter = searchParams.get("filter")==="unread" ? "unread":"all";
 
@@ -32,51 +34,35 @@ export function useNotificationFilters(){
 
         const selectedType :NotificationType|null = NOTIFICATION_TYPES.includes(typeParam as NotificationType) ? typeParam as NotificationType : null;
         return {
-            page, 
+            page, size,
             filter,
             selectedType
         }
     },[searchParams]);
 
-    function handleFilterChange(newFilter:"all"|"unread"){
-        setSearchParams({
-            filter:newFilter,
-            page:"0"
-        });
-
+    function handleFilterChange(newFilter:"all"|"unread") {
+        setSearchParams(current => { const next = new URLSearchParams(current); next.set("filter", newFilter); next.delete("type"); next.delete("page"); return next; });
     }
     function handleTypeChange(type: NotificationType | "") {
-
-        if (type === "") {
-
-            setSearchParams({
-                filter: "all",
-                page: "0"
-            });
-
-            return;
-        }
-
-        setSearchParams({
-            type,
-            page: "0"
-        });
+        setSearchParams(current => { const next = new URLSearchParams(current); if (type) { next.set("type", type); next.delete("filter"); } else { next.delete("type"); next.set("filter", "all"); } next.delete("page"); return next; });
     }
 
 
     const handlePageChange = useCallback((newPage: number, replace = false) => {
-        if (selectedType) {
-            setSearchParams({ type: selectedType, page: String(newPage) }, { replace });
-            return;
-        }
-        setSearchParams({ filter, page: String(newPage) }, { replace });
-    }, [selectedType, filter, setSearchParams]);
+        if (newPage < 0) return;
+        setSearchParams(current => { const next = new URLSearchParams(current); if (newPage === 0) next.delete("page"); else next.set("page", String(newPage)); return next; }, { replace });
+    }, [setSearchParams]);
+
+    const handleSizeChange = useCallback((nextSize: number) => {
+        setSearchParams(current => { const next = new URLSearchParams(current); next.set("size", String(nextSize)); next.delete("page"); return next; });
+    }, [setSearchParams]);
 
 
     return {
-        page,
+        page, size,
         filter,
         selectedType,
+        handleSizeChange,
         handleFilterChange,
         handleTypeChange,
         handlePageChange

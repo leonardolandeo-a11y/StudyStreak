@@ -56,9 +56,10 @@ function Notifications(){
     const {refreshUnreadCount} = useUnreadNotifications();
     const confirm = useConfirm();
     const {
-        page,
+        page, size,
         filter,
         selectedType,
+        handleSizeChange,
         handleFilterChange,
         handleTypeChange,
         handlePageChange
@@ -228,11 +229,11 @@ function Notifications(){
                 let result: PageResponse<Notification>;
 
                 if (selectedType) {
-                    result = await getNotificationsByType(id, selectedType, page, 20, controller.signal);
+                    result = await getNotificationsByType(id, selectedType, page, size, controller.signal);
                 } else if (filter === "unread") {
-                    result = await getUnreadNotifications(id, page, 20, controller.signal);
+                    result = await getUnreadNotifications(id, page, size, controller.signal);
                 } else {
-                    result = await getNotifications(id, page, 20, controller.signal);
+                    result = await getNotifications(id, page, size, controller.signal);
                 }
 
                 if (!controller.signal.aborted) {
@@ -274,6 +275,7 @@ function Notifications(){
     }, [
         userId,
         page,
+        size,
         filter,
         selectedType,
         refreshKey,
@@ -310,9 +312,8 @@ function Notifications(){
 
                         <button
                             type="button"
-                            onClick={() =>
-                                handleFilterChange("all")
-                            }
+                            onClick={() => handleFilterChange("all")}
+                            aria-pressed={filter === "all" && !selectedType}
                             className={`
                                 rounded-lg
                                 px-4 py-2
@@ -330,9 +331,8 @@ function Notifications(){
 
                         <button
                             type="button"
-                            onClick={() =>
-                                handleFilterChange("unread")
-                            }
+                            onClick={() => handleFilterChange("unread")}
+                            aria-pressed={filter === "unread" && !selectedType}
                             className={`
                                 rounded-lg
                                 px-4 py-2
@@ -506,9 +506,8 @@ function Notifications(){
                     onPrevious={() =>
                         handlePageChange(page - 1)
                     }
-                    onNext={() =>
-                        handlePageChange(page + 1)
-                    }
+                    onNext={() => handlePageChange(page + 1)}
+                    onPageChange={handlePageChange} size={size} totalElements={notificationPage.totalElements} onPageSizeChange={handleSizeChange}
                 />
             )}
 

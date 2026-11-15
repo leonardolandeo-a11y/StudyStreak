@@ -182,6 +182,8 @@ function TrackingLinks() {
                 last={data.last}
                 onPrevious={() => setPage(key, currentPage - 1)}
                 onNext={() => setPage(key, currentPage + 1)}
+                onPageChange={next => setPage(key, next)} size={10} totalElements={data.totalElements}
+                label={key === "activePage" ? "Active tracking links pagination" : key === "pendingPage" ? "Pending invitations pagination" : "Tracking history pagination"}
             />
         );
     }
