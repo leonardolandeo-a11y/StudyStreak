@@ -39,7 +39,7 @@ export function EnvironmentScene({ sceneId, enabled, fallbackColor }: { sceneId:
     const source = failed ? fallback : scenePictures[sceneId];
     return <View testID={`environment-scene-${sceneId}`}>
         <View onLayout={event => setWidth(event.nativeEvent.layout.width)} pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"
-            style={{ width: '100%', aspectRatio: 3, overflow: 'hidden', backgroundColor: '#513366' }}>
+            style={{ width: '100%', aspectRatio: 3, overflow: 'hidden', backgroundColor: theme.colors.background }}>
             {width > 0 ? <Image testID="environment-base" source={source} style={imageStyle} resizeMode="stretch" fadeDuration={0} onError={() => setFailed(true)}/> : null}
             <View testID={moving ? 'ambient-running' : 'ambient-paused'} style={{ position: 'absolute', width, height }}>
                 {!failed && width > 0 ? <>

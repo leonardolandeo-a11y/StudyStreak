@@ -23,3 +23,13 @@ test('Native masks and effects use the approved Web scene coordinates',async()=>
  const {scenes:web}=await import('../../frontend-web/src/components/environment/scenes.ts');
  for(const id of Object.keys(web))for(const field of ['panes','steam','effect'])assert.deepEqual(native[id][field],web[id][field]);
 });
+
+test('compact hero is artwork-only and its edge gradients follow all ten family/mode pairs',async()=>{
+ const {StudyEnvironment}=await import('../src/components/environment/StudyEnvironment.tsx');
+ for(const background of ['neutral','lavender','sage','amber','sky'])for(const mode of ['light','dark']){
+  await store.setPreferences({background,mode});const html=render(h(StudyEnvironment));
+  assert.match(html,/environment-edge-fade/);assert.match(html,/linear-gradient/);
+  assert.ok(html.includes(store.getSnapshot().theme.colors.background));
+  assert.doesNotMatch(html,/Good evening|Welcome back|Keep the momentum|Start focusing|Join a Study Room/);
+ }
+});

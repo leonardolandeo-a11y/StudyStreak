@@ -8,6 +8,7 @@ import { useAppearance } from '../../../hooks/useAppearance';
 import { StudyDrawerContent } from '../../../components/navigation/StudyDrawerContent';
 import { StudyPartnersPanel } from '../../../components/social/StudyPartnersPanel';
 import { AppIcon } from '../../../components/ui/AppIcon';
+import { StudyBrand } from '../../../components/branding/StudyBrand';
 import { primaryBackTarget } from '../../../features/navigation/menu';
 export const unstable_settings = { initialRouteName: '(menu)' };
 
@@ -41,7 +42,7 @@ export default function MainLayout() {
         </NavigationPressable></PrimaryMenuButton>,
       })}>
       <Drawer.Screen name="(menu)" options={{ title: 'Menu' }} />
-      <Drawer.Screen name="dashboard" options={{ title: 'Dashboard' }} />
+      <Drawer.Screen name="dashboard" options={{ title: 'Dashboard', headerTitle: () => <StudyBrand variant="compact"/> }} />
       <Drawer.Screen name="focus-studio" options={{ title: 'Focus Studio' }} />
       <Drawer.Screen name="resources/index" options={{ title: 'Resources' }} />
       <Drawer.Screen name="notifications/index" options={{ title: 'Notifications' }} />

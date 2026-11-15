@@ -5,7 +5,8 @@ export const widgetLabels = {
 export type WidgetId = keyof typeof widgetLabels;
 export interface WidgetSetting { id: WidgetId; visible: boolean }
 const ids = Object.keys(widgetLabels) as WidgetId[];
-export const defaultWidgets = (): WidgetSetting[] => ids.map(id => ({ id, visible: true }));
+const defaultOrder: WidgetId[] = ['activity', ...ids.filter(id => id !== 'activity')];
+export const defaultWidgets = (): WidgetSetting[] => defaultOrder.map(id => ({ id, visible: true }));
 /** Accept older partial arrays, discard unknown fields/IDs and keep each ID exactly once. */
 export function parseWidgets(raw: string | null): WidgetSetting[] {
     try {

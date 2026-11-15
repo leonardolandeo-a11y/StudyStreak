@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 const { defaultWidgets, parseWidgets, moveWidget, widgetKey, createWidgetStore } = await import('../src/features/dashboard/widgetPreferences.ts');
 test('layouts normalize corrupt, partial, duplicate and unknown entries without retaining private fields', () => {
  for(const raw of [null,'bad','null','{}','42']) assert.deepEqual(parseWidgets(raw),defaultWidgets());
@@ -31,9 +30,12 @@ test('late hydration cannot replace a preview and storage failure remains explic
  resolveRead(JSON.stringify(defaultWidgets()));await hydration;assert.deepEqual(store.getSnapshot().rows,next);
  fail=false;await store.save(next);assert.equal(store.getSnapshot().error,null);
 });
-test('Web and Mobile keep an identical layout-only contract',()=>{
- const web=readFileSync(new URL('../../frontend-web/src/features/dashboard/widgetPreferences.ts',import.meta.url),'utf8');
- const mobile=readFileSync(new URL('../../frontend-mobile/src/features/dashboard/widgetPreferences.ts',import.meta.url),'utf8');assert.equal(web,mobile);
+test('Mobile leads with activity while saved Web/Mobile layouts retain an identical schema',async()=>{
+ const web=await import('../../frontend-web/src/features/dashboard/widgetPreferences.ts');
+ assert.deepEqual(Object.keys(web.widgetLabels).sort(),Object.keys(defaultWidgets().reduce((all,row)=>({...all,[row.id]:true}),{})).sort());
+ const saved=web.defaultWidgets().reverse().map((row,index)=>({...row,visible:index%2===0}));
+ assert.deepEqual(parseWidgets(JSON.stringify(saved)),web.parseWidgets(JSON.stringify(saved)));
+ assert.equal(defaultWidgets()[0].id,'activity');assert.equal(defaultWidgets().length,9);
 });
 
 test('older layouts retain order/visibility and append the calendar hidden; defaults include it',()=>{

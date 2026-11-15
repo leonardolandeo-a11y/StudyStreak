@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ComponentRef } from 'react';
+import { useCallback, useImperativeHandle, useRef, useState, type ComponentRef, type Ref } from 'react';
 import { AccessibilityInfo, findNodeHandle, Modal, Platform, ScrollView, Text, View } from 'react-native';
 import { useIsFocused } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ import { WidgetReorderList } from './WidgetReorderList';
 import { moveWidgetTo } from '../../features/dashboard/widgetReorder';
 import { defaultWidgets, widgetLabels, type WidgetId, type WidgetSetting } from '../../features/dashboard/widgetPreferences';
 
-export function CustomizeDashboard({ rows, ready, error, save }: { rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
+export interface DashboardCustomization { choose(id: WidgetId): void }
+export function CustomizeDashboard({ rows, ready, error, save, ref, onOpenChange }: { ref?: Ref<DashboardCustomization>; onOpenChange?(open: boolean): void; rows: WidgetSetting[]; ready: boolean; error: string | null; save(rows: WidgetSetting[]): Promise<void> }) {
   const { theme: { colors }, reduceMotion } = useAppearance();
   const focused = useIsFocused();
   const [open, setOpen] = useState(false), [announcement, setAnnouncement] = useState('');
@@ -24,7 +25,10 @@ export function CustomizeDashboard({ rows, ready, error, save }: { rows: WidgetS
       const node = findNodeHandle(trigger.current); if (node) AccessibilityInfo.setAccessibilityFocus(node);
     }
   }, []);
-  const close = () => { setOpen(false); setChoosing(null); requestAnimationFrame(restoreFocus); };
+  const close = () => { setOpen(false); onOpenChange?.(false); setChoosing(null); requestAnimationFrame(restoreFocus); };
+  useImperativeHandle(ref, () => ({ choose(id: WidgetId) {
+    setOpen(true); onOpenChange?.(true); setChoosing(id); setFocusId(id);
+  } }), [onOpenChange]);
   const choose = useCallback((id: WidgetId) => { setFocusId(id); setChoosing(id); }, []);
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
@@ -33,12 +37,11 @@ export function CustomizeDashboard({ rows, ready, error, save }: { rows: WidgetS
   return <>
     <View style={{ alignSelf: 'flex-end' }}>
       <NavigationPressable ref={trigger} accessibilityRole="button" accessibilityLabel="Customize Dashboard" accessibilityState={{ disabled: !ready, expanded: open }}
-        aria-expanded={open} disabled={!ready} onPress={() => { setOpen(true); setChoosing(null); setFocusId(null); }}
-        style={{ padding: 12, minHeight: 48, borderRadius: 8, backgroundColor: colors.surfaceRaised }}>
-        <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '600' }}>Customize Dashboard</Text>
+        aria-expanded={open} disabled={!ready} onPress={() => { setOpen(true); onOpenChange?.(true); setChoosing(null); setFocusId(null); }}
+        style={{ width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+        <AppIcon name="settings" size={20} color={colors.primary}/>
       </NavigationPressable>
     </View>
-    {error ? <View><Text accessibilityRole="alert" style={{ color: colors.error }}>{error}</Text><ActionButton compact secondary title="Retry layout" onPress={() => { void save(rows); }}/></View> : null}
     <Modal visible={open && focused} animationType={reduceMotion ? 'none' : 'slide'} presentationStyle="fullScreen" onRequestClose={close} onDismiss={restoreFocus}
       onShow={() => { if (Platform.OS === 'web') heading.current?.focus(); else { const node = findNodeHandle(heading.current); if (node) AccessibilityInfo.setAccessibilityFocus(node); } }}>
       {open && focused ? <SafeAreaView testID="dashboard-customization-modal" accessibilityViewIsModal onAccessibilityEscape={close}

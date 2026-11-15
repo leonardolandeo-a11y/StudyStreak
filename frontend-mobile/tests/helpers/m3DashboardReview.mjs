@@ -64,9 +64,9 @@ export async function reviewM3Dashboard(browser,{account,statsRequests}){
  await browser.wait(`(${visible})[0]==='quick'`);
  // Reload loses only the in-memory preview login; saved layout remains per account.
  await load(101);await browser.wait(`(${visible})[0]==='quick'`);
- await load(202);assert.equal(await browser.evaluate(`(${visible})[0]`),'focus-summary');assert.equal(await browser.evaluate(`(${visible}).length`),9);
+ await load(202);assert.equal(await browser.evaluate(`(${visible})[0]`),'activity');assert.equal(await browser.evaluate(`(${visible}).length`),9);
  await load(101);await browser.wait(`(${visible})[0]==='quick'`);
- await open();await browser.click('Restore default layout');await end();await browser.wait(`(${visible}).length===9&&(${visible})[0]==='focus-summary'`);
+ await open();await browser.click('Restore default layout');await end();await browser.wait(`(${visible}).length===9&&(${visible})[0]==='activity'`);
  await open();
  const labels=await browser.evaluate(`Array.from(document.querySelectorAll('[data-testid="dashboard-customization-modal"] [aria-label^="Show "]')).map(e=>e.getAttribute('aria-label'))`);
  for(const label of labels){await browser.evaluate(`document.querySelector('[aria-label="${label}"]').click()`);await browser.wait(`${layout}.filter(row=>row.visible).length===${9-labels.indexOf(label)-1}`);}
