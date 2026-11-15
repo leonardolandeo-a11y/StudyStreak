@@ -5,9 +5,11 @@ import { apiClient } from '../../services/apiClient';
 import type { StudyRoom } from '../../services/studyRoomService';
 import { CreationModal } from '../ui/CreationModal';
 import { ActionButton } from '../ui/ActionButton';
+import { NavigationPressable } from '../navigation/NavigationPressable';
+import { AppIcon } from '../ui/AppIcon';
 import { useAppearance } from '../../hooks/useAppearance';
 
-export function RoomModeration({room}:{room:StudyRoom}) {
+export function RoomModeration({room,disabled=false}:{room:StudyRoom;disabled?:boolean}) {
     const { theme: { colors: palette } } = useAppearance();
     const [removing,setRemoving]=useState<number|null>(null);
     const [permissions,setPermissions]=useState<{userId:number;canPublish:boolean}[]>([]);
@@ -26,7 +28,7 @@ export function RoomModeration({room}:{room:StudyRoom}) {
         return ()=>{controller.abort();clearInterval(timer);};
     },[endpoint,room.host]));
     async function moderate(user:number,allowed?:boolean) {
-        if(busy)return;setBusy(true);setError(null);
+        if(busy||disabled)return;setBusy(true);setError(null);
         try{
             if(allowed===undefined)await apiClient.delete(`${endpoint}/members/${user}`);
             else await apiClient.put(`${endpoint}/permissions/${user}`,{allowed});
@@ -40,14 +42,14 @@ export function RoomModeration({room}:{room:StudyRoom}) {
         {room.members.filter(member=>!member.host).map(member=>{
             const allowed=permissions.find(item=>item.userId===member.userId)?.canPublish??false;
             return <View key={member.userId} style={{gap:8}}><Text style={{color:palette.text}}>{member.username}</Text>
-                <ActionButton compact secondary title={allowed?'Revoke screen permission':'Allow screen sharing'} disabled={busy} onPress={()=>void moderate(member.userId,!allowed)}/>
-                <ActionButton compact secondary title="Remove from room" disabled={busy} onPress={()=>setRemoving(member.userId)}/>
+                <ActionButton compact secondary title={allowed?'Revoke screen permission':'Allow screen sharing'} disabled={busy || disabled} onPress={()=>void moderate(member.userId,!allowed)}/>
+                <NavigationPressable accessibilityRole="button" accessibilityLabel={`Remove ${member.username} from room`} disabled={busy || disabled} onPress={()=>setRemoving(member.userId)} style={{minWidth:44,minHeight:44,alignItems:'center',justifyContent:'center',alignSelf:'flex-start'}}><AppIcon name="trash" color={palette.error} size={20}/></NavigationPressable>
             </View>;
         })}
         <CreationModal visible={removing!==null} title="Remove participant?" showBack={false} busy={busy} cancelLabel="Cancel participant removal" onClose={()=>setRemoving(null)}>
             <Text style={{color:palette.text}}>Remove {room.members.find(member=>member.userId===removing)?.username} from this room?</Text>
-            <ActionButton compact title="Confirm remove participant" busy={busy} onPress={()=>{if(removing!==null){void moderate(removing);setRemoving(null);}}}/>
-            <ActionButton compact secondary title="Keep participant" disabled={busy} onPress={()=>setRemoving(null)}/>
+            <ActionButton compact title="Confirm remove participant" busy={busy} disabled={disabled} onPress={()=>{if(removing!==null){void moderate(removing);setRemoving(null);}}}/>
+            <ActionButton compact secondary title="Keep participant" disabled={busy || disabled} onPress={()=>setRemoving(null)}/>
         </CreationModal>
         <Text style={{color:palette.muted}}>Permission changes disconnect media for everyone. Reconnect for fresh authorization.</Text>
     </View>;

@@ -5,6 +5,7 @@ import ts from 'typescript';
 
 const root = new URL('../../src/', import.meta.url).href;
 const mocks = new Map([
+  ['expo-clipboard', './clipboardMock.mjs'],
   ['react-native', './appearanceNativeMock.mjs'],
   ['expo-device', './appearanceNativeMock.mjs'],
   ['react-native-safe-area-context', './appearanceNativeMock.mjs'],

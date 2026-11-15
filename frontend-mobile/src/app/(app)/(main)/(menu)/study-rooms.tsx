@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { SharedRoomDial } from '../../../../components/study/SharedRoomDial';
 import { workspacePalette } from '../../../../components/academic/workspacePalette';
 import { AcademicHeading, AcademicEmpty } from '../../../../components/academic/Academic';
@@ -39,6 +40,7 @@ export default function StudyRooms() {
   const [rooms, setRooms] = useState<StudyRoom[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [roomName, setRoomName] = useState('');
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [roomId, setRoomId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -301,15 +303,18 @@ export default function StudyRooms() {
             <Text accessibilityRole="header" style={styles.roomTitle}>{room.name}</Text>
             <Text style={styles.description}>{online} online · {studyingCount} studying · {room.members.length}/12 members</Text>
             <View style={styles.inviteBox}>
-              <Text style={styles.codeLabel}>INVITATION CODE · Long-press to copy</Text>
-              <Text selectable style={styles.inviteCode}>{room.inviteCode}</Text><ActionButton compact secondary title="Share invitation" onPress={()=>{void Share.share({message:`Join my StudyStreak room: ${room.inviteCode}`}).catch(()=>setError("Sharing unavailable. Long-press the code to copy it."));}}/>
+              <Text style={styles.codeLabel}>INVITATION CODE</Text>
+              <Text selectable style={styles.inviteCode}>{room.inviteCode}</Text><View testID="room-invite-actions" style={styles.controlRow}>
+                <ActionButton compact secondary title={copiedCode === room.inviteCode ? 'Copied' : 'Copy code'} disabled={busy || stale} onPress={() => { void Clipboard.setStringAsync(room.inviteCode).then(() => setCopiedCode(room.inviteCode)).catch(() => setError('Copy unavailable. Long-press the code to copy it.')); }}/>
+                {room.host ? <ActionButton compact secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => setConfirmation({title:'Replace invitation?',message:'The previous code will stop working.',label:'Replace',run:()=>{void manageRoom();}})}/> : null}
+              </View><ActionButton compact secondary title="Share invitation" onPress={()=>{void Share.share({message:`Join my StudyStreak room: ${room.inviteCode}`}).catch(()=>setError("Sharing unavailable. Long-press the code to copy it."));}}/>
             </View>
           </View>
-          <View style={styles.card}><RoomMedia key={`media-${room.id}`} roomId={room.id}/></View>
-          <View style={styles.feature}>
+          <View testID="room-shared-screens" style={styles.card}><RoomMedia key={`media-${room.id}`} roomId={room.id}/></View>
+          <View testID="room-pomodoro" style={styles.feature}>
             <SharedRoomDial seconds={remaining} phase={room.phase} time={displayRoomTime(remaining)} status={stale ? 'Last known timer · reconnecting' : room.timerStatus === 'PAUSED' ? 'Timer paused' : room.timerStatus === 'COMPLETE' ? 'Session finished · server confirmed' : room.timerStatus === 'RUNNING' && remaining === 0 ? 'Awaiting server confirmation' : room.timerStatus === 'RUNNING' ? 'Timer running' : 'Waiting for host'}/>
             {room.host ? (
-              <View style={styles.controls}><Text style={styles.timerLabel}>HOST CONTROLS</Text>
+              <View testID="shared-timer-controls" style={styles.controls}><Text style={styles.timerLabel}>HOST CONTROLS</Text>
                 <ActionButton compact title={room.timerStatus === 'RUNNING' && remaining > 0 ? 'Pause timer' : 'Start timer'}
                   busy={busy} disabled={stale} onPress={() => { void timer(room.timerStatus === 'RUNNING' && remaining > 0 ? 'PAUSE' : 'START'); }}/>
                 <View style={styles.controlRow}>
@@ -333,14 +338,13 @@ export default function StudyRooms() {
           <RoomCollaboration key={`chat-${room.id}`} room={room} userId={currentUser?.id}>
           <View style={{ gap: 10 }}>
             <Text style={[styles.cardTitle, { color: theme.colors.text, fontSize: 16, fontWeight: '600' }]}>Participants · {room.members.length}/12</Text>
-            {room.host && <ActionButton compact secondary title="Regenerate invitation code" disabled={busy || stale} onPress={() => setConfirmation({title:'Replace invitation?',message:'The previous code will stop working.',label:'Replace',run:()=>{void manageRoom();}})}/> }
             {room.members.map(member => (
               <ParticipantCard key={member.userId} userId={member.userId} name={member.username} host={member.host} online={member.online} studying={member.studying}>
-                {room.host && !member.host && <ActionButton compact secondary title="Make host" disabled={busy || stale} onPress={() => setConfirmation({title:'Transfer host?',message:`Give controls to ${member.username}?`,label:'Transfer',run:()=>{void manageRoom(member.userId);}})}/>}
+                {room.host && !member.host && <NavigationPressable accessibilityRole="button" accessibilityLabel={`Make ${member.username} host`} disabled={busy || stale} style={{ minHeight: 44, padding: 6, gap: 4, alignItems: 'center', justifyContent: 'center' }} onPress={() => setConfirmation({title:'Transfer host?',message:`Give controls to ${member.username}?`,label:'Transfer',run:()=>{void manageRoom(member.userId);}})}><Text accessible={false} style={{color:theme.colors.primary,fontSize:20}}>♛</Text><Text style={{color:theme.colors.primary,fontSize:11}}>Make host</Text></NavigationPressable>}
               </ParticipantCard>
             ))}
           </View>
-          <RoomModeration key={`moderation-${room.id}`} room={room}/>
+          <RoomModeration key={`moderation-${room.id}`} room={room} disabled={busy || stale}/>
           </RoomCollaboration>
           <Text style={styles.footer}>Room state refreshes every 4 seconds using the server clock. Your optional private Goal records eligible group participation.</Text>
           <ActionButton compact secondary title={room.host ? 'Close room for everyone' : 'Leave room'}
@@ -373,7 +377,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   timerBox: { backgroundColor: palette.background, borderRadius: 8, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', gap: 8 },
   timerLabel: { color: palette.primary, fontSize: 12, letterSpacing: 2, fontWeight: '800' },
   timer: { color: palette.text, fontWeight: '900', fontSize: 48, fontVariant: ['tabular-nums'] },
-  controls: { gap: 8 },
+  controls: { gap: 8, flexDirection: 'column', alignItems: 'stretch' },
   controlRow: { flexWrap: 'wrap', flexDirection: 'row', gap: 8 },
   controlButton: { flex: 1, minWidth: 100, minHeight: 48, backgroundColor: palette.surfaceRaised, padding: 13, borderRadius: 12, alignItems: 'center' },
   controlText: { color: palette.text, fontSize: 13, fontWeight: '800' },

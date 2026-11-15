@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type ComponentRef } from 'react';
-import { ActivityIndicator, Modal, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useRoomCollaboration } from '../../hooks/useRoomCollaboration';
 import { groupedMessage, nearChatEnd, roomReactions } from '../../features/studyRooms/collaborationState';
 import type { StudyRoom } from '../../services/studyRoomService';
@@ -13,6 +13,7 @@ import { workspacePalette } from '../academic/workspacePalette';
 
 export function RoomCollaboration({ room, userId, children }: { room: StudyRoom; userId?: number; children?: ReactNode }) {
     const { theme, reduceMotion } = useAppearance(), palette = workspacePalette(theme);
+    const { height } = useWindowDimensions();
     const chat = useRoomCollaboration(room.id);
     const [tab, setTab] = useState<'chat' | 'participants'>('chat');
     const [picker, setPicker] = useState(false), [removing, setRemoving] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export function RoomCollaboration({ room, userId, children }: { room: StudyRoom;
             <View style={{ paddingHorizontal: 10, paddingVertical: 4, minHeight: 56 }}>
                 {chat.hasEarlier ? <ActionButton compact secondary title="Load earlier messages" busy={chat.loadingEarlier} onPress={earlier}/> : <View style={{ height: 48, alignItems: 'center', justifyContent: 'center' }}>{chat.loading ? <ActivityIndicator accessibilityLabel="Loading room chat" color={palette.primary}/> : <Text style={{ color: palette.muted, fontSize: 11 }}>{chat.messages.length ? 'Beginning of recent history' : 'Room conversation'}</Text>}</View>}
             </View>
-            <ScrollView ref={viewport} testID="room-chat-scroll" accessibilityLabel="Room messages" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ height: 360 }} contentContainerStyle={{ padding: 10, gap: 2 }} scrollEventThrottle={32}
+            <ScrollView ref={viewport} testID="room-chat-scroll" accessibilityLabel="Room messages" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ height: Math.min(360, Math.max(180, height * .38)) }} contentContainerStyle={{ padding: 10, gap: 2 }} scrollEventThrottle={32}
                 onContentSizeChange={scheduleRestore} onScrollBeginDrag={() => { armed.current = true; }} onScroll={event => {
                     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
                     if (restoring.current) return;
@@ -104,7 +105,7 @@ export function RoomCollaboration({ room, userId, children }: { room: StudyRoom;
             </View>
         </View>
         <View style={{ display: tab === 'participants' ? 'flex' : 'none' }}>
-            <ScrollView testID="room-participants-scroll" accessibilityLabel="Room participants" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: 540 }} contentContainerStyle={{ padding: 12, gap: 12 }}>{children}</ScrollView>
+            <ScrollView testID="room-participants-scroll" accessibilityLabel="Room participants" nestedScrollEnabled keyboardShouldPersistTaps="handled" style={{ maxHeight: Math.min(540, height * .55) }} contentContainerStyle={{ padding: 12, gap: 12 }}>{children}</ScrollView>
         </View>
         <Modal visible={canRemove} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={() => setRemoving(null)}>
             <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: palette.overlay, justifyContent: 'center', padding: 24 }}>
