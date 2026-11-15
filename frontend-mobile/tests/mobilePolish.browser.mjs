@@ -93,7 +93,7 @@ try {
   await browser.click('Validations'); await browser.wait(has('Start a validation')); await reviewNativeModule(browser, '74b-validations-partner'); await browser.click('Start a validation');
   await browser.wait(has('Cancel creation'));
   assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Continue"]').getAttribute('aria-disabled')`), 'true');
-  await browser.click('Review goals from partner'); await browser.click('Continue');
+  await browser.click('Select tracking partner partner'); await browser.click('Continue');
   await browser.wait(has('View records for Partner algebra')); await browser.click('View records for Partner algebra'); await browser.click('Continue');
   await browser.wait(has('Review record 2026-11-08')); await browser.click('Review record 2026-11-08'); await browser.click('Continue');
   await browser.wait(`document.querySelector('[aria-modal="true"]').innerText.includes('Review evidence')`);

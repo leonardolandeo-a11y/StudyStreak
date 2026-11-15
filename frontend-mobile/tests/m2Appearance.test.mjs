@@ -104,7 +104,7 @@ test('account activation does not key the router and wizard removes only the tex
   const wizard = readFileSync(new URL('app/(app)/(main)/(menu)/validations/index.tsx',root),'utf8');
   assert.doesNotMatch(wizard,/MemberProfileLink/);
   assert.match(wizard,/setPartner\(member\);setGoal\(null\);setRecord\(null\)/);
-  assert.match(wizard,/Review goals from/);
+  assert.match(wizard,/ValidationPartnerRow/);
 });
 
 

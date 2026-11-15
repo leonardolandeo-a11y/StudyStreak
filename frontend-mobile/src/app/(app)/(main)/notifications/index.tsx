@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../../components/ui/Screen';
 import { ActionButton } from '../../../../components/ui/ActionButton';
+import { AppIcon } from '../../../../components/ui/AppIcon';
 import { StatusMessage } from '../../../../components/ui/StatusMessage';
 import { PageControls } from '../../../../components/ui/PageControls';
 import { NotificationCard } from '../../../../components/notifications/NotificationCard';
@@ -13,7 +14,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { usePagedResource } from '../../../../hooks/usePagedResource';
 import { notificationService } from '../../../../services/notificationService';
 import { getApiErrorMessage } from '../../../../utils/apiError';
-import { useThemedStyles } from '../../../../hooks/useAppearance';
+import { useAppearance, useThemedStyles } from '../../../../hooks/useAppearance';
 import type { ThemeColors } from '../../../../features/appearance/theme';
 import { notificationTypeLabels, notificationTypes } from '../../../../types/notification';
 import { notificationDestination } from '../../../../utils/notificationDestination';
@@ -24,6 +25,7 @@ type Filter = 'all' | 'unread' | 'type';
 
 export default function Notifications() {
   const styles = useThemedStyles(createStyles);
+  const { theme: { colors } } = useAppearance();
   const { refreshUnread } = useNavigationData();
   const { currentUser } = useAuth();
   const userId = currentUser?.id;
@@ -127,8 +129,8 @@ export default function Notifications() {
       </ScrollView>
       <View style={styles.row}>
         <Text style={styles.heading}>{filter === 'unread' ? 'Unread notifications' : filter === 'type' ? notificationTypeLabels[selectedType] : 'All notifications'}</Text>
-        <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh notifications" onPress={() => { reload(); void refreshUnread(); }} style={{ minHeight: 48, paddingHorizontal: 8, justifyContent: 'center' }}>
-          <Text style={styles.refresh}>Refresh</Text>
+        <NavigationPressable accessibilityRole="button" accessibilityLabel="Refresh notifications" accessibilityState={{busy:loading}} onPress={() => { reload(); void refreshUnread(); }} style={{ minHeight: 48, minWidth:44, alignItems:'center', justifyContent: 'center' }}>
+          <AppIcon name="refresh" color={colors.primary} size={22}/>
         </NavigationPressable>
       </View>
       {message ? <StatusMessage message={message} /> : null}
@@ -182,7 +184,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   activeChipText: { color: palette.primaryText },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, alignItems: 'center' },
   heading: { color: palette.text, fontSize: 19, fontWeight: '700', flex: 1 },
-  refresh: { color: palette.primary, fontSize: 14, fontWeight: '700' },
   count: { color: palette.muted, fontSize: 12 },
   empty: { color: palette.muted, fontSize: 14, padding: 18, backgroundColor: palette.surface,
     borderRadius: 12 },

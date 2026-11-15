@@ -22,6 +22,7 @@ try{
  for(const width of [320,390,768]){
   await browser.command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:true});
   assert.equal(await browser.evaluate(`(()=>{const a=document.querySelector('[data-testid="shared-pomodoro-circle"]').getBoundingClientRect(),b=document.querySelector('[data-testid="shared-timer-controls"]').getBoundingClientRect();return Math.abs(a.width-a.height)<1&&b.top>=a.bottom})()`),true);
+  assert.equal(await browser.evaluate(`(()=>{const chat=document.querySelector('[data-testid="room-collaboration"]').getBoundingClientRect(),timer=document.querySelector('[data-testid="room-pomodoro"]').getBoundingClientRect(),circle=document.querySelector('[data-testid="shared-pomodoro-circle"]').getBoundingClientRect();return timer.top>=chat.bottom&&Math.abs(circle.left+circle.width/2-timer.left-timer.width/2)<2})()`),true);
   assert.equal(await browser.evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
  }
  await browser.click('Participants (12)');await browser.wait(shown('Make LunaStudy host'));await browser.wait(shown('View profile of LunaStudy'));
@@ -41,5 +42,7 @@ try{
  }
  assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Regenerate invitation code"]').getAttribute('aria-disabled')==='true'`),true);
  fixture.setConnectionFailure(false);await browser.wait(`document.querySelector('[aria-label="Regenerate invitation code"]').getAttribute('aria-disabled')!=='true'`);
- assert.deepEqual(browser.errors,[]);console.log('M4 rooms passed: host/member, copy, confirmations, stacked circle/controls, roles/reconnect and 320/390/768.');
+ assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Copied"]').textContent`),'');
+ assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Regenerate invitation code"]').textContent`),'');
+ assert.deepEqual(browser.errors,[]);console.log('M4 rooms passed: host/member, icon copy/regenerate, confirmations, timer below chat/participants, centered circle/controls, roles/reconnect and 320/390/768.');
 }finally{await browser.close();}

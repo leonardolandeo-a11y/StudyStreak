@@ -41,11 +41,11 @@ try{
  await browser.navigate('/');await browser.wait(has('Username'));await browser.fill('[aria-label="Username"]','fixture');await browser.fill('[aria-label="Password"]','fixture-only');await browser.click('Sign in');
  await browser.wait(has('Open Historical goal'));await capture('goals');
  for(let index=0;index<4;index++){
-  await browser.click('Create Goal');await browser.wait(has('Topic'));await browser.fill('[aria-label="Topic"]','Created '+levels[index]);await browser.click(labels[index]);
+  await browser.click('Create a goal');await browser.wait(has('Topic'));await browser.fill('[aria-label="Topic"]','Created '+levels[index]);await browser.click(labels[index]);
   if(index===3)await capture('selector');
   await browser.click('Create goal');await modalGone();assert.equal(writes.at(-1).body.difficulty,levels[index]);
  }
- legacy=true;const before=writes.length;await browser.click('Create Goal');await browser.wait(has('Topic'));await browser.fill('[aria-label="Topic"]','Unconfirmed legacy goal');await browser.click('Fácil · Alegre');await browser.click('Create goal');await browser.wait(`document.body.innerText.includes('Difficulty was not confirmed')`);
+ legacy=true;const before=writes.length;await browser.click('Create a goal');await browser.wait(has('Topic'));await browser.fill('[aria-label="Topic"]','Unconfirmed legacy goal');await browser.click('Fácil · Alegre');await browser.click('Create goal');await browser.wait(`document.body.innerText.includes('Difficulty was not confirmed')`);
  assert.equal(writes.length,before+1);assert.equal(await browser.evaluate(`document.querySelector('[aria-label="Create goal"]').getAttribute('aria-disabled')`),'true');await browser.click('Cancel');await modalGone();legacy=false;
  await browser.click('Open Historical goal');await browser.wait(has('Update Goal'));await browser.click('Update Goal');await browser.wait(has('Topic'));
  await browser.click('Difícil · Enojada');await browser.click('Save changes');await modalGone();assert.equal(goals.find(g=>g.id===11).difficulty,'HARD');

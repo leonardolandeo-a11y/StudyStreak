@@ -71,7 +71,6 @@ export default function Goals() {
     </CreationModal>
     <Screen themed compact scrollRef={menuScroll} backgroundColor={palette.background}>
       <AcademicHeading title="My Goals" eyebrow="YOUR STUDY GOALS" glyph="book" description="Create study goals and manage their daily records." art={<AcademicSprite name="books" width={60}/>} />
-      <ActionButton compact title="Create Goal" onPress={() => { setShowCreate(true); setFormError(null); setUnconfirmed(null); }}/>
       {message ? <StatusMessage message={message} /> : null}
       <View style={styles.row}>
         <Text style={styles.section}>Your goals</Text>

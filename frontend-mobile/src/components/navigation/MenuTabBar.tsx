@@ -10,6 +10,7 @@ type BarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0
 export function MenuTabBar({ state, emitter, navigateToTab, insets }: BarProps) {
   const { theme } = useAppearance();
   const action = useCurrentMenuAction();
+  const goalAction = state.routes[state.index].name === menuTabs[0].name;
   const [keyboard, setKeyboard] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboard(true));
@@ -39,10 +40,22 @@ export function MenuTabBar({ state, emitter, navigateToTab, insets }: BarProps) 
     {tab(0)}{tab(1)}
     <NavigationPressable accessibilityRole="button" accessibilityLabel={action?.label ?? 'Contextual action'}
       disabled={!action} onPress={action?.run} style={({ pressed }) => ({ width: 52, height: 52, marginHorizontal: 4,
-        borderRadius: 26, backgroundColor: pressed ? theme.colors.primaryHover : theme.colors.primary,
-        alignItems: 'center', justifyContent: 'center', opacity: action ? 1 : .5 })}>
-      <Text accessible={false} style={{ color: theme.colors.primaryText, fontSize: 32 }}>+</Text>
+        borderRadius: goalAction ? 0 : 26, backgroundColor: goalAction ? 'transparent' : pressed ? theme.colors.primaryHover : theme.colors.primary,
+        alignItems: 'center', justifyContent: 'center', opacity: !action ? .5 : pressed ? .8 : 1 })}>
+      {goalAction ? <PixelGoalAction/> : <Text accessible={false} style={{ color: theme.colors.primaryText, fontSize: 32 }}>+</Text>}
     </NavigationPressable>
     {tab(2)}{tab(3)}
+  </View>;
+}
+
+function PixelGoalAction() {
+  const { theme: { colors } } = useAppearance();
+  return <View testID="pixel-goal-action" accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={{width:48,height:48}}>
+    {[[8,0,32,48],[4,4,40,40],[0,8,48,32]].map(([left,top,width,height],index)=><View key={index} style={{position:'absolute',left,top,width,height,backgroundColor:colors.borderStrong}}/>)}
+    <View style={{position:'absolute',left:8,top:4,width:32,height:36,backgroundColor:colors.surfaceRaised}}/>
+    <View style={{position:'absolute',left:4,top:8,width:40,height:28,backgroundColor:colors.surfaceRaised}}/>
+    <View style={{position:'absolute',left:8,top:40,width:32,height:4,backgroundColor:colors.shadow}}/>
+    <View style={{position:'absolute',left:20,top:12,width:8,height:24,backgroundColor:colors.primary}}/>
+    <View style={{position:'absolute',left:12,top:20,width:24,height:8,backgroundColor:colors.primary}}/>
   </View>;
 }

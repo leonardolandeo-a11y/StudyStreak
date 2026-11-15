@@ -4,7 +4,10 @@ import { ValidationStepper } from '../../../../../components/validations/Validat
 import { AcademicHeading, AcademicEmpty } from '../../../../../components/academic/Academic';
 import { useCallback, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { SocialAvatar } from '../../../../../components/social/MemberReference';
+import { ValidationPartnerRow } from '../../../../../components/validations/ValidationPartnerRow';
+import { DifficultyBadge } from '../../../../../components/goals/GoalDifficulty';
+import { NavigationPressable } from '../../../../../components/navigation/NavigationPressable';
+import { AppIcon } from '../../../../../components/ui/AppIcon';
 import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useMenuAction } from '../../../../../contexts/MenuActionContext';
 import { isAxiosError } from 'axios';
@@ -182,11 +185,15 @@ export default function Validations() {
   const flow = <View style={{ gap: 16 }}>
     <ValidationStepper step={step} busy={saving} onStep={setStep}/>
     {step === 0 ? <Section step={1} title="Tracking partners"><ActionButton compact secondary title="Refresh partners" onPress={partners.reload}/><ListStatus state={partners} empty="No active tracking partners yet."/>
-      {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <View key={link.id} style={[styles.item,partner?.id===member.id&&styles.itemSelected,{flexDirection:'row',gap:12}]}><SocialAvatar userId={member.id} name={member.username}/><View style={{flex:1,minWidth:0}}><Text style={styles.itemTitle}>{member.username}</Text><ActionButton compact secondary title={`Review goals from ${member.username}`} selected={partner?.id===member.id} onPress={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/></View></View>; }) : null}
-      <PageControls page={partners.page} totalPages={partners.data?.totalPages ?? 0} onChange={partners.setPage}/>
+      {!partners.loading && !partners.error ? partners.data?.content.map(link => { const member = partnerFromLink(link,currentUser.id); return <ValidationPartnerRow key={link.id} id={member.id} name={member.username} selected={partner?.id===member.id} onSelect={() => { if(partner?.id!==member.id){setPartner(member);setGoal(null);setRecord(null);} setStarting(true); }}/>; }) : null}
+      <PageControls compact page={partners.page} totalPages={partners.data?.totalPages ?? 0} onChange={partners.setPage}/>
     </Section> : null}
-    {step === 1 && partner ? <Section step={2} title={`Study goals · ${partner.username}`}><ListStatus state={goals} empty="This partner has no goals."/>{!goals.loading && !goals.error ? goals.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`View records for ${item.topic}`} selected={goal?.id===item.id} onPress={() => { if(goal?.id!==item.id){setGoal(item);setRecord(null);} }}/>) : null}<PageControls page={goals.page} totalPages={goals.data?.totalPages ?? 0} onChange={goals.setPage}/></Section> : null}
-    {step === 2 && goal ? <Section step={3} title={`Daily records · ${goal.topic}`}><ListStatus state={records} empty="This goal has no daily records."/>{!records.loading && !records.error ? records.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`Review record ${item.date}`} selected={record?.id===item.id} onPress={() => setRecord(previous => previous?.id===item.id ? previous : item)}/>) : null}<PageControls page={records.page} totalPages={records.data?.totalPages ?? 0} onChange={records.setPage}/></Section> : null}
+    {step === 1 && partner ? <Section step={2} title={`Study goals · ${partner.username}`}><ListStatus state={goals} empty="This partner has no goals."/>{!goals.loading && !goals.error ? goals.data?.content.map(item => <NavigationPressable key={item.id} accessibilityRole="button" accessibilityLabel={`View records for ${item.topic}`} accessibilityState={{selected:goal?.id===item.id}} aria-selected={goal?.id===item.id} onPress={() => { if(goal?.id!==item.id){setGoal(item);setRecord(null);} }} style={[styles.goalRow,goal?.id===item.id&&styles.goalSelected]}>
+      <DifficultyBadge value={item.difficulty} strip/>
+      <View style={{flex:1,minWidth:0,padding:10,gap:4}}><Text style={styles.itemTitle}>{item.topic}</Text><Text style={styles.meta}>{item.frequency} sessions/week · {item.duration} min/session</Text></View>
+      <View style={{paddingRight:8}}><AppIcon name="chevron-right" color={colors.muted} size={18}/></View>
+    </NavigationPressable>) : null}<PageControls compact page={goals.page} totalPages={goals.data?.totalPages ?? 0} onChange={goals.setPage}/></Section> : null}
+    {step === 2 && goal ? <Section step={3} title={`Daily records · ${goal.topic}`}><ListStatus state={records} empty="This goal has no daily records."/>{!records.loading && !records.error ? records.data?.content.map(item => <ActionButton key={item.id} compact secondary title={`Review record ${item.date}`} selected={record?.id===item.id} onPress={() => setRecord(previous => previous?.id===item.id ? previous : item)}/>) : null}<PageControls compact page={records.page} totalPages={records.data?.totalPages ?? 0} onChange={records.setPage}/></Section> : null}
     {goal && record ? <RecordReview key={`${goal.id}-${record.id}`} goalId={goal.id} record={record} partnerName={partner?.username ?? ''} step={step} onBack={() => setStep(value => value-1)} onContinue={() => setStep(4)} onBusyChange={setSaving}/> : null}
     {step < 3 ? <View style={styles.buttons}><ActionButton compact secondary title="Previous step" disabled={step===0} onPress={() => setStep(value => value-1)}/><ActionButton compact title="Continue" disabled={step===0?!partner:step===1?!goal:!record} onPress={() => setStep(value => value+1)}/></View> : null}
   </View>;
@@ -210,9 +217,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   label: { color: palette.muted, fontSize: 12, fontWeight: '700' },
   count: { color: palette.muted, fontSize: 12 },
   empty: { color: palette.muted, fontSize: 14, paddingVertical: 10 },
-  item: { borderWidth: 1, borderColor: palette.border, backgroundColor: palette.background,
-    borderRadius: 12, padding: 14, gap: 8 },
-  itemSelected: { borderColor: palette.primary },
+  goalRow: {flexDirection:'row',alignItems:'center',minHeight:64,borderWidth:1,borderColor:palette.border,backgroundColor:palette.surface,borderRadius:9,overflow:'hidden'},
+  goalSelected: {borderColor:palette.primary,backgroundColor:palette.primarySoft},
   itemTitle: { color: palette.text, fontSize: 16, fontWeight: '700' },
   link: { color: palette.primary, fontSize: 13, fontWeight: '700' },
   current: { backgroundColor: palette.surfaceRaised, borderRadius: 12, padding: 13, gap: 6 },
