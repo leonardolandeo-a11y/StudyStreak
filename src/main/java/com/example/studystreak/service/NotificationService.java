@@ -103,7 +103,7 @@ public class NotificationService {
     @Transactional
     public NotificationDTO createGoalCompletedNotification(Long userId, Long goalId) {
 
-        String message = "Â¡Felicidades! Has completado la meta con id: " + goalId;
+        String message = "Congratulations! You completed a study goal.";
 
         return createNotification(userId, message, NotificationType.GOAL_COMPLETED, goalId, null, null);
     }

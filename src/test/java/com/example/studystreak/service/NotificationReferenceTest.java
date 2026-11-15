@@ -41,6 +41,21 @@ class NotificationReferenceTest {
     }
 
     @Test
+    void completedGoalNotificationUsesReadableTextAndKeepsGoalReference() {
+        NotificationRepository notifications = mock(NotificationRepository.class);
+        UserRepository users = mock(UserRepository.class);
+        when(users.findById(11L)).thenReturn(Optional.of(mock(User.class)));
+        when(notifications.save(any(Notification.class))).thenAnswer(call -> call.getArgument(0));
+
+        NotificationService service = new NotificationService(notifications, new ModelMapper(), users);
+        NotificationDTO result = service.createGoalCompletedNotification(11L, 42L);
+
+        assertEquals("Congratulations! You completed a study goal.", result.getMessage());
+        assertEquals(NotificationType.GOAL_COMPLETED, result.getType());
+        assertEquals(42L, result.getRelatedGoalId());
+    }
+
+    @Test
     void olderNotificationCreationStillWorksWithoutReferences() {
         NotificationRepository notifications = mock(NotificationRepository.class);
         UserRepository users = mock(UserRepository.class);
