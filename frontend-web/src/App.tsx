@@ -14,8 +14,7 @@ import {
     ROUTES,
     ROUTE_PATTERNS
 } from "./routes/paths";
-import LoadingState
-    from "./components/ui/LoadingState";
+import AppLoadingScreen from "./components/ui/AppLoadingScreen";
 
 const SocialProfile = lazy(() => import("./pages/SocialProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -47,11 +46,7 @@ function App(){
   return (
     <BrowserRouter>
       <Suspense
-          fallback={
-              <LoadingState
-                  message="Loading page..."
-              />
-          }
+          fallback={<AppLoadingScreen />}
       >
         
         <Routes>
