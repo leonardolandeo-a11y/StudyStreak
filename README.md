@@ -290,13 +290,13 @@ docker compose up --build
 
 ## Despliegue en AWS
 
-El backend de StudyStreak se encuentra desplegado en **Amazon EC2**, mientras que la persistencia de datos en producción utiliza **Amazon RDS for PostgreSQL**.
+La infraestructura utilizada en la primera fase se documentó con **Amazon EC2** para Spring Boot y **Amazon RDS for PostgreSQL** para los datos. El estado actual, la exposición HTTPS y la integración con Web/Mobile requieren verificación antes de afirmar que la segunda fase está desplegada.
 
 La aplicación Spring Boot se ejecuta dentro de un contenedor Docker en la instancia EC2 y se comunica con la base de datos RDS mediante la red privada de AWS.
 
 ```mermaid
 flowchart LR
-    Client[Cliente / Postman] --> Public[HTTP / Endpoint público :8080]
+    Client[Clientes Web / Mobile] --> Public[Entrada HTTPS requerida en producción]
     Public --> EC2[Amazon EC2\nDocker + Spring Boot]
     EC2 --> RDS[(Amazon RDS\nPostgreSQL)]
     EC2 --> SMTP[Servicio SMTP]
@@ -304,7 +304,7 @@ flowchart LR
 
 Los valores sensibles se proporcionan mediante variables de entorno y los Security Groups controlan el acceso entre cliente, EC2 y RDS.
 
-**URL pública:** `http://3.238.32.75:8080`
+**URL histórica (primera fase; no válida como endpoint HTTPS de producción):** `http://3.238.32.75:8080`. Sustituir por la URL HTTPS comprobada por Leonardo antes de la entrega.
 
 ---
 
