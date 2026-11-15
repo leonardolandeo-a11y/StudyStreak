@@ -48,7 +48,10 @@ export function usePagedResource<T>(
             return;
           }
           setData(response);
-          if (silent) setRefreshError(null);
+          if (silent) {
+            setError(null);
+            setRefreshError(null);
+          }
         }
       } catch (cause) {
         if (isCurrent()) {
