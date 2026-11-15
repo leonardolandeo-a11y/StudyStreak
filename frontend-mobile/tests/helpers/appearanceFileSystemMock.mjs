@@ -1,4 +1,5 @@
 export const files = new Map();
+export const pickedFiles = [];
 export const Paths = { document: 'test://documents', cache: 'test://cache' };
 export class Directory {
   constructor(parent, name) { this.uri = name === undefined ? (parent.uri ?? parent) : `${parent.uri ?? parent}/${name}`; }
@@ -6,6 +7,10 @@ export class Directory {
   list() { return [...files.keys()].filter(key => key.startsWith(this.uri + '/')).map(key => new File(this, key.slice(this.uri.length + 1))); }
 }
 export class File {
+  static async pickFileAsync() { return {canceled:false,result:pickedFiles.splice(0)}; }
+  get extension() { const dot=this.name.lastIndexOf('.');return dot<0?'':this.name.slice(dot); }
+  get type() { return ''; }
+  copy(destination) { files.set(destination.uri,files.get(this.uri)); }
   constructor(parent, name) { this.uri = name === undefined ? (parent.uri ?? parent) : `${parent.uri ?? parent}/${name}`; }
   get exists() { return files.has(this.uri); }
   get name() { return this.uri.split('/').at(-1); }

@@ -1,3 +1,5 @@
+import { useLocalMusic } from '../../../hooks/useLocalMusic';
+import { LocalMusicLibrary } from '../../../components/focus/LocalMusicLibrary';
 import { workspacePalette } from '../../../components/academic/workspacePalette';
 import { getApiErrorMessage } from "../../../utils/apiError";
 import { studyTracking, recoverTrackedTimer, mergePending, readPending, savePending, removePending } from "../../../services/studyTracking";
@@ -70,6 +72,9 @@ export default function FocusStudioMobile() {
   const playbackRequest = useRef(0);
   const focused = useRef(false);
   const notifiedAt = useRef<number | null>(null);
+
+  const music = useLocalMusic(stopAudio, timer.preferences.volume);
+  const importedTrack = music.tracks.find(track => track.id === music.activeId);
 
   const selectionReady = selectedGoalLoadedFor === selectionKey && Boolean(selectionKey);
 
@@ -239,6 +244,7 @@ export default function FocusStudioMobile() {
     setSyncRevision(previous => previous + 1);
     const clock = setInterval(refresh, 500);
     const sub = AppState.addEventListener('change', state => {
+      if (state !== 'active') stopAudio();
       if (state === 'active') {
         refresh();
         failed.current.clear();
@@ -330,6 +336,7 @@ export default function FocusStudioMobile() {
 
   async function chooseSound(sound: Soundscape) {
     if (!ready || !focused.current) return;
+    music.deactivate();
     if (sound === timer.preferences.soundscape && (playing || loadingAudio)) {
       stopAudio();
       return;
@@ -368,13 +375,13 @@ export default function FocusStudioMobile() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <FocusArtwork sound={timer.preferences.soundscape} />
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 16 }}>{activeTrack.title}</Text>
-                <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{loadingAudio ? 'Preparing audio…' : playing ? 'Playing' : 'Paused'} · {activeTrack.kind}</Text>
+                <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 16 }}>{importedTrack?.name ?? activeTrack.title}</Text>
+                <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{importedTrack ? music.loading ? 'Preparing audio…' : music.playing ? 'Playing' : 'Paused' : loadingAudio ? 'Preparing audio…' : playing ? 'Playing' : 'Paused'} · {importedTrack ? 'Local music' : activeTrack.kind}</Text>
               </View>
             </View>
-            <Text style={{ color: theme.colors.muted, fontSize: 13, lineHeight: 19 }}>{activeTrack.description}</Text>
-            <ActionButton title={playing ? 'Pause soundscape' : 'Play soundscape'} busy={loadingAudio} disabled={!ready}
-              onPress={() => { if (playing) stopAudio(); else void chooseSound(timer.preferences.soundscape); }} />
+            <Text style={{ color: theme.colors.muted, fontSize: 13, lineHeight: 19 }}>{importedTrack ? 'Imported from this device for this session.' : activeTrack.description}</Text>
+            <ActionButton title={importedTrack ? music.playing ? 'Pause imported music' : 'Play imported music' : playing ? 'Pause soundscape' : 'Play soundscape'} busy={importedTrack ? music.loading : loadingAudio} disabled={!ready}
+              onPress={() => { if (importedTrack) { if (music.playing) music.pause(); else void music.play(importedTrack.id); } else if (playing) stopAudio(); else void chooseSound(timer.preferences.soundscape); }} />
             {audioError ? <StatusMessage error message={audioError} /> : null}
           </Card>
         </View>
@@ -408,6 +415,7 @@ export default function FocusStudioMobile() {
       </View>
       {pendingSync > 0 ? <StatusMessage message={`${pendingSync} completed sessions pending sync · excluded from confirmed totals`} /> : null}
       {saveError ? <><StatusMessage error message={saveError} /><ActionButton title="Retry sync" secondary onPress={retrySync} /></> : null}
+      <LocalMusicLibrary music={music} ready={ready}/>
       <FocusSoundCarousel colors={theme.colors} selected={timer.preferences.soundscape} playing={playing} loading={loadingAudio} ready={ready}
         onChoose={sound => { void chooseSound(sound); }} />
       <Text style={{ color: theme.colors.muted, fontSize: 12 }}>{timer.focusSessions} local focus cycles on this device · not server-verified session totals</Text>

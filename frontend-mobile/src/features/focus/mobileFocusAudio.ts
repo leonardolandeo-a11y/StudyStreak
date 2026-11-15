@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import type { AudioPlayer } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
@@ -6,7 +7,12 @@ import { synthesizeCue, synthesizeStudySound } from './soundSynthesis';
 
 type Cue = 'start' | 'pause' | 'complete';
 
-async function cachedSound(kind: Soundscape | Cue, isCue: boolean): Promise<string> {
+async function cachedSound(kind: Soundscape | Cue, isCue: boolean): Promise<{uri:string;release():void}> {
+  if (Platform.OS === 'web') {
+    const bytes = isCue ? synthesizeCue(kind as Cue) : synthesizeStudySound(kind as Soundscape);
+    const uri = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'audio/wav' }));
+    return { uri, release: () => URL.revokeObjectURL(uri) };
+  }
   // Fixed, app-owned names: no user input or file paths.
   const file = new File(Paths.cache, `focus-studio-v1-${isCue ? 'cue-' : ''}${kind}.wav`);
   if (!file.exists || file.size < 44) {
@@ -14,7 +20,7 @@ async function cachedSound(kind: Soundscape | Cue, isCue: boolean): Promise<stri
     file.create({ overwrite: true });
     await file.write(bytes);
   }
-  return file.uri;
+  return { uri: file.uri, release() {} };
 }
 
 /**
@@ -25,6 +31,7 @@ export class MobileFocusAudio {
   private player: AudioPlayer | null = null;
   private cues = new Set<AudioPlayer>();
   private cueTimers = new Set<ReturnType<typeof setTimeout>>();
+  private sources = new Set<() => void>();
   private generation = 0;
   private disposed = false;
 
@@ -37,9 +44,10 @@ export class MobileFocusAudio {
         playsInSilentMode: true,
         interruptionMode: 'mixWithOthers',
       });
-      const uri = await cachedSound(style, false);
-      if (this.disposed || generation !== this.generation) return false;
-      const player = createAudioPlayer({ uri });
+      const source = await cachedSound(style, false);
+      if (this.disposed || generation !== this.generation) { source.release(); return false; }
+      this.sources.add(source.release);
+      const player = createAudioPlayer({ uri: source.uri });
       player.loop = true;
       player.volume = Math.max(0, Math.min(1, volume)) * 0.9;
       this.player = player;
@@ -58,20 +66,24 @@ export class MobileFocusAudio {
   async cue(kind: Cue, volume: number): Promise<void> {
     if (this.disposed || volume <= 0) return;
     const generation = this.generation;
+    let release: (() => void) | null = null;
     try {
-      const uri = await cachedSound(kind, true);
-      if (this.disposed || generation !== this.generation) return;
-      const player = createAudioPlayer({ uri });
+      const source = await cachedSound(kind, true);
+      release = source.release;
+      if (this.disposed || generation !== this.generation) { source.release(); return; }
+      this.sources.add(source.release);
+      const player = createAudioPlayer({ uri: source.uri });
       player.volume = Math.min(1, volume) * 0.7;
       this.cues.add(player);
       player.play();
       const timeout = setTimeout(() => {
         this.cueTimers.delete(timeout);
         this.cues.delete(player);
-        player.release();
+        player.release(); this.sources.delete(source.release); source.release();
       }, 2200);
       this.cueTimers.add(timeout);
     } catch {
+      if (release) { this.sources.delete(release); release(); }
       // Optional notification chimes must not interrupt studying.
     }
   }
@@ -88,6 +100,8 @@ export class MobileFocusAudio {
       try { player.release(); } catch { /* Already released */ }
     }
     this.cues.clear();
+    for (const release of this.sources) release();
+    this.sources.clear();
   }
 
   dispose(): void {
