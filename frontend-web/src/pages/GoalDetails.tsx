@@ -55,6 +55,7 @@ function GoalDetails(){
     const [goal,setGoal]= useState<Goal|null>(null);
     const [loading, setLoading] = useState(true);
     const [error,setError] = useState<string|null>(null);
+    const [retryRevision, setRetryRevision] = useState(0);
 
     const [unconfirmed, setUnconfirmed] = useState<GoalWriteUnconfirmedError | null>(null);
     const [editing, setEditing] = useState(false);
@@ -143,9 +144,10 @@ useEffect(() => {
 
                 setLoading(true);
                 setError(null);
+                setGoal(null);
 
                 const response =await getGoal(id, goalNumber,controller.signal );
-                setGoal(response);
+                if (!controller.signal.aborted) setGoal(response);
 
             } catch {
 
@@ -172,7 +174,8 @@ useEffect(() => {
     }, [
         userId,
         parsedGoalId,
-        invalidGoalId
+        invalidGoalId,
+        retryRevision
     ]);
     useEffect(() => {
         if (userId == null ||parsedGoalId === null ||invalidGoalId) {
@@ -269,6 +272,7 @@ useEffect(() => {
         return (
             <ErrorMessage
                 message={error}
+                onRetry={() => setRetryRevision(value => value + 1)}
             />
         );
     }

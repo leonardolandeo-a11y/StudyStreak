@@ -20,5 +20,6 @@ test('explicit retry clears stale warnings and new load errors remain visible', 
   const retrying = notificationReducer(stale, { type: 'LOAD_START' });
   assert.equal(retrying.refreshError, null);
   assert.equal(retrying.loading, true);
+  assert.equal(retrying.notificationPage, null);
   assert.equal(notificationReducer(retrying, { type: 'LOAD_ERROR', payload: 'Could not load notifications.' }).error, 'Could not load notifications.');
 });

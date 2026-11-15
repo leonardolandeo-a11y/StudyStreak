@@ -70,6 +70,7 @@ export function notificationReducer(state:NotificationState, action:Notification
             return {
                 ...state,
                 loading: true,
+                notificationPage: null,
                 error: null,
                 refreshError: null
             };

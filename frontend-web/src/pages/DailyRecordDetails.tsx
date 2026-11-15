@@ -193,6 +193,7 @@ function DailyRecordDetails(){
 
                 setLoading(true);
                 setError(null);
+                setDailyRecord(null);
                 setValidation(null);
                 setValidationError(null);
 
@@ -201,7 +202,7 @@ function DailyRecordDetails(){
                 if (controller.signal.aborted) return;
                 setDailyRecord(response);
                 try {
-                    const review = await getValidation(goalNumber, recordNumber);
+                    const review = await getValidation(goalNumber, recordNumber, controller.signal);
                     if (!controller.signal.aborted) setValidation(review);
                 } catch (cause) {
                     if (controller.signal.aborted) return;
@@ -252,7 +253,7 @@ function DailyRecordDetails(){
 
 
     if (error && !dailyRecord) {
-        return ( <ErrorMessage message={error} />);
+        return ( <ErrorMessage message={error} onRetry={() => setReviewRevision(value => value + 1)} />);
     }
 
 

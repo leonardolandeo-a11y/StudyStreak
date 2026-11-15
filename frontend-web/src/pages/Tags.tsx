@@ -66,6 +66,7 @@ function Tags() {
     const [loading, setLoading] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
+    const [retryRevision, setRetryRevision] = useState(0);
 
     const [creating, setCreating] = useState(false);
 
@@ -261,7 +262,7 @@ function Tags() {
 
                 setLoading(true);
                 setError(null);
-
+                setTagPage(null);
 
                 const response =await getTags(id,goalNumber,page,PAGE_SIZE,controller.signal);
                 if (controller.signal.aborted) return;
@@ -305,7 +306,8 @@ function Tags() {
         parsedGoalId,
         invalidGoalId,
         page,
-        setSearchParams
+        setSearchParams,
+        retryRevision
     ]);
 
 
@@ -336,6 +338,7 @@ function Tags() {
         return (
             <ErrorMessage
                 message={error}
+                onRetry={() => setRetryRevision(value => value + 1)}
             />
         );
     }
