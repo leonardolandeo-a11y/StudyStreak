@@ -8,13 +8,12 @@ import { join } from 'node:path';
 
 for (const mode of ['exit', 'protocol']) test(`Chrome startup ${mode}: preserves the error and releases process, port and profile`, async () => {
   const directory = mkdtempSync(join(tmpdir(), 'studystreak-browser-lifecycle-'));
-  const binary = join(directory, 'chrome'), record = join(directory, 'record.json');
+  const binary = join(directory, 'browser-fixture.mjs'), record = join(directory, 'record.json');
   const listener = createServer();
   await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
   const port = listener.address().port;
   await new Promise(resolve => listener.close(resolve));
-  writeFileSync(binary, `#!${process.execPath}
-import { createReadStream, writeFileSync, writeSync } from 'node:fs';
+  writeFileSync(binary, `import { createReadStream, writeFileSync, writeSync } from 'node:fs';
 if (process.argv.includes('--version')) { console.log('Chrome lifecycle fixture'); process.exit(0); }
 writeFileSync(process.env.BROWSER_RECORD, JSON.stringify({pid:process.pid,folder:process.argv.find(arg=>arg.startsWith('--user-data-dir=')).split('=')[1]}));
 if (process.env.BROWSER_FAILURE === 'exit') { console.error('fixture startup failure'); process.exit(23); }
@@ -35,7 +34,7 @@ createReadStream(null,{fd:3}).on('data',chunk=>{
       import { existsSync, readFileSync } from 'node:fs';
       import { createServer } from 'node:net';
       import { profileBrowser } from ${JSON.stringify(new URL('./helpers/profileBrowser.mjs', import.meta.url).href)};
-      await assert.rejects(profileBrowser({port:${port}}), new RegExp(${JSON.stringify(expected)}, 's'));
+      await assert.rejects(profileBrowser({port:${port},browserFixture:process.env.BROWSER_FIXTURE}), new RegExp(${JSON.stringify(expected)}, 's'));
       const {pid,folder}=JSON.parse(readFileSync(process.env.BROWSER_RECORD));
       assert.equal(existsSync(folder), false, 'Chrome profile must be removed after failed setup');
       assert.throws(()=>process.kill(pid,0), {code:'ESRCH'}, 'Chrome must have exited');
@@ -44,7 +43,7 @@ createReadStream(null,{fd:3}).on('data',chunk=>{
       await new Promise(resolve=>listener.close(resolve));
     `;
     execFileSync(process.execPath, ['--input-type=module', '-e', probe], {
-      env: { ...process.env, STUDYSTREAK_CHROME_BIN: binary, BROWSER_RECORD: record, BROWSER_FAILURE: mode },
+      env: { ...process.env, BROWSER_FIXTURE: binary, BROWSER_RECORD: record, BROWSER_FAILURE: mode },
       timeout: 30000, stdio: 'pipe',
     });
   } finally {
