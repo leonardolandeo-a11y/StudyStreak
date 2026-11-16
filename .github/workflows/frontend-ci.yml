@@ -67,6 +67,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit mobile production dependencies for high-severity vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Run mobile session and JWT tests
         run: npm run test:auth
 
@@ -78,6 +81,9 @@ jobs:
 
       - name: Test mobile focus studio audio and timer
         run: npm run test:focus
+
+      - name: Test mobile appearance and accessibility
+        run: npm run test:appearance
 
       - name: Run mobile ESLint
         run: npm run lint -- --max-warnings 0

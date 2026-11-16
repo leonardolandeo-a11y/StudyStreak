@@ -11,7 +11,7 @@ fixture.intercept=async request=>{
  return reply;
 };
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f2-pomodoro/vite-cache/',import.meta.url)),intercept:fixture.intercept});
-const output=new URL(process.env.ROOM_POMODORO_CAPTURES||'../../docs/images/final-ui-f2-pomodoro/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.ROOM_POMODORO_CAPTURES||'../../.local/captures/final-ui-f2-pomodoro/',import.meta.url);mkdirSync(output,{recursive:true});
 const press=async name=>{await browser.wait(`Array.from(document.querySelectorAll('button')).some(b=>!b.disabled&&(b.getAttribute('aria-label')===${JSON.stringify(name)}||b.textContent.trim()===${JSON.stringify(name)}))`);await browser.evaluate(`(()=>{const b=Array.from(document.querySelectorAll('button')).find(b=>!b.disabled&&(b.getAttribute('aria-label')===${JSON.stringify(name)}||b.textContent.trim()===${JSON.stringify(name)}));b.click()})()`);};
 const capture=async(name,selector)=>{
  const clip=await browser.evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.scrollIntoView({block:'center'});const r=e.getBoundingClientRect();return{x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height,scale:1}})()`);

@@ -4,7 +4,7 @@ import {mkdirSync,readFileSync,readdirSync,writeFileSync} from 'node:fs';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {collaborationFixture,token} from '../../scripts/tests/roomCollaborationFixture.mjs';
 const before=process.env.F1_SECTIONS_BEFORE==='1';
-const output=new URL('../../docs/images/final-ui-f1-sections/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/final-ui-f1-sections/',import.meta.url);mkdirSync(output,{recursive:true});
 const page=content=>({content,number:0,size:10,totalElements:content.length,totalPages:content.length?1:0,empty:!content.length,first:true,last:true});
 const combinations=[['amber','dark','orange'],['sage','dark','mint'],['lavender','dark','purple'],['neutral','light','blue']];
 function audit(){

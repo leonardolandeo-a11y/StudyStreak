@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 const before=process.env.F1_PHASE==='before';
-const output=new URL('../../docs/images/final-ui-f1/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/final-ui-f1/',import.meta.url);mkdirSync(output,{recursive:true});
 const page=content=>({content,number:0,size:10,totalElements:content.length,totalPages:content.length?1:0,first:true,last:true,empty:!content.length});
 let owner=42;
 const token=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';

@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {roomLayoutFixture,token} from './helpers/roomLayoutFixture.mjs';
 const before=process.env.F2_BEFORE==='1';
-const output=new URL('../../docs/images/final-ui-f2/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/final-ui-f2/',import.meta.url);mkdirSync(output,{recursive:true});
 test('room layout, identity and compact administration preserve server actions',{timeout:180000},async()=>{
  const fixture=roomLayoutFixture(),browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f2/vite-cache/',import.meta.url)),aliases:{'livekit-client':fileURLToPath(new URL('./helpers/roomMediaViewMock.mjs',import.meta.url))},intercept:fixture.intercept});
  const press=async label=>{await browser.wait(`Array.from(document.querySelectorAll('button,a,[role=tab]')).some(e=>e.getClientRects().length&&!e.disabled&&(e.getAttribute('aria-label')===${JSON.stringify(label)}||e.textContent.trim()===${JSON.stringify(label)}))`);await browser.evaluate(`(()=>{const b=Array.from(document.querySelectorAll('button,a,[role=tab]')).find(e=>e.getClientRects().length&&(e.getAttribute('aria-label')===${JSON.stringify(label)}||e.textContent.trim()===${JSON.stringify(label)}));if(!b)throw Error('Missing '+${JSON.stringify(label)});b.scrollIntoView({block:'center'});b.focus();b.click()})()`);};

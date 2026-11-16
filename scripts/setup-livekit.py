@@ -15,4 +15,4 @@ for path, text in [(env, f'LIVEKIT_ENABLED=true\nLIVEKIT_URL=ws://localhost:7880
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, 'w') as output:
         output.write(text)
-print('Created .env.livekit and .local/livekit.yaml (permissions 0600). Local desktop only; see docs/livekit.md.')
+print('Created .env.livekit and .local/livekit.yaml (permissions 0600). Local desktop only; see README.md for local setup.')

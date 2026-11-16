@@ -3,7 +3,7 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 export async function roomPolishReview(browser,platform,fixture){
  const mobile=platform==='mobile',baseline=process.env.ROOM_POLISH_BASELINE==='1';
- const root=resolve('../docs/images/retro-pixel-academia-7-4d');mkdirSync(root,{recursive:true});
+ const root=resolve('../.local/captures/retro-pixel-academia-7-4d');mkdirSync(root,{recursive:true});
  const capture=async name=>{await browser.evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');const shot=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(resolve(root,`${baseline?'before':'after'}-${platform}-${name}.png`),Buffer.from(shot.data,'base64'));};
  const press=async label=>browser.evaluate(`(()=>{const e=Array.from(document.querySelectorAll('button,a,[role="button"],[role="tab"]')).find(e=>e.getClientRects().length&&!e.closest('[aria-hidden="true"]')&&(e.getAttribute('aria-label')===${JSON.stringify(label)}||e.textContent.trim()===${JSON.stringify(label)}));if(!e)throw Error('Missing '+${JSON.stringify(label)});e.scrollIntoView({block:'center'});e.focus();e.click();})()`);
  await browser.command('Emulation.setDeviceMetricsOverride',{width:390,height:950,deviceScaleFactor:1,mobile:true});

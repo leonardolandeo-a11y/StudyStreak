@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.F5_BEFORE==='1';
-const output=new URL(process.env.F5_CAPTURES || '../../docs/images/final-ui-f5/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.F5_CAPTURES || '../../.local/captures/final-ui-f5/',import.meta.url);mkdirSync(output,{recursive:true});
 const page=content=>({content,totalPages:1,totalElements:content.length,first:true,last:true,empty:!content.length});
 const goal={id:7,topic:'Fixture study goal',frequency:3,duration:25,completed:false,difficulty:'EASY'};
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f5/vite-cache/',import.meta.url)),intercept:request=>{

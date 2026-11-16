@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 const before=process.env.F1_SIDEBAR_BEFORE==='1';
-const output=new URL(process.env.SIDEBAR_CAPTURES||'../../docs/images/final-ui-f1-sidebar/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.SIDEBAR_CAPTURES||'../../.local/captures/final-ui-f1-sidebar/',import.meta.url);mkdirSync(output,{recursive:true});
 const token='fixture.'+Buffer.from(JSON.stringify({type:'access',userId:42,sub:'Scholar',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 test('sidebar and pixel skyline follow all background families independently of accents',{timeout:120000},async()=>{
  const browser=await profileBrowser({intercept:async req=>{

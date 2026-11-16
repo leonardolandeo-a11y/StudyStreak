@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.F4_BEFORE==='1',part='notifications';
-const output=new URL('../../docs/images/final-ui-f4/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/final-ui-f4/',import.meta.url);mkdirSync(output,{recursive:true});
 let owner=101;
 const notes=[{id:10,type:'WEEKLY_SUMMARY',message:'Existing weekly summary',read:false,createdAt:'2026-11-14T09:00:00'},{id:9,type:'GOAL_COMPLETED',message:'Existing goal update',relatedGoalId:7,read:true,createdAt:'2026-11-13T09:00:00'}];
 const requests=[];

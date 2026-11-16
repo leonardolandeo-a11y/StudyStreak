@@ -3,7 +3,7 @@ import {mkdirSync,writeFileSync,readFileSync,readdirSync} from 'node:fs';
 import {preview} from 'vite';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 const production=process.env.SCENE_PRODUCTION==='1';
-const output=new URL('../../docs/images/f5-scene-preview/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/f5-scene-preview/',import.meta.url);mkdirSync(output,{recursive:true});
 const b=await profileBrowser({intercept:async()=>({status:404})});
 let served;
 const capture=async name=>{const r=await b.command('Page.captureScreenshot',{format:'png'});writeFileSync(new URL(name+'.png',output),Buffer.from(r.data,'base64'));};

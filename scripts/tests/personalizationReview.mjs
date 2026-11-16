@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 const ids=['focus-summary','streak','activity','goals','journey','recent','partners','quick'];
 export async function reviewPersonalization(browser,platform,{setStatsFailure,statsRequests}){
  const mobile=platform==='mobile',baseline=process.env.STUDY84_BASELINE==='1';
- const root=resolve('../docs/images/academia-pixel-viva-8-4');mkdirSync(root,{recursive:true});
+ const root=resolve('../.local/captures/academia-pixel-viva-8-4');mkdirSync(root,{recursive:true});
  const prefix=`${baseline?'before':'after'}-${platform}`;
  const hero=mobile?'[data-testid="study-environment"]':'.study-environment';
  const widget=id=>mobile?`[data-testid="widget-${id}"]`:`[data-widget="${id}"]`;

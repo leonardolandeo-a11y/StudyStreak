@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.F3_BEFORE==='1';
-const output=new URL('../../docs/images/final-ui-f3/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/final-ui-f3/',import.meta.url);mkdirSync(output,{recursive:true});
 let owner=101,statsCalls=0,empty=false;
 const tokenFor=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Fixture Student',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f3/vite-cache/',import.meta.url)),intercept:request=>{

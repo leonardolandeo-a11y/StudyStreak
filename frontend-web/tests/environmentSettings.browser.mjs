@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { profileBrowser } from './helpers/profileBrowser.mjs';
 import { environmentFixture } from '../../scripts/tests/studyEnvironmentFixture.mjs';
-const root=resolve(process.env.ENVIRONMENT_CAPTURES || '../docs/images/dashboard-environment-refresh');mkdirSync(root,{recursive:true});
+const root=resolve(process.env.ENVIRONMENT_CAPTURES || '../.local/captures/dashboard-environment-refresh');mkdirSync(root,{recursive:true});
 let owner=101;const paths=[];
 const tokenFor=id=>'fixture.'+Buffer.from(JSON.stringify({type:'access',userId:id,sub:'Fixture Student',email:'fixture@example.invalid',role:'USER',exp:4102444800})).toString('base64url')+'.signature';
 const browser=await profileBrowser({intercept:request=>{

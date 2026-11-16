@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
 const before=process.env.PIXEL_BEFORE==='1';
-const output=new URL(process.env.PIXEL_CAPTURES || '../../docs/images/f5-original-restored/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL(process.env.PIXEL_CAPTURES || '../../.local/captures/f5-original-restored/',import.meta.url);mkdirSync(output,{recursive:true});
 const browser=await profileBrowser({desktopPointer:true,cacheDir:fileURLToPath(new URL('../../.local/f5-pixel/vite-cache/',import.meta.url)),intercept:environmentFixture});
 const capture=async name=>{const r=await browser.command('Page.captureScreenshot',{format:'png'});writeFileSync(new URL((before?'before-':'after-')+name+'.png',output),Buffer.from(r.data,'base64'));};
 try{

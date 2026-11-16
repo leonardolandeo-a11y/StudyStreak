@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {token} from './studyEnvironmentFixture.mjs';
 export async function reviewEnvironment(browser, platform) {
  const baseline=process.env.STUDY_ENV_BASELINE==='1';
- const root=resolve(process.env.STUDY_ENV_CAPTURES||'../docs/images/academia-pixel-viva-8-1');mkdirSync(root,{recursive:true});
+ const root=resolve(process.env.STUDY_ENV_CAPTURES||'../.local/captures/academia-pixel-viva-8-1');mkdirSync(root,{recursive:true});
  const prefix=`${baseline?'before':'after'}-${platform}`;
  const scene=platform==='web'?'.study-environment .auth-scene':'[data-testid="study-environment"] [data-testid^="study-scene-"]';
  const hiddenSource=`window.__environmentNow=new Date(2026,10,12,9).getTime();window.__RealDate=Date;window.Date=class extends Date{constructor(...args){super(...(args.length?args:[window.__environmentNow]));}static now(){return window.__RealDate.now();}};window.__environmentHidden=false;Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__environmentHidden});Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>window.__environmentHidden?'hidden':'visible'});`;

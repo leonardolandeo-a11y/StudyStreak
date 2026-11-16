@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {profileBrowser} from './helpers/profileBrowser.mjs';
 import {environmentFixture,token} from '../../scripts/tests/studyEnvironmentFixture.mjs';
-const output=new URL('../../docs/images/sidebar-header-hotfix/',import.meta.url);mkdirSync(output,{recursive:true});
+const output=new URL('../../.local/captures/sidebar-header-hotfix/',import.meta.url);mkdirSync(output,{recursive:true});
 const b=await profileBrowser({desktopPointer:true,intercept:environmentFixture});
 const capture=async name=>{const r=await b.command('Page.captureScreenshot',{format:'png'});writeFileSync(new URL(name+'.png',output),Buffer.from(r.data,'base64'));};
 const move=async(x,y)=>b.command('Input.dispatchMouseEvent',{type:'mouseMoved',x,y});
