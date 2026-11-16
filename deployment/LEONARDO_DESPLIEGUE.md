@@ -4,6 +4,8 @@
 
 **Importante:** no introducir credenciales reales en GitHub, capturas, issues, commits, Vite ni variables `EXPO_PUBLIC_*`. No reinicializar RDS, eliminar volúmenes ni cambiar la base de producción sin respaldo y validación.
 
+Las claves y contraseñas reales se entregan solo por un **archivo TXT privado separado del repositorio**, completado por quien custodia las credenciales. **No subir ese TXT a GitHub.** La eliminación posterior de `deployment/` no elimina secretos que se hayan incorporado al historial de commits.
+
 ## 1. Confirmar el código que se desplegará
 
 La auditoría técnica trabaja en la rama `audit/rubrica-cs2031-20261115`. Antes de publicar, comparar su código con `main` y acordar con el equipo el commit que corresponde integrar, mediante un Pull Request revisado. No asumir que el último CI verde de una rama también existe en producción. Evitar cambios directos a `main` sin revisión del equipo.
@@ -94,7 +96,7 @@ Registrar las URLs y resultados verificados, sin compartir contraseñas, JWT ni 
 ## 6. Completar el README final y retirar esta carpeta
 
 1. Sustituir en `README.md` los estados “por confirmar” por las **URLs HTTPS verificadas** de la Web y del backend, y el enlace de la APK preview/publicación Android **que funcione sin Metro**. Actualizar el estado de RDS solo si se verificó su integración.
-2. Pedir al equipo que confirme las contribuciones y el **porcentaje individual de 0 % a 100 % de cada integrante**; no inventar los valores.
+2. El README ya registra **100 % de cumplimiento individual para Fabricio, Leonardo y Jared**, según la confirmación del equipo y el contraste de sus aportes con los pull requests. Conservar esa declaración si el equipo la ratifica en la entrega.
 3. Dejar enlazados los resultados de CI del **commit efectivamente entregado** y conservar evidencia de la demo.
 4. **Eliminar toda la carpeta `deployment/` una vez finalizado el despliegue y actualizado el README**. Este documento es únicamente un traspaso de tareas para Leonardo; no debe quedar como documentación provisional en la versión final de entrega.
 
