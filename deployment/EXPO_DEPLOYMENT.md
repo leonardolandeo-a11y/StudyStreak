@@ -1,44 +1,31 @@
-# StudyStreak — Stage 19.2: Android EAS readiness
+# StudyStreak Android con Expo EAS
 
-This stage configures EAS Build for Android. It does **not** publish an app, change AWS/Vercel, or upload secrets.
+El proyecto [`studystreak-team/studystreak`](https://expo.dev/accounts/studystreak-team/projects/studystreak) usa el paquete Android `com.srhouse.studystreak`. El identificador del proyecto y el paquete Android se conservaron al cambiar de organización.
 
-## Before building
+## Generar el APK
 
-1. Confirm that the Spring Boot API is accessible through a working public **HTTPS** URL. `http://localhost:8080` and private Wi-Fi addresses are not valid production endpoints.
-2. Confirm the Android package identifier with your team. The existing `frontend-mobile/app.json` has no `android.package` field. EAS may ask you to choose an identifier during its setup. Do not assume an identifier without checking whether the app was previously registered.
-3. Sign in to Expo/EAS using your team's account. Keep credentials out of the repository.
-4. `EXPO_PUBLIC_API_URL` is a **public client configuration** value. Store it in EAS **preview** and **production** environments, pointing to the verified HTTPS backend URL. Never place passwords, JWT secrets, AWS credentials, or database passwords in `EXPO_PUBLIC_*` variables. A `.env.production.example` file is documentation, not a deployed environment.
-5. If `.env.local` contains a LAN IP, leave it for local Expo Go development; do not assume EAS uses that file. Use EAS environments for cloud builds.
+Desde la raíz del repositorio, con acceso al proyecto de Expo:
 
-## Suggested manual commands (only after the HTTPS backend is confirmed)
-
-From `frontend-mobile`:
-
-```powershell
-npx --yes eas-cli@latest login
+```bash
+cd frontend-mobile
+npm ci
 npx --yes eas-cli@latest whoami
-npx --yes eas-cli@latest build:configure --platform android
-```
-
-Configure `EXPO_PUBLIC_API_URL` in the Expo dashboard or via EAS CLI, substituting the actual HTTPS URL:
-
-```powershell
-npx --yes eas-cli@latest env:set --environment preview --name EXPO_PUBLIC_API_URL --value "https://YOUR-VERIFIED-API" --visibility plaintext
-npx --yes eas-cli@latest env:set --environment production --name EXPO_PUBLIC_API_URL --value "https://YOUR-VERIFIED-API" --visibility plaintext
-```
-
-To create an Android APK for a physical device:
-
-```powershell
+npx --yes eas-cli@latest project:info
+npx --yes eas-cli@latest env:set --environment preview --name EXPO_PUBLIC_API_URL --value https://54.92.245.208 --visibility plaintext
 npx --yes eas-cli@latest build --platform android --profile preview
 ```
 
-The `production` profile creates an Android App Bundle (AAB) for distribution through an app store. It is not directly installable like an APK. An Expo cloud build link alone does not establish that the deployed app can authenticate against the backend; this must be verified later.
+El perfil `preview` genera un APK instalable sin Expo Go ni Metro. El perfil `development` es para desarrollo con Metro y el perfil `production` genera un AAB para una tienda. Usa las credenciales de firma existentes para mantener la compatibilidad con instalaciones previas.
 
-## Verification still pending
+El perfil `preview` desactiva R8 y la reducción de recursos en Android. El AAR prefijado de WebRTC M150 hace referencia a una clase JNI ausente durante el análisis de R8. Se conservan LiveKit, la firma de release y el perfil de tienda sin cambios.
 
-- Actual public Spring Boot HTTPS URL, health/availability, and JWT calls.
-- Actual Amazon RDS availability from EC2 (RDS should normally remain private).
-- Deployed Vercel site URL, CORS origin, and SPA routing.
-- EAS project registration, preview APK link, real device API connectivity, and permissions.
-- Evidence required by the rubric, plus full end-to-end functional tests.
+`EXPO_PUBLIC_API_URL` es la URL pública del backend y se incluye al compilar. No compartas claves de firma, credenciales ni secretos en variables `EXPO_PUBLIC_*`. Si la API cambia de dirección, actualiza la variable y compila de nuevo.
+
+## Verificar en un dispositivo Android
+
+1. Abre el enlace de instalación de Expo en un navegador sin sesión y comprueba que permita descargar el APK.
+2. Instala el APK y prueba el inicio de sesión y la persistencia de una meta contra la API pública.
+3. Adjunta una foto y una nota de voz a un registro diario. Verifica el comportamiento al denegar y conceder permisos.
+4. Busca un libro en Recursos. En Study Rooms, usa Android para ver una pantalla que comparte otro participante desde la web.
+
+La compilación y descarga no sustituyen las pruebas en un dispositivo real.
