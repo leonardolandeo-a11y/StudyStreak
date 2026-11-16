@@ -69,6 +69,7 @@
         }
       ],
       "@config-plugins/react-native-webrtc",
+      "./plugins/withAndroidPreviewBuild.cjs",
       [
         "expo-image-picker",
         {

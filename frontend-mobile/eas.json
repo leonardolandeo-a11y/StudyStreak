@@ -6,6 +6,9 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
+      "env": {
+        "STUDYSTREAK_ANDROID_PREVIEW": "1"
+      },
       "android": {
         "buildType": "apk"
       }

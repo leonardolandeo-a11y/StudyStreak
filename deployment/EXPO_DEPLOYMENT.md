@@ -17,6 +17,8 @@ npx --yes eas-cli@latest build --platform android --profile preview
 
 El perfil `preview` genera un APK instalable sin Expo Go ni Metro. El perfil `development` es para desarrollo con Metro y el perfil `production` genera un AAB para una tienda. Usa las credenciales de firma existentes para mantener la compatibilidad con instalaciones previas.
 
+El perfil `preview` desactiva R8 y la reducción de recursos en Android. El AAR prefijado de WebRTC M150 hace referencia a una clase JNI ausente durante el análisis de R8. Se conservan LiveKit, la firma de release y el perfil de tienda sin cambios.
+
 `EXPO_PUBLIC_API_URL` es la URL pública del backend y se incluye al compilar. No compartas claves de firma, credenciales ni secretos en variables `EXPO_PUBLIC_*`. Si la API cambia de dirección, actualiza la variable y compila de nuevo.
 
 ## Verificar en un dispositivo Android
