@@ -239,12 +239,12 @@ La web de StudyStreak se sirve desde Vercel. La API Spring Boot corre en AWS EC2
 | Web React | [Abrir StudyStreak](https://study-streak-alpha.vercel.app). Vercel usa `frontend-web` como directorio raíz y `VITE_API_BASE_URL` para la conexión con la API. |
 | API Spring Boot | URL base: [https://54.92.245.208](https://54.92.245.208). La mayoría de rutas requieren sesión. Una petición anónima a `/api/dashboard/goals` debe devolver `401`. |
 | Base de datos | Amazon RDS para PostgreSQL. Scripts de evolución del esquema en [`db/migrations/`](db/migrations/). |
-| Android | Proyecto [StudyStreak en Expo EAS](https://expo.dev/accounts/srhouse/projects/studystreak). El APK independiente usa el perfil `preview` y `EXPO_PUBLIC_API_URL=https://54.92.245.208`. El enlace de instalación está pendiente de la compilación y verificación. |
+| Android | [Descargar APK de StudyStreak 1.0.0](https://expo.dev/artifacts/eas/7h848EeXY9APIZYNt77ChTQDOBlVLmbYQ2bntJRuGOU.apk) · [Build de Expo EAS](https://expo.dev/accounts/studystreak-team/projects/studystreak/builds/9b201d69-74a4-4db9-97da-5d12412acab5). El APK usa el perfil `preview` y se conecta a la API pública de AWS. |
 | Integraciones | Google Books y LiveKit están configurados en producción. La web permite publicar video de pantalla y la app móvil permite visualizarlo. |
 
 La API autoriza el origen de Vercel mediante `APP_CORS_ALLOWED_ORIGINS`. Las variables `VITE_*` y `EXPO_PUBLIC_*` solo contienen configuración pública. Las claves de Google Books y LiveKit y las credenciales de PostgreSQL, JWT y SMTP se mantienen en el servidor.
 
-La [compilación EAS de desarrollo](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40) requiere Metro. No es el APK independiente de distribución. Consultar la [guía de despliegue](deployment/README.md) y la [guía de Expo EAS](deployment/EXPO_DEPLOYMENT.md) para preparar un build Android.
+Abre el enlace del APK desde Android e instala la aplicación. No requiere Expo Go ni Metro. Expo indica que el artefacto de esta compilación está disponible hasta el 30 de noviembre de 2026. Consulta la [guía de despliegue](deployment/README.md) y la [guía de Expo EAS](deployment/EXPO_DEPLOYMENT.md) para generar y validar otra compilación.
 
 ## Equipo y contribuciones
 
