@@ -1,332 +1,238 @@
-# StudyStreak — Seguimiento colaborativo de hábitos de estudio
+# StudyStreak
+
+**Seguimiento colaborativo de hábitos de estudio**  
+Proyecto de **CS2031 — Desarrollo Basado en Plataformas | UTEC | 2026-2**
+
+StudyStreak ayuda a convertir objetivos académicos en hábitos medibles. Cada estudiante puede planificar metas, registrar avances y mantener una racha de constancia; además, puede conectar con otros estudiantes para compartir seguimiento y validar actividades. La misma información se consulta desde la aplicación web y la aplicación Android mediante una API propia.
+
+## ¿Qué permite hacer?
+
+| Área | Funcionalidad |
+| --- | --- |
+| Cuenta y perfil | Registro, inicio y cierre de sesión, perfil personal, edición de datos y preferencias |
+| Metas | Crear, consultar, editar y eliminar objetivos; organizar por etiquetas y dificultad |
+| Registro de progreso | Registrar actividades diarias, consultar historial y añadir evidencias según el flujo |
+| Seguimiento | Solicitar seguimiento entre estudiantes, aceptar o rechazar solicitudes y consultar compañeros |
+| Validación | Revisar y aprobar o rechazar registros de un compañero autorizado |
+| Rachas y notificaciones | Consultar continuidad, resultados y avisos relacionados con la actividad |
+| Dashboard | Resumen del estudio, indicadores y acceso a las funciones principales |
+| Focus Studio | Sesiones de concentración, temporizador Pomodoro y ambientes sonoros |
+| Study Rooms | Salas compartidas, participantes, temporizador sincronizado y funciones multimedia mediante LiveKit |
+| Recursos | Búsqueda de libros con Google Books a través del backend |
+| Personalización | Temas visuales, ajustes de apariencia, navegación responsive y accesibilidad básica |
+
+La persistencia de las funciones académicas principales reside en PostgreSQL a través de Spring Boot. Los temporizadores, preferencias visuales y datos temporales de interfaz pueden usar estado local, pero no sustituyen a la API para las operaciones principales.
+
+## Arquitectura
+
+~~~mermaid
+flowchart TB
+    W["Aplicación web<br/>React + TypeScript + Vite"]
+    M["Aplicación Android<br/>React Native + Expo Router"]
+    B["API REST<br/>Spring Boot + Spring Security"]
+    DB[("PostgreSQL")]
+    BOOKS["Google Books API"]
+    MEDIA["LiveKit<br/>comunicación en tiempo real"]
+    W -->|HTTPS / JWT| B
+    M -->|HTTPS / JWT| B
+    B -->|JPA / transacciones| DB
+    B -->|Consulta de libros| BOOKS
+    W <-->|Sesiones multimedia| MEDIA
+    M <-->|Sesiones multimedia| MEDIA
+    B -->|Autorización de salas y tokens| MEDIA
+~~~
+
+- **Backend (`src/`):** Java 21, Spring Boot 4.1.1, Spring Security, Spring Data JPA, validación, JWT, eventos y tareas asíncronas.
+- **Web (`frontend-web/`):** React 19, TypeScript, Vite, React Router, componentes reutilizables, hooks y cliente Axios.
+- **Mobile (`frontend-mobile/`):** React Native, Expo SDK 58, Expo Router, Expo SecureStore, cámara, micrófono y cliente Axios.
+- **Datos (`db/`):** PostgreSQL, entidades relacionales y scripts de evolución del esquema.
+- **Infraestructura:** Docker Compose para desarrollo y verificación aislada; configuración de AWS EC2/RDS, Vercel y EAS para publicación.
+- **Pruebas (`src/test/`, `frontend-web/tests/`, `frontend-mobile/tests/`):** verificaciones de servicios, API, sesión, navegación, interfaz y lógica de estudio.
+
+### Flujo académico principal
+
+~~~text
+Registro e inicio de sesión
+         ↓
+Creación de meta → Registro diario → Seguimiento de compañero
+                                            ↓
+                                  Validación del registro
+                                            ↓
+                                Racha, progreso y avisos
+~~~
+
+### Seguridad e integración
+
+La API autentica mediante access tokens JWT y refresh tokens, protegidos por Spring Security. El backend comprueba la autorización sobre recursos de cada usuario. En Android, los tokens se guardan mediante Expo SecureStore; en Web se utiliza una sesión de navegador con interceptores para autenticación y renovación de tokens. Las claves privadas, contraseñas y tokens de firma se configuran únicamente del lado del servidor. `VITE_*` y `EXPO_PUBLIC_*` son variables públicas, **nunca** deben contener secretos.
+
+Los clientes comparten contratos HTTP y utilizan manejo de errores, estados de carga y validaciones. La interfaz web incorpora rutas protegidas y dinámicas, indicadores de navegación, componentes reutilizables y paginación conectada con el backend.
+
+## Estructura del repositorio
+
+~~~text
+StudyStreak/
+├── src/                         API Spring Boot y pruebas
+├── frontend-web/                Aplicación React
+│   ├── src/                     Páginas, componentes, hooks y servicios
+│   └── tests/                   Pruebas Web
+├── frontend-mobile/             Aplicación React Native / Expo
+│   ├── src/                     Rutas, pantallas, componentes y servicios
+│   ├── tests/                   Pruebas Mobile
+│   ├── app.json                 Configuración de Expo
+│   └── eas.json                 Perfiles de compilación Android
+├── db/migrations/               Scripts SQL
+├── scripts/                     Verificaciones y utilidades
+├── assets/                      Recursos compartidos
+├── .github/workflows/           Integración continua
+├── Dockerfile
+├── compose.local.yaml           Backend y PostgreSQL aislados
+└── README.md
+~~~
+
+## Ejecutar el proyecto localmente
+
+**Requisitos:** Git, Docker Desktop con Compose, Node.js y npm; Java 21 y Maven Wrapper para ejecutar el backend fuera de Docker. Para Android se requiere un teléfono y una compilación de desarrollo de Expo si se desean usar los módulos nativos de LiveKit/WebRTC.
+
+### 1. Backend y PostgreSQL de pruebas
+
+Desde la raíz, crear un archivo privado de configuración:
+
+~~~powershell
+Copy-Item .env.docker.local.example .env.docker.local
+notepad .env.docker.local
+~~~
 
-Backend desarrollado para el curso **CS 2031 – Desarrollo Basado en Plataforma**.
+Antes de levantar los servicios, configurar `LOCAL_LAN_IP` con la IPv4 actual del equipo, un puerto disponible (`LOCAL_API_PORT`), un nombre **nuevo** para `LOCAL_DB_VOLUME` y credenciales locales generadas para pruebas. No reutilizar bases o volúmenes con datos importantes.
 
-## Portada
+~~~powershell
+docker compose -p studystreak-qa --env-file .env.docker.local -f compose.local.yaml config -q
+docker compose -p studystreak-qa --env-file .env.docker.local -f compose.local.yaml up -d --build
+docker compose -p studystreak-qa --env-file .env.docker.local -f compose.local.yaml ps
+~~~
 
-**Título del proyecto:** StudyStreak — Seguimiento colaborativo de hábitos de estudio  
-**Curso:** CS 2031 Desarrollo Basado en Plataforma
+Si se usa `LOCAL_API_PORT=18081`:
 
-**Integrantes:**
+~~~powershell
+py scripts/check-local-auth.py http://127.0.0.1:18081
+~~~
 
-- [Fabricio Nick Tumialan Maihua](mailto:fabricio.tumialan@utec.edu.pe) — **202520045**
-- [Leonard Alexander Landeo Huatay](mailto:leonardo.landeo@utec.edu.pe) — **202520151**
-- [Jared Eloy Daniel Chala Lastra](mailto:jared.chala@utec.edu.pe) — **202520040**
+Una ruta protegida sin credenciales debe responder con HTTP `401`. **No utilizar `docker compose down -v`**: elimina el volumen de base de datos del proyecto.
 
-**Backend desplegado:** `http://3.238.32.75:8080`
+### 2. Aplicación Web
 
----
+Crear `frontend-web/.env.local` con la dirección local del backend:
 
-## Índice
+~~~ini
+VITE_API_BASE_URL=http://127.0.0.1:18081
+~~~
 
-1. [Introducción](#introducción)
-2. [Identificación del problema o necesidad](#identificación-del-problema-o-necesidad)
-3. [Descripción de la solución](#descripción-de-la-solución)
-4. [Tecnologías utilizadas](#tecnologías-utilizadas)
-5. [Modelo de entidades](#modelo-de-entidades)
-6. [Manejo de errores](#manejo-de-errores)
-7. [Medidas de seguridad implementadas](#medidas-de-seguridad-implementadas)
-8. [Eventos y asincronía](#eventos-y-asincronía)
-9. [Endpoints principales](#endpoints-principales)
-10. [Ejecución local](#ejecución-local)
-11. [Docker y PostgreSQL](#docker-y-postgresql)
-12. [Despliegue en AWS](#despliegue-en-aws)
-13. [GitHub & Management](#github--management)
-14. [Conclusión](#conclusión)
-15. [Apéndices](#apéndices)
+~~~powershell
+cd frontend-web
+npm ci
+npm run lint
+npm run test:web
+npm run build
+npm run dev
+~~~
 
----
+Abrir `http://localhost:5173`. Al cambiar variables de Vite, reiniciar el servidor de desarrollo.
 
-## Introducción
+### 3. Aplicación Android
 
-### Contexto
+En `frontend-mobile/.env.local`, usar la IPv4 del equipo que ejecuta Docker, **no** `localhost`:
 
-StudyStreak es una aplicación backend orientada a ayudar a estudiantes a mantener hábitos de estudio constantes. Integra metas personales, registro de progreso diario, seguimiento entre usuarios, validación de actividades, cálculo de rachas, notificaciones y autenticación segura dentro de una API REST.
+~~~ini
+EXPO_PUBLIC_API_URL=http://IP_DEL_EQUIPO:18081
+~~~
 
-El proyecto fue desarrollado con Spring Boot y PostgreSQL siguiendo una arquitectura por capas. Spring Security y JWT protegen los recursos privados, mientras que eventos de aplicación y listeners asíncronos desacoplan tareas secundarias como notificaciones y correo electrónico.
+~~~powershell
+cd frontend-mobile
+npm ci
+npx --no-install expo install --check
+npm run lint
+npx --no-install tsc --noEmit
+npm run test:auth
+npm run test:pagination
+npm run test:review
+npm run test:focus
+npm run test:appearance
+npx --no-install expo start --dev-client --lan --clear
+~~~
 
-### Objetivos del proyecto
+Instalar antes la APK de desarrollo y conectar el celular a la misma red Wi-Fi. Expo Go no incluye los módulos nativos personalizados necesarios para todas las funciones multimedia.
 
-El objetivo general es desarrollar un backend seguro y estructurado para gestionar metas de estudio y convertir el progreso diario en información verificable. Los objetivos específicos son permitir registro y login, proteger contraseñas con BCrypt, administrar metas y registros diarios, organizar metas mediante tags, gestionar relaciones de seguimiento, validar progreso, calcular rachas, generar notificaciones, integrar correo, persistir información en PostgreSQL y facilitar ejecución con Docker y despliegue en AWS.
+## Pruebas y calidad
 
----
+Las verificaciones automatizadas se encuentran en los respectivos proyectos y se ejecutan también desde `.github/workflows/ci.yml` y `.github/workflows/frontend-ci.yml`.
 
-## Identificación del problema o necesidad
+| Área | Evidencia comprobada en la rama de auditoría |
+| --- | --- |
+| Backend | Docker/PostgreSQL aislados, verificación de autenticación local y Backend CI aprobado |
+| Web | **154/154 pruebas aprobadas**, ESLint y build de producción aprobados |
+| Dependencias Web | `npm audit --omit=dev`: **0 vulnerabilidades reportadas** durante la auditoría |
+| Mobile | **75/75 pruebas aprobadas**, ESLint y TypeScript sin errores |
+| Expo | Compatibilidad SDK 58 comprobada; exportación del bundle Android completada |
+| Android nativo | EAS development build finalizada y aplicación abierta en teléfono físico |
+| CI | Backend CI y Frontend/Mobile CI aprobados para el commit `667b779c` de la rama auditada; comprobar de nuevo tras cada commit posterior |
 
-### Descripción del problema
+Estos resultados **no equivalen** a una prueba funcional completa de todas las pantallas ni garantizan que `main` o los servicios de producción contengan esa revisión. En Mobile, la auditoría de dependencias reportó **cuatro avisos moderados** relacionados con una dependencia transitiva de Expo; no se aplicó una degradación forzada del SDK para silenciarlos.
 
-Muchos estudiantes definen metas académicas, pero tienen dificultades para mantener constancia. El progreso suele registrarse de forma informal y no siempre existe una forma clara de visualizar continuidad, comprobar avances o compartir responsabilidad con otra persona.
+La validación integral pendiente cubre registro e inicio de sesión, metas, registros, seguimiento y validaciones entre dos cuentas, rachas, recursos externos, notificaciones, evidencias, permisos, Focus Studio, Study Rooms, recuperación ante errores y sincronización entre Web y Android.
 
-StudyStreak aborda este problema mediante metas, registros diarios y relaciones de seguimiento. Los registros pueden ser validados por usuarios autorizados y utilizarse para calcular una racha que representa la continuidad del hábito.
+## API y servicios externos
 
-### Justificación
+| Servicio | Uso |
+| --- | --- |
+| `POST /register`, `POST /login`, `POST /refresh` y `POST /logout` | Identidad y sesión |
+| `/users/{userId}/goals` | Metas del estudiante |
+| `/api/goals/{goalId}/daily-records` | Registro del progreso |
+| `/api/tracking-links` | Relaciones de seguimiento |
+| `/api/goals/{goalId}/daily-records/{dailyRecordId}/validation` | Validaciones |
+| `/api/resources/books` | Consulta de Google Books a través del servidor |
+| `/api/study-rooms` | Operaciones de las salas de estudio |
 
-La constancia es un componente importante de los hábitos de estudio. StudyStreak convierte el progreso diario en información estructurada y verificable y agrega un componente de responsabilidad compartida. Técnicamente, el proyecto permite aplicar persistencia relacional, DTOs, APIs REST, seguridad, eventos, asincronía, contenedores y despliegue en la nube.
+Los recursos privados requieren autenticación. Las operaciones HTTP, las restricciones de acceso y los parámetros de paginación dependen del endpoint correspondiente. La colección `postman_collection.json` ofrece peticiones adicionales para inspeccionar la API.
 
----
+**Google Books:** `GOOGLE_BOOKS_API_KEY` se configura exclusivamente en el backend.  
+**LiveKit:** las credenciales de firma se mantienen en el backend; los clientes reciben únicamente las autorizaciones necesarias para las salas.
 
-## Descripción de la solución
+## Publicación y estado de entrega
 
-El flujo principal es:
+La publicación completa exige una Web y una API accesibles mediante HTTPS, PostgreSQL administrado, CORS configurado para el dominio real, JWT funcionando de extremo a extremo y Android conectado a los mismos servicios.
 
-```text
-Registro → Login → JWT → Goal → DailyRecord → TrackingLink
-→ Validation → Streak → Notifications
-```
+| Componente | Enlace / comprobación |
+| --- | --- |
+| Código fuente | [GitHub — StudyStreak](https://github.com/leonardolandeo-a11y/StudyStreak) |
+| Web pública | URL HTTPS por confirmar tras la verificación del despliegue |
+| Backend público | URL HTTPS por confirmar tras la verificación del despliegue |
+| PostgreSQL administrado | Integración AWS RDS por verificar con el backend desplegado |
+| Android — compilación de desarrollo | [EAS Build — StudyStreak](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40) |
+| Android — distribución independiente de Metro | APK preview / publicación definitiva pendiente de verificar |
 
-Los controllers reciben las peticiones y delegan en services. Los services aplican reglas de negocio, ownership y transacciones. Los repositories administran PostgreSQL mediante Spring Data JPA y los DTOs separan el contrato externo de las entidades persistentes.
+**La compilación Android enlazada es de desarrollo:** requiere Metro para cargar el proyecto y no representa por sí misma una aplicación de producción publicada. El entorno local emplea HTTP en una red privada; en producción debe emplearse una API HTTPS.
 
-### Funcionalidades implementadas
+Para comprobar el despliegue público sin alterar datos:
 
-- **Usuarios y autenticación:** registro, login, access token y refresh token.
-- **Goals:** creación, consulta, actualización y eliminación de metas.
-- **DailyRecords:** progreso diario con restricción de duplicados por meta y fecha.
-- **Tags:** clasificación de metas mediante relación muchos a muchos.
-- **TrackingLinks:** seguimiento entre usuarios con estados `PENDING`, `ACCEPTED` y `REJECTED`.
-- **Validations:** aprobación o rechazo de registros por usuarios autorizados.
-- **Streaks:** cálculo de racha actual y mejor racha.
-- **Notifications:** avisos generados a partir de eventos del dominio.
+~~~powershell
+node scripts/check-deployment.mjs --api https://URL_BACKEND_VERIFICADA --web https://URL_WEB_VERIFICADA
+~~~
 
----
+Esta comprobación verifica elementos básicos de disponibilidad, carga de la Web, protección de la API y CORS; las acciones de usuario y la multimedia requieren pruebas adicionales.
 
-## Tecnologías utilizadas
+## Equipo y contribuciones
 
-- Java 21 y Maven
-- Spring Boot 4.1.1 y Spring Web
-- Spring Data JPA / Hibernate
-- Spring Security y JJWT
-- Jakarta Bean Validation
-- PostgreSQL 17 para desarrollo local y Amazon RDS PostgreSQL 18.3 en producción
-- ModelMapper y Lombok
-- Spring Mail / JavaMailSender y servicio SMTP
-- Docker y Docker Compose
-- AWS EC2 y Amazon RDS for PostgreSQL
-- Git y GitHub
+Los aportes descritos se contrastaron con los pull requests fusionados en GitHub y, para Fabricio, también con el registro de implementación y pruebas del proyecto. **Los porcentajes son el cumplimiento individual de responsabilidades informado por el equipo**, no la fracción de líneas de código escritas por cada integrante. El docente puede verificar y ajustar la valoración individual.
 
----
+| Integrante | Aportes concretos y evidencia | Cumplimiento individual informado |
+| --- | --- | --- |
+| **Fabricio Nick Tumialan Maihua** | **Backend:** implementación original de `StreakService`, `ValidationService` y sus consultas; controllers de registros diarios, rachas, seguimiento y validación; excepciones HTTP; refuerzo de JWT, refresh/logout, autorización, manejo de concurrencia, zonas horarias y pruebas con PostgreSQL; configuración de CI. **Mobile:** desarrollo e integración React Native/Expo con la API, sesión segura, evidencias de cámara y micrófono, búsqueda Google Books y detalles (incluida integración backend), notificaciones y preparación de Android/EAS. **Calidad transversal:** correcciones de paginación, errores y timeouts Web/Mobile, pruebas y auditoría de integración. [PR #12](https://github.com/leonardolandeo-a11y/StudyStreak/pull/12), [#18](https://github.com/leonardolandeo-a11y/StudyStreak/pull/18), [#20](https://github.com/leonardolandeo-a11y/StudyStreak/pull/20), [#24](https://github.com/leonardolandeo-a11y/StudyStreak/pull/24), [#50](https://github.com/leonardolandeo-a11y/StudyStreak/pull/50), [#52](https://github.com/leonardolandeo-a11y/StudyStreak/pull/52), [#107](https://github.com/leonardolandeo-a11y/StudyStreak/pull/107). | **100 %** |
+| **Leonard Alexander Landeo Huatay** | **Backend:** DTOs, servicios de usuarios, metas y registros, Docker/PostgreSQL, autenticación JWT inicial, eventos y tareas asíncronas. **Web:** estructura React/Vite, autenticación, metas, registros, seguimiento, validaciones, notificaciones, navegación y componentes; adaptación a Web de recursos y evidencias multimedia. **Funciones ampliadas:** correcciones de configuración Google Books, Focus Studio, Pomodoro, estadísticas de estudio, Study Rooms privadas, sincronización y colaboración LiveKit/WebRTC, con componentes backend, Web y Mobile. **Infraestructura:** configuración e integración para despliegue, sin confundirla con producción HTTPS ya verificada. [PR #4](https://github.com/leonardolandeo-a11y/StudyStreak/pull/4), [#8](https://github.com/leonardolandeo-a11y/StudyStreak/pull/8), [#10](https://github.com/leonardolandeo-a11y/StudyStreak/pull/10), [#28](https://github.com/leonardolandeo-a11y/StudyStreak/pull/28), [#56](https://github.com/leonardolandeo-a11y/StudyStreak/pull/56), [#108](https://github.com/leonardolandeo-a11y/StudyStreak/pull/108), [#110](https://github.com/leonardolandeo-a11y/StudyStreak/pull/110), [#117](https://github.com/leonardolandeo-a11y/StudyStreak/pull/117), [#118](https://github.com/leonardolandeo-a11y/StudyStreak/pull/118), [#119](https://github.com/leonardolandeo-a11y/StudyStreak/pull/119). | **100 %** |
+| **Jared Eloy Daniel Chala Lastra** | **Backend inicial:** servicios adicionales, controllers de metas, etiquetas y notificaciones, mejoras de seguridad/autorización y documentación de API. **Web y Mobile:** diseño UI/UX, branding, temas y personalización, navegación, dashboard y widgets, perfiles, formularios, Focus Studio, Study Rooms, notificaciones, adaptación responsive y accesibilidad. **Cambios también funcionales:** ajustes de controllers/servicios y perfil, base de datos, pruebas, dependencias y estabilización de CI; su trabajo no se limita a estilos visuales. [PR #11](https://github.com/leonardolandeo-a11y/StudyStreak/pull/11), [#22](https://github.com/leonardolandeo-a11y/StudyStreak/pull/22), [#25](https://github.com/leonardolandeo-a11y/StudyStreak/pull/25), [#35](https://github.com/leonardolandeo-a11y/StudyStreak/pull/35), [#53](https://github.com/leonardolandeo-a11y/StudyStreak/pull/53), [#122](https://github.com/leonardolandeo-a11y/StudyStreak/pull/122). | **100 %** |
 
-## Modelo de entidades
+Las contribuciones se construyeron sobre una misma base y fueron integradas en conjunto; un PR puede modificar capas de otro integrante por compatibilidad o corrección. Los enlaces acreditan cambios en GitHub, no certifican por sí solos la ejecución de una demo o un despliegue final.
 
-Las entidades persistentes principales son **User, Goal, DailyRecord, Tag, TrackingLink, Validation, Streak** y **Notification**.
+## Presentación
 
-### Diagrama Entidad-Relación
+La exposición se organiza como un pitch tecnológico de **20 minutos**: introducción y gancho (1 min), problema (2 min), solución (4 min), arquitectura (2 min), demostración funcional (6 min) y preguntas técnicas (5 min). La demostración debe usar cuentas de prueba y datos previamente preparados, mostrar el recorrido principal entre Web, Android y backend, y permitir justificar las decisiones técnicas.
 
-```mermaid
-erDiagram
-    USER ||--o{ GOAL : owns
-    USER ||--o{ VALIDATION : performs
-    USER ||--o{ NOTIFICATION : receives
-    USER ||--o{ TRACKING_LINK : requester
-    USER ||--o{ TRACKING_LINK : receiver
-    GOAL ||--o{ DAILY_RECORD : contains
-    GOAL ||--o| STREAK : has
-    GOAL }o--o{ TAG : classified_with
-    DAILY_RECORD ||--o| VALIDATION : has
-```
-
-### Descripción de entidades
-
-| Entidad | Atributos principales | Relaciones |
-|---|---|---|
-| `User` | `id`, `username`, `email`, `password`, `active`, `registrationDate`, `timeZone`, `role` | Posee Goals, recibe Notifications y participa en TrackingLinks y Validations |
-| `Goal` | `id`, `topic`, `frequency`, `duration`, `completed` | Pertenece a User, contiene DailyRecords, Tags y puede tener Streak |
-| `DailyRecord` | `id`, `date`, `note`, `evidence` | Pertenece a Goal y puede tener Validation |
-| `Tag` | `id`, `name` | Relación muchos a muchos con Goal |
-| `TrackingLink` | `id`, `requester`, `receiver`, `status` | Relaciona dos Users |
-| `Validation` | `id`, `approved`, `comment` | Pertenece a DailyRecord y es realizada por User |
-| `Streak` | `id`, `currentStreak`, `bestStreak`, `lastUpdateDate` | Pertenece a Goal |
-| `Notification` | `id`, `message`, `read`, `createdAt`, `type` | Pertenece a User |
-
-Existen restricciones para username y email únicos, un DailyRecord por meta y fecha, un Streak por Goal y una Validation por DailyRecord.
-
-### Arquitectura general
-
-```mermaid
-flowchart TD
-    Client[Cliente / Postman] --> Security[Spring Security + JWT Filter]
-    Security --> Controller[Controllers]
-    Controller --> Service[Services]
-    Service --> Repository[Repositories]
-    Repository --> DB[(PostgreSQL)]
-    Service --> Events[Application Events]
-    Events --> Async[Listeners asíncronos]
-    Async --> Notification[Notification Service]
-    Async --> Email[Email Service]
-```
-
----
-
-## Manejo de errores
-
-El backend centraliza excepciones mediante `@RestControllerAdvice`. El formato común es:
-
-```json
-{
-  "timestamp": "2026-09-25T00:00:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Descripción del error",
-  "path": "/ruta"
-}
-```
-
-Se manejan `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict` y `500 Internal Server Error`. Además de `ResourceNotFoundException`, `ConflictException` y `ForbiddenException`, el handler procesa `BadCredentialsException`, `MethodArgumentNotValidException`, `HttpMessageNotReadableException`, `IllegalArgumentException` y errores inesperados. Spring Security utiliza el mismo `ErrorResponseDTO` para respuestas 401 y 403.
-
-El registro comprueba username y email duplicados antes de persistirlos, por lo que dichos conflictos se transforman en `409 Conflict` en lugar de errores internos.
-
----
-
-## Medidas de seguridad implementadas
-
-### Autenticación y autorización
-
-Las contraseñas se almacenan con `BCryptPasswordEncoder`. El registro valida username, email, zona horaria y una contraseña de 8 a 72 caracteres que debe contener mayúscula, minúscula y número.
-
-`POST /login` devuelve un **access token** y un **refresh token**. Ambos JWT incluyen `userId`, `email`, `role` y un claim `type`; el access token usa `type=access` y el refresh token `type=refresh`. `POST /refresh` valida el refresh token y emite un nuevo par de tokens. La firma y los tiempos de expiración se configuran mediante variables de entorno.
-
-`JwtRequestFilter` valida el Bearer Token, comprueba que sea de tipo access, verifica su expiración y rol y establece la identidad en `SecurityContext`. Los services aplican ownership para impedir acceso a recursos ajenos.
-
-La aplicación define roles `USER` y `ADMIN`. `@EnableMethodSecurity` habilita seguridad por método; `DELETE /users/{userId}` y `POST /api/goals/{goalId}/streak/recalculate` están restringidos con `@PreAuthorize("hasRole('ADMIN')")`.
-
-### Prevención de vulnerabilidades
-
-- **Inyección SQL:** acceso mediante Spring Data JPA y consultas parametrizadas.
-- **CSRF:** deshabilitado porque la API es stateless y usa Bearer Token.
-- **XSS:** el backend responde principalmente JSON y no renderiza HTML con entrada del usuario.
-- **CORS:** permite orígenes locales `http://localhost:*` y métodos HTTP configurados.
-- **Secretos:** JWT, base de datos y SMTP se suministran mediante variables de entorno y `.env` no debe versionarse.
-
----
-
-## Eventos y asincronía
-
-La aplicación publica eventos para desacoplar procesos secundarios. Existen casos para registro de usuario, finalización de meta, solicitud de TrackingLink, respuesta a la invitación y finalización de la relación de seguimiento.
-
-Los listeners usan `@TransactionalEventListener(phase = AFTER_COMMIT)` para reaccionar únicamente después de una transacción exitosa. La asincronía se habilita mediante `@EnableAsync` y `ThreadPoolTaskExecutor`, evitando que tareas como correo y notificaciones bloqueen la respuesta HTTP principal.
-
-El servicio de correo usa `JavaMailSender`; después del registro, un listener asíncrono envía un correo de bienvenida usando configuración SMTP externa.
-
----
-
-## Endpoints principales
-
-| Dominio | Endpoints principales |
-|---|---|
-| Autenticación | `POST /register`, `POST /login`, `POST /refresh` |
-| Usuarios | `GET/PATCH /users/{userId}`, `DELETE /users/{userId}` *(ADMIN)* |
-| Goals | `GET/POST /users/{userId}/goals`, `GET/PUT/DELETE /users/{userId}/goals/{goalId}` |
-| Tags | `GET/POST /users/{userId}/goals/{goalId}/tags`, `GET/PATCH/DELETE .../{tagId}` |
-| DailyRecords | `GET/POST /api/goals/{goalId}/daily-records`, `GET/PUT/DELETE .../{dailyRecordId}` |
-| TrackingLinks | `POST /api/tracking-links/{receiverId}`, `GET /api/tracking-links`, `/pending`, `/active`, `/with/{otherUserId}`, `PATCH .../{trackingId}/status`, `DELETE .../{trackingId}` |
-| Validations | `POST/GET/PUT /api/goals/{goalId}/daily-records/{dailyRecordId}/validation` |
-| Streak | `GET /api/goals/{goalId}/streak`, `POST .../recalculate` *(ADMIN)* |
-| Notifications | `GET /users/{userId}/notifications`, `/unread`, `/type/{type}`, `PATCH .../{notificationId}/read`, `DELETE .../{notificationId}` |
-
-Los endpoints protegidos requieren `Authorization: Bearer <access-token>`. Los listados que reciben `Pageable` soportan paginación.
-
----
-
-## Ejecución local
-
-Requisitos: Java 21, Git, Docker y Docker Compose.
-
-```bash
-git clone <REPOSITORY_URL>
-cd StudyStreak
-cp .env.example .env
-```
-
-Variables principales: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`, `APP_PORT`, `JWT_SECRET`, `JWT_EXPIRATION`, `JWT_REFRESH_EXPIRATION`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME` y `MAIL_PASSWORD`. Al ejecutar Spring fuera de Docker también pueden definirse `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
-
-```bash
-set -a
-source .env
-set +a
-./mvnw spring-boot:run
-```
-
-Las pruebas automatizadas se ejecutan con:
-
-```bash
-./mvnw clean test
-```
-
-La versión revisada contiene **8 tests** que cubren carga del contexto, JWT access/refresh, separación entre refresh y access token, ownership de DailyRecords y respuestas 403/404/409 del manejador global.
-
----
-
-## Docker y PostgreSQL
-
-Docker Compose levanta PostgreSQL 17 y el backend. La aplicación recibe por variables de entorno la URL JDBC, credenciales, configuración JWT —incluida la expiración del refresh token— y configuración SMTP. PostgreSQL utiliza un volumen persistente.
-
-```bash
-docker compose up --build
-```
-
----
-
-## Despliegue en AWS
-
-El backend de StudyStreak se encuentra desplegado en **Amazon EC2**, mientras que la persistencia de datos en producción utiliza **Amazon RDS for PostgreSQL**.
-
-La aplicación Spring Boot se ejecuta dentro de un contenedor Docker en la instancia EC2 y se comunica con la base de datos RDS mediante la red privada de AWS.
-
-```mermaid
-flowchart LR
-    Client[Cliente / Postman] --> Public[HTTP / Endpoint público :8080]
-    Public --> EC2[Amazon EC2\nDocker + Spring Boot]
-    EC2 --> RDS[(Amazon RDS\nPostgreSQL)]
-    EC2 --> SMTP[Servicio SMTP]
-```
-
-Los valores sensibles se proporcionan mediante variables de entorno y los Security Groups controlan el acceso entre cliente, EC2 y RDS.
-
-**URL pública:** `http://3.238.32.75:8080`
-
----
-
-## GitHub & Management
-
-El trabajo se organizó mediante **GitHub Issues**, ramas por tarea y Pull Requests. Los issues fueron asignados a integrantes y cada cambio se implementó en una rama independiente antes de revisión y merge a `main`.
-
-```text
-Issue → responsable → rama → implementación y pruebas → commit/push
-→ Pull Request → revisión → merge a main
-```
-
-La verificación final del backend incluyó pruebas Maven, construcción de imagen Docker, revisión de Docker Compose y pruebas funcionales del flujo registro → login → Goal → DailyRecord → TrackingLink → Validation → Streak.
-
-### GitHub Actions
-
-La versión revisada del repositorio no contiene workflows en `.github/workflows`, por lo que no se afirma que exista CI automatizado con GitHub Actions. El flujo utilizado se basa en validación local y Pull Requests.
-
----
-
-## Conclusión
-
-### Logros del proyecto
-
-StudyStreak integra autenticación y autorización, persistencia, metas, progreso diario, seguimiento entre usuarios, validaciones, rachas, notificaciones, correo y asincronía. La solución permite registrar continuidad y compartir seguimiento dentro de una API segura.
-
-### Aprendizajes clave
-
-El proyecto permitió aplicar modelado relacional, JPA, DTOs, arquitectura por capas, JWT con access/refresh tokens, ownership, manejo global de errores, eventos transaccionales, asincronía, PostgreSQL, Docker, AWS y trabajo colaborativo con GitHub.
-
-### Trabajo futuro
-
-Como mejoras se propone desarrollar un frontend, ampliar estadísticas, agregar recordatorios, aumentar cobertura de pruebas, añadir Swagger/OpenAPI, incorporar logging estructurado, automatizar CI/CD y mejorar las plantillas de correo.
-
----
-
-## Apéndices
-
-### Licencia
-
-Este proyecto se distribuye bajo la licencia MIT.
-
-### Referencias
-
-- Documentación oficial de Spring Boot, Spring Security y Spring Data JPA
-- Documentación oficial de PostgreSQL y Docker
-- Documentación de Jakarta Bean Validation y JJWT
-- Documentación de Amazon EC2 y Amazon RDS
+La documentación del repositorio describe la implementación y las verificaciones disponibles; el cumplimiento definitivo de la rúbrica también depende de la prueba funcional, la publicación comprobada y la exposición de cada integrante.
