@@ -69,9 +69,14 @@ Los clientes comparten contratos HTTP y utilizan manejo de errores, estados de c
 
 ## Estructura del repositorio
 
+El código se organiza en un **monorepositorio** con tres aplicaciones. Spring Boot utiliza la estructura estándar de Maven en la raíz (`pom.xml`, `src/main/` y `src/test/`); React Web y React Native tienen sus propias carpetas, dependencias y configuraciones. Los archivos de infraestructura, migraciones y automatización se mantienen compartidos en el nivel superior.
+
 ~~~text
 StudyStreak/
-├── src/                         API Spring Boot y pruebas
+├── src/                         Backend Spring Boot (estructura Maven)
+│   ├── main/java/              Controladores, servicios, repositorios y seguridad
+│   ├── main/resources/         Configuración y recursos del servidor
+│   └── test/                   Pruebas automatizadas del backend
 ├── frontend-web/                Aplicación React
 │   ├── src/                     Páginas, componentes, hooks y servicios
 │   └── tests/                   Pruebas Web
@@ -84,6 +89,8 @@ StudyStreak/
 ├── scripts/                     Verificaciones y utilidades
 ├── assets/                      Recursos compartidos
 ├── .github/workflows/           Integración continua
+├── pom.xml                       Dependencias y compilación Maven del backend
+├── mvnw / mvnw.cmd              Maven Wrapper
 ├── Dockerfile
 ├── compose.local.yaml           Backend y PostgreSQL aislados
 └── README.md
