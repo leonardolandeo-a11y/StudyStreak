@@ -221,7 +221,7 @@ Esta comprobación verifica elementos básicos de disponibilidad, carga de la We
 
 ## Equipo y contribuciones
 
-Los tres integrantes confirmaron el **cumplimiento completo de las responsabilidades asignadas (100 % cada uno)**. Este porcentaje expresa el grado de cumplimiento **individual**, no una distribución porcentual del volumen total de trabajo; por tanto, los tres valores no tienen que sumar 100 %. Las responsabilidades que se muestran a continuación se contrastaron con las ramas, los commits y los pull requests del equipo.
+Según la confirmación proporcionada por el equipo para esta entrega, los tres integrantes registran **cumplimiento completo de sus responsabilidades (100 % cada uno)**. Este porcentaje expresa el grado de cumplimiento **individual**, no una distribución porcentual del volumen total de trabajo; por tanto, los tres valores no tienen que sumar 100 %. Las responsabilidades que se muestran a continuación se contrastaron con las ramas, los commits y los pull requests del equipo.
 
 | Integrante | Principales aportes verificados | Cumplimiento individual |
 | --- | --- | --- |
