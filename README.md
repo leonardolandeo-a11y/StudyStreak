@@ -232,27 +232,19 @@ Los recursos privados requieren autenticación. Las operaciones HTTP, las restri
 
 ## Infraestructura y despliegue
 
-StudyStreak dispone de configuración de infraestructura para separar el desarrollo local de la distribución pública. El backend se prepara para AWS EC2 con PostgreSQL en Amazon RDS; la Web está preparada para Vercel y Android utiliza perfiles de compilación EAS.
+La web de StudyStreak se sirve desde Vercel. La API Spring Boot corre en AWS EC2 detrás de Nginx con HTTPS y usa PostgreSQL en Amazon RDS. La base de datos no está expuesta a Internet.
 
-| Componente | Configuración y recursos |
+| Componente | Acceso y configuración |
 | --- | --- |
-| API Spring Boot | `Dockerfile`, `compose.local.yaml` y configuración de variables de entorno del servidor |
-| Base de datos | PostgreSQL; scripts en `db/migrations/` y configuración JDBC para el entorno correspondiente |
-| Web React | `frontend-web/vercel.json` para navegación SPA y `VITE_API_BASE_URL` para la URL pública de la API |
-| Android | `frontend-mobile/app.json` y `frontend-mobile/eas.json`; `EXPO_PUBLIC_API_URL` para conectar con el backend |
-| Seguridad | JWT, configuración de CORS mediante `APP_CORS_ALLOWED_ORIGINS` y credenciales privadas del lado del servidor |
-| Integraciones | Google Books y LiveKit con configuración de sus servicios en el backend |
+| Web React | [Abrir StudyStreak](https://study-streak-alpha.vercel.app). Vercel usa `frontend-web` como directorio raíz y `VITE_API_BASE_URL` para la conexión con la API. |
+| API Spring Boot | URL base: [https://54.92.245.208](https://54.92.245.208). La mayoría de rutas requieren sesión. Una petición anónima a `/api/dashboard/goals` debe devolver `401`. |
+| Base de datos | Amazon RDS para PostgreSQL. Scripts de evolución del esquema en [`db/migrations/`](db/migrations/). |
+| Android | Proyecto [StudyStreak en Expo EAS](https://expo.dev/accounts/srhouse/projects/studystreak). El APK independiente usa el perfil `preview` y `EXPO_PUBLIC_API_URL=https://54.92.245.208`. El enlace de instalación está pendiente de la compilación y verificación. |
+| Integraciones | Google Books y LiveKit están configurados en producción. La web permite publicar video de pantalla y la app móvil permite visualizarlo. |
 
-En producción, la Web y la API deben comunicarse mediante **HTTPS**. Las credenciales de PostgreSQL, JWT, correo y servicios externos se suministran mediante variables privadas; las variables `VITE_*` y `EXPO_PUBLIC_*` son visibles en los clientes y se utilizan únicamente para configuración pública.
+La API autoriza el origen de Vercel mediante `APP_CORS_ALLOWED_ORIGINS`. Las variables `VITE_*` y `EXPO_PUBLIC_*` solo contienen configuración pública. Las claves de Google Books y LiveKit y las credenciales de PostgreSQL, JWT y SMTP se mantienen en el servidor.
 
-**Referencias de publicación:**
-
-- [Repositorio del proyecto](https://github.com/leonardolandeo-a11y/StudyStreak)
-- [Compilación Android de desarrollo en Expo EAS](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40)
-
-La compilación EAS enlazada es de desarrollo y requiere el servidor Metro. La aplicación Android de distribución independiente se obtiene con el perfil `preview` (APK) o `production` (Android App Bundle), según el canal de publicación elegido.
-
-Los pasos de configuración y publicación están descritos en `deployment/README.md` y `deployment/EXPO_DEPLOYMENT.md`. Las direcciones definitivas de Web y API se incorporan cuando se confirme su disponibilidad pública.
+La [compilación EAS de desarrollo](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40) requiere Metro. No es el APK independiente de distribución. Consultar la [guía de despliegue](deployment/README.md) y la [guía de Expo EAS](deployment/EXPO_DEPLOYMENT.md) para preparar un build Android.
 
 ## Equipo y contribuciones
 
