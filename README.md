@@ -173,7 +173,7 @@ Las verificaciones automatizadas se encuentran en los respectivos proyectos y se
 | Mobile | **75/75 pruebas aprobadas**, ESLint y TypeScript sin errores |
 | Expo | Compatibilidad SDK 58 comprobada; exportación del bundle Android completada |
 | Android nativo | EAS development build finalizada y aplicación abierta en teléfono físico |
-| CI | Backend CI y Frontend/Mobile CI aprobados para el commit `d65ae7b` de la rama auditada |
+| CI | Backend CI y Frontend/Mobile CI aprobados para el commit `667b779c` de la rama auditada; comprobar de nuevo tras cada commit posterior |
 
 Estos resultados **no equivalen** a una prueba funcional completa de todas las pantallas ni garantizan que `main` o los servicios de producción contengan esa revisión. En Mobile, la auditoría de dependencias reportó **cuatro avisos moderados** relacionados con una dependencia transitiva de Expo; no se aplicó una degradación forzada del SDK para silenciarlos.
 
@@ -221,13 +221,15 @@ Esta comprobación verifica elementos básicos de disponibilidad, carga de la We
 
 ## Equipo y contribuciones
 
-| Integrante | Principales responsabilidades | Cumplimiento individual |
-| --- | --- | --- |
-| Fabricio Nick Tumialan Maihua | Backend, integración móvil, verificaciones y pruebas técnicas | **Por confirmar con el equipo** |
-| Leonard Alexander Landeo Huatay | Frontend Web, integración y coordinación de infraestructura | **Por confirmar con el equipo** |
-| Jared Eloy Daniel Chala Lastra | Diseño de interfaz y experiencia visual para Web y Mobile | **Por confirmar con el equipo** |
+Los tres integrantes confirmaron el **cumplimiento completo de las responsabilidades asignadas (100 % cada uno)**. Este porcentaje expresa el grado de cumplimiento **individual**, no una distribución porcentual del volumen total de trabajo; por tanto, los tres valores no tienen que sumar 100 %. Las responsabilidades que se muestran a continuación se contrastaron con las ramas, los commits y los pull requests del equipo.
 
-Los aportes descritos deben ser ratificados por los integrantes. **Antes de la entrega deben registrarse los porcentajes de cumplimiento de 0 % a 100 % acordados por el equipo**, porque son un dato exigido por la rúbrica, no una estimación técnica automática.
+| Integrante | Principales aportes verificados | Cumplimiento individual |
+| --- | --- | --- |
+| **Fabricio Nick Tumialan Maihua** | Backend: lógica de rachas y validaciones, controllers de registros diarios/seguimiento, manejo de excepciones, seguridad JWT, autorizaciones y pruebas; implementación e integración inicial de React Native/Expo con Spring Boot, cámara y audio; preparación Android/EAS y auditoría técnica Web/Mobile. | **100 %** |
+| **Leonard Alexander Landeo Huatay** | Backend: servicios, DTOs, seguridad y configuración de Docker; desarrollo de React Web con autenticación, metas, registros, seguimiento, validaciones y notificaciones; ampliación de recursos Google Books, Focus Studio y Study Rooms/LiveKit; coordinación de despliegue y conectividad cloud. | **100 %** |
+| **Jared Eloy Daniel Chala Lastra** | Backend: servicios, controllers, ajustes de autorización y documentación de API; diseño e implementación UI/UX Web y Mobile, branding y temas, dashboard configurable, navegación, perfil, Focus Studio, Study Rooms y notificaciones; mejoras responsive, accesibilidad, regresiones y estabilización de CI. | **100 %** |
+
+**Evidencia del repositorio:** [PR #107 — aplicación móvil e integración](https://github.com/leonardolandeo-a11y/StudyStreak/pull/107), [PR #50 — seguridad y pruebas backend](https://github.com/leonardolandeo-a11y/StudyStreak/pull/50), [PR #108 — funciones móviles trasladadas a Web](https://github.com/leonardolandeo-a11y/StudyStreak/pull/108), [PR #118 — Study Rooms](https://github.com/leonardolandeo-a11y/StudyStreak/pull/118), [PR #119 — LiveKit y colaboración](https://github.com/leonardolandeo-a11y/StudyStreak/pull/119) y [PR #122 — UI/UX Web y Mobile](https://github.com/leonardolandeo-a11y/StudyStreak/pull/122). Los commits individuales y las ramas correspondientes documentan aportes adicionales.
 
 ## Presentación
 
