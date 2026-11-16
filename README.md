@@ -33,8 +33,8 @@ flowchart TB
     DB[("PostgreSQL")]
     BOOKS["Google Books API"]
     MEDIA["LiveKit<br/>comunicación en tiempo real"]
-    W -->|HTTPS / JWT| B
-    M -->|HTTPS / JWT| B
+    W -->|API REST / JWT| B
+    M -->|API REST / JWT| B
     B -->|JPA / transacciones| DB
     B -->|Consulta de libros| BOOKS
     W <-->|Sesiones multimedia| MEDIA
@@ -163,21 +163,48 @@ Instalar antes la APK de desarrollo y conectar el celular a la misma red Wi-Fi. 
 
 ## Pruebas y calidad
 
-Las verificaciones automatizadas se encuentran en los respectivos proyectos y se ejecutan también desde `.github/workflows/ci.yml` y `.github/workflows/frontend-ci.yml`.
+El repositorio incorpora pruebas automatizadas para los tres componentes. GitHub Actions ejecuta los flujos de integración continua definidos en `.github/workflows/ci.yml` y `.github/workflows/frontend-ci.yml`.
 
-| Área | Evidencia comprobada en la rama de auditoría |
+| Área | Cobertura |
 | --- | --- |
-| Backend | Docker/PostgreSQL aislados, verificación de autenticación local y Backend CI aprobado |
-| Web | **154/154 pruebas aprobadas**, ESLint y build de producción aprobados |
-| Dependencias Web | `npm audit --omit=dev`: **0 vulnerabilidades reportadas** durante la auditoría |
-| Mobile | **75/75 pruebas aprobadas**, ESLint y TypeScript sin errores |
-| Expo | Compatibilidad SDK 58 comprobada; exportación del bundle Android completada |
-| Android nativo | EAS development build finalizada y aplicación abierta en teléfono físico |
-| CI | Backend CI y Frontend/Mobile CI aprobados para el commit `667b779c` de la rama auditada; comprobar de nuevo tras cada commit posterior |
+| Backend | Autenticación JWT, permisos, servicios, reglas de negocio, repositorios e integración con PostgreSQL |
+| Web | Sesiones y renovación de tokens, navegación, componentes, formularios, paginación, manejo de errores, Focus Studio e interfaz |
+| Android | Sesiones, JWT, navegación, paginación, apariencia y funciones de concentración |
 
-Estos resultados **no equivalen** a una prueba funcional completa de todas las pantallas ni garantizan que `main` o los servicios de producción contengan esa revisión. En Mobile, la auditoría de dependencias reportó **cuatro avisos moderados** relacionados con una dependencia transitiva de Expo; no se aplicó una degradación forzada del SDK para silenciarlos.
+**Backend:** con el entorno Docker local ya iniciado, la prueba `py scripts/check-local-auth.py http://127.0.0.1:18081` comprueba el registro, inicio de sesión, rotación de refresh tokens, autorización y cierre de sesión sin mostrar credenciales.
 
-La validación integral pendiente cubre registro e inicio de sesión, metas, registros, seguimiento y validaciones entre dos cuentas, rachas, recursos externos, notificaciones, evidencias, permisos, Focus Studio, Study Rooms, recuperación ante errores y sincronización entre Web y Android.
+**Web:** desde `frontend-web/`:
+
+~~~powershell
+npm run lint
+npm run test:web
+npm run build
+~~~
+
+**Android:** desde `frontend-mobile/`:
+
+~~~powershell
+npm run lint
+npx --no-install tsc --noEmit
+npm run test:auth
+npm run test:appearance
+npm run test:pagination
+npm run test:review
+npm run test:focus
+~~~
+
+Las funcionalidades de cámara, micrófono, permisos del sistema y sesiones multimedia también se prueban en un dispositivo Android. Para la interacción completa entre usuarios pueden utilizarse dos cuentas de prueba conectadas a la misma API.
+
+### Recorrido funcional entre Web y Android
+
+1. Registrar dos cuentas e iniciar sesión desde la Web y Android.
+2. Crear una meta, asignar sus características y registrar el progreso diario.
+3. Adjuntar evidencias de estudio mediante fotografía o grabación de voz cuando corresponda.
+4. Establecer una relación de seguimiento entre las cuentas y validar una actividad autorizada.
+5. Consultar rachas, estadísticas, notificaciones y el historial desde las dos aplicaciones.
+6. Buscar recursos académicos mediante Google Books y utilizar las herramientas de concentración o las salas colaborativas.
+
+Este recorrido permite comprobar la persistencia en PostgreSQL, el control de acceso, los estados de interfaz y la coherencia de los datos compartidos entre plataformas.
 
 ## API y servicios externos
 
@@ -196,43 +223,60 @@ Los recursos privados requieren autenticación. Las operaciones HTTP, las restri
 **Google Books:** `GOOGLE_BOOKS_API_KEY` se configura exclusivamente en el backend.  
 **LiveKit:** las credenciales de firma se mantienen en el backend; los clientes reciben únicamente las autorizaciones necesarias para las salas.
 
-## Publicación y estado de entrega
+## Infraestructura y despliegue
 
-La publicación completa exige una Web y una API accesibles mediante HTTPS, PostgreSQL administrado, CORS configurado para el dominio real, JWT funcionando de extremo a extremo y Android conectado a los mismos servicios.
+StudyStreak dispone de configuración de infraestructura para separar el desarrollo local de la distribución pública. El backend se prepara para AWS EC2 con PostgreSQL en Amazon RDS; la Web está preparada para Vercel y Android utiliza perfiles de compilación EAS.
 
-| Componente | Enlace / comprobación |
+| Componente | Configuración y recursos |
 | --- | --- |
-| Código fuente | [GitHub — StudyStreak](https://github.com/leonardolandeo-a11y/StudyStreak) |
-| Web pública | URL HTTPS por confirmar tras la verificación del despliegue |
-| Backend público | URL HTTPS por confirmar tras la verificación del despliegue |
-| PostgreSQL administrado | Integración AWS RDS por verificar con el backend desplegado |
-| Android — compilación de desarrollo | [EAS Build — StudyStreak](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40) |
-| Android — distribución independiente de Metro | APK preview / publicación definitiva pendiente de verificar |
+| API Spring Boot | `Dockerfile`, `compose.local.yaml` y configuración de variables de entorno del servidor |
+| Base de datos | PostgreSQL; scripts en `db/migrations/` y configuración JDBC para el entorno correspondiente |
+| Web React | `frontend-web/vercel.json` para navegación SPA y `VITE_API_BASE_URL` para la URL pública de la API |
+| Android | `frontend-mobile/app.json` y `frontend-mobile/eas.json`; `EXPO_PUBLIC_API_URL` para conectar con el backend |
+| Seguridad | JWT, configuración de CORS mediante `APP_CORS_ALLOWED_ORIGINS` y credenciales privadas del lado del servidor |
+| Integraciones | Google Books y LiveKit con configuración de sus servicios en el backend |
 
-**La compilación Android enlazada es de desarrollo:** requiere Metro para cargar el proyecto y no representa por sí misma una aplicación de producción publicada. El entorno local emplea HTTP en una red privada; en producción debe emplearse una API HTTPS.
+En producción, la Web y la API deben comunicarse mediante **HTTPS**. Las credenciales de PostgreSQL, JWT, correo y servicios externos se suministran mediante variables privadas; las variables `VITE_*` y `EXPO_PUBLIC_*` son visibles en los clientes y se utilizan únicamente para configuración pública.
 
-Para comprobar el despliegue público sin alterar datos:
+**Referencias de publicación:**
 
-~~~powershell
-node scripts/check-deployment.mjs --api https://URL_BACKEND_VERIFICADA --web https://URL_WEB_VERIFICADA
-~~~
+- [Repositorio del proyecto](https://github.com/leonardolandeo-a11y/StudyStreak)
+- [Compilación Android de desarrollo en Expo EAS](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40)
 
-Esta comprobación verifica elementos básicos de disponibilidad, carga de la Web, protección de la API y CORS; las acciones de usuario y la multimedia requieren pruebas adicionales.
+La compilación EAS enlazada es de desarrollo y requiere el servidor Metro. La aplicación Android de distribución independiente se obtiene con el perfil `preview` (APK) o `production` (Android App Bundle), según el canal de publicación elegido.
+
+Los pasos de configuración y publicación están descritos en `deployment/README.md` y `deployment/EXPO_DEPLOYMENT.md`. Las direcciones definitivas de Web y API se incorporan cuando se confirme su disponibilidad pública.
 
 ## Equipo y contribuciones
 
-Los aportes descritos se contrastaron con los pull requests fusionados en GitHub y, para Fabricio, también con el registro de implementación y pruebas del proyecto. **Los porcentajes son el cumplimiento individual de responsabilidades informado por el equipo**, no la fracción de líneas de código escritas por cada integrante. El docente puede verificar y ajustar la valoración individual.
+El desarrollo del proyecto se distribuyó entre backend, aplicaciones cliente, interfaz e integración. La siguiente tabla resume las responsabilidades de cada integrante y el **porcentaje de cumplimiento de sus tareas asignadas**.
 
-| Integrante | Aportes concretos y evidencia | Cumplimiento individual informado |
-| --- | --- | --- |
-| **Fabricio Nick Tumialan Maihua** | **Backend:** implementación original de `StreakService`, `ValidationService` y sus consultas; controllers de registros diarios, rachas, seguimiento y validación; excepciones HTTP; refuerzo de JWT, refresh/logout, autorización, manejo de concurrencia, zonas horarias y pruebas con PostgreSQL; configuración de CI. **Mobile:** desarrollo e integración React Native/Expo con la API, sesión segura, evidencias de cámara y micrófono, búsqueda Google Books y detalles (incluida integración backend), notificaciones y preparación de Android/EAS. **Calidad transversal:** correcciones de paginación, errores y timeouts Web/Mobile, pruebas y auditoría de integración. [PR #12](https://github.com/leonardolandeo-a11y/StudyStreak/pull/12), [#18](https://github.com/leonardolandeo-a11y/StudyStreak/pull/18), [#20](https://github.com/leonardolandeo-a11y/StudyStreak/pull/20), [#24](https://github.com/leonardolandeo-a11y/StudyStreak/pull/24), [#50](https://github.com/leonardolandeo-a11y/StudyStreak/pull/50), [#52](https://github.com/leonardolandeo-a11y/StudyStreak/pull/52), [#107](https://github.com/leonardolandeo-a11y/StudyStreak/pull/107). | **100 %** |
-| **Leonard Alexander Landeo Huatay** | **Backend:** DTOs, servicios de usuarios, metas y registros, Docker/PostgreSQL, autenticación JWT inicial, eventos y tareas asíncronas. **Web:** estructura React/Vite, autenticación, metas, registros, seguimiento, validaciones, notificaciones, navegación y componentes; adaptación a Web de recursos y evidencias multimedia. **Funciones ampliadas:** correcciones de configuración Google Books, Focus Studio, Pomodoro, estadísticas de estudio, Study Rooms privadas, sincronización y colaboración LiveKit/WebRTC, con componentes backend, Web y Mobile. **Infraestructura:** configuración e integración para despliegue, sin confundirla con producción HTTPS ya verificada. [PR #4](https://github.com/leonardolandeo-a11y/StudyStreak/pull/4), [#8](https://github.com/leonardolandeo-a11y/StudyStreak/pull/8), [#10](https://github.com/leonardolandeo-a11y/StudyStreak/pull/10), [#28](https://github.com/leonardolandeo-a11y/StudyStreak/pull/28), [#56](https://github.com/leonardolandeo-a11y/StudyStreak/pull/56), [#108](https://github.com/leonardolandeo-a11y/StudyStreak/pull/108), [#110](https://github.com/leonardolandeo-a11y/StudyStreak/pull/110), [#117](https://github.com/leonardolandeo-a11y/StudyStreak/pull/117), [#118](https://github.com/leonardolandeo-a11y/StudyStreak/pull/118), [#119](https://github.com/leonardolandeo-a11y/StudyStreak/pull/119). | **100 %** |
-| **Jared Eloy Daniel Chala Lastra** | **Backend inicial:** servicios adicionales, controllers de metas, etiquetas y notificaciones, mejoras de seguridad/autorización y documentación de API. **Web y Mobile:** diseño UI/UX, branding, temas y personalización, navegación, dashboard y widgets, perfiles, formularios, Focus Studio, Study Rooms, notificaciones, adaptación responsive y accesibilidad. **Cambios también funcionales:** ajustes de controllers/servicios y perfil, base de datos, pruebas, dependencias y estabilización de CI; su trabajo no se limita a estilos visuales. [PR #11](https://github.com/leonardolandeo-a11y/StudyStreak/pull/11), [#22](https://github.com/leonardolandeo-a11y/StudyStreak/pull/22), [#25](https://github.com/leonardolandeo-a11y/StudyStreak/pull/25), [#35](https://github.com/leonardolandeo-a11y/StudyStreak/pull/35), [#53](https://github.com/leonardolandeo-a11y/StudyStreak/pull/53), [#122](https://github.com/leonardolandeo-a11y/StudyStreak/pull/122). | **100 %** |
+| Integrante | Responsabilidades principales | Cumplimiento |
+| --- | --- | ---: |
+| **Fabricio Nick Tumialan Maihua** | Lógica de rachas y validaciones; seguridad, pruebas e integración del backend; desarrollo de React Native y recursos externos | **100 %** |
+| **Leonard Alexander Landeo Huatay** | Backend inicial y Docker; desarrollo de la Web; funcionalidades académicas, Focus Studio, Study Rooms y colaboración en tiempo real | **100 %** |
+| **Jared Eloy Daniel Chala Lastra** | Controladores y seguridad del backend; diseño e implementación UI/UX de Web y Android; personalización, navegación y ajustes funcionales | **100 %** |
 
-Las contribuciones se construyeron sobre una misma base y fueron integradas en conjunto; un PR puede modificar capas de otro integrante por compatibilidad o corrección. Los enlaces acreditan cambios en GitHub, no certifican por sí solos la ejecución de una demo o un despliegue final.
+### Fabricio Nick Tumialan Maihua
 
-## Presentación
+**Lógica de negocio y servicios del backend.** Desarrolló la implementación inicial de `StreakService` y `ValidationService`, junto con los repositorios y consultas asociados al seguimiento de hábitos de estudio. Implementó controladores para los registros diarios, las rachas, los vínculos de seguimiento y las validaciones. Incorporó el tratamiento de excepciones HTTP y ajustes de las operaciones académicas. Referencias: [PR #12](https://github.com/leonardolandeo-a11y/StudyStreak/pull/12), [#18](https://github.com/leonardolandeo-a11y/StudyStreak/pull/18), [#20](https://github.com/leonardolandeo-a11y/StudyStreak/pull/20) y [#24](https://github.com/leonardolandeo-a11y/StudyStreak/pull/24).
 
-La exposición se organiza como un pitch tecnológico de **20 minutos**: introducción y gancho (1 min), problema (2 min), solución (4 min), arquitectura (2 min), demostración funcional (6 min) y preguntas técnicas (5 min). La demostración debe usar cuentas de prueba y datos previamente preparados, mostrar el recorrido principal entre Web, Android y backend, y permitir justificar las decisiones técnicas.
+**Seguridad, integración y calidad.** Reforzó la autenticación y autorización JWT, el manejo de refresh tokens y logout, las verificaciones de acceso y los casos de prueba relacionados con sesiones. Trabajó en escenarios de concurrencia, persistencia con PostgreSQL, zonas horarias, expiraciones, paginación y manejo de errores. Participó en la preparación de pruebas automatizadas y CI para facilitar la integración del proyecto. Referencias: [PR #50](https://github.com/leonardolandeo-a11y/StudyStreak/pull/50) y [#52](https://github.com/leonardolandeo-a11y/StudyStreak/pull/52).
 
-La documentación del repositorio describe la implementación y las verificaciones disponibles; el cumplimiento definitivo de la rúbrica también depende de la prueba funcional, la publicación comprobada y la exposición de cada integrante.
+**Aplicación móvil React Native.** Desarrolló e integró la aplicación Android con la API Spring Boot, incluyendo la sesión segura, navegación, servicios HTTP, manejo de estados y funciones de metas y seguimiento. Implementó las evidencias de estudio con cámara y micrófono, junto con la búsqueda de recursos de Google Books mediante el backend. Participó en las pruebas de integración móvil y en la preparación de compilaciones Android mediante Expo/EAS. Referencia: [PR #107](https://github.com/leonardolandeo-a11y/StudyStreak/pull/107).
+
+### Leonard Alexander Landeo Huatay
+
+**Servicios e infraestructura del backend.** Implementó DTOs, operaciones de usuarios, metas y registros diarios, así como componentes de la configuración inicial de Spring Security y autenticación JWT. Preparó la infraestructura Docker/PostgreSQL que facilita la ejecución e integración de los servicios, además de contribuir a procesos relacionados con eventos y tareas asíncronas. Referencias: [PR #4](https://github.com/leonardolandeo-a11y/StudyStreak/pull/4), [#8](https://github.com/leonardolandeo-a11y/StudyStreak/pull/8), [#10](https://github.com/leonardolandeo-a11y/StudyStreak/pull/10) y [#28](https://github.com/leonardolandeo-a11y/StudyStreak/pull/28).
+
+**Aplicación Web e integración con la API.** Desarrolló la estructura de React/Vite y las funciones de autenticación, metas, registros diarios, seguimiento, validaciones, notificaciones y navegación. Adaptó a la Web funciones disponibles en la experiencia móvil, entre ellas recursos académicos, búsqueda de libros y evidencias multimedia. También trabajó en la integración HTTP con el backend y la configuración de Google Books. Referencias: [PR #56](https://github.com/leonardolandeo-a11y/StudyStreak/pull/56), [#108](https://github.com/leonardolandeo-a11y/StudyStreak/pull/108) y [#110](https://github.com/leonardolandeo-a11y/StudyStreak/pull/110).
+
+**Concentración y colaboración.** Incorporó herramientas de Focus Studio, sesiones Pomodoro, sonidos ambientales, estadísticas de actividad y salas de estudio privadas. Trabajó en la integración de LiveKit/WebRTC, la sincronización de sesiones y los componentes necesarios de Web, Android y backend para la colaboración entre estudiantes. Referencias: [PR #117](https://github.com/leonardolandeo-a11y/StudyStreak/pull/117), [#118](https://github.com/leonardolandeo-a11y/StudyStreak/pull/118) y [#119](https://github.com/leonardolandeo-a11y/StudyStreak/pull/119).
+
+### Jared Eloy Daniel Chala Lastra
+
+**Backend y operaciones de la API.** Participó en los servicios y controladores de metas, etiquetas y notificaciones; trabajó en controles de seguridad y autorización, además de contribuir a la documentación de las peticiones de API. Sus cambios incluyen lógica funcional y componentes del backend. Referencias: [PR #11](https://github.com/leonardolandeo-a11y/StudyStreak/pull/11), [#22](https://github.com/leonardolandeo-a11y/StudyStreak/pull/22), [#25](https://github.com/leonardolandeo-a11y/StudyStreak/pull/25), [#35](https://github.com/leonardolandeo-a11y/StudyStreak/pull/35) y [#53](https://github.com/leonardolandeo-a11y/StudyStreak/pull/53).
+
+**Diseño de interfaces Web y Android.** Trabajó en la identidad visual de StudyStreak, la organización de pantallas, los temas y las opciones de personalización. Refinó dashboards, widgets, perfiles, formularios, navegación y componentes de las vistas académicas, incluyendo aspectos de diseño responsive, estados de interfaz y accesibilidad.
+
+**Integración y refinamiento funcional.** Además de los estilos, contribuyó a la experiencia de Focus Studio, Study Rooms, notificaciones y navegación entre secciones. Su trabajo incluyó ajustes de controladores y servicios, cambios de base de datos, dependencias, pruebas y CI para mantener la coherencia entre las aplicaciones. Referencia: [PR #122](https://github.com/leonardolandeo-a11y/StudyStreak/pull/122).
