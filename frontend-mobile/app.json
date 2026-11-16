@@ -76,7 +76,9 @@
           "cameraPermission": "Allow StudyStreak to take photos of your study notes.",
           "microphonePermission": "Allow StudyStreak to record voice notes for study sessions."
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
