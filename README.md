@@ -1,5 +1,13 @@
 # StudyStreak
 
+## Descarga de la app Android
+
+### [⬇️ Descargar e instalar StudyStreak para Android (APK)](https://expo.dev/artifacts/eas/7h848EeXY9APIZYNt77ChTQDOBlVLmbYQ2bntJRuGOU.apk)
+
+**Versión 1.0.0 · 195 MB.** Abre el enlace desde tu celular Android y toca el archivo descargado para instalarlo. Si Android lo pide, permite la instalación desde tu navegador. La app se conecta a la API de producción y no requiere Expo Go ni Metro.
+
+[**Abrir StudyStreak en la web**](https://study-streak-alpha.vercel.app)
+
 **Seguimiento colaborativo de hábitos de estudio**  
 Proyecto de **CS2031 — Desarrollo Basado en Plataformas | UTEC | 2026-2**
 
@@ -239,12 +247,12 @@ La web de StudyStreak se sirve desde Vercel. La API Spring Boot corre en AWS EC2
 | Web React | [Abrir StudyStreak](https://study-streak-alpha.vercel.app). Vercel usa `frontend-web` como directorio raíz y `VITE_API_BASE_URL` para la conexión con la API. |
 | API Spring Boot | URL base: [https://54.92.245.208](https://54.92.245.208). La mayoría de rutas requieren sesión. Una petición anónima a `/api/dashboard/goals` debe devolver `401`. |
 | Base de datos | Amazon RDS para PostgreSQL. Scripts de evolución del esquema en [`db/migrations/`](db/migrations/). |
-| Android | Proyecto [StudyStreak en Expo EAS](https://expo.dev/accounts/srhouse/projects/studystreak). El APK independiente usa el perfil `preview` y `EXPO_PUBLIC_API_URL=https://54.92.245.208`. El enlace de instalación está pendiente de la compilación y verificación. |
+| Android | [APK e instrucciones de instalación](#descarga-de-la-app-android) · [Compilación en Expo EAS](https://expo.dev/accounts/studystreak-team/projects/studystreak/builds/9b201d69-74a4-4db9-97da-5d12412acab5). Usa el perfil `preview` y se conecta a la API pública de AWS. |
 | Integraciones | Google Books y LiveKit están configurados en producción. La web permite publicar video de pantalla y la app móvil permite visualizarlo. |
 
 La API autoriza el origen de Vercel mediante `APP_CORS_ALLOWED_ORIGINS`. Las variables `VITE_*` y `EXPO_PUBLIC_*` solo contienen configuración pública. Las claves de Google Books y LiveKit y las credenciales de PostgreSQL, JWT y SMTP se mantienen en el servidor.
 
-La [compilación EAS de desarrollo](https://expo.dev/accounts/srhouse/projects/studystreak/builds/8c6f383f-93f7-418d-8144-632a902d4c40) requiere Metro. No es el APK independiente de distribución. Consultar la [guía de despliegue](deployment/README.md) y la [guía de Expo EAS](deployment/EXPO_DEPLOYMENT.md) para preparar un build Android.
+Expo EAS indica que el APK estará disponible hasta el **30 de noviembre de 2026**. Para generar y validar otra compilación, consulta la [guía de despliegue](deployment/README.md) y la [guía de Expo EAS](deployment/EXPO_DEPLOYMENT.md).
 
 ## Equipo y contribuciones
 
