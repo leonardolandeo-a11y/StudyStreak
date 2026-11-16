@@ -191,6 +191,8 @@ test('keyboard focus survives legacy utilities without styling noninteractive co
         const stopped = new Promise(resolve => browser.once('exit', resolve));
         browser.kill('SIGTERM');
         if (browser.exitCode === null && browser.signalCode === null) await stopped;
-        rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        // Chromium subprocesses can finish writing profile files shortly after the main process exits.
+        // Retry cleanup so a transient ENOTEMPTY does not fail an otherwise successful UI test.
+        rmSync(profile, { recursive: true, force: true, maxRetries: 20, retryDelay: 200 });
     }
 });
